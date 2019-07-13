@@ -1,0 +1,58 @@
+# Documentation: https://goreleaser.com/
+project_name: paragon
+
+before:
+  hooks:
+    - go mod download
+    - go generate ./...
+
+builds:
+  -
+    main: ./cmd/paragon
+    env:
+      - GO111MODULE=on
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+      - android
+      - freebsd
+      - netbsd
+      - openbsd
+      - solaris
+    goarch:
+      - amd64
+      - 386
+      - arm64
+    goarm:
+      - 7
+archives:
+  -
+    format_overrides:
+      - goos: windows
+        format: zip
+    files:
+      - LICENSE
+      - README.md
+      - docs/*
+
+dockers:
+  -
+    dockerfile: Dockerfile
+    image_templates:
+      - "kcarretto/{{.ProjectName}}:latest"
+      - "kcarretto/{{.ProjectName}}:{{ .Tag }}"
+
+checksum:
+  name_template: 'checksums.txt'
+
+snapshot:
+  name_template: "{{ .Tag }}-next"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'

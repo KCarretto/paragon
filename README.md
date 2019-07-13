@@ -1,1 +1,3 @@
-# paragon
+[![Build Status](https://travis-ci.org/KCarretto/paragon.svg?branch=master)](https://travis-ci.org/KCarretto/paragon) [![Go Report Card](https://goreportcard.com/badge/github.com/kcarretto/paragon)](https://goreportcard.com/report/github.com/kcarretto/paragon) [![Coverage Status](https://coveralls.io/repos/github/KCarretto/paragon/badge.svg?branch=master)](https://coveralls.io/github/KCarretto/paragon?branch=master) ![GitHub release](https://img.shields.io/github/release-pre/kcarretto/paragon.svg) [![GoDoc](https://godoc.org/github.com/KCarretto/paragon?status.svg)](https://godoc.org/github.com/KCarretto/paragon)
+# Paragon
+![Logo](.github/images/logo.png)
