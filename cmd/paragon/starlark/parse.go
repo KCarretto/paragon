@@ -176,3 +176,21 @@ func New(options ...Option) *Engine {
 
 	return engine
 }
+
+// An Option for configuring a new flux engine.
+type Option func(*Engine)
+
+type globalFn = func(args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error)
+
+// WithGlobalFunction adds the provided handler to the global scope for each flux script.
+func WithGlobalFunction(name string, handler globalFn) Option {
+	builtIn := starlark.NewBuiltin(
+		name,
+		func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+			return handler(args, kwargs)
+		},
+	)
+	return func(e *Engine) {
+		e.globals[name] = builtIn
+	}
+}
