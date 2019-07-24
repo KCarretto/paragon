@@ -2,7 +2,10 @@ package execution
 
 import (
 	"fmt"
+<<<<<<< HEAD
 	"testing"
+=======
+>>>>>>> moved files
 
 	"go.starlark.net/starlark"
 )
@@ -11,7 +14,11 @@ import (
 // TODO: Dynamically load scripts (i.e. w/ events)
 
 const loadMe string = `
+<<<<<<< HEAD
 def loadedFunc(loadedStr):
+=======
+def loadedFunc(loadedStr) -> str:
+>>>>>>> moved files
 	print("I am so jacked br0: "+loadedStr)
 	return "5"
 `
@@ -30,7 +37,11 @@ def count():
 	print(x)
 `
 
+<<<<<<< HEAD
 func mainfunc() {
+=======
+func main() {
+>>>>>>> moved files
 	loadDemo := NewScript("loadable_script_demo", loadMe)
 	demo := NewScript("demo", demoScript)
 
@@ -64,10 +75,13 @@ func mainfunc() {
 	}
 }
 
+<<<<<<< HEAD
 func TestIt(t *testing.T) {
 	mainfunc()
 }
 
+=======
+>>>>>>> moved files
 /*
  Each script declares events to listen for.
  Based on the events, register handlers with a map.
