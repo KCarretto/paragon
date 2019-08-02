@@ -56,7 +56,7 @@ func (a *agent) ExecTimeout() time.Duration {
 	return a.execTimeout
 }
 
-func New(options ...Option) *agent {
+func New(options ...Option) Agent {
 	a := &agent{
 		id:               uuid.New().String(),
 		maxResultBacklog: 25,
