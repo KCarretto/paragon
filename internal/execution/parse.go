@@ -10,7 +10,7 @@ import (
 
 var (
 	// ErrScriptNotFound occurs when attempting to resolve a script that is not registered with the
-	// flux engine.
+	// flux interpreter.
 	ErrScriptNotFound = errors.New("could not resolve script")
 
 	// ErrMethodNotFound occurs when attempting to resolve a function that does not exist.
@@ -23,14 +23,14 @@ var (
 // A ScriptOption allows for flexible configuration of newly created flux scripts.
 type ScriptOption func(*Script)
 
-// Script represents starlark code that is executable by the flux engine.
+// Script represents starlark code that is executable by the flux interpreter.
 type Script struct {
 	name    string
 	content string
 	symbols starlark.StringDict
 }
 
-// NewScript returns a new flux script that is ready to be registered with the flux engine.
+// NewScript returns a new flux script that is ready to be registered with the flux interpreter.
 func NewScript(name string, src string, options ...ScriptOption) *Script {
 	script := &Script{
 		name:    name,
@@ -44,11 +44,11 @@ func NewScript(name string, src string, options ...ScriptOption) *Script {
 	return script
 }
 
-// A Processor is used by the flux engine to handle additional processing logic during script registration.
-type Processor func(*Engine, *Script)
+// A Processor is used by the flux interpreter to handle additional processing logic during script registration.
+type Processor func(*Interpreter, *Script)
 
-// Engine represents a starlark interpeter equipped with flux domain-specific functionality.
-type Engine struct {
+// Interpreter represents a starlark interpeter equipped with flux domain-specific functionality.
+type Interpreter struct {
 	globals starlark.StringDict
 	scripts map[string]*Script
 
@@ -58,67 +58,80 @@ type Engine struct {
 	thread *starlark.Thread
 }
 
-// RegisterScript evaluates and registers the provided script with the flux engine, returning any
+// RegisterScript evaluates and registers the provided script with the flux interpreter, returning any
 // compilation errors it may have caused. If the script has already been registered, it will not be
-// executed again. To update the flux engine's cache of this script, invoke UpdateScript() instead.
-func (e *Engine) RegisterScript(fluxScript *Script) error {
-	cached, ok := e.scripts[fluxScript.name]
+// executed again. To update the flux interpreter's cache of this script, invoke UpdateScript() instead.
+func (i *Interpreter) RegisterScript(fluxScript *Script) error {
+	cached, ok := i.scripts[fluxScript.name]
 	if !ok || cached == nil {
-		return e.UpdateScript(fluxScript)
+		return i.UpdateScript(fluxScript)
 	}
 	return nil
 }
 
-// UpdateScript evaluates and registers the provided script with the flux engine, returning any
+// UpdateScript evaluates and registers the provided script with the flux interpreter, returning any
 // compilation errors it may have caused. The script will be re-evaluated even if it has been
 // previously registered. In this case, flux will not replace the cached version of the script
 // unless evaluation completes without errors.
-func (e *Engine) UpdateScript(fluxScript *Script) error {
+func (i *Interpreter) UpdateScript(fluxScript *Script) error {
 	// Parse script
-	symbols, err := starlark.ExecFile(e.thread, fluxScript.name, fluxScript.content, e.globals)
+	symbols, err := starlark.ExecFile(i.thread, fluxScript.name, fluxScript.content, i.globals)
 	if err != nil {
 		return err
 	}
 
 	// Update script
 	fluxScript.symbols = symbols
-	e.scripts[fluxScript.name] = fluxScript
+	i.scripts[fluxScript.name] = fluxScript
 
-	// Flux engine post-processing
-	for _, processor := range e.processors {
-		processor(e, fluxScript)
+	// Flux interpreter post-processing
+	for _, processor := range i.processors {
+		processor(i, fluxScript)
 	}
 
 	return nil
 }
 
-func (e *Engine) loadModule(_ *starlark.Thread, module string) (starlark.StringDict, error) {
-	script, ok := e.scripts[module]
+// ExecScript executes an entire script already saved in the interpreter
+func (i *Intepreter) ExecScript(name string) error {
+	script, ok := i.scripts[name]
+	if !ok || script != nil {
+		return ErrScriptNotFound
+	}
+	globals, err := starlark.ExecFile(i.thread, script.name, script.content, i.globals)
+	if err != nil {
+		return err
+	}
+}
+
+// loadModule is used as load within starlark
+func (i *Interpreter) loadModule(_ *starlark.Thread, module string) (starlark.StringDict, error) {
+	script, ok := i.scripts[module]
 	if !ok || script == nil {
 		return nil, ErrScriptNotFound
 	}
 	return script.symbols, nil
 }
 
-// RemoveScript removes a flux script from the engine's cache. If the script does not exist, this is
+// RemoveScript removes a flux script from the interpreter's cache. If the script does not exist, this is
 // a no op.
-func (e *Engine) RemoveScript(name string) {
-	delete(e.scripts, name)
+func (i *Interpreter) RemoveScript(name string) {
+	delete(i.scripts, name)
 }
 
-// RemoveAllScripts removes all flux scripts from the engine's cache.
-func (e *Engine) RemoveAllScripts(name string) {
-	e.scripts = map[string]*Script{}
+// RemoveAllScripts removes all flux scripts from the interpreter's cache.
+func (i *Interpreter) RemoveAllScripts(name string) {
+	i.scripts = map[string]*Script{}
 }
 
-// Globals returns starlark values that will be used for module execution with the flux engine.
-func (e *Engine) Globals() starlark.StringDict {
-	return e.globals
+// Globals returns starlark values that will be used for module execution with the flux interpreter.
+func (i *Interpreter) Globals() starlark.StringDict {
+	return i.globals
 }
 
 // Call executes a method defined in the provided script.
-func (e *Engine) Call(scriptName string, methodName string, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
-	script, ok := e.scripts[scriptName]
+func (i *Interpreter) Call(scriptName string, methodName string, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	script, ok := i.scripts[scriptName]
 	if !ok || script == nil {
 		return nil, ErrScriptNotFound
 	}
@@ -128,26 +141,26 @@ func (e *Engine) Call(scriptName string, methodName string, args starlark.Tuple,
 		return nil, ErrMethodNotFound
 	}
 
-	return starlark.Call(e.thread, method, args, kwargs)
+	return starlark.Call(i.thread, method, args, kwargs)
 }
 
-func (e *Engine) print(_ *starlark.Thread, msg string) {
+func (i *Interpreter) print(_ *starlark.Thread, msg string) {
 	// TODO: Configure outputter
 	fmt.Println(msg)
 }
 
-func (e *Engine) newThread() *starlark.Thread {
+func (i *Interpreter) newThread() *starlark.Thread {
 	thread := &starlark.Thread{
 		// TODO: Thread IDs?
-		Name:  "flux_engine_thread",
-		Print: e.print,
-		Load:  e.loadModule,
+		Name:  "flux_interpreter_thread",
+		Print: i.print,
+		Load:  i.loadModule,
 	}
 
 	return thread
 }
 
-// DefaultGlobals returns the default set of global starlark values used by the flux engine.
+// DefaultGlobals returns the default set of global starlark values used by the flux interpreter.
 func DefaultGlobals() starlark.StringDict {
 	event := starlarkstruct.FromStringDict(
 		starlarkstruct.Default,
@@ -162,23 +175,23 @@ func DefaultGlobals() starlark.StringDict {
 	}
 }
 
-// New creates and returns a new flux engine implementation.
-func New(options ...Option) *Engine {
-	engine := &Engine{
+// New creates and returns a new flux interpreter implementation.
+func New(options ...Option) *Interpreter {
+	interpreter := &Interpreter{
 		globals: DefaultGlobals(),
 		scripts: map[string]*Script{},
 	}
-	engine.thread = engine.newThread()
+	interpreter.thread = interpreter.newThread()
 
 	for _, opt := range options {
-		opt(engine)
+		opt(interpreter)
 	}
 
-	return engine
+	return interpreter
 }
 
-// An Option for configuring a new flux engine.
-type Option func(*Engine)
+// An Option for configuring a new flux interpreter.
+type Option func(*Interpreter)
 
 type globalFn = func(args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error)
 
@@ -190,7 +203,7 @@ func WithGlobalFunction(name string, handler globalFn) Option {
 			return handler(args, kwargs)
 		},
 	)
-	return func(e *Engine) {
-		e.globals[name] = builtIn
+	return func(i *Interpreter) {
+		i.globals[name] = builtIn
 	}
 }
