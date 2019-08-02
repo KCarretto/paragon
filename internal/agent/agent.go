@@ -11,14 +11,9 @@ import (
 )
 
 type Agent interface {
-	Execute(ctx context.Context, tasks ...Task)
+	Config
+	Executor
 	Run(ctx context.Context)
-
-	ID() string
-	String() string
-	Interval() time.Duration
-	Jitter() time.Duration
-	ExecTimeout() time.Duration
 }
 
 type agent struct {
