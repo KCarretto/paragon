@@ -15,7 +15,7 @@ before_install:
   - $GOPATH/bin/golangci-lint --version
 
 script:
-  - $GOPATH/bin/golangci-lint run
+  - $GOPATH/bin/golangci-lint run --verbose
   - $GOPATH/bin/goveralls -service=travis-ci
 
 after_success:
