@@ -1,9 +1,11 @@
 language: go
 go:
   - 1.12.x
-  - 1.x
 services:
   - docker
+env:
+  global:
+    - GO111MODULE=on
 
 before_install:
   - go get github.com/mattn/goveralls
@@ -13,7 +15,7 @@ before_install:
   - $GOPATH/bin/golangci-lint --version
 
 script:
-  - $GOPATH/bin/golangci-lint run
+  - $GOPATH/bin/golangci-lint run --verbose
   - $GOPATH/bin/goveralls -service=travis-ci
 
 after_success:
@@ -24,7 +26,16 @@ deploy:
 # Goreleaser deployment
 - provider: script
   skip_cleanup: true
-  script: curl -sL https://git.io/goreleaser | bash
+  script:
+    - curl -sL https://git.io/goreleaser -o goreleaser.sh
+    - bash goreleaser.sh
   on:
     tags: true
+    condition: $TRAVIS_OS_NAME = linux
+- provider: script
+  script:
+    - curl -sL https://git.io/goreleaser -o goreleaser.sh
+    - bash goreleaser.sh --snapshot --skip-publish --rm-dist
+  on:
+    tags: false
     condition: $TRAVIS_OS_NAME = linux
