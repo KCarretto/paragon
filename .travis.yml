@@ -23,15 +23,6 @@ after_success:
   - test -n "$TRAVIS_TAG" && docker login -u="$DOCKER_USER" -p="$DOCKER_PASSWORD"
 
 deploy:
-  # Goreleaser test
-  - provider: script
-    script:
-      - curl -sL https://git.io/goreleaser -o /tmp/goreleaser.sh
-      - bash /tmp/goreleaser.sh --snapshot --skip-publish --rm-dist
-    on:
-      tags: false
-      condition: $TRAVIS_OS_NAME = linux
-
   # Goreleaser deployment
   - provider: script
     skip_cleanup: true
