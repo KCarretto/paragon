@@ -3,17 +3,20 @@ go:
   - 1.12.x
 services:
   - docker
+env:
+  global:
+    - GO111MODULE=on
 
 before_install:
-  - env GO111MODULE=on go get github.com/mattn/goveralls
+  - go get github.com/mattn/goveralls
 
   # Lock linter version to env: $GOLANGCI_LINT_VERSION
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION-v1.17.1}
-  - env GO111MODULE=on $GOPATH/bin/golangci-lint --version
+  - $GOPATH/bin/golangci-lint --version
 
 script:
-  - env GO111MODULE=on $GOPATH/bin/golangci-lint run
-  - env GO111MODULE=on $GOPATH/bin/goveralls -service=travis-ci
+  - $GOPATH/bin/golangci-lint run
+  - $GOPATH/bin/goveralls -service=travis-ci
 
 after_success:
   # Required for docker push
