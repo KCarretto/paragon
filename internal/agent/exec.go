@@ -1,26 +1,14 @@
-package engine
+package agent
 
-import "context"
+import (
+	"context"
 
-// Result stores and displays the result of running a task.
-type Result struct {
-	TaskID    string
-	TimeStart int
-	TimeEnd   int
-	Stdout    string
-	Stderr    string
-	ExitCode  int
-	Err       bool
-}
-
-// Tasks can be run, which return a result
-type Task interface {
-	Run(ctx context.Context) Result
-}
+	"go.uber.org/zap"
+)
 
 func (a *agent) Execute(ctx context.Context, tasks ...Task) {
 	for _, t := range tasks {
-		// TODO: Log task scheduling
+		a.logger.Debug("Scheduling task execution", zap.String("task_id", t.ID()))
 		a.pending.Add(1)
 		go func(task Task) {
 			// TODO: Enable script timeout

@@ -2,22 +2,27 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"time"
 
-	"github.com/kcarretto/paragon/internal/engine"
+	"go.uber.org/zap"
+
+	"github.com/kcarretto/paragon/internal/agent"
 )
 
 func main() {
-	fmt.Println("Starting")
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Debug("Exiting agent")
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*20)
 	defer cancel()
 
-	agent := engine.New()
+	agent := agent.New(
+		agent.WithLogger(logger),
+	)
 	agent.Run(ctx)
-
-	fmt.Println("Exiting")
 }
 
 // )
