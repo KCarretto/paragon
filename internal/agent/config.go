@@ -2,6 +2,8 @@ package agent
 
 import "time"
 
+// Config describes the getter methods for the agent's configuration, and additionally provides
+// the Reconfigure() method to apply configuration updates at runtime.
 type Config interface {
 	Reconfigure(updates ...Option)
 

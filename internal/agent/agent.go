@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// An Agent is run to execute tasks and report results.
 type Agent interface {
 	Config
 	Executor
@@ -51,6 +52,8 @@ func (a *agent) ExecTimeout() time.Duration {
 	return a.execTimeout
 }
 
+// New initializes a new agent to be run. Optionally specify additional configuration, or use
+// the Reconfigure() method while the agent is running.
 func New(options ...Option) Agent {
 	a := &agent{
 		id:               uuid.New().String(),
