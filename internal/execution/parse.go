@@ -98,7 +98,8 @@ func (i *Intepreter) ExecScript(name string) error {
 	if !ok || script != nil {
 		return ErrScriptNotFound
 	}
-	globals, err := starlark.ExecFile(i.thread, script.name, script.content, i.globals)
+	thread = i.newThread()
+	globals, err := starlark.ExecFile(thread, script.name, script.content, i.globals)
 	if err != nil {
 		return err
 	}
@@ -141,7 +142,8 @@ func (i *Interpreter) Call(scriptName string, methodName string, args starlark.T
 		return nil, ErrMethodNotFound
 	}
 
-	return starlark.Call(i.thread, method, args, kwargs)
+	thread := i.newThread()
+	return starlark.Call(thread, method, args, kwargs)
 }
 
 func (i *Interpreter) print(_ *starlark.Thread, msg string) {
