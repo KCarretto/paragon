@@ -26,8 +26,8 @@ deploy:
   # Goreleaser test
   - provider: script
     script:
-      - curl -sL https://git.io/goreleaser -o goreleaser.sh
-      - bash goreleaser.sh --snapshot --skip-publish --rm-dist
+      - curl -sL https://git.io/goreleaser -o /tmp/goreleaser.sh
+      - bash /tmp/goreleaser.sh --snapshot --skip-publish --rm-dist
     on:
       tags: false
       condition: $TRAVIS_OS_NAME = linux
@@ -36,8 +36,7 @@ deploy:
   - provider: script
     skip_cleanup: true
     script:
-      - curl -sL https://git.io/goreleaser -o goreleaser.sh
-      - bash goreleaser.sh
+      - curl -sL https://git.io/goreleaser | bash
     on:
       tags: true
       condition: $TRAVIS_OS_NAME = linux
