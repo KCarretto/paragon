@@ -3,6 +3,7 @@ package execution
 import (
 	"errors"
 	"fmt"
+	"io"
 
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
@@ -93,16 +94,19 @@ func (i *Interpreter) UpdateScript(fluxScript *Script) error {
 }
 
 // ExecScript executes an entire script already saved in the interpreter
-func (i *Intepreter) ExecScript(name string) error {
+func (i *Interpreter) ExecScript(name string) error {
 	script, ok := i.scripts[name]
 	if !ok || script != nil {
 		return ErrScriptNotFound
 	}
-	thread = i.newThread()
-	globals, err := starlark.ExecFile(thread, script.name, script.content, i.globals)
+	stdout := &StdOutCapture{}
+	thread := i.newThread(stdout)
+	_, err := starlark.ExecFile(thread, script.name, script.content, i.globals)
 	if err != nil {
 		return err
 	}
+	stdout.Print()
+	return nil
 }
 
 // loadModule is used as load within starlark
@@ -142,20 +146,46 @@ func (i *Interpreter) Call(scriptName string, methodName string, args starlark.T
 		return nil, ErrMethodNotFound
 	}
 
-	thread := i.newThread()
-	return starlark.Call(thread, method, args, kwargs)
+	stdout := &StdOutCapture{}
+	thread := i.newThread(stdout)
+	val, err := starlark.Call(thread, method, args, kwargs)
+	stdout.Print()
+	return val, err
 }
 
-func (i *Interpreter) print(_ *starlark.Thread, msg string) {
+type StdOutCapture struct {
+	stdout []byte
+}
+
+func (s *StdOutCapture) Write(p []byte) (int, error) {
+	if s.stdout == nil {
+		s.stdout = []byte{}
+	}
+	s.stdout = append(s.stdout, p...)
+	return 0, nil // todo let's make this int real
+
+}
+
+func (s *StdOutCapture) Print() {
+	fmt.Printf("%s", s.stdout)
+}
+
+func (i *Interpreter) print(writer io.Writer) printFunc {
 	// TODO: Configure outputter
-	fmt.Println(msg)
+	return func(_ *starlark.Thread, msg string) {
+		bytesMsg := []byte(msg)
+		bytesMsg = append(bytesMsg, []byte("\n")...)
+		writer.Write(bytesMsg)
+	}
 }
 
-func (i *Interpreter) newThread() *starlark.Thread {
+type printFunc func(*starlark.Thread, string)
+
+func (i *Interpreter) newThread(printWriter io.Writer) *starlark.Thread {
 	thread := &starlark.Thread{
 		// TODO: Thread IDs?
 		Name:  "flux_interpreter_thread",
-		Print: i.print,
+		Print: i.print(printWriter),
 		Load:  i.loadModule,
 	}
 
@@ -183,7 +213,8 @@ func New(options ...Option) *Interpreter {
 		globals: DefaultGlobals(),
 		scripts: map[string]*Script{},
 	}
-	interpreter.thread = interpreter.newThread()
+	stdout := &StdOutCapture{}
+	interpreter.thread = interpreter.newThread(stdout)
 
 	for _, opt := range options {
 		opt(interpreter)
