@@ -2,6 +2,7 @@ package execution
 
 import (
 	"fmt"
+	"testing"
 
 	"go.starlark.net/starlark"
 )
@@ -10,7 +11,7 @@ import (
 // TODO: Dynamically load scripts (i.e. w/ events)
 
 const loadMe string = `
-def loadedFunc(loadedStr) -> str:
+def loadedFunc(loadedStr):
 	print("I am so jacked br0: "+loadedStr)
 	return "5"
 `
@@ -29,7 +30,7 @@ def count():
 	print(x)
 `
 
-func main() {
+func mainfunc() {
 	loadDemo := NewScript("loadable_script_demo", loadMe)
 	demo := NewScript("demo", demoScript)
 
@@ -61,6 +62,10 @@ func main() {
 	if _, err := engine.Call("demo", "count", nil, nil); err != nil {
 		panic(err)
 	}
+}
+
+func TestIt(t *testing.T) {
+	mainfunc()
 }
 
 /*
