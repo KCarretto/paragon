@@ -4,31 +4,47 @@ import (
 	"go.starlark.net/starlark"
 )
 
+<<<<<<< HEAD
 // TODO: Fix type assertions
 
+=======
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 // An ArgParser enables golang function implementations to retrieve the positional and keyword
 // arguments provided to the starlark method call.
 type ArgParser interface {
 	GetString(index int) (string, error)
 	GetStringByName(name string) (string, error)
 
+<<<<<<< HEAD
 	GetInt(index int) (int64, error)
 	GetIntByName(name string) (int64, error)
 
 	GetBool(index int) (bool, error)
 	GetBoolByName(kwarg string) (bool, error)
+=======
+	GetInt(index int) (int, error)
+	GetIntByName(name string) (int, error)
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 }
 
 type argParser struct {
 	ArgParser
 
+<<<<<<< HEAD
 	args   map[int]starlark.Value
+=======
+	args   map[int]interface{}
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 	kwargs map[string]int
 }
 
 func getParser(args starlark.Tuple, kwargs []starlark.Tuple) (*argParser, error) {
 	parser := &argParser{
+<<<<<<< HEAD
 		args:   map[int]starlark.Value{},
+=======
+		args:   map[int]interface{}{},
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 		kwargs: map[string]int{},
 	}
 
@@ -50,7 +66,11 @@ func getParser(args starlark.Tuple, kwargs []starlark.Tuple) (*argParser, error)
 	return parser, nil
 }
 
+<<<<<<< HEAD
 func (parser *argParser) GetParam(index int) (starlark.Value, error) {
+=======
+func (parser *argParser) GetParam(index int) (interface{}, error) {
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 	val, ok := parser.args[index]
 	if !ok {
 		return nil, ErrMissingArg
@@ -72,12 +92,20 @@ func (parser *argParser) GetString(index int) (string, error) {
 		return "", err
 	}
 
+<<<<<<< HEAD
 	str, ok := val.(starlark.String)
+=======
+	str, ok := val.(string)
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 	if !ok {
 		return "", ErrInvalidArgType
 	}
 
+<<<<<<< HEAD
 	return str.GoString(), nil
+=======
+	return str, nil
+>>>>>>> Adds interpreter & argParser w/ helper functions for exporting starlark bindings for golang functions
 }
 func (parser *argParser) GetStringByName(kwarg string) (string, error) {
 	index, err := parser.GetParamIndex(kwarg)
