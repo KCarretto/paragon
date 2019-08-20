@@ -4,14 +4,19 @@ import (
 	"go.starlark.net/starlark"
 )
 
+// TODO: Fix type assertions
+
 // An ArgParser enables golang function implementations to retrieve the positional and keyword
 // arguments provided to the starlark method call.
 type ArgParser interface {
 	GetString(index int) (string, error)
 	GetStringByName(name string) (string, error)
 
-	GetInt(index int) (int, error)
-	GetIntByName(name string) (int, error)
+	GetInt(index int) (int64, error)
+	GetIntByName(name string) (int64, error)
+
+	GetBool(index int) (bool, error)
+	GetBoolByName(kwarg string) (bool, error)
 }
 
 type argParser struct {
@@ -82,23 +87,44 @@ func (parser *argParser) GetStringByName(kwarg string) (string, error) {
 	return parser.GetString(index)
 }
 
-func (parser *argParser) GetInt(index int) (int, error) {
+func (parser *argParser) GetInt(index int) (int64, error) {
 	val, err := parser.GetParam(index)
 	if err != nil {
 		return 0, err
 	}
 
-	str, ok := val.(int)
+	num, ok := val.(int64)
 	if !ok {
 		return 0, ErrInvalidArgType
 	}
 
-	return str, nil
+	return num, nil
 }
-func (parser *argParser) GetIntByName(kwarg string) (int, error) {
+func (parser *argParser) GetIntByName(kwarg string) (int64, error) {
 	index, err := parser.GetParamIndex(kwarg)
 	if err != nil {
 		return 0, err
 	}
 	return parser.GetInt(index)
+}
+
+func (parser *argParser) GetBool(index int) (bool, error) {
+	val, err := parser.GetParam(index)
+	if err != nil {
+		return false, err
+	}
+
+	maybe, ok := val.(bool)
+	if !ok {
+		return false, ErrInvalidArgType
+	}
+
+	return maybe, nil
+}
+func (parser *argParser) GetBoolByName(kwarg string) (bool, error) {
+	index, err := parser.GetParamIndex(kwarg)
+	if err != nil {
+		return false, err
+	}
+	return parser.GetBool(index)
 }
