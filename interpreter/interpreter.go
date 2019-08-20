@@ -3,6 +3,7 @@ package interpreter
 import (
 	"fmt"
 	"io"
+	"os"
 
 	"go.starlark.net/starlark"
 )
@@ -11,6 +12,16 @@ import (
 type Interpreter struct {
 	builtins starlark.StringDict
 	libs     map[string]starlark.StringDict
+	output   io.Writer
+}
+
+// New TODO
+func New() *Interpreter {
+	return &Interpreter{
+		builtins: starlark.StringDict{},
+		libs:     map[string]starlark.StringDict{},
+		output:   os.Stdout,
+	}
 }
 
 func (i *Interpreter) thread(name string, output io.Writer) *starlark.Thread {
@@ -26,8 +37,7 @@ func (i *Interpreter) thread(name string, output io.Writer) *starlark.Thread {
 func (i *Interpreter) printer(output io.Writer) func(t *starlark.Thread, msg string) {
 	return func(t *starlark.Thread, msg string) {
 		// TODO: Format with logger + timestamp?
-		msgBytes := []byte(fmt.Sprintf("[%s] %s\n", t.Name, msg))
-		output.Write(msgBytes)
+		io.WriteString(output, fmt.Sprintf("[%s] %s\n", t.Name, msg))
 	}
 }
 

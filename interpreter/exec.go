@@ -27,7 +27,10 @@ func (i *Interpreter) Execute(script *Script, output io.Writer) error {
 	if err != nil {
 		return err
 	}
-	output.Write([]byte(res.String()))
+
+	if _, ok := res.(starlark.NoneType); !ok {
+		io.WriteString(output, res.String())
+	}
 
 	return nil
 }

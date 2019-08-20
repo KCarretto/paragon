@@ -1,6 +1,8 @@
 package interpreter
 
 import (
+	"io"
+
 	"go.starlark.net/starlark"
 )
 
@@ -8,10 +10,10 @@ import (
 type Retval interface{}
 
 // Func provides a simple wrapper that enables a golang function to be exposed to starlark.
-type Func func(args ArgParser) (Retval, error)
+type Func func(args ArgParser, output io.Writer) (Retval, error)
 
 // toBuiltin wraps the Func and returns a starlark builtin
-func (fn Func) toBuiltin(name string) *starlark.Builtin {
+func (fn Func) toBuiltin(name string, output io.Writer) *starlark.Builtin {
 	return starlark.NewBuiltin(
 		name,
 		func(_ *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -20,7 +22,7 @@ func (fn Func) toBuiltin(name string) *starlark.Builtin {
 				return nil, err
 			}
 
-			retval, err := fn(parser)
+			retval, err := fn(parser, output)
 			if err != nil {
 				return nil, err
 			}
