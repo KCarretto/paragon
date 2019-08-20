@@ -1,7 +1,6 @@
 package interpreter
 
 import (
-	"errors"
 	"fmt"
 	"io"
 
@@ -11,50 +10,32 @@ import (
 // Interpreter TODO
 type Interpreter struct {
 	builtins starlark.StringDict
-	stdlib   map[string]starlark.StringDict
+	libs     map[string]starlark.StringDict
 }
 
-// AddLibrary TODO
-func (i Interpreter) AddLibrary(name string, src io.Reader) error {
-	// Parse and validate syntax
-	_, program, err := starlark.SourceProgram(name, src, i.builtins.Has)
-	if err != nil {
-		// TODO: Handle error
-		return err
-	}
-
-	// Initialize & run top level declarations
-	symbols, err := program.Init(i.thread(), i.builtins)
-	if err != nil {
-		// TODO: Handle error
-		return err
-	}
-
-	// Add symbols to stdlib, making them available to load()
-	i.stdlib[name] = symbols
-
-	return nil
-}
-
-func (i Interpreter) thread() *starlark.Thread {
+func (i *Interpreter) thread(name string, output io.Writer) *starlark.Thread {
 	thread := &starlark.Thread{
-		// TODO: Thread IDs?
-		Name:  "interpreter_thread",
-		Print: i.print,
+		Name:  name,
+		Print: i.printer(output),
 		Load:  i.load,
 	}
 
 	return thread
 }
 
-func (i Interpreter) print(_ *starlark.Thread, msg string) {
-	fmt.Println(msg)
+func (i *Interpreter) printer(output io.Writer) func(t *starlark.Thread, msg string) {
+	return func(t *starlark.Thread, msg string) {
+		// TODO: Format with logger + timestamp?
+		msgBytes := []byte(fmt.Sprintf("[%s] %s\n", t.Name, msg))
+		output.Write(msgBytes)
+	}
 }
 
-func (i Interpreter) load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
-	lib, ok := i.stdlib[module]
+func (i *Interpreter) load(_ *starlark.Thread, module string) (starlark.StringDict, error) {
+	lib, ok := i.libs[module]
 	if !ok || lib == nil {
-		return nil, errors.New("module not found")
+		return nil, ErrMissingLibrary
 	}
+
 	return lib, nil
 }
