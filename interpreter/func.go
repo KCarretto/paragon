@@ -4,11 +4,6 @@ import (
 	"go.starlark.net/starlark"
 )
 
-func convertToStarlark(value interface{}) (starlark.Value, error) {
-	// TODO
-	return nil, nil
-}
-
 // Retval TODO
 type Retval interface{}
 

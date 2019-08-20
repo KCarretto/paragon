@@ -16,4 +16,10 @@ var (
 
 	// ErrInvalidArgType occurs when an argument provided to a starlark function call has the wrong type.
 	ErrInvalidArgType = errors.New("invalid argument type provided to method")
+
+	// ErrMissingLibrary occurs when attempting to load a library that doesn't exist.
+	ErrMissingLibrary = errors.New("could not find library to load")
+
+	// ErrInvalidTypeConversion occurs when converting a golang type to a starlark.Value fails.
+	ErrInvalidTypeConversion = errors.New("could not convert golang value to starlark.Value")
 )
