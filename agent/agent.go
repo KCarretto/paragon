@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"io"
 	"sync"
 )
@@ -47,7 +48,7 @@ Implementation Details:
 */
 type Transport interface {
 	io.ReadWriteCloser
-	Run(Config) error
+	Run(context.Context, Config) error
 }
 
 /*
