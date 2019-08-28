@@ -43,7 +43,7 @@ const myscript string = `
 load("mylib", "my_func")
 
 def main():
-	print("test")
+	my_func("test", 1337, True)
 `
 
 func TestArgParse(t *testing.T) {
