@@ -43,7 +43,11 @@ const myscript string = `
 load("mylib", "my_func")
 
 def main():
+<<<<<<< HEAD
 	my_func("test", 1337, True)
+=======
+	print("test")
+>>>>>>> nope doesn't work yet
 `
 
 func TestArgParse(t *testing.T) {
@@ -55,7 +59,11 @@ func TestArgParse(t *testing.T) {
 	script := interpreter.NewScript("myscript", []byte(myscript))
 	output := &Output{}
 	err := i.Execute(script, output)
+<<<<<<< HEAD
 	if err != nil {
+=======
+	if err != nil { // erroring here
+>>>>>>> nope doesn't work yet
 		t.Error("Error executing test: ", err)
 	}
 }
