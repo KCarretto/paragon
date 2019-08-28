@@ -22,13 +22,13 @@ type ArgParser interface {
 type argParser struct {
 	ArgParser
 
-	args   map[int]interface{}
+	args   map[int]starlark.Value
 	kwargs map[string]int
 }
 
 func getParser(args starlark.Tuple, kwargs []starlark.Tuple) (*argParser, error) {
 	parser := &argParser{
-		args:   map[int]interface{}{},
+		args:   map[int]starlark.Value{},
 		kwargs: map[string]int{},
 	}
 
@@ -50,7 +50,7 @@ func getParser(args starlark.Tuple, kwargs []starlark.Tuple) (*argParser, error)
 	return parser, nil
 }
 
-func (parser *argParser) GetParam(index int) (interface{}, error) {
+func (parser *argParser) GetParam(index int) (starlark.Value, error) {
 	val, ok := parser.args[index]
 	if !ok {
 		return nil, ErrMissingArg
@@ -72,12 +72,12 @@ func (parser *argParser) GetString(index int) (string, error) {
 		return "", err
 	}
 
-	str, ok := val.(string)
+	str, ok := val.(starlark.String)
 	if !ok {
 		return "", ErrInvalidArgType
 	}
 
-	return str, nil
+	return str.GoString(), nil
 }
 func (parser *argParser) GetStringByName(kwarg string) (string, error) {
 	index, err := parser.GetParamIndex(kwarg)
@@ -93,12 +93,16 @@ func (parser *argParser) GetInt(index int) (int64, error) {
 		return 0, err
 	}
 
-	num, ok := val.(int64)
+	intVal, ok := val.(starlark.Int)
 	if !ok {
 		return 0, ErrInvalidArgType
 	}
 
-	return num, nil
+	realInt, isRepresentable := intVal.Int64()
+	if !isRepresentable {
+		return 0, ErrInvalidArgType // IDK how this actually happens
+	}
+	return realInt, nil
 }
 func (parser *argParser) GetIntByName(kwarg string) (int64, error) {
 	index, err := parser.GetParamIndex(kwarg)
@@ -114,12 +118,12 @@ func (parser *argParser) GetBool(index int) (bool, error) {
 		return false, err
 	}
 
-	maybe, ok := val.(bool)
+	boolVal, ok := val.(starlark.Bool)
 	if !ok {
 		return false, ErrInvalidArgType
 	}
 
-	return maybe, nil
+	return bool(boolVal.Truth()), nil
 }
 func (parser *argParser) GetBoolByName(kwarg string) (bool, error) {
 	index, err := parser.GetParamIndex(kwarg)
