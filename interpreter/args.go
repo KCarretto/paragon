@@ -12,8 +12,8 @@ type ArgParser interface {
 	GetString(index int) (string, error)
 	GetStringByName(name string) (string, error)
 
-	GetInt(index int) (int, error)
-	GetIntByName(name string) (int, error)
+	GetInt(index int) (int64, error)
+	GetIntByName(name string) (int64, error)
 
 	GetBool(index int) (bool, error)
 	GetBoolByName(kwarg string) (bool, error)
@@ -72,12 +72,12 @@ func (parser *argParser) GetString(index int) (string, error) {
 		return "", err
 	}
 
-	if val.Type() != "string" {
+	str, ok := val.(starlark.String)
+	if !ok {
 		return "", ErrInvalidArgType
 	}
 
-	str, _ := starlark.AsString(val)
-	return str, nil
+	return str.GoString(), nil
 }
 func (parser *argParser) GetStringByName(kwarg string) (string, error) {
 	index, err := parser.GetParamIndex(kwarg)
@@ -87,19 +87,24 @@ func (parser *argParser) GetStringByName(kwarg string) (string, error) {
 	return parser.GetString(index)
 }
 
-func (parser *argParser) GetInt(index int) (int, error) {
+func (parser *argParser) GetInt(index int) (int64, error) {
 	val, err := parser.GetParam(index)
 	if err != nil {
 		return 0, err
 	}
 
-	if val.Type() != "int" {
+	intVal, ok := val.(starlark.Int)
+	if !ok {
 		return 0, ErrInvalidArgType
 	}
 
-	return starlark.AsInt32(val)
+	realInt, isRepresentable := intVal.Int64()
+	if !isRepresentable {
+		return 0, ErrInvalidArgType // IDK how this actually happens
+	}
+	return realInt, nil
 }
-func (parser *argParser) GetIntByName(kwarg string) (int, error) {
+func (parser *argParser) GetIntByName(kwarg string) (int64, error) {
 	index, err := parser.GetParamIndex(kwarg)
 	if err != nil {
 		return 0, err
@@ -113,11 +118,12 @@ func (parser *argParser) GetBool(index int) (bool, error) {
 		return false, err
 	}
 
-	if val.Type() != "bool" {
+	boolVal, ok := val.(starlark.Bool)
+	if !ok {
 		return false, ErrInvalidArgType
 	}
 
-	return bool(val.Truth()), nil
+	return bool(boolVal.Truth()), nil
 }
 func (parser *argParser) GetBoolByName(kwarg string) (bool, error) {
 	index, err := parser.GetParamIndex(kwarg)
