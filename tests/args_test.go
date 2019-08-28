@@ -2,7 +2,6 @@ package tests
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"testing"
 
@@ -22,7 +21,6 @@ func aTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Re
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf(stringVar)
 	if stringVar != "test" {
 		return nil, errors.New("String var was wrong")
 	}
@@ -57,7 +55,7 @@ func TestArgParse(t *testing.T) {
 	script := interpreter.NewScript("myscript", []byte(myscript))
 	output := &Output{}
 	err := i.Execute(script, output)
-	if err != nil { // erroring here
+	if err != nil {
 		t.Error("Error executing test: ", err)
 	}
 }
