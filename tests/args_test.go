@@ -2,6 +2,7 @@ package tests
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"testing"
 
@@ -21,6 +22,7 @@ func aTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Re
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf(stringVar)
 	if stringVar != "test" {
 		return nil, errors.New("String var was wrong")
 	}

@@ -12,8 +12,8 @@ type ArgParser interface {
 	GetString(index int) (string, error)
 	GetStringByName(name string) (string, error)
 
-	GetInt(index int) (int64, error)
-	GetIntByName(name string) (int64, error)
+	GetInt(index int) (int, error)
+	GetIntByName(name string) (int, error)
 
 	GetBool(index int) (bool, error)
 	GetBoolByName(kwarg string) (bool, error)
@@ -87,7 +87,7 @@ func (parser *argParser) GetStringByName(kwarg string) (string, error) {
 	return parser.GetString(index)
 }
 
-func (parser *argParser) GetInt(index int) (int64, error) {
+func (parser *argParser) GetInt(index int) (int, error) {
 	val, err := parser.GetParam(index)
 	if err != nil {
 		return 0, err
@@ -104,7 +104,7 @@ func (parser *argParser) GetInt(index int) (int64, error) {
 	}
 	return realInt, nil
 }
-func (parser *argParser) GetIntByName(kwarg string) (int64, error) {
+func (parser *argParser) GetIntByName(kwarg string) (int, error) {
 	index, err := parser.GetParamIndex(kwarg)
 	if err != nil {
 		return 0, err
