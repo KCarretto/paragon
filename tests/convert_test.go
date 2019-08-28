@@ -7,17 +7,24 @@ import (
 	"github.com/kcarretto/paragon/interpreter"
 )
 
-func convertTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Retval, error) {
-	return nil, nil
+func convertTestString(argParse interpreter.ArgParser, output io.Writer) (interpreter.Retval, error) {
+	return "", nil
 }
 
+const myconvertscript string = `
+load("mylib", "my_func")
+
+def main():
+	my_func()
+`
+
 func TestConvert(t *testing.T) {
-	newFunc := interpreter.Func(convertTestFunc)
+	newFunc := interpreter.Func(convertTestString)
 	i := interpreter.New()
 	l := interpreter.Library{"my_func": newFunc}
 	i.AddLibrary("mylib", l)
 
-	script := interpreter.NewScript("myscript", []byte(myscript))
+	script := interpreter.NewScript("myscript", []byte(myconvertscript))
 	output := &Output{}
 	err := i.Execute(script, output)
 	if err != nil {
