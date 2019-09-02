@@ -17,7 +17,8 @@ func convertTestString(argParse interpreter.ArgParser, output io.Writer) (interp
 	test[4] = float32(4.4)
 	test[5] = float64(5.5)
 	test[6] = "1"
-	test[7] = map[string]string{"1": "1"}
+	test[7] = map[interface{}]interface{}{"1": "1"}
+	test[7] = map[string]string{"1": "1"} // Doesnt work right.
 	test[8] = nil
 	return test, nil
 }
@@ -42,6 +43,6 @@ func TestConvert(t *testing.T) {
 	if err != nil {
 		t.Error("Error executing test: ", err)
 	}
-	fmt.Println(output.String())
+	fmt.Println(output.String()) // Need to figure out how to test this
 	t.Error("wa")
 }
