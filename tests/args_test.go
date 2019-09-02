@@ -33,10 +33,17 @@ func aTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Re
 	return nil, nil
 }
 
-type Output struct{}
+type Output struct {
+	output []byte
+}
 
 func (o *Output) Write(p []byte) (int, error) {
+	o.output = append(o.output, p...)
 	return len(p), nil
+}
+
+func (o *Output) String() string {
+	return string(o.output)
 }
 
 const myscript string = `
