@@ -9,7 +9,7 @@ import (
 )
 
 func convertTestString(argParse interpreter.ArgParser, output io.Writer) (interpreter.Retval, error) {
-	test := make([]interface{}, 9)
+	test := make([]interface{}, 10)
 	test[0] = true
 	test[1] = int(1)
 	test[2] = int64(2)
@@ -18,8 +18,8 @@ func convertTestString(argParse interpreter.ArgParser, output io.Writer) (interp
 	test[5] = float64(5.5)
 	test[6] = "1"
 	test[7] = map[interface{}]interface{}{"1": "1"}
-	test[7] = map[string]string{"1": "1"} // Doesnt work right.
-	test[8] = nil
+	test[8] = map[string]string{"1": "1"} // Doesnt work right.
+	test[9] = nil
 	return test, nil
 }
 
