@@ -18,6 +18,7 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 	case uint64:
 		return starlark.MakeUint64(v), nil
 	case float32:
+		return starlark.Float(v), nil
 	case float64:
 		return starlark.Float(v), nil
 	case string:
