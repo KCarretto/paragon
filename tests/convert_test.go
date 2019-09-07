@@ -18,7 +18,7 @@ func convertTestString(argParse interpreter.ArgParser, output io.Writer) (interp
 	test[5] = float64(5.5)
 	test[6] = "1"
 	test[7] = map[interface{}]interface{}{"1": "1"}
-	test[8] = map[string]string{"1": "1"} // Doesnt work right.
+	test[8] = map[string]string{"1": "1"}
 	test[9] = nil
 	return test, nil
 }
