@@ -44,5 +44,8 @@ func TestConvert(t *testing.T) {
 		t.Error("Error executing test: ", err)
 	}
 	fmt.Println(output.String()) // Need to figure out how to test this
-	t.Error("wa")
+	correctData := "[myscript] [True, 1, 2, 3, 4.4, 5.5, \"1\", {\"1\": \"1\"}, {\"1\": \"1\"}, None]\n"
+	if output.String() != correctData {
+		t.Error("output does not match, a conversion was wrong:", output.String(), correctData)
+	}
 }
