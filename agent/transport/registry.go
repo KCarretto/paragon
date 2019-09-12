@@ -3,6 +3,7 @@ package transport
 import (
 	"io"
 	"sort"
+	"sync"
 
 	"github.com/pkg/errors"
 	"go.uber.org/zap"
@@ -18,12 +19,21 @@ type Registrar interface {
 type Registry struct {
 	SortBy func(t1, t2 Meta) bool
 
+	mu       sync.RWMutex
 	active   map[string]io.WriteCloser
 	metadata map[string]*Meta
 }
 
-// Add a transport factory to the registry and configure it's metadata.
+// Add a transport factory to the registry and configure it's metadata. If a transport with the same
+// name is already registered, this method is a no-op. Use Update() and Remove() to modify existing
+// transports.
 func (reg Registry) Add(name string, factory Factory, options ...Option) {
+	reg.mu.Lock()
+	defer reg.mu.Unlock()
+	if _, ok := reg.metadata[name]; ok {
+		return
+	}
+
 	meta := &Meta{
 		Name:    name,
 		Factory: factory,
@@ -37,6 +47,9 @@ func (reg Registry) Add(name string, factory Factory, options ...Option) {
 
 // Update transport metadata by applying options to the transport metadata with the provided name.
 func (reg Registry) Update(name string, options ...Option) error {
+	reg.mu.Lock()
+	defer reg.mu.Unlock()
+
 	transport, ok := reg.metadata[name]
 	if !ok {
 		return errors.New("transport not registered")
@@ -51,6 +64,9 @@ func (reg Registry) Update(name string, options ...Option) error {
 // Remove a transport from the registry, closing it if open. If the transport is not registered,
 // remove is a no-op.
 func (reg Registry) Remove(name string) error {
+	reg.mu.Lock()
+	defer reg.mu.Unlock()
+
 	transport, ok := reg.active[name]
 	if !ok {
 		return nil
@@ -61,6 +77,9 @@ func (reg Registry) Remove(name string) error {
 
 // Get returns an active transport with the given name or initializes a new one if none is found.
 func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.WriteCloser, error) {
+	reg.mu.Lock()
+	defer reg.mu.Unlock()
+
 	transport, ok := reg.active[name]
 	if ok && transport != nil {
 		return transport, nil
@@ -68,21 +87,29 @@ func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writ
 
 	meta, ok := reg.metadata[name]
 	if !ok || meta == nil || meta.Factory == nil {
-		// TODO: Log removal
 		delete(reg.metadata, name)
 		return nil, errors.New("transport not registered")
 	}
 
-	var err error
-	if reg.active[name], err = meta.Factory(logger, writer); err != nil {
+	transport, err := meta.Factory(logger, writer)
+	if err != nil {
 		return nil, errors.Wrap(err, "transport failed to initialize")
 	}
+	if transport == nil {
+		err = errors.New("transport factory returned nil")
+		logger.DPanic("Transport factory cannot return nil transport without error", zap.Error(err))
+		return nil, err
+	}
 
-	return reg.active[name], nil
+	reg.active[name] = transport
+	return transport, nil
 }
 
 // List transports, sorted by the provided SortBy method or by priority if no method was provided.
 func (reg Registry) List() []Meta {
+	reg.mu.RLock()
+	defer reg.mu.RUnlock()
+
 	if reg.SortBy == nil {
 		reg.SortBy = func(t1, t2 Meta) bool {
 			return t1.Priority < t2.Priority
