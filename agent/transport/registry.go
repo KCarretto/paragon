@@ -9,12 +9,6 @@ import (
 	"go.uber.org/zap"
 )
 
-type Registrar interface {
-	Add(name string, factory Factory, options ...Option)
-	Update(name string, options ...Option) error
-	Remove(name string) error
-}
-
 // A Registry tracks transports and associated metadata.
 type Registry struct {
 	SortBy func(t1, t2 Meta) bool
