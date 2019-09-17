@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// A Runner is responsible for executing tasks.
-type Runner interface {
-	Run(context.Context, *zap.Logger, Task)
+// A Executor is responsible for executing tasks.
+type Executor interface {
+	Exec(context.Context, *zap.Logger, Task)
 }
 
 // A Task contains instructions that will be executed by the runner, and a unique identifier.
@@ -21,10 +21,9 @@ type Task struct {
 	Content io.Reader
 }
 
-// An Agent queues tasks for execution, executes them using the provided runner, and logs output to
-// a registered transport.
+// An Agent queues tasks for execution, executes them, and logs output to a registered transport.
 type Agent struct {
-	Tasks      Runner
+	Tasks      Executor
 	Transports transport.Registry
 
 	numWorkers     int
@@ -37,6 +36,7 @@ type Agent struct {
 	queue  chan Task
 }
 
+// assertReady ensures that the agent is properly initialized, otherwise panics.
 func (agent Agent) assertReady() {
 	if agent.Tasks == nil ||
 		agent.buffer == nil ||
@@ -67,7 +67,7 @@ func (agent Agent) Run() {
 		}()
 	}
 
-	// Send buffer to a registered transport
+	// Send buffer to a registered
 	for {
 		if err := agent.send(agent.logger.Named("writer"), agent.buffer); err != nil {
 			agent.logger.DPanic("Failed to send buffer", zap.Error(err))
@@ -101,7 +101,7 @@ func (agent Agent) taskWorker(ctx context.Context, logger *zap.Logger, queue <-c
 		tLogger := logger.With(zap.String("task_id", task.ID))
 		tLogger.Debug("Starting task execution")
 		defer tLogger.Debug("Finished task execution")
-		agent.Tasks.Run(ctx, tLogger, task)
+		agent.Tasks.Exec(ctx, tLogger, task)
 	}
 }
 

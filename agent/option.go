@@ -8,13 +8,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-// An Option enables additional customization over an Agent's configuration.
+// An Option enables additional customization over an agent's configuration.
 type Option func(*Agent)
 
 // New initializes and configures a new Agent.
-func New(logger *zap.Logger, runner Runner, options ...Option) Agent {
+func New(logger *zap.Logger, taskExecutor Executor, options ...Option) Agent {
 	agent := Agent{
-		Tasks:      runner,
+		Tasks:      taskExecutor,
 		Transports: transport.Registry{},
 		logger:     logger,
 	}
