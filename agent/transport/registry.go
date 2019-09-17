@@ -70,7 +70,7 @@ func (reg Registry) Remove(name string) error {
 }
 
 // Get returns an active transport with the given name or initializes a new one if none is found.
-func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.WriteCloser, error) {
+func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writer, error) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 

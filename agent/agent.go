@@ -117,10 +117,6 @@ func (agent Agent) send(logger *zap.Logger, buffer *transport.Buffer) error {
 			tLogger.Error("Failed to get transport from registry", zap.Error(err))
 			continue
 		}
-		if writer == nil {
-			tLogger.Error("Failed to get transport from registry", zap.Error(err))
-			continue
-		}
 
 		delay := meta.Interval - time.Since(buffer.Timestamp())
 		time.Sleep(delay)
