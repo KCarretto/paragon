@@ -10,9 +10,9 @@ import (
 	"go.uber.org/zap"
 )
 
-type Runner string
+type Executor string
 
-func (runner Runner) Run(context.Context, *zap.Logger, agent.Task) {}
+func (executor Executor) Exec(context.Context, *zap.Logger, agent.Task) {}
 
 func main() {
 	interupts := make(chan os.Signal, 1)

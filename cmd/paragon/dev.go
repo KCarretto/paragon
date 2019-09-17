@@ -18,7 +18,7 @@ func getLogger() *zap.Logger {
 func Run(logger *zap.Logger) {
 	agent := agent.New(
 		logger,
-		Runner("Stuff"),
+		Executor("Stuff"),
 	)
 
 	agent.Run()

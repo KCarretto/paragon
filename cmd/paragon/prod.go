@@ -24,7 +24,7 @@ func runLoop(logger *zap.Logger) {
 
 	agent := agent.New(
 		logger,
-		Runner("Stuff"),
+		Executor("Stuff"),
 	)
 	defer func() {
 		if err := agent.Close(); err != nil {

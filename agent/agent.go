@@ -48,7 +48,7 @@ func (agent Agent) assertReady() {
 }
 
 // Run the agent, enabling tasks to be queued and output to be logged to a registered transport.
-func (agent Agent) Run() {
+func (agent Agent) Run() error {
 	agent.assertReady()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -67,10 +67,11 @@ func (agent Agent) Run() {
 		}()
 	}
 
-	// Send buffer to a registered
+	// Send buffer to a registered transport.
 	for {
 		if err := agent.send(agent.logger.Named("writer"), agent.buffer); err != nil {
-			agent.logger.DPanic("Failed to send buffer", zap.Error(err))
+			agent.logger.Error("Failed to send buffer", zap.Error(err))
+			return err
 		}
 	}
 }
