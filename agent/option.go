@@ -14,9 +14,10 @@ type Option func(*Agent)
 // New initializes and configures a new Agent.
 func New(logger *zap.Logger, taskExecutor Executor, options ...Option) Agent {
 	agent := Agent{
-		Tasks:      taskExecutor,
-		Transports: transport.Registry{},
-		logger:     logger,
+		Tasks:         taskExecutor,
+		Transports:    transport.Registry{},
+		logger:        logger,
+		logBufferSize: 1024 * 10,
 	}
 
 	for _, opt := range options {
@@ -24,7 +25,7 @@ func New(logger *zap.Logger, taskExecutor Executor, options ...Option) Agent {
 	}
 
 	agent.queue = make(chan Task, agent.maxTaskBacklog)
-	agent.buffer = transport.NewBuffer(agent.maxLogBacklog)
+	agent.buffer = transport.NewBuffer(make([]byte, 0, agent.logBufferSize))
 	agent.logger = agent.logger.Named("agent").With(zap.Time("start_time", time.Now())).WithOptions(
 		zap.WrapCore(func(core zapcore.Core) zapcore.Core {
 			return zapcore.NewTee(
@@ -57,10 +58,9 @@ func SetTaskBacklog(max int) Option {
 	}
 }
 
-// SetLogBacklog configures the maximum number of logs that can be backlogged before logging output
-// will start blocking.
-func SetLogBacklog(max int) Option {
+// SetLogBufferSize configures the size (in bytes) of the initial log output buffer.
+func SetLogBufferSize(size int) Option {
 	return func(agent *Agent) {
-		agent.maxLogBacklog = max
+		agent.logBufferSize = size
 	}
 }

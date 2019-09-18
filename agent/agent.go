@@ -28,7 +28,7 @@ type Agent struct {
 
 	numWorkers     int
 	maxTaskBacklog int
-	maxLogBacklog  int
+	logBufferSize  int
 
 	wg     sync.WaitGroup
 	buffer *transport.Buffer
