@@ -1,62 +1,116 @@
 package transport
 
 import (
+	"bytes"
 	"io"
 	"sync"
 	"time"
+
+	"go.uber.org/zap"
 )
 
 // Buffer is a write safe io.Writer & io.WriterTo that is used to buffer agent output and safely
 // copy it to a transport writer. If copying fails, buffer does not lose data.
 type Buffer struct {
-	mu        sync.Mutex
-	buf       chan []byte
+	Logger    *zap.Logger
+	mu        sync.RWMutex
+	buffer    *bytes.Buffer
 	timestamp time.Time
 }
 
 // NewBuffer Initializes and returns a new transport buffer.
-func NewBuffer(maxSize int) *Buffer {
+func NewBuffer(p []byte) *Buffer {
 	return &Buffer{
-		buf: make(chan []byte, maxSize),
+		buffer: bytes.NewBuffer(p),
 	}
 }
 
 // Timestamp returns the time that the buffer was last successfully written to a transport.
 func (b *Buffer) Timestamp() time.Time {
-	b.mu.Lock()
+	b.mu.RLock()
 	t := b.timestamp
-	b.mu.Unlock()
+	b.mu.RUnlock()
 	return t
 }
 
 // Write buffers the provided data until it is consumed by a transport. It is safe for concurrent use.
-// It never errors, unless the make or copy builtins panic.
 func (b *Buffer) Write(p []byte) (int, error) {
-	// TODO: Select + goroutine + waitgroup
-	// TODO: Ensure channel is initialized
-	// if b.buf == nil {
-	// 	b.buf = make(chan []byte, DefaultMessageBacklog)
-	// }
-	data := make([]byte, len(p))
-	n := copy(data, p)
-	b.buf <- data
-	return n, nil
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.buffer == nil {
+		b.buffer = bytes.NewBuffer(p)
+		return len(p), nil
+	}
+
+	return b.buffer.Write(p)
 }
 
 // WriteTo implements io.WriterTo, allowing Buffer to be used by io.Copy. It will write it's
 // contents to the provided writer. It will preserve any data that still needs to be written, even
 // in the case of error.
 func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
-	size, msgs := drain(b.buf)
+	b.mu.Lock()
+
+	// Don't waste allocations if there's nothing to write
+	size := b.buffer.Len()
 	if size <= 0 {
+		b.mu.Unlock()
 		return 0, io.EOF
 	}
 
-	msg := marshal(msgs...)
-	n, err := w.Write(msg)
+	// Default no-op logger if none has been configured
+	if b.Logger == nil {
+		b.Logger = zap.NewNop()
+	}
+
+	// Copy the buffer and truncate it
+	data := make([]byte, size)
+	copy(data, b.buffer.Bytes())
+	b.buffer.Reset()
+
+	// It's important that the lock is released when control is handed to the writer, in case it
+	// logs more messages into the buffer.
+	b.mu.Unlock()
+
+	// Write the data to the transport
+	n, err := w.Write(data)
+
+	// Restore buffer on error
 	if err != nil {
-		b.Write(msg) // TODO: b.buf <-msg or b.Write?
+		b.mu.Lock()
+		num, restoreErr := b.buffer.Write(data)
+		b.mu.Unlock()
+
+		// Should never fail to restore buffer
+		if restoreErr != nil {
+			// Note: Cannot call logger inside lock, as it may write to buffer
+			b.Logger.DPanic(
+				"Failed restore buffer",
+				zap.NamedError("transport_error", err),
+				zap.Error(restoreErr),
+			)
+			return 0, err
+		}
+
+		// Should always restore full size of buffer, otherwise this leads to log loss.
+		if num != size {
+			// Note: Cannot call logger inside lock, as it may write to buffer
+			b.Logger.DPanic(
+				"Failed to restore entire buffer",
+				zap.Int("written_bytes", num),
+				zap.Int("total_bytes", size),
+			)
+		}
+
 		return 0, err
+	}
+
+	// Need to aquire lock one last time to update timestamp if bytes were written
+	if n > 0 {
+		b.mu.Lock()
+		b.timestamp = time.Now()
+		b.mu.Unlock()
 	}
 
 	return int64(n), nil
@@ -65,25 +119,4 @@ func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
 // Sync is a nop to implement zapcore.WriteSyncer
 func (b *Buffer) Sync() error {
 	return nil
-}
-
-// marshal multiple messages into a single byte array.
-func marshal(msgs ...[]byte) (msg []byte) {
-	for _, entry := range msgs {
-		msg = append(msg, entry...)
-	}
-	return
-}
-
-// drain and return all available output messages from the channel
-func drain(output <-chan []byte) (size int, msgs [][]byte) {
-	for {
-		select {
-		case msg := <-output:
-			size += len(msg)
-			msgs = append(msgs, msg) // TODO: Better way than append?
-		default:
-			return
-		}
-	}
 }

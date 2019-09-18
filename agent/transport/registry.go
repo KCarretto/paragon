@@ -15,7 +15,7 @@ type Registry struct {
 
 	mu       sync.RWMutex
 	active   map[string]io.WriteCloser
-	metadata map[string]*Meta
+	metadata map[string]Meta
 }
 
 // Add a transport factory to the registry and configure it's metadata. If a transport with the same
@@ -24,18 +24,22 @@ type Registry struct {
 func (reg Registry) Add(name string, factory Factory, options ...Option) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
+
 	if _, ok := reg.metadata[name]; ok {
 		return
 	}
 
-	meta := &Meta{
+	meta := Meta{
 		Name:    name,
 		Factory: factory,
 	}
 	for _, opt := range options {
-		opt(meta)
+		opt(&meta)
 	}
 
+	if reg.metadata == nil {
+		reg.metadata = map[string]Meta{}
+	}
 	reg.metadata[name] = meta
 }
 
@@ -44,13 +48,13 @@ func (reg Registry) Update(name string, options ...Option) error {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 
-	transport, ok := reg.metadata[name]
+	meta, ok := reg.metadata[name]
 	if !ok {
 		return errors.New("transport not registered")
 	}
 
 	for _, opt := range options {
-		opt(transport)
+		opt(&meta)
 	}
 	return nil
 }
@@ -65,7 +69,8 @@ func (reg Registry) Remove(name string) error {
 	if !ok {
 		return nil
 	}
-	defer delete(reg.active, name)
+	delete(reg.active, name)
+
 	return transport.Close()
 }
 
@@ -80,12 +85,12 @@ func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writ
 	}
 
 	meta, ok := reg.metadata[name]
-	if !ok || meta == nil || meta.Factory == nil {
+	if !ok || meta.Factory == nil {
 		delete(reg.metadata, name)
 		return nil, errors.New("transport not registered")
 	}
 
-	transport, err := meta.Factory(logger, writer)
+	transport, err := meta.Factory.New(logger, writer)
 	if err != nil {
 		return nil, errors.Wrap(err, "transport failed to initialize")
 	}
@@ -95,7 +100,11 @@ func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writ
 		return nil, err
 	}
 
+	if reg.active == nil {
+		reg.active = map[string]io.WriteCloser{}
+	}
 	reg.active[name] = transport
+
 	return transport, nil
 }
 
@@ -112,8 +121,8 @@ func (reg Registry) List() []Meta {
 
 	transports := make([]Meta, 0, len(reg.metadata))
 	for name, meta := range reg.metadata {
-		if meta != nil && meta.Factory != nil {
-			transports = append(transports, *meta)
+		if meta.Factory != nil {
+			transports = append(transports, meta)
 		} else {
 			reg.Remove(name)
 		}

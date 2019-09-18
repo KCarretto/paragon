@@ -7,8 +7,18 @@ import (
 	"go.uber.org/zap"
 )
 
-// A Factory is used to initialize a new transport.
-type Factory func(*zap.Logger, Tasker) (io.WriteCloser, error)
+// A FactoryFn is used to initialize a new transport.
+type Factory interface {
+	New(*zap.Logger, Tasker) (io.WriteCloser, error)
+}
+
+// A FactoryFn is a method implementation of Factory used to initialize a new transport.
+type FactoryFn func(*zap.Logger, Tasker) (io.WriteCloser, error)
+
+// New calls the FactoryFn to initialize and return a new transport.
+func (fn FactoryFn) New(logger *zap.Logger, tasker Tasker) (io.WriteCloser, error) {
+	return fn(logger, tasker)
+}
 
 // A Tasker is provided to a Transport to enable it to send incoming tasks to the agent.
 type Tasker interface {
