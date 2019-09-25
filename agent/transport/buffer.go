@@ -25,14 +25,6 @@ func NewBuffer(p []byte) *Buffer {
 	}
 }
 
-// Timestamp returns the time that the buffer was last successfully written to a transport.
-func (b *Buffer) Timestamp() time.Time {
-	b.mu.RLock()
-	t := b.timestamp
-	b.mu.RUnlock()
-	return t
-}
-
 // Write buffers the provided data until it is consumed by a transport. It is safe for concurrent use.
 func (b *Buffer) Write(p []byte) (int, error) {
 	b.mu.Lock()
@@ -50,68 +42,15 @@ func (b *Buffer) Write(p []byte) (int, error) {
 // contents to the provided writer. It will preserve any data that still needs to be written, even
 // in the case of error.
 func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
-	b.mu.Lock()
+	data := b.readCopy()
 
-	// Don't waste allocations if there's nothing to write
-	size := b.buffer.Len()
-	if size <= 0 {
-		b.mu.Unlock()
-		return 0, io.EOF
-	}
-
-	// Default no-op logger if none has been configured
-	if b.Logger == nil {
-		b.Logger = zap.NewNop()
-	}
-
-	// Copy the buffer and truncate it
-	data := make([]byte, size)
-	copy(data, b.buffer.Bytes())
-	b.buffer.Reset()
-
-	// It's important that the lock is released when control is handed to the writer, in case it
-	// logs more messages into the buffer.
-	b.mu.Unlock()
-
-	// Write the data to the transport
 	n, err := w.Write(data)
-
-	// Restore buffer on error
 	if err != nil {
-		b.mu.Lock()
-		num, restoreErr := b.buffer.Write(data)
-		b.mu.Unlock()
-
-		// Should never fail to restore buffer
-		if restoreErr != nil {
-			// Note: Cannot call logger inside lock, as it may write to buffer
-			b.Logger.DPanic(
-				"Failed restore buffer",
-				zap.NamedError("transport_error", err),
-				zap.Error(restoreErr),
-			)
-			return 0, err
-		}
-
-		// Should always restore full size of buffer, otherwise this leads to log loss.
-		if num != size {
-			// Note: Cannot call logger inside lock, as it may write to buffer
-			b.Logger.DPanic(
-				"Failed to restore entire buffer",
-				zap.Int("written_bytes", num),
-				zap.Int("total_bytes", size),
-			)
-		}
-
+		b.restore(data)
 		return 0, err
 	}
 
-	// Need to aquire lock one last time to update timestamp if bytes were written
-	if n > 0 {
-		b.mu.Lock()
-		b.timestamp = time.Now()
-		b.mu.Unlock()
-	}
+	b.timestamp = time.Now()
 
 	return int64(n), nil
 }
@@ -119,4 +58,47 @@ func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
 // Sync is a nop to implement zapcore.WriteSyncer
 func (b *Buffer) Sync() error {
 	return nil
+}
+
+// Timestamp returns the time that the buffer was last successfully written to a transport.
+func (b *Buffer) Timestamp() time.Time {
+	b.mu.RLock()
+	t := b.timestamp
+	b.mu.RUnlock()
+	return t
+}
+
+func (b *Buffer) readCopy() (data []byte) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
+	if b.buffer.Len() <= 0 {
+		return
+	}
+
+	data = make([]byte, b.buffer.Len())
+	copy(data, b.buffer.Bytes())
+	b.buffer.Reset()
+
+	return
+}
+
+// restore the buffer to the provided state.
+func (b *Buffer) restore(data []byte) {
+	size := len(data)
+
+	n, err := b.Write(data)
+
+	if err != nil || n != size {
+		// Default no-op logger if none has been configured
+		if b.Logger == nil {
+			b.Logger = zap.NewNop()
+		}
+		b.Logger.DPanic(
+			"Failed to restore buffer",
+			zap.Error(err),
+			zap.Int("written_bytes", n),
+			zap.Int("total_bytes", size),
+		)
+	}
 }
