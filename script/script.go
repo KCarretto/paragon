@@ -12,8 +12,8 @@ type Script struct {
 }
 
 // New initializes and returns a script with the provided contents.
-func New(id string, content []byte) *Script {
-	return &Script{
+func New(id string, content []byte) Script {
+	return Script{
 		bytes.NewBuffer(content),
 		id,
 	}

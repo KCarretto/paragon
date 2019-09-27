@@ -24,7 +24,7 @@ type Task struct {
 // An Agent queues tasks for execution, executes them, and logs output to a registered transport.
 type Agent struct {
 	Tasks      Executor
-	Transports transport.Registry
+	Transports *transport.Registry
 
 	numWorkers     int
 	maxTaskBacklog int
@@ -48,7 +48,7 @@ func (agent Agent) assertReady() {
 }
 
 // Run the agent, enabling tasks to be queued and output to be logged to a registered transport.
-func (agent Agent) Run() error {
+func (agent *Agent) Run() error {
 	agent.assertReady()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -69,7 +69,7 @@ func (agent Agent) Run() error {
 
 	// Send buffer to a registered transport.
 	for {
-		if err := agent.send(agent.logger.Named("writer"), agent.buffer); err != nil {
+		if err := agent.send(agent.logger.Named("transport"), agent.buffer); err != nil {
 			agent.logger.Error("Failed to send buffer", zap.Error(err))
 			return err
 		}
@@ -77,7 +77,7 @@ func (agent Agent) Run() error {
 }
 
 // QueueTask implements transport.Tasker by initializing a task and adding it to the execution queue.
-func (agent Agent) QueueTask(id string, content io.Reader) {
+func (agent *Agent) QueueTask(id string, content io.Reader) {
 	agent.assertReady()
 
 	task := Task{
@@ -88,16 +88,17 @@ func (agent Agent) QueueTask(id string, content io.Reader) {
 }
 
 // Close the agent by finishing all tasks in the queue.
-func (agent Agent) Close() error {
+func (agent *Agent) Close() error {
 	if agent.queue != nil {
 		close(agent.queue)
 	}
 	agent.wg.Wait()
+	// TODO: Close transports in registry
 	return nil
 }
 
 // taskWorker consumes tasks from the queue and executes them using the configured runner.
-func (agent Agent) taskWorker(ctx context.Context, logger *zap.Logger, queue <-chan Task) {
+func (agent *Agent) taskWorker(ctx context.Context, logger *zap.Logger, queue <-chan Task) {
 	for task := range queue {
 		tLogger := logger.With(zap.String("task_id", task.ID))
 		tLogger.Debug("Starting task execution")
@@ -109,9 +110,10 @@ func (agent Agent) taskWorker(ctx context.Context, logger *zap.Logger, queue <-c
 // send the provided buffer using a registered transport. The transport is selected based on the
 // ordering of the List() method in the transport registry. Send iterates through all registered
 // transports until one succeeds. If no configured transport is successful, send returns an error.
-func (agent Agent) send(logger *zap.Logger, buffer *transport.Buffer) error {
+func (agent *Agent) send(logger *zap.Logger, buffer *transport.Buffer) error {
+
 	for _, meta := range agent.Transports.List() {
-		tLogger := logger.Named("transport").With(zap.String("transport_name", meta.Name))
+		tLogger := logger.Named(meta.Name)
 		writer, err := agent.Transports.Get(meta.Name, tLogger, agent)
 		if err != nil {
 			tLogger.Error("Failed to get transport from registry", zap.Error(err))
@@ -121,13 +123,20 @@ func (agent Agent) send(logger *zap.Logger, buffer *transport.Buffer) error {
 		delay := meta.Interval - time.Since(buffer.Timestamp())
 		time.Sleep(delay)
 
-		if _, err = buffer.WriteTo(writer); err != nil {
-			tLogger.Error("Failed to write buffer to transport", zap.Error(err))
-			// TODO: Remove, just decrement priority, or just close?
-			if err := agent.Transports.Remove(meta.Name); err != nil {
-				tLogger.Error("Failed to close transport", zap.Error(err))
-			}
+		n, err := buffer.WriteTo(writer)
+		if err != nil && err != io.EOF {
+			// TODO: Decrement priority, or just close?
+			closeErr := agent.Transports.CloseTransport(meta.Name)
+			tLogger.Error(
+				"Failed to write buffer to transport",
+				zap.Error(err),
+				zap.NamedError("transport_close_err", closeErr),
+			)
+			continue
 		}
+
+		tLogger.Debug("Successfully transported output", zap.Int64("bytes_sent", n))
+		return nil
 	}
 
 	return ErrNoTransportAvailable

@@ -13,7 +13,6 @@ type Interpreter struct {
 	builtins starlark.StringDict
 	libs     map[string]starlark.StringDict
 	output   io.Writer
-	logger   *zap.Logger
 }
 
 // NewInterpreter initializes a new interpreter with sane defaults.
@@ -22,7 +21,6 @@ func NewInterpreter() *Interpreter {
 		builtins: starlark.StringDict{},
 		libs:     map[string]starlark.StringDict{},
 		output:   os.Stdout,
-		logger:   zap.NewNop(),
 	}
 }
 
@@ -38,7 +36,7 @@ func (i *Interpreter) thread(name string, logger *zap.Logger) *starlark.Thread {
 
 func (i *Interpreter) printer(logger *zap.Logger) func(t *starlark.Thread, msg string) {
 	return func(_ *starlark.Thread, msg string) {
-		i.logger.Info(msg)
+		logger.Info(msg)
 	}
 }
 

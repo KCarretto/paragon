@@ -21,7 +21,7 @@ type Registry struct {
 // Add a transport factory to the registry and configure it's metadata. If a transport with the same
 // name is already registered, this method is a no-op. Use Update() and Remove() to modify existing
 // transports.
-func (reg Registry) Add(name string, factory Factory, options ...Option) {
+func (reg *Registry) Add(name string, factory Factory, options ...Option) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 
@@ -44,7 +44,7 @@ func (reg Registry) Add(name string, factory Factory, options ...Option) {
 }
 
 // Update transport metadata by applying options to the transport metadata with the provided name.
-func (reg Registry) Update(name string, options ...Option) error {
+func (reg *Registry) Update(name string, options ...Option) error {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 
@@ -56,12 +56,13 @@ func (reg Registry) Update(name string, options ...Option) error {
 	for _, opt := range options {
 		opt(&meta)
 	}
+	reg.metadata[name] = meta
+
 	return nil
 }
 
-// Remove a transport from the registry, closing it if open. If the transport is not registered,
-// remove is a no-op.
-func (reg Registry) Remove(name string) error {
+// CloseTransport a transport if open. If the transport is not opened, close is a no-op.
+func (reg *Registry) CloseTransport(name string) error {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 
@@ -75,7 +76,7 @@ func (reg Registry) Remove(name string) error {
 }
 
 // Get returns an active transport with the given name or initializes a new one if none is found.
-func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writer, error) {
+func (reg *Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writer, error) {
 	reg.mu.Lock()
 	defer reg.mu.Unlock()
 
@@ -109,7 +110,7 @@ func (reg Registry) Get(name string, logger *zap.Logger, writer Tasker) (io.Writ
 }
 
 // List transports, sorted by the provided SortBy method or by priority if no method was provided.
-func (reg Registry) List() []Meta {
+func (reg *Registry) List() []Meta {
 	reg.mu.RLock()
 	defer reg.mu.RUnlock()
 
@@ -121,11 +122,12 @@ func (reg Registry) List() []Meta {
 
 	transports := make([]Meta, 0, len(reg.metadata))
 	for name, meta := range reg.metadata {
-		if meta.Factory != nil {
-			transports = append(transports, meta)
-		} else {
-			reg.Remove(name)
+		// Ensure the transport has a factory
+		if meta.Factory == nil {
+			delete(reg.metadata, name)
+			continue
 		}
+		transports = append(transports, meta)
 	}
 
 	sort.Slice(transports, func(i, j int) bool {

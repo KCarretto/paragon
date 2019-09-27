@@ -1,16 +1,11 @@
-// +build dev
+// +build local
 
 package main
 
 import (
-	"bytes"
-	"time"
-
-	"github.com/kcarretto/paragon/script"
-
 	"github.com/kcarretto/paragon/agent"
 	"github.com/kcarretto/paragon/agent/transport"
-	"github.com/kcarretto/paragon/agent/transport/http"
+	"github.com/kcarretto/paragon/agent/transport/local"
 	"go.uber.org/zap"
 )
 
@@ -23,22 +18,12 @@ func getLogger() *zap.Logger {
 }
 
 func Run(logger *zap.Logger) {
-	py := script.NewInterpreter()
 	a := agent.New(
 		logger,
-		Executor{
-			py,
-		},
+		Executor("Stuff"),
 	)
-	a.Transports.Add(
-		"http",
-		transport.FactoryFn(http.New),
-		transport.SetInterval(time.Second*5),
-		transport.SetJitter(time.Second*1),
-	)
-
+	a.Transports.Add("local", transport.FactoryFn(local.New))
 	a.Run()
-	a.QueueTask("someID", bytes.NewBufferString(`print("Hello World")`))
 	defer func() {
 		if err := a.Close(); err != nil {
 			panic(err)

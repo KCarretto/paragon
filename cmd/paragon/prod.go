@@ -1,4 +1,4 @@
-//+build !development
+// +build !dev,!local
 
 package main
 

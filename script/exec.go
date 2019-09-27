@@ -12,7 +12,7 @@ import (
 const EntryPoint = "main"
 
 // Exec runs a script using the interpreter's execution environment.
-func (i *Interpreter) Exec(ctx context.Context, logger *zap.Logger, script *Script) error {
+func (i *Interpreter) Exec(ctx context.Context, logger *zap.Logger, script Script) error {
 	thread := i.thread(script.ID, logger)
 	symbols, err := starlark.ExecFile(thread, script.ID, script, i.builtins)
 	if err != nil {

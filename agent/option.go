@@ -12,16 +12,16 @@ import (
 type Option func(*Agent)
 
 // New initializes and configures a new Agent.
-func New(logger *zap.Logger, taskExecutor Executor, options ...Option) Agent {
-	agent := Agent{
+func New(logger *zap.Logger, taskExecutor Executor, options ...Option) *Agent {
+	agent := &Agent{
 		Tasks:         taskExecutor,
-		Transports:    transport.Registry{},
+		Transports:    &transport.Registry{},
 		logger:        logger,
 		logBufferSize: 1024 * 10,
 	}
 
 	for _, opt := range options {
-		opt(&agent)
+		opt(agent)
 	}
 
 	agent.queue = make(chan Task, agent.maxTaskBacklog)
