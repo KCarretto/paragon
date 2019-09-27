@@ -135,7 +135,10 @@ func (agent *Agent) send(logger *zap.Logger, buffer *transport.Buffer) error {
 			continue
 		}
 
-		tLogger.Debug("Successfully transported output", zap.Int64("bytes_sent", n))
+		if n > 0 {
+			tLogger.Debug("Successfully transported output", zap.Int64("bytes_sent", n))
+		}
+
 		return nil
 	}
 
