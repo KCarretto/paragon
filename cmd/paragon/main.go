@@ -4,6 +4,8 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -12,7 +14,28 @@ func main() {
 
 	logger := getLogger()
 
-	go Run(logger)
+	bot := NewAgent()
+	addTransports(bot)
+
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				logger.DPanic("Recovered from panic", zap.Reflect("error", err))
+			}
+		}()
+
+		err := bot.Run()
+		defer func() {
+			if err := bot.Close(); err != nil {
+				panic(err)
+			}
+		}()
+
+		if err != nil {
+			// TODO: Handle ErrNoTransport
+			logger.DPanic("Run encountered an error", zap.Error(err))
+		}
+	}()
 
 	switch <-interupts {
 	case syscall.SIGINT:

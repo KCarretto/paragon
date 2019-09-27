@@ -4,6 +4,8 @@ package main
 
 import (
 	"github.com/kcarretto/paragon/agent"
+	"github.com/kcarretto/paragon/agent/transport"
+	"github.com/kcarretto/paragon/agent/transport/local"
 	"go.uber.org/zap"
 )
 
@@ -15,28 +17,6 @@ func getLogger() *zap.Logger {
 	return logger
 }
 
-func runLoop(logger *zap.Logger) {
-	defer func() {
-		if err := recover(); err != nil {
-			logger.Error("Recovered from panic", zap.Reflect("error", err))
-		}
-	}()
-
-	agent := agent.New(
-		logger,
-		Executor("Stuff"),
-	)
-	defer func() {
-		if err := agent.Close(); err != nil {
-			logger.Error("Encountered error closing agent", zap.Error(err))
-		}
-	}()
-
-	agent.Run()
-}
-
-func Run(logger *zap.Logger) {
-	for {
-		runLoop(logger)
-	}
+func addTransports(bot *agent.Agent) {
+	bot.Transports.Add("local", transport.FactoryFn(local.New))
 }

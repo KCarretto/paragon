@@ -15,12 +15,17 @@ type Executor struct {
 
 func (exec Executor) Exec(ctx context.Context, logger *zap.Logger, task agent.Task) {
 	err := exec.Interpreter.Exec(ctx, logger, script.Script{
-		task.Content,
-		task.ID,
+		Reader: task.Content,
+		ID:     task.ID,
 	})
 	if err != nil {
 		logger.Error("Task resulting in error", zap.Error(err))
 	} else {
 		logger.Info("Task completed successfully")
 	}
+}
+
+func getExecutor() Executor {
+	py := script.NewInterpreter()
+	return Executor{py}
 }

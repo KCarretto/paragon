@@ -17,17 +17,6 @@ func getLogger() *zap.Logger {
 	return logger
 }
 
-func Run(logger *zap.Logger) {
-	a := agent.New(
-		logger,
-		Executor("Stuff"),
-	)
-	a.Transports.Add("local", transport.FactoryFn(local.New))
-	a.Run()
-	defer func() {
-		if err := a.Close(); err != nil {
-			panic(err)
-		}
-	}()
-
+func addTransports(bot *agent.Agent) {
+	bot.Transports.Add("local", transport.FactoryFn(local.New))
 }
