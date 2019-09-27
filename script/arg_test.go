@@ -1,14 +1,15 @@
-package tests
+package script_test
 
 import (
+	"context"
 	"errors"
-	"io"
 	"testing"
 
-	"github.com/kcarretto/paragon/interpreter"
+	"github.com/kcarretto/paragon/script"
+	"go.uber.org/zap"
 )
 
-func aTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Retval, error) {
+func aTestFunc(argParse script.ArgParser) (script.Retval, error) {
 	stringVar, err := argParse.GetString(0)
 	if err != nil {
 		return nil, err
@@ -33,12 +34,6 @@ func aTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Re
 	return nil, nil
 }
 
-type Output struct{}
-
-func (o *Output) Write(p []byte) (int, error) {
-	return len(p), nil
-}
-
 const myscript string = `
 load("mylib", "my_func")
 
@@ -47,14 +42,13 @@ def main():
 `
 
 func TestArgParse(t *testing.T) {
-	newFunc := interpreter.Func(aTestFunc)
-	i := interpreter.New()
-	l := interpreter.Library{"my_func": newFunc}
+	newFunc := script.Func(aTestFunc)
+	i := script.NewInterpreter()
+	l := script.Library{"my_func": newFunc}
 	i.AddLibrary("mylib", l)
 
-	script := interpreter.NewScript("myscript", []byte(myscript))
-	output := &Output{}
-	err := i.Execute(script, output)
+	code := script.New("myscript", []byte(myscript))
+	err := i.Exec(context.Background(), zap.NewNop(), code)
 	if err != nil {
 		t.Error("Error executing test: ", err)
 	}

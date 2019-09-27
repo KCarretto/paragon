@@ -1,20 +1,22 @@
-package interpreter
+package script
 
 import (
-	"io"
+	"context"
 
 	"go.starlark.net/starlark"
+	"go.uber.org/zap"
 )
 
 // EntryPoint defines the name of the method that will be called when running a script (if it exists)
 // in addition to executing top level statements.
 const EntryPoint = "main"
 
-// Execute a script using the interpreter.
-func (i *Interpreter) Execute(script *Script, output io.Writer) error {
-	thread := i.thread(script.Name, output)
-	symbols, err := starlark.ExecFile(thread, script.Name, script, i.builtins)
+// Exec runs a script using the interpreter's execution environment.
+func (i *Interpreter) Exec(ctx context.Context, logger *zap.Logger, script Script) error {
+	thread := i.thread(script.ID, logger)
+	symbols, err := starlark.ExecFile(thread, script.ID, script, i.builtins)
 	if err != nil {
+		logger.Error("Failed to initialize script", zap.Error(err))
 		return err
 	}
 
@@ -25,11 +27,12 @@ func (i *Interpreter) Execute(script *Script, output io.Writer) error {
 
 	res, err := starlark.Call(thread, fn, starlark.Tuple{}, []starlark.Tuple{})
 	if err != nil {
+		logger.Error("Failed to execute script", zap.Error(err))
 		return err
 	}
 
 	if _, ok := res.(starlark.NoneType); !ok {
-		io.WriteString(output, res.String())
+		logger.Info(res.String())
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package interpreter
+package script
 
 import (
 	"go.starlark.net/starlark"

@@ -1,22 +1,22 @@
-package interpreter
+package script
 
 import (
-	"fmt"
 	"io"
 	"os"
 
 	"go.starlark.net/starlark"
+	"go.uber.org/zap"
 )
 
-// Interpreter TODO
+// Interpreter executes scripts within the environment of the preloaded libraries and builtins.
 type Interpreter struct {
 	builtins starlark.StringDict
 	libs     map[string]starlark.StringDict
 	output   io.Writer
 }
 
-// New TODO
-func New() *Interpreter {
+// NewInterpreter initializes a new interpreter with sane defaults.
+func NewInterpreter() *Interpreter {
 	return &Interpreter{
 		builtins: starlark.StringDict{},
 		libs:     map[string]starlark.StringDict{},
@@ -24,20 +24,19 @@ func New() *Interpreter {
 	}
 }
 
-func (i *Interpreter) thread(name string, output io.Writer) *starlark.Thread {
+func (i *Interpreter) thread(name string, logger *zap.Logger) *starlark.Thread {
 	thread := &starlark.Thread{
 		Name:  name,
-		Print: i.printer(output),
+		Print: i.printer(logger.With(zap.String("thread_name", name))),
 		Load:  i.load,
 	}
 
 	return thread
 }
 
-func (i *Interpreter) printer(output io.Writer) func(t *starlark.Thread, msg string) {
-	return func(t *starlark.Thread, msg string) {
-		// TODO: Format with logger + timestamp?
-		io.WriteString(output, fmt.Sprintf("[%s] %s\n", t.Name, msg))
+func (i *Interpreter) printer(logger *zap.Logger) func(t *starlark.Thread, msg string) {
+	return func(_ *starlark.Thread, msg string) {
+		logger.Info(msg)
 	}
 }
 
