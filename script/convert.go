@@ -54,7 +54,3 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 	}
 	return nil, nil
 }
-
-func IHaveNoComment() {
-	return
-}
