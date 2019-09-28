@@ -3,6 +3,7 @@ package interpreter
 import (
 	"reflect"
 
+	"github.com/pkg/errors"
 	"go.starlark.net/starlark"
 )
 
@@ -35,7 +36,7 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 			for i := 0; i < reflectV.Len(); i++ {
 				val, err := convertToStarlark(reflectV.Index(i).Interface())
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrapf(err, "failed to convert element %d", i)
 				}
 				elems = append(elems, val)
 			}
@@ -47,12 +48,12 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 			for iter.Next() {
 				key, err := convertToStarlark(iter.Key().Interface())
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrapf(err, "failed to convert element %s", key)
 				}
 
 				val, err := convertToStarlark(iter.Value().Interface())
 				if err != nil {
-					return nil, err
+					return nil, errors.Wrapf(err, "failed to convert element %s", val)
 				}
 				if err = dict.SetKey(key, val); err != nil {
 					return nil, err

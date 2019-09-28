@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"bytes"
 	"errors"
 	"io"
 	"testing"
@@ -33,19 +34,6 @@ func aTestFunc(argParse interpreter.ArgParser, output io.Writer) (interpreter.Re
 	return nil, nil
 }
 
-type Output struct {
-	output []byte
-}
-
-func (o *Output) Write(p []byte) (int, error) {
-	o.output = append(o.output, p...)
-	return len(p), nil
-}
-
-func (o *Output) String() string {
-	return string(o.output)
-}
-
 const myscript string = `
 load("mylib", "my_func")
 
@@ -60,7 +48,7 @@ func TestArgParse(t *testing.T) {
 	i.AddLibrary("mylib", l)
 
 	script := interpreter.NewScript("myscript", []byte(myscript))
-	output := &Output{}
+	output := bytes.NewBuffer(make([]byte, 0))
 	err := i.Execute(script, output)
 	if err != nil {
 		t.Error("Error executing test: ", err)

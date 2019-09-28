@@ -1,11 +1,12 @@
 package tests
 
 import (
-	"fmt"
+	"bytes"
 	"io"
 	"testing"
 
 	"github.com/kcarretto/paragon/interpreter"
+	"github.com/stretchr/testify/require"
 )
 
 func convertTestString(argParse interpreter.ArgParser, output io.Writer) (interpreter.Retval, error) {
@@ -38,14 +39,12 @@ func TestConvert(t *testing.T) {
 	i.AddLibrary("mylib", l)
 
 	script := interpreter.NewScript("myscript", []byte(myconvertscript))
-	output := &Output{}
+	correctData := "[myscript] [True, 1, 2, 3, 4.4, 5.5, \"1\", {\"1\": \"1\"}, {\"1\": \"1\"}, None]\n"
+	output := bytes.NewBuffer(make([]byte, 0, len(correctData)))
 	err := i.Execute(script, output)
 	if err != nil {
 		t.Error("Error executing test: ", err)
 	}
-	fmt.Println(output.String()) // Need to figure out how to test this
-	correctData := "[myscript] [True, 1, 2, 3, 4.4, 5.5, \"1\", {\"1\": \"1\"}, {\"1\": \"1\"}, None]\n"
-	if output.String() != correctData {
-		t.Error("output does not match, a conversion was wrong:", output.String(), correctData)
-	}
+	t.Log(output.String())
+	require.Equal(t, output.String(), correctData)
 }
