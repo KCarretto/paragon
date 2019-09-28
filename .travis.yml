@@ -19,7 +19,7 @@ before_install:
 script:
   - $GOPATH/bin/golangci-lint run --verbose
   - $GOPATH/bin/goveralls -service=travis-ci
-  - $GOPATH/bin/golint ./... | reviewdog -f=golint -reporter=github-pr-check
+  - $GOPATH/bin/golint ./... | reviewdog -f=golint -reporter=github-pr-review
 
 after_success:
   # Required for docker push
