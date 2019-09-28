@@ -18,7 +18,8 @@ func setBit(n uint32, pos uint) uint32 {
 // @param ?setGroup: A bool for the set group bit.
 // @param ?setSticky: A bool for the sticky bit.
 // @param ?ownerRead: A bool for the owner read permission.
-// @param ?ownerWrite: A bool for the owner write permission.
+// @param ?ownerWrite: A bool for the owner write permission. In Windows this is the only bit that matters (set file
+//	        to read only iff false; true o/w).
 // @param ?ownerExec: A bool for the owner execute permission.
 // @param ?groupRead: A bool for the group read permission.
 // @param ?groupWrite: A bool for the group write permission.
