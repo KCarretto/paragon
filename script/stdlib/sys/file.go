@@ -67,6 +67,7 @@ func WriteFile(parser script.ArgParser) (script.Retval, error) {
 	err = ioutil.WriteFile(file, []byte(content), 0644)
 	return nil, err
 }
+<<<<<<< HEAD
 
 // Move uses os.Rename to move a file from source to destination.
 //
@@ -326,3 +327,5 @@ func Dir(parser script.ArgParser) (script.Retval, error) {
 	}
 	return files, nil
 }
+=======
+>>>>>>> Started working on some stdlib functions that could be useful, chmod was Y I K E S.
