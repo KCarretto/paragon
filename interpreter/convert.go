@@ -1,6 +1,7 @@
 package interpreter
 
 import (
+	"fmt"
 	"reflect"
 
 	"github.com/pkg/errors"
@@ -36,7 +37,7 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 			for i := 0; i < reflectV.Len(); i++ {
 				val, err := convertToStarlark(reflectV.Index(i).Interface())
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to convert element %d", i)
+					return nil, errors.Wrapf(err, "failed to convert slice element %d", i)
 				}
 				elems = append(elems, val)
 			}
@@ -48,12 +49,12 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 			for iter.Next() {
 				key, err := convertToStarlark(iter.Key().Interface())
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to convert element %s", key)
+					return nil, errors.Wrapf(err, "failed to convert map key %s", key.String())
 				}
 
 				val, err := convertToStarlark(iter.Value().Interface())
 				if err != nil {
-					return nil, errors.Wrapf(err, "failed to convert element %s", val)
+					return nil, errors.Wrapf(err, "failed to convert map val %s: %s", key.String(), val.String())
 				}
 				if err = dict.SetKey(key, val); err != nil {
 					return nil, err
@@ -62,5 +63,5 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 			return dict, nil
 		}
 	}
-	return nil, nil
+	return nil, fmt.Errorf("cannot convert value %#v", value)
 }
