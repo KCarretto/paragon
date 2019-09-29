@@ -1,6 +1,8 @@
 package script
 
-import "go.starlark.net/starlark"
+import (
+	"go.starlark.net/starlark"
+)
 
 func convertToStarlark(value interface{}) (starlark.Value, error) {
 	if value == nil {

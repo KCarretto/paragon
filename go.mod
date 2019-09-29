@@ -9,6 +9,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
+	github.com/shirou/gopsutil v2.18.12+incompatible
 	github.com/stretchr/testify v1.4.0
 	go.starlark.net v0.0.0-20190717023158-fc7a7f44baed
 	go.uber.org/atomic v1.4.0 // indirect
