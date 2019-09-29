@@ -14,10 +14,7 @@ require (
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/term v0.0.0-20190109203006-aa71e9d9e942 // indirect
-	github.com/reviewdog/errorformat v0.0.0-20190922193611-a885a245ae0b // indirect
-	github.com/reviewdog/reviewdog v0.9.13 // indirect
-	github.com/rogpeppe/go-internal v1.4.0 // indirect
-	github.com/stretchr/objx v0.2.0 // indirect
+	github.com/shirou/gopsutil v2.18.12+incompatible
 	github.com/stretchr/testify v1.4.0
 	go.opencensus.io v0.22.1 // indirect
 	go.starlark.net v0.0.0-20190717023158-fc7a7f44baed

@@ -17,17 +17,17 @@ func (fn Func) builtin(name string) *starlark.Builtin {
 		func(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 			parser, err := getParser(args, kwargs)
 			if err != nil {
-				return nil, err
+				return starlark.None, err
 			}
 
 			retval, err := fn(parser)
 			if err != nil {
-				return nil, err
+				return starlark.None, err
 			}
 
 			val, err := convertToStarlark(retval)
 			if err != nil {
-				return nil, err
+				return starlark.None, err
 			}
 
 			return val, nil
