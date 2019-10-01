@@ -1,7 +1,6 @@
 package sys
 
 import (
-	"fmt"
 	"strconv"
 
 	"github.com/kcarretto/paragon/script"
@@ -9,6 +8,8 @@ import (
 )
 
 // Processes uses gopsutil.process.Pids to get all pids for a box and then makes them into Process map structs.
+//
+// BUG(cictrone): It seems this functions is much much much slower on Darwin.
 //
 // The Process map is defined as:
 //  map[string]string{
@@ -24,19 +25,14 @@ import (
 //
 // @return (processes, nil) iff success; (nil, err) o/w
 func Processes(parser script.ArgParser) (script.Retval, error) {
-	fmt.Println("entered")
 	pids, err := process.Pids()
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("got pids")
 	var procs []map[string]string
-	fmt.Println(len(pids))
-	for i, pid := range pids {
-		fmt.Printf("looking through pids: %d\n", i)
+	for _, pid := range pids {
 		proc, err := process.NewProcess(pid)
 		if err != nil {
-			fmt.Println("Error!!!")
 			// if a process dies between getting the list and now, its okay
 			continue
 		}
@@ -61,10 +57,8 @@ func Processes(parser script.ArgParser) (script.Retval, error) {
 			"tty":     procTerminal,
 		}
 
-		fmt.Println(procMap)
 		procs = append(procs, procMap)
 	}
-	fmt.Println(procs[0])
 	return procs, nil
 }
 
