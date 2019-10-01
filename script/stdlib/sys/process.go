@@ -19,7 +19,7 @@ import (
 //   "status":  Status of the process,
 //   "cmdLine": Command line argumenest for the process,
 //   "exe":     Name of executable that started the process,
-//   "terminal":     The tty/pty of the process ,
+//   "tty":     The tty/pty of the process ,
 //  }
 //
 // @return (processes, nil) iff success; (nil, err) o/w
