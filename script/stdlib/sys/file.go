@@ -220,46 +220,46 @@ func Chmod(parser script.ArgParser) (script.Retval, error) {
 
 	// world perms
 	if worldExec {
-		setBit(perms, 0)
+		perms = setBit(perms, 0)
 	}
 	if worldWrite {
-		setBit(perms, 1)
+		perms = setBit(perms, 1)
 	}
 	if worldRead {
-		setBit(perms, 2)
+		perms = setBit(perms, 2)
 	}
 
 	// group perms
 	if groupExec {
-		setBit(perms, 3)
+		perms = setBit(perms, 3)
 	}
 	if groupWrite {
-		setBit(perms, 4)
+		perms = setBit(perms, 4)
 	}
 	if groupRead {
-		setBit(perms, 5)
+		perms = setBit(perms, 5)
 	}
 
 	// owner perms
 	if ownerExec {
-		setBit(perms, 6)
+		perms = setBit(perms, 6)
 	}
 	if ownerWrite {
-		setBit(perms, 7)
+		perms = setBit(perms, 7)
 	}
 	if ownerRead {
-		setBit(perms, 8)
+		perms = setBit(perms, 8)
 	}
 
 	// other perms
 	if setSticky {
-		setBit(perms, 9)
+		perms = setBit(perms, 9)
 	}
 	if setGroup {
-		setBit(perms, 10)
+		perms = setBit(perms, 10)
 	}
 	if setUser {
-		setBit(perms, 11)
+		perms = setBit(perms, 11)
 	}
 
 	err = os.Chmod(file, os.FileMode(perms))

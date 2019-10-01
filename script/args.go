@@ -39,12 +39,15 @@ func getParser(args starlark.Tuple, kwargs []starlark.Tuple) (*argParser, error)
 		if kwarg.Len() != 2 {
 			return nil, ErrMalformattedKwarg
 		}
-		name := kwarg[0]
+		name, ok := starlark.AsString(kwarg[0])
+		if !ok {
+			return nil, ErrMalformattedKwarg
+		}
 		val := kwarg[1]
 
 		index := len(parser.args)
 		parser.args[index] = val
-		parser.kwargs[name.String()] = index
+		parser.kwargs[name] = index
 	}
 
 	return parser, nil

@@ -1,6 +1,10 @@
 package script
 
 import (
+	"fmt"
+	"reflect"
+
+	"github.com/pkg/errors"
 	"go.starlark.net/starlark"
 )
 
