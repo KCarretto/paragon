@@ -1,6 +1,7 @@
 package sys
 
 import (
+	"errors"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -9,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/kcarretto/paragon/script"
-	"github.com/pkg/errors"
 )
 
 func setBit(n uint32, pos uint) uint32 {
@@ -264,4 +264,47 @@ func Chmod(parser script.ArgParser) (script.Retval, error) {
 
 	err = os.Chmod(file, os.FileMode(perms))
 	return nil, err
+}
+
+// Dir uses ioutil.ReadDir to get the directory entries of a passed directory.
+//
+// @param ?dir: The directory to be listed. The default is ".".
+//
+// The files map is defined as:
+//  map[string]string{
+//   "name":             The name of the file,
+//   "size":             The size of the file,
+//   "mode":             The permissions of the file,
+//   "modTimeUnix":      The last time the file was modified; as a Unix timestamp,
+//   "modTimeReadable":  The last time the file was modified; as human readable,
+//   "isDir":            True iff the file is a directory,
+//  }
+//
+// @return (files, nil) iff success; (nil, err) o/w
+func Dir(parser script.ArgParser) (script.Retval, error) {
+	dir, err := parser.GetString(0)
+	if errors.Is(err, script.ErrMissingArg) {
+		dir = "."
+	} else if err != nil {
+		return nil, err
+	}
+	fileInfos, err := ioutil.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var files []map[string]string
+	for _, fileInfo := range fileInfos {
+		size := strconv.FormatInt(fileInfo.Size(), 10)
+		isDir := strconv.FormatBool(fileInfo.IsDir())
+		timestamp := strconv.FormatInt(fileInfo.ModTime().Unix(), 10)
+		files = append(files, map[string]string{
+			"name":            fileInfo.Name(),
+			"size":            size,
+			"mode":            fileInfo.Mode().String(),
+			"modTimeUnix":     timestamp,
+			"modTimeReadable": fileInfo.ModTime().String(),
+			"isDir":           isDir,
+		})
+	}
+	return files, nil
 }
