@@ -17,4 +17,5 @@ var Lib script.Library = script.Library{
 	"processes":   script.Func(Processes),
 	"kill":        script.Func(Kill),
 	"connections": script.Func(Connections),
+	"dir":         script.Func(Dir),
 }

@@ -3,7 +3,10 @@ module github.com/kcarretto/paragon
 go 1.12
 
 require (
-	github.com/davecgh/go-spew v1.1.1 // indirect
+	cloud.google.com/go v0.46.3 // indirect
+	github.com/c-bata/go-prompt v0.2.3 // indirect
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
+	github.com/creack/pty v1.1.9 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/kr/pretty v0.1.0 // indirect
 	github.com/pkg/errors v0.8.1
