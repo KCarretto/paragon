@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	"github.com/kcarretto/paragon/script"
-	"github.com/pkg/errors"
 )
 
 func setBit(n uint32, pos uint) uint32 {
