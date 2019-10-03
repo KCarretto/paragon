@@ -22,4 +22,7 @@ var (
 
 	// ErrInvalidTypeConversion occurs when converting a golang type to a starlark.Value fails.
 	ErrInvalidTypeConversion = errors.New("could not convert golang value to starlark.Value")
+
+	// ErrInvalidKwarg occurs when a user incorrectly passes a kwarg to a starlark function
+	ErrInvalidKwarg = errors.New("invalid kwarg was passed to the method")
 )

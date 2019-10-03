@@ -18,5 +18,6 @@ var Lib script.Library = script.Library{
 	"kill":          script.Func(Kill),
 	"connections":   script.Func(Connections),
 	"dir":           script.Func(Dir),
-	"replaceString": script.Func(ReplaceString()),
+	"replaceString": script.Func(ReplaceString),
+	"request":       script.Func(Request),
 }

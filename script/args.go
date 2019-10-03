@@ -1,6 +1,8 @@
 package script
 
 import (
+	"fmt"
+
 	"go.starlark.net/starlark"
 )
 
@@ -9,6 +11,8 @@ import (
 // An ArgParser enables golang function implementations to retrieve the positional and keyword
 // arguments provided to the starlark method call.
 type ArgParser interface {
+	RestrictKwargs(kwargs ...string) error
+
 	GetString(index int) (string, error)
 	GetStringByName(name string) (string, error)
 
@@ -24,6 +28,22 @@ type argParser struct {
 
 	args   map[int]starlark.Value
 	kwargs map[string]int
+}
+
+func (parser *argParser) RestrictKwargs(kwargs ...string) error {
+	for kwarg := range parser.kwargs {
+		valid := false
+		for _, validKwarg := range kwargs {
+			if kwarg == validKwarg {
+				valid = true
+			}
+		}
+		if !valid {
+			return fmt.Errorf("%w: %q", ErrInvalidKwarg, kwarg)
+		}
+		valid = false
+	}
+	return nil
 }
 
 func getParser(args starlark.Tuple, kwargs []starlark.Tuple) (*argParser, error) {
@@ -64,7 +84,7 @@ func (parser *argParser) GetParam(index int) (starlark.Value, error) {
 func (parser *argParser) GetParamIndex(kwarg string) (int, error) {
 	index, ok := parser.kwargs[kwarg]
 	if !ok {
-		return 0, ErrMissingKwarg
+		return 0, fmt.Errorf("%w: %q", ErrMissingKwarg, kwarg)
 	}
 	return index, nil
 }
