@@ -200,6 +200,24 @@ func Chown(parser script.ArgParser) (script.Retval, error) {
 //
 // @return (nil, nil) iff success; (nil, err) o/w
 func Chmod(parser script.ArgParser) (script.Retval, error) {
+	err := parser.RestrictKwargs(
+		"setUser",
+		"setGroup",
+		"setSticky",
+		"ownerRead",
+		"ownerWrite",
+		"ownerExec",
+		"groupRead",
+		"groupWrite",
+		"groupExec",
+		"worldRead",
+		"worldWrite",
+		"worldExec",
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	file, err := parser.GetString(0)
 	if err != nil {
 		return nil, err
