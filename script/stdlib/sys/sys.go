@@ -21,5 +21,4 @@ var Lib script.Library = script.Library{
 	"replaceString": script.Func(ReplaceString),
 	"request":       script.Func(Request),
 	"detectOS":      script.Func(Detect),
-	"tables":        script.Func(Tables),
 }
