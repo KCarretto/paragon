@@ -43,11 +43,12 @@ def main():
 
 func TestArgParse(t *testing.T) {
 	newFunc := script.Func(aTestFunc)
-	i := script.NewInterpreter()
-	l := script.Library{"my_func": newFunc}
-	i.AddLibrary("mylib", l)
+	lib := script.Library{"my_func": newFunc}
 
-	code := script.New("myscript", bytes.NewBufferString(myscript))
+	code := script.New("myscript", bytes.NewBufferString(myscript), script.WithLibraries(map[string]script.Library{
+		"mylib": lib,
+	}))
+
 	err := code.Exec(context.Background())
 	if err != nil {
 		t.Error("Error executing test: ", err)

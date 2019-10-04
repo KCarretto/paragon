@@ -19,8 +19,3 @@ func (lib Library) stringDict() starlark.StringDict {
 
 	return symbols
 }
-
-// AddLibrary adds a library to the interpreter, exposing it to the execution environment.
-func (i *Interpreter) AddLibrary(name string, lib Library) {
-	i.libs[name] = lib.stringDict()
-}

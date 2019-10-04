@@ -2,13 +2,16 @@ package script
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"io/ioutil"
 
 	"go.starlark.net/starlark"
 )
 
-type Option func(*Script)
+// EntryPoint defines the name of the method that will be called when running a script (if it exists)
+// in addition to executing top level statements.
+const EntryPoint = "main"
 
 // A Script provides metadata and instructions to be executed by the interpreter.
 type Script struct {
@@ -19,6 +22,8 @@ type Script struct {
 	Libraries map[string]Library
 }
 
+// Exec parses input from the script reader and executes it. It will also invoke the EntryPoint
+// method if one is available.
 func (script Script) Exec(ctx context.Context) error {
 	builtins := script.compilePredeclared()
 	thread := script.newThread()
@@ -41,8 +46,7 @@ func (script Script) Exec(ctx context.Context) error {
 	}
 
 	if _, ok := res.(starlark.NoneType); !ok {
-		// TODO: Handle error
-		io.WriteString(script.Writer, res.String())
+		thread.Print(thread, res.String())
 	}
 
 	return nil
@@ -60,7 +64,7 @@ func (script Script) newThread() *starlark.Thread {
 		Name: script.ID,
 		Print: func(_ *starlark.Thread, msg string) {
 			// TODO: Handle error
-			io.WriteString(script.Writer, msg)
+			fmt.Fprintf(script.Writer, "%s\n", msg)
 		},
 		Load: func(_ *starlark.Thread, module string) (starlark.StringDict, error) {
 			lib, ok := script.Libraries[module]
@@ -76,11 +80,17 @@ func (script Script) newThread() *starlark.Thread {
 
 // New initializes and returns a script with the provided contents.
 func New(id string, content io.Reader, options ...Option) Script {
-	return Script{
+	script := Script{
 		content,
 		ioutil.Discard,
 		id,
 		map[string]Func{},
 		map[string]Library{},
 	}
+
+	for _, opt := range options {
+		opt(&script)
+	}
+
+	return script
 }
