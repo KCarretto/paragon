@@ -1,80 +1,64 @@
 package main
 
 import (
-	"bytes"
 	"context"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 	"time"
 
-	"github.com/kcarretto/paragon/script"
-	"github.com/kcarretto/paragon/transport"
-	"github.com/kcarretto/paragon/transport/local"
 	"go.uber.org/zap"
 )
 
-func getLogger(*transport.Buffer) *zap.Logger {
-	return zap.NewNop()
-}
-
-func main() {
+func runLoop() {
 	// Initialize context
-	ctx := context.Background()
-
-	// Initialize buffer
-	buffer := &transport.Buffer{
-		Encoder:     transport.NewDefaultEncoder(),
-		Metadata:    transport.Metadata{},
-		MaxIdleTime: time.Second * 5,
-	}
+	ctx, cancel := context.WithCancel(context.Background())
 
 	// Initialize logger
-	logger := getLogger(buffer)
+	logger := getLogger()
 
-	// Initialize registry
-	registry := &transport.Registry{}
+	// Handle panic
+	defer func() {
+		if err := recover(); err != nil {
+			logger.DPanic("Recovered from panic", zap.Reflect("error", err))
+		}
+	}()
 
-	// Initialize Receiver
-	receiver := &transport.Receiver{
-		ResultWriter: buffer,
-		Decoder:      transport.NewDefaultDecoder(),
-		Handler: transport.PayloadHandlerFn(func(w transport.ResultWriter, payload transport.Payload, err error) {
-			for _, task := range payload.Tasks {
-				output := transport.NewResult(task)
-				code := script.New(task.ID, bytes.NewBuffer(task.Content)) // TODO: Add libraries, set output
-				// TODO: Context timeout
-				if err := code.Exec(ctx); err != nil {
-					// TODO: Handle task execution error
-				}
-				output.CloseWithError(err)
-				w.WriteResult(output)
-			}
-		}),
-	}
+	// Run agent
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func(logger *zap.Logger) {
+		defer wg.Done()
+		run(ctx, logger)
+	}(logger.With(zap.Time("agent_loop_start", time.Now())))
 
-	// Register Transports
-	registry.Add(transport.New(
-		"local",
-		local.New(receiver),
-	))
+	// Listen for interupts
+	sigint := make(chan os.Signal, 1)
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGINT)
+	signal.Notify(sigterm, syscall.SIGTERM)
 
-	// Initialize MultiSender
-	sender := transport.MultiSender{
-		Transports: registry,
-		OnError: func(t transport.Transport, err error) {
-			logger.Named("transport").Named(t.Name).Error("Failed to transport data", zap.Error(err))
-		},
-	}
-
-	// Flush buffer using multi sender
-	for {
-		select {
-		// TODO: Handle SIGINT
-		// TODO: Handle SIGTERM
-		default:
-			if _, err := sender.Send(buffer); err != nil {
-				// TODO: Handle encode error
-				// TODO: Handle ErrNoTransports
-			}
+	// Wait for interupt
+	select {
+	case <-sigint:
+		if exitCode := handleInterupt(logger); exitCode != 0 {
+			os.Exit(exitCode)
+		}
+	case <-sigterm:
+		if exitCode := handleTerminate(logger); exitCode != 0 {
+			os.Exit(exitCode)
 		}
 	}
 
+	// After interupt, wait for threads to finish
+	cancel()
+	wg.Wait()
+
+}
+
+func main() {
+	for {
+		runLoop()
+	}
 }
