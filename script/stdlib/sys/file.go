@@ -119,19 +119,30 @@ func Copy(parser script.ArgParser) (script.Retval, error) {
 
 // Exec uses os.Command to execute the passed string
 //
-// @param cmd: A string for execution.
+// @param cmd:     A string for execution.
+// @param ?disown: A bool that dictates if a process should be disowned or not. The default is false.
 //
 // @return (stdoutStderr, nil) iff success; (nil, err) o/w
 func Exec(parser script.ArgParser) (script.Retval, error) {
+	err := parser.RestrictKwargs("disown")
+	if err != nil {
+		return nil, err
+	}
 	cmd, err := parser.GetString(0)
 	if err != nil {
 		return nil, err
 	}
+	disown, _ := parser.GetBoolByName("disown")
+
 	argv := strings.Fields(cmd)
 	if len(argv) == 0 {
 		return nil, errors.New("exec expected args but got none")
 	}
 	bin := exec.Command(argv[0], argv[1:]...)
+	if disown {
+		bin.Start()
+		return "", nil
+	}
 	result, err := bin.CombinedOutput()
 	return string(result), err
 }

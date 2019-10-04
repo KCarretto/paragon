@@ -3,6 +3,7 @@ package sys_test
 import (
 	"context"
 	"testing"
+	"bytes"
 
 	"github.com/kcarretto/paragon/script"
 	"github.com/kcarretto/paragon/script/stdlib/sys"
@@ -19,16 +20,9 @@ def main():
 `
 
 func TestProcesses(t *testing.T) {
-	intp := script.NewInterpreter()
-	intp.AddLibrary("sys", sys.Lib)
-
-	testScript := script.New("test_script", []byte(testContent))
-	logger, err := zap.NewDevelopment()
+	testScript := script.New("test_script", bytes.NewBufferString(testContent), script.WithLibrary("sys", sys.Lib))
+	err := testScript.Exec(context.Background())
 	if err != nil {
-		panic(err)
-	}
-
-	if err := intp.Exec(context.Background(), logger, testScript); err != nil {
 		panic(err)
 	}
 }
