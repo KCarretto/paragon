@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -28,21 +29,11 @@ type Transport struct {
 	tasks  transport.Tasker
 }
 
-func (t Transport) Write(p []byte) (int, error) {
-	// Encode Agent Payload
-	output, err := json.Marshal(
-		transport.AgentPayload{
-			Output: p,
-		},
-	)
-	if err != nil {
-		return 0, errors.Wrap(err, "failed to marshal output to json")
-	}
-
+func (t Transport) Write(payload []byte) (int, error) {
 	// Send Agent Payload
-	resp, err := http.Post(t.url, "application/json", bytes.NewBuffer(output))
+	resp, err := http.Post(t.url, "application/json", bytes.NewBuffer(payload))
 	if err != nil {
-		return 0, errors.Wrap(err, "failed to connect via http")
+		return 0, fmt.Errorf("failed to connect via http: %w", err)
 	}
 	defer resp.Body.Close()
 
@@ -50,7 +41,7 @@ func (t Transport) Write(p []byte) (int, error) {
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		t.logger.DPanic("Failed to read server payload!", zap.Error(err))
-		return 0, errors.Wrap(err, "failed to read response body")
+		return 0, fmt.Errorf("failed to read http response body: %w", err)
 	}
 
 	// Decode Server Payload
