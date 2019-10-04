@@ -8,6 +8,13 @@ import (
 	"time"
 )
 
+// A TimestampWriterTo extends io.WriterTo with a method that returns the timestamp of when the
+// contents were last successfully written.
+type TimestampWriterTo interface {
+	io.WriterTo
+	Timestamp() time.Time
+}
+
 // Buffer is a write safe io.Writer & io.WriterTo that is used to buffer output and safely copy it
 // to a transport writer. If copying fails, buffer does not lose data.
 type Buffer struct {
@@ -48,6 +55,10 @@ func (b *Buffer) Write(data []byte) (int, error) {
 func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
 	output := b.copyOutput()
 	results := b.copyResults()
+
+	if len(output) <= 0 && len(results) <= 0 && time.Since(b.Timestamp()) < b.MaxIdleTime {
+		return 0, nil
+	}
 
 	resp := Response{
 		Metadata: b.Metadata,
@@ -105,6 +116,10 @@ func (b *Buffer) copyResults() (results []Result) {
 func (b *Buffer) copyOutput() (data []byte) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
+
+	if b.output == nil {
+		b.output = &bytes.Buffer{}
+	}
 
 	if b.output.Len() <= 0 {
 		return

@@ -1,9 +1,14 @@
 package main
 
 import (
+	"bytes"
 	"context"
-	"go.uber.org/zap"
+	"time"
+
+	"github.com/kcarretto/paragon/script"
 	"github.com/kcarretto/paragon/transport"
+	"github.com/kcarretto/paragon/transport/local"
+	"go.uber.org/zap"
 )
 
 func getLogger(*transport.Buffer) *zap.Logger {
@@ -16,7 +21,9 @@ func main() {
 
 	// Initialize buffer
 	buffer := &transport.Buffer{
-		MaxIdleTime: time.Minute * 1,
+		Encoder:     transport.NewDefaultEncoder(),
+		Metadata:    transport.Metadata{},
+		MaxIdleTime: time.Second * 5,
 	}
 
 	// Initialize logger
@@ -25,56 +32,49 @@ func main() {
 	// Initialize registry
 	registry := &transport.Registry{}
 
-	// Initialize Interpreter
-	interpreter := script.NewInterpreter()
-	// stdlib.Compile(
-	// stdlib.WithRegistry(registry),
-
 	// Initialize Receiver
 	receiver := &transport.Receiver{
-		Decoder: transport.NewDefaultDecoder(),
-		Handler: func(payload transport.Payload, err error) {
+		ResultWriter: buffer,
+		Decoder:      transport.NewDefaultDecoder(),
+		Handler: transport.PayloadHandlerFn(func(w transport.ResultWriter, payload transport.Payload, err error) {
 			for _, task := range payload.Tasks {
 				output := transport.NewResult(task)
+				code := script.New(task.ID, bytes.NewBuffer(task.Content)) // TODO: Add libraries, set output
 				// TODO: Context timeout
-				if err := interpreter.Execute(ctx, task.Content, output); err != nil {
+				if err := code.Exec(ctx); err != nil {
 					// TODO: Handle task execution error
 				}
 				output.CloseWithError(err)
-				buffer.WriteResult(output)
+				w.WriteResult(output)
 			}
+		}),
+	}
+
+	// Register Transports
+	registry.Add(transport.New(
+		"local",
+		local.New(receiver),
+	))
+
+	// Initialize MultiSender
+	sender := transport.MultiSender{
+		Transports: registry,
+		OnError: func(t transport.Transport, err error) {
+			logger.Named("transport").Named(t.Name).Error("Failed to transport data", zap.Error(err))
 		},
 	}
 
-	
-	// Register Transports
-	registry.Add(transport.New(
-		"http",
-		&http.Transport{
-			// Inject transport dependencies
-			PayloadWriter: receiver,
-			Logger: logger.Named("transport").Named("http"),
-		},
-	))
-	
-	// Initialize MultiSender
-	sender := transport.NewMultiSender(registry, func(meta transport.Meta, err error) {
-			// HANDLE error
-				* Transport error
-	})
-	
 	// Flush buffer using multi sender
 	for {
-			select {
-				// TODO: Handle SIGINT
-				// TODO: Handle SIGTERM
-				default:
-				if err := buffer.Flush(sender); err != nil {
-					// HANDLE errors
-						* Encode error
-						* ErrNoTransports
-				}
+		select {
+		// TODO: Handle SIGINT
+		// TODO: Handle SIGTERM
+		default:
+			if _, err := sender.Send(buffer); err != nil {
+				// TODO: Handle encode error
+				// TODO: Handle ErrNoTransports
 			}
+		}
 	}
-	
+
 }

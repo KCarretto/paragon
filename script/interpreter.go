@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"go.starlark.net/starlark"
-	"go.uber.org/zap"
 )
 
 // Interpreter executes scripts within the environment of the preloaded libraries and builtins.
@@ -24,19 +23,20 @@ func NewInterpreter() *Interpreter {
 	}
 }
 
-func (i *Interpreter) thread(name string, logger *zap.Logger) *starlark.Thread {
+func (i *Interpreter) thread(name string, out io.Writer) *starlark.Thread {
 	thread := &starlark.Thread{
 		Name:  name,
-		Print: i.printer(logger.With(zap.String("thread_name", name))),
+		Print: i.printer(out),
 		Load:  i.load,
 	}
 
 	return thread
 }
 
-func (i *Interpreter) printer(logger *zap.Logger) func(t *starlark.Thread, msg string) {
+func (i *Interpreter) printer(out io.Writer) func(t *starlark.Thread, msg string) {
 	return func(_ *starlark.Thread, msg string) {
-		logger.Info(msg)
+		// TODO: Handle error
+		io.WriteString(out, msg)
 	}
 }
 

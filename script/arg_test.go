@@ -1,12 +1,12 @@
 package script_test
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
 
 	"github.com/kcarretto/paragon/script"
-	"go.uber.org/zap"
 )
 
 func aTestFunc(argParse script.ArgParser) (script.Retval, error) {
@@ -47,8 +47,8 @@ func TestArgParse(t *testing.T) {
 	l := script.Library{"my_func": newFunc}
 	i.AddLibrary("mylib", l)
 
-	code := script.New("myscript", []byte(myscript))
-	err := i.Exec(context.Background(), zap.NewNop(), code)
+	code := script.New("myscript", bytes.NewBufferString(myscript))
+	err := code.Exec(context.Background())
 	if err != nil {
 		t.Error("Error executing test: ", err)
 	}

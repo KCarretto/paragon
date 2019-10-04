@@ -1,19 +1,18 @@
 package script_test
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
 	"github.com/kcarretto/paragon/script"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 func TestExecOutput(t *testing.T) {
-	py := script.NewInterpreter()
-	script := script.New("test_execute", []byte(testScriptContent))
+	code := script.New("test_execute", bytes.NewBufferString(testScriptContent))
 
-	err := py.Exec(context.Background(), zap.NewNop(), script)
+	err := code.Exec(context.Background())
 	require.NoError(t, err)
 
 	// TODO: Check output of logger
