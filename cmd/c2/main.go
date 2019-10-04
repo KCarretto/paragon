@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 
-	"github.com/kcarretto/paragon/agent/transport"
+	"github.com/kcarretto/paragon/transport"
 )
 
 func main() {
@@ -17,21 +18,26 @@ func main() {
 			panic(err)
 		}
 
-		var payload transport.AgentPayload
-		if err := json.Unmarshal(data, &payload); err != nil {
+		var agentResponse transport.Response
+		if err := json.Unmarshal(data, &agentResponse); err != nil {
 			panic(err)
 		}
 
-		fmt.Printf("\n\nReceived request: %s\n", payload.Output)
+		fmt.Printf("\n\nReceived request: %+v\n", agentResponse)
 
-		resp := transport.ServerPayload{
-			Tasks: []transport.TaskPayload{
-				transport.TaskPayload{
-					ID:      "task1",
-					Content: []byte(`print("Task from C2 ;)")`),
-				},
-			},
+		var tasks []transport.Task
+		if rand.Intn(2) == 0 {
+			task := transport.Task{
+				ID:      "task1",
+				Content: []byte(`print("Task from C2 ;)")`),
+			}
+			tasks = append(tasks, task)
 		}
+
+		resp := transport.Payload{
+			Tasks: tasks,
+		}
+
 		respData, err := json.Marshal(resp)
 		if err != nil {
 			panic(err)

@@ -1,5 +1,14 @@
 package main
 
+import (
+	"bytes"
+	"context"
+	"time"
+
+	"github.com/kcarretto/paragon/script"
+	"github.com/kcarretto/paragon/transport"
+	"go.uber.org/zap"
+)
 
 func run(ctx context.Context, logger *zap.Logger) {
 	// Initialize buffer
@@ -16,14 +25,28 @@ func run(ctx context.Context, logger *zap.Logger) {
 	registry := &transport.Registry{}
 
 	// Handle payloads from the server
+	hLogger := logger.Named("scripts")
 	handler := func(w transport.ResultWriter, payload transport.Payload, err error) {
+		if err != nil {
+			hLogger.Error("Payload decode error", zap.Error(err))
+			return
+		}
+
+		hLogger.Debug("Executing new payload from server",
+			zap.Int("num_tasks", len(payload.Tasks)),
+			zap.Reflect("payload", payload),
+		)
+
 		for _, task := range payload.Tasks {
 			output := transport.NewResult(task)
 			code := script.New(task.ID, bytes.NewBuffer(task.Content)) // TODO: Add libraries, set output
 			// TODO: Context timeout
 			if err := code.Exec(ctx); err != nil {
-				// TODO: Handle task execution error
+				hLogger.Error("failed to execute script", zap.Error(err), zap.String("task_id", task.ID))
+			} else {
+				hLogger.Debug("completed script execution", zap.String("task_id", task.ID))
 			}
+
 			output.CloseWithError(err)
 			w.WriteResult(output)
 		}
@@ -37,7 +60,7 @@ func run(ctx context.Context, logger *zap.Logger) {
 	}
 
 	// Register Transports
-	addTransports(receiver, registry)
+	addTransports(logger.Named("transport"), receiver, registry)
 
 	// Initialize MultiSender
 	sender := transport.MultiSender{

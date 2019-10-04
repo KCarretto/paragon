@@ -2,65 +2,47 @@ package http
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"net/http"
 
-	"github.com/kcarretto/paragon/agent/transport"
+	"github.com/kcarretto/paragon/transport"
 	"go.uber.org/zap"
-
-	"github.com/pkg/errors"
 )
 
-// New starts and returns a transport that receives tasks and reports output over HTTP.
-func New(logger *zap.Logger, tasks transport.Tasker) (io.WriteCloser, error) {
-	return Transport{
-		url:    "http://127.0.0.1:8080",
-		logger: logger,
-		tasks:  tasks,
-	}, nil
-}
-
+// Transport sends agent responses and receives server payloads via HTTP.
 type Transport struct {
-	url    string
-	logger *zap.Logger
-	tasks  transport.Tasker
+	transport.PayloadWriter
+	URL    string
+	Logger *zap.Logger
 }
 
-func (t Transport) Write(payload []byte) (int, error) {
+func (t Transport) Write(response []byte) (int, error) {
 	// Send Agent Payload
-	resp, err := http.Post(t.url, "application/json", bytes.NewBuffer(payload))
+	resp, err := http.Post(t.URL, "application/json", bytes.NewBuffer(response))
 	if err != nil {
 		return 0, fmt.Errorf("failed to connect via http: %w", err)
 	}
 	defer resp.Body.Close()
 
 	// Read Server Payload
-	body, err := ioutil.ReadAll(resp.Body)
+	payload, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		t.logger.DPanic("Failed to read server payload!", zap.Error(err))
 		return 0, fmt.Errorf("failed to read http response body: %w", err)
 	}
 
-	// Decode Server Payload
-	var payload transport.ServerPayload
-	if err := json.Unmarshal(body, &payload); err != nil {
-		t.logger.DPanic("Failed to unmarshal server payload!", zap.Error(err))
-		return 0, errors.Wrap(err, "failed to unmarshal response from json")
+	if t.Logger == nil {
+		t.Logger = zap.NewNop()
 	}
+	t.Logger.Debug("Received new payload from server", zap.Int("bytes", len(payload)))
 
-	t.logger.Debug("Received payload from server")
+	// Write payload
+	t.WritePayload(payload)
 
-	// Queue Tasks
-	for _, task := range payload.Tasks {
-		t.tasks.QueueTask(task.ID, bytes.NewBuffer(task.Content))
-	}
-
-	return len(p), nil
+	return len(response), nil
 }
 
+// Close is a no-op for an HTTP transport since it is not stateful.
 func (t Transport) Close() error {
 	return nil
 }

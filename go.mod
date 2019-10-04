@@ -8,7 +8,7 @@ require (
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/google/pprof v0.0.0-20190908185732-236ed259b199 // indirect
-	github.com/google/uuid v1.1.1
+	github.com/google/uuid v1.1.1 // indirect
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect

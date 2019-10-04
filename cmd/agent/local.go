@@ -30,7 +30,7 @@ func getLogger() *zap.Logger {
 
 func configureLogger(logger *zap.Logger, buf io.Writer) {}
 
-func addTransports(receiver transport.PayloadWriter, registry *transport.Registry) {
+func addTransports(logger *zap.Logger, receiver transport.PayloadWriter, registry *transport.Registry) {
 	registry.Add(transport.New(
 		"local",
 		local.New(receiver),
