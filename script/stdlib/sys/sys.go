@@ -20,4 +20,6 @@ var Lib script.Library = script.Library{
 	"dir":           script.Func(Dir),
 	"replaceString": script.Func(ReplaceString),
 	"request":       script.Func(Request),
+	"detectOS":      script.Func(Detect),
+	"tables":        script.Func(Tables),
 }
