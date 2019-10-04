@@ -8,6 +8,7 @@ import (
 	"github.com/kcarretto/paragon/transport"
 )
 
+// Transport is a local transport that reads from stdin and writes to stdout.
 type Transport struct {
 	io.Reader
 	transport.PayloadWriter
@@ -17,11 +18,13 @@ type Transport struct {
 	closed bool
 }
 
+// Write sends response data to stdout, and ensure that stdin is being consumed.
 func (t Transport) Write(data []byte) (int, error) {
 	t.ensureActive()
 	return os.Stdout.Write(data)
 }
 
+// Close stops the goroutine responsible for consuming stdin if it is active.
 func (t Transport) Close() error {
 	if t.input != nil {
 		close(t.input)
@@ -33,6 +36,7 @@ func (t Transport) Close() error {
 	return nil
 }
 
+// ensureActive starts a goroutine to consume stdin if the transport is not yet active.
 func (t Transport) ensureActive() {
 	if !t.closed {
 		return
@@ -49,6 +53,7 @@ func (t Transport) ensureActive() {
 	t.closed = false
 }
 
+// New initializes and returns a local transport, which must be closed.
 func New(receiver transport.PayloadWriter) Transport {
 	var wg sync.WaitGroup
 

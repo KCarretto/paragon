@@ -25,10 +25,10 @@ func TestReceiver(t *testing.T) {
 		Decoder: transport.DecoderFn(func(data []byte) (transport.Payload, error) {
 			return decoder.Decode(data)
 		}),
-		Handler: func(payload transport.Payload, err error) {
+		Handler: transport.PayloadHandlerFn(func(w transport.ResultWriter, payload transport.Payload, err error) {
 			require.Equal(t, expectedPayload, payload)
 			require.NoError(t, err)
-		},
+		}),
 	}
 
 	recv.WritePayload(expectedData)

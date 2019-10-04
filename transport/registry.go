@@ -96,3 +96,10 @@ func (reg *Registry) Close(name string) error {
 
 	return nil
 }
+
+// CloseAll attempts to close all transports.
+func (reg *Registry) CloseAll() {
+	for name := range reg.transports {
+		reg.Close(name)
+	}
+}
