@@ -8,9 +8,11 @@ require (
 	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/creack/pty v1.1.9 // indirect
 	github.com/golang/mock v1.3.1
+	github.com/google/nftables v0.0.0-20190906062827-5d14089d2edc
 	github.com/google/pprof v0.0.0-20190908185732-236ed259b199 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/hashicorp/golang-lru v0.5.3 // indirect
+	github.com/kardianos/service v1.0.0
 	github.com/kr/pty v1.1.8 // indirect
 	github.com/mattn/go-runewidth v0.0.4 // indirect
 	github.com/pkg/errors v0.8.1
