@@ -4,11 +4,10 @@ project_name: paragon
 before:
   hooks:
     - go mod download
-    - go generate ./...
 
 builds:
   -
-    main: ./cmd/paragon
+    main: ./cmd/agent
     env:
       - GO111MODULE=on
       - CGO_ENABLED=0
