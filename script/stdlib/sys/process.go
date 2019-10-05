@@ -9,8 +9,6 @@ import (
 
 // Processes uses gopsutil.process.Pids to get all pids for a box and then makes them into Process map structs.
 //
-// BUG(cictrone): It seems this functions is much much much slower on Darwin.
-//
 // The Process map is defined as:
 //  map[string]string{
 //   "pid":     PID of the process,
@@ -23,7 +21,14 @@ import (
 //   "tty":     The tty/pty of the process ,
 //  }
 //
+//
 // @return (processes, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "processes")
+//
+//  for proc in processes():
+//      print(proc)
 func Processes(parser script.ArgParser) (script.Retval, error) {
 	pids, err := process.Pids()
 	if err != nil {
@@ -66,7 +71,16 @@ func Processes(parser script.ArgParser) (script.Retval, error) {
 //
 // @param pid: A string of the process pid to be killed.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "processes")
+//  load("sys", "kill")
+//
+//  for proc in processes():
+//      if proc["name"] == "nginx":
+//          kill(proc["pid"])
 func Kill(parser script.ArgParser) (script.Retval, error) {
 	pid, err := parser.GetString(0)
 	if err != nil {
