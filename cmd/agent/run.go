@@ -48,12 +48,12 @@ func run(ctx context.Context, logger *zap.Logger) {
 				stdlib.Load(),
 			) // TODO: Add libraries, set output
 			fmt.Println(code.Libraries)
-			// TODO: Context timeout
-			if err := code.Exec(ctx); err != nil {
+			err = code.Exec(ctx)
+			if err != nil {
 				hLogger.Error("failed to execute script", zap.Error(err), zap.String("task_id", task.ID))
-			} else {
-				hLogger.Debug("completed script execution", zap.String("task_id", task.ID))
 			}
+
+			hLogger.Debug("completed script execution", zap.String("task_id", task.ID))
 
 			output.CloseWithError(err)
 			w.WriteResult(output)
