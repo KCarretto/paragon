@@ -388,7 +388,7 @@ func Chmod(parser script.ArgParser) (script.Retval, error) {
 //  load("sys", "dir")
 //  load("sys", "remove")
 //
-//  def maint():
+//  def main():
 //      # loops need to be in functions, main is called automatically
 //      for entry in dir():
 //          # delete all backups :)
