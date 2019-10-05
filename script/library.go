@@ -7,10 +7,6 @@ import (
 // Library is a map of identifiers to underlying golang function implementations.
 type Library map[string]Func
 
-func (lib Library) Compile() starlark.StringDict {
-	return lib.stringDict()
-}
-
 func (lib Library) stringDict() starlark.StringDict {
 	symbols := starlark.StringDict{}
 	if lib == nil {
