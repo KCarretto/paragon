@@ -14,7 +14,7 @@ const debugHTML = `<!DOCTYPE html>
 
 <script>
 	var OFFSET = 0;
-    var MAX_RESULTS_SHOWN = 15;
+    var MAX_RESULTS_SHOWN = 10;
     toastr.options = {
       "closeButton": true,
       "debug": false,
