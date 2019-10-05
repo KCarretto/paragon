@@ -118,7 +118,7 @@ const debugHTML = `<!DOCTYPE html>
   <p class="lead"></p>
   <hr class="my-6">
   <p>The agent is currently running in debug mode. Try running paragon scripts below.</p>
-  <a class="btn btn-primary btn-md" target="_blank" href="https://github.com/KCarretto/paragon" role="button">Learn more</a>
+  <a class="btn btn-primary btn-md" target="_blank" href="https://godoc.org/github.com/KCarretto/paragon/script/stdlib/sys" role="button">Learn more</a>
 </div>
 
 <div class="row">

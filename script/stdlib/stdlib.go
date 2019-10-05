@@ -1,3 +1,6 @@
+// Package stdlib contains all of the basic building blocks of OS operation. It is intended to be cross platform and
+// minimalistic in scale. Its largest sublibrary is "sys" and to use it simply use the syntax `load("sys", "myFunc")`
+// where `myFunc` is one of the premade library functions.
 package stdlib
 
 import (
