@@ -74,7 +74,7 @@ const debugHTML = `<!DOCTYPE html>
                         } else if (result.error != "") {
 							addToResults("error: "+result.error)
 						} else {
-							addToResults("error: the server did not return neither an output nor an error")
+							addToResults("error: the server returned neither an output nor an error")
 						}
                     });
                 }
