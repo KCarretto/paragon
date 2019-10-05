@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"syscall"
 
 	"github.com/kcarretto/paragon/script"
@@ -65,11 +66,14 @@ func Connections(parser script.ArgParser) (script.Retval, error) {
 	connections, err := net.ConnectionsPid(connectionsType, int32(ppid))
 	var conns []map[string]string
 	for _, conn := range connections {
+		pid := strconv.FormatInt(int64(conn.Pid), 10)
+		laddrPort := strconv.FormatInt(int64(conn.Laddr.Port), 10)
+		raddrPort := strconv.FormatInt(int64(conn.Raddr.Port), 10)
 		connMap := map[string]string{
-			"pid":        string(conn.Pid),
+			"pid":        pid,
 			"proto":      familyAndTypeToString(conn.Family, conn.Type),
-			"localaddr":  conn.Laddr.IP + ":" + string(conn.Laddr.Port),
-			"remoteaddr": conn.Raddr.IP + ":" + string(conn.Raddr.Port),
+			"localaddr":  conn.Laddr.IP + ":" + laddrPort,
+			"remoteaddr": conn.Raddr.IP + ":" + raddrPort,
 			"status":     conn.Status,
 		}
 		conns = append(conns, connMap)
