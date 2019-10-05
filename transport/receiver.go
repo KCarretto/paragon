@@ -8,7 +8,7 @@ import (
 // ResultWriter buffers result output that will be transported to the server.
 type ResultWriter interface {
 	io.Writer
-	WriteResult(Result)
+	WriteResult(*Result)
 }
 
 // A PayloadWriter sends payloads from the server to a consumer.

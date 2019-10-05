@@ -39,7 +39,7 @@ func run(ctx context.Context, logger *zap.Logger) {
 
 		for _, task := range payload.Tasks {
 			output := transport.NewResult(task)
-			code := script.New(task.ID, bytes.NewBuffer(task.Content)) // TODO: Add libraries, set output
+			code := script.New(task.ID, bytes.NewBuffer(task.Content), script.WithOutput(output)) // TODO: Add libraries, set output
 			// TODO: Context timeout
 			if err := code.Exec(ctx); err != nil {
 				hLogger.Error("failed to execute script", zap.Error(err), zap.String("task_id", task.ID))

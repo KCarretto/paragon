@@ -36,7 +36,7 @@ func TestBufferWriteTo(t *testing.T) {
 
 	response := transport.Response{
 		transport.Metadata{},
-		[]transport.Result{
+		[]*transport.Result{
 			expectedResult,
 		},
 		expectedOutput,
@@ -80,7 +80,7 @@ func TestBufferWriteToError(t *testing.T) {
 
 	response := transport.Response{
 		transport.Metadata{},
-		[]transport.Result{
+		[]*transport.Result{
 			expectedResult,
 		},
 		expectedOutput,

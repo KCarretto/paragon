@@ -25,12 +25,16 @@ type Buffer struct {
 
 	mu        sync.RWMutex
 	output    *bytes.Buffer
-	results   []Result
+	results   []*Result
 	timestamp time.Time
 }
 
 // WriteResult writes structured task execution output to the response.
-func (b *Buffer) WriteResult(result Result) {
+func (b *Buffer) WriteResult(result *Result) {
+	if result == nil {
+		return
+	}
+
 	b.mu.Lock()
 	b.results = append(b.results, result)
 	b.mu.Unlock()
@@ -56,7 +60,7 @@ func (b *Buffer) WriteTo(w io.Writer) (int64, error) {
 	output := b.copyOutput()
 	results := b.copyResults()
 
-	if len(output) <= 0 && len(results) <= 0 && time.Since(b.Timestamp()) < b.MaxIdleTime {
+	if len(output) <= 0 && len(results) <= 0 && time.Since(b.Timestamp()) <= b.MaxIdleTime {
 		return 0, nil
 	}
 
@@ -97,7 +101,7 @@ func (b *Buffer) Timestamp() time.Time {
 }
 
 // copyResults returns a copy of the current result buffer and truncates it.
-func (b *Buffer) copyResults() (results []Result) {
+func (b *Buffer) copyResults() (results []*Result) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -105,7 +109,7 @@ func (b *Buffer) copyResults() (results []Result) {
 		return
 	}
 
-	results = make([]Result, len(b.results))
+	results = make([]*Result, len(b.results))
 	copy(results, b.results)
 	b.results = b.results[len(b.results):]
 
@@ -133,7 +137,7 @@ func (b *Buffer) copyOutput() (data []byte) {
 }
 
 // restore the provided state to the buffer.
-func (b *Buffer) restore(results []Result, data []byte) error {
+func (b *Buffer) restore(results []*Result, data []byte) error {
 	// Restore results buffer
 	for _, result := range results {
 		b.WriteResult(result)

@@ -54,8 +54,8 @@ type Payload struct {
 // Response holds structured information that will be transported to a server.
 type Response struct {
 	Metadata Metadata
-	Results  []Result `json:"results"`
-	Log      []byte   `json:"log"`
+	Results  []*Result `json:"results"`
+	Log      []byte    `json:"log"`
 }
 
 // Metadata holds agent metadata useful for identifying an agent.
@@ -79,20 +79,20 @@ type Result struct {
 
 // Write implements io.Writer by appending output to the current result buffer. It is safe for
 // concurrent use and always returns len(p), nil.
-func (r Result) Write(p []byte) (int, error) {
+func (r *Result) Write(p []byte) (int, error) {
 	r.Output = append(r.Output, p...)
 
 	return len(p), nil
 }
 
 // Close implements io.Closer by wrapping CloseWithError to indicate no error. Always returns nil.
-func (r Result) Close() error {
+func (r *Result) Close() error {
 	r.CloseWithError(nil)
 	return nil
 }
 
 // CloseWithError sets the result error and execution stop time.
-func (r Result) CloseWithError(err error) {
+func (r *Result) CloseWithError(err error) {
 	if err != nil {
 		r.Error = err.Error()
 	}
@@ -100,8 +100,8 @@ func (r Result) CloseWithError(err error) {
 }
 
 // NewResult initializes and returns a new Result to store execution output for the provided task.
-func NewResult(task Task) Result {
-	return Result{
+func NewResult(task Task) *Result {
+	return &Result{
 		ID:            task.ID,
 		ExecStartTime: time.Now(),
 	}

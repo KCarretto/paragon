@@ -1,4 +1,4 @@
-// +build local
+// +build debug
 
 package main
 
@@ -6,7 +6,7 @@ import (
 	"io"
 
 	"github.com/kcarretto/paragon/transport"
-	"github.com/kcarretto/paragon/transport/local"
+	"github.com/kcarretto/paragon/transport/debug"
 	"go.uber.org/zap"
 )
 
@@ -32,7 +32,10 @@ func configureLogger(logger *zap.Logger, buf io.Writer) {}
 
 func addTransports(logger *zap.Logger, receiver transport.PayloadWriter, registry *transport.Registry) {
 	registry.Add(transport.New(
-		"local",
-		local.New(receiver),
+		"debug",
+		&debug.Transport{
+			Logger:        logger,
+			PayloadWriter: receiver,
+		},
 	))
 }
