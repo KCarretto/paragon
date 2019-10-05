@@ -8,10 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/pkg/profile"
 	"go.uber.org/zap"
 )
 
 func runLoop() {
+	pprof := profile.Start(profile.NoShutdownHook)
+
 	// Initialize context
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -43,10 +46,12 @@ func runLoop() {
 	select {
 	case <-sigint:
 		if exitCode := handleInterupt(logger); exitCode != 0 {
+			pprof.Stop()
 			os.Exit(exitCode)
 		}
 	case <-sigterm:
 		if exitCode := handleTerminate(logger); exitCode != 0 {
+			pprof.Stop()
 			os.Exit(exitCode)
 		}
 	}
@@ -58,6 +63,7 @@ func runLoop() {
 }
 
 func main() {
+
 	for {
 		runLoop()
 	}
