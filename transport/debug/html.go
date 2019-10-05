@@ -71,7 +71,9 @@ const debugHTML = `<!DOCTYPE html>
                     response.results.map(function(result){
                         if (result.output != null){
                             addToResults(atob(result.output));
-                        }
+                        } else if (output.error != null) {
+							addTResults("error: "+output.error)
+						}
                     });
                 }
             });
