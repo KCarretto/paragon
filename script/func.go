@@ -34,8 +34,3 @@ func (fn Func) builtin(name string) *starlark.Builtin {
 		},
 	)
 }
-
-// AddFunc adds a builtin function to the interpreter, exposing it to the execution environment.
-func (i *Interpreter) AddFunc(name string, fn Func) {
-	i.builtins[name] = fn.builtin(name)
-}

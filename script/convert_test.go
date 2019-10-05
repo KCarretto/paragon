@@ -1,11 +1,15 @@
 package script_test
 
 import (
+	"bytes"
 	"context"
 	"testing"
 
 	"github.com/kcarretto/paragon/script"
-	"go.uber.org/zap"
+	"github.com/kcarretto/paragon/script/mocks"
+
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func convertTestString(argParse script.ArgParser) (script.Retval, error) {
@@ -24,26 +28,34 @@ func convertTestString(argParse script.ArgParser) (script.Retval, error) {
 }
 
 const myconvertscript string = `
-load("mylib", "my_func")
+load("cvt", "doConvert")
 
 def main():
-	a = my_func()
+	a = doConvert()
 	print(a)
 `
 
 func TestConvert(t *testing.T) {
-	newFunc := script.Func(convertTestString)
-	i := script.NewInterpreter()
-	l := script.Library{"my_func": newFunc}
-	i.AddLibrary("mylib", l)
+	expected := "[True, 1, 2, 3, 4.4, 5.5, \"1\", {\"1\": \"1\"}, {\"1\": \"1\"}, None]\n"
 
-	script := script.New("myscript", []byte(myconvertscript))
-	logger, _ := zap.NewDevelopment()
-	err := i.Exec(context.Background(), logger, script)
-	if err != nil {
-		t.Error("Error executing test: ", err)
-	}
-	// correctData := "[myscript] [True, 1, 2, 3, 4.4, 5.5, \"1\", {\"1\": \"1\"}, {\"1\": \"1\"}, None]\n"
-	// t.Log(logger)                         // Borked
-	// require.Equal(t, output.String(), correctData) // Borked
+	doConvert := script.Func(convertTestString)
+	lib := script.Library{"doConvert": doConvert}
+
+	// Prepare mock controller
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	// Prepare mocks
+	dst := mocks.NewMockWriter(ctrl)
+	dst.EXPECT().Write(gomock.Any()).DoAndReturn(func(p []byte) (int, error) {
+		require.Equal(t, expected, string(p))
+		return len(p), nil
+	})
+
+	// Initialize script
+	script := script.New("myscript", bytes.NewBufferString(myconvertscript), script.WithLibrary("cvt", lib), script.WithOutput(dst))
+	err := script.Exec(context.Background())
+
+	// Execute script
+	require.NoError(t, err)
 }
