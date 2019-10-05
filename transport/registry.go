@@ -13,6 +13,7 @@ type Registry struct {
 
 	mu         sync.RWMutex
 	transports map[string]Transport
+	cache      []Transport
 }
 
 func (reg *Registry) set(transport Transport) {
@@ -21,6 +22,7 @@ func (reg *Registry) set(transport Transport) {
 		reg.transports = map[string]Transport{}
 	}
 	reg.transports[transport.Name] = transport
+	reg.cache = nil
 	reg.mu.Unlock()
 }
 
@@ -65,6 +67,10 @@ func (reg *Registry) Update(name string, options ...Option) error {
 
 // List transports, sorted by the provided SortBy method or by priority if no method was provided.
 func (reg *Registry) List() []Transport {
+	if reg.cache != nil {
+		return reg.cache
+	}
+
 	if reg.SortBy == nil {
 		reg.SortBy = func(t1, t2 Transport) bool {
 			return t1.Priority < t2.Priority
@@ -80,7 +86,9 @@ func (reg *Registry) List() []Transport {
 		return reg.SortBy(transports[i], transports[j])
 	})
 
-	return transports
+	reg.cache = transports
+
+	return reg.cache
 }
 
 // Close a transport by name. Close is a no-op if the transport is not an io.Closer.

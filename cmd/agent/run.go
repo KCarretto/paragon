@@ -84,5 +84,6 @@ func run(ctx context.Context, logger *zap.Logger) {
 			// TODO: Handle encode error
 			// TODO: Handle ErrNoTransports
 		}
+		time.Sleep(time.Millisecond * 50)
 	}
 }
