@@ -27,8 +27,10 @@ import (
 // @example
 //  load("sys", "processes")
 //
-//  for proc in processes():
-//      print(proc)
+//  def main():
+//      # loops need to be in functions, main is called automatically
+//      for proc in processes():
+//          print(proc)
 func Processes(parser script.ArgParser) (script.Retval, error) {
 	pids, err := process.Pids()
 	if err != nil {
@@ -78,9 +80,11 @@ func Processes(parser script.ArgParser) (script.Retval, error) {
 //  load("sys", "processes")
 //  load("sys", "kill")
 //
-//  for proc in processes():
-//      if proc["name"] == "nginx":
-//          kill(proc["pid"])
+//  def main():
+//      # loops need to be in functions, main is called automatically
+//      for proc in processes():
+//          if proc["name"] == "nginx":
+//              kill(proc["pid"])
 func Kill(parser script.ArgParser) (script.Retval, error) {
 	pid, err := parser.GetString(0)
 	if err != nil {

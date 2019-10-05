@@ -53,8 +53,10 @@ func familyAndTypeToString(connFamily, connType uint32) string {
 // @example
 //  load("sys", "connections")
 //
-//  for conn in connections():
-//      print("%s\t%s\t%s\t%s\t%s" % (conn["proto"], conn["localaddr"], conn["remoteaddr"], conn["status"], conn["pid"]))
+//  def main():
+//      # loops need to be in functions, main is called automatically
+//      for conn in connections():
+//          print("%s\t%s\t%s\t%s\t%s;" % (conn["proto"], conn["localaddr"], conn["remoteaddr"], conn["status"], conn["pid"]))
 func Connections(parser script.ArgParser) (script.Retval, error) {
 	err := parser.RestrictKwargs("type", "ppid")
 	if err != nil {

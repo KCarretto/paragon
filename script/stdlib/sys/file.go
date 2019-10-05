@@ -388,10 +388,12 @@ func Chmod(parser script.ArgParser) (script.Retval, error) {
 //  load("sys", "dir")
 //  load("sys", "remove")
 //
-//  for entry in dir():
-//      # delete all backups :)
-//      if ".bak" in entry["name"]:
-//          remove(entry)
+//  def maint():
+//      # loops need to be in functions, main is called automatically
+//      for entry in dir():
+//          # delete all backups :)
+//          if ".bak" in entry["name"]:
+//              remove(entry)
 func Dir(parser script.ArgParser) (script.Retval, error) {
 	dir, err := parser.GetString(0)
 	if errors.Is(err, script.ErrMissingArg) {
