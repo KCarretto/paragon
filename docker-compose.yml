@@ -6,7 +6,7 @@ services:
       context: ./
       target: developer
     environment:
-      DEBUG_API_USERNAME: "admin"
+      DEBUG_API_USER: "admin"
       DEBUG_API_PASSWORD: "password123"
       DEBUG_API_ADDR: "0.0.0.0:8080"
     ports:
