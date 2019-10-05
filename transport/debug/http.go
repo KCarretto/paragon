@@ -34,7 +34,7 @@ func (t *Transport) handleQueue(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
-	fmt.Printf("\n\nTASK BYTES: %v\n\n", data)
+
 	t.Logger.Debug("Request to queue task", zap.String("task", string(data)))
 	var task transport.Task
 	if err := json.Unmarshal(data, &task); err != nil {

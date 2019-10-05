@@ -35,7 +35,7 @@ const debugHTML = `<!DOCTYPE html>
     
 	function addToResults(result) {
     	$('#resultsList').prepend(
-    		$('<li>').append(
+    		$('<li class="list-group-item">').append(
             	result
             )
          );
@@ -53,7 +53,6 @@ const debugHTML = `<!DOCTYPE html>
     		contentType: 'application/json',
     		data: JSON.stringify(script),
             success: function(data){
-                $("#scriptTextArea").val("");
                 toastr.success('Your Task was successfully Queued!', 'Task Queued')
             },
            	error: function(){
@@ -78,7 +77,26 @@ const debugHTML = `<!DOCTYPE html>
             });
         });
     }
-	$(document).ready(function() { 
+	$(document).ready(function() {
+		$('#scriptTextArea').keydown(function(e) {
+			var keyCode = e.keyCode || e.which;
+
+			if (keyCode == 9) {
+			  e.preventDefault();
+			  var start = $(this).get(0).selectionStart;
+			  var end = $(this).get(0).selectionEnd;
+
+			  // set textarea value to: text before caret + tab + text after caret
+			  spaces = "    "
+			  $(this).val($(this).val().substring(0, start)
+						  + spaces
+						  + $(this).val().substring(end));
+
+			  // put caret at right position again
+			  $(this).get(0).selectionStart =
+			  $(this).get(0).selectionEnd = start + 4;
+			}
+		});
         $("#submit").click(function() {
         	queueScript()
 		});
@@ -91,21 +109,41 @@ const debugHTML = `<!DOCTYPE html>
 </head>
 <body>
 
-<h1>Paragon Script</h1>
-
-<div class="form-group">
-	<textarea class="form-control" id="scriptTextArea" rows="3">def main():
-	    print("Hello World")
-	</textarea>
+<div class="jumbotron" style="padding-top:10px;padding-bottom:10px;">
+  <h3 class="display-6" style="padding-top:5px;">Welcome to Paragon</h3>
+  <p class="lead"></p>
+  <hr class="my-6">
+  <p>The agent is currently running in debug mode. Try running paragon scripts below.</p>
+  <a class="btn btn-primary btn-md" target="_blank" href="https://github.com/KCarretto/paragon" role="button">Learn more</a>
 </div>
-<button type="button" id="submit"class="btn btn-primary">Submit</button>
-<br/>
-<br/>
-<br/>
-<h1>Results</h1>
-<ul id="resultsList">
 
-</ul>
+<div class="row">
+
+	<div class="col-sm-6">
+		<div class="card">
+			<h4 class="card-header">Code</h4>
+			<div class="card-body">
+				<div class="form-group">
+<textarea class="form-control" id="scriptTextArea" rows="8">
+def main():
+    print("Hello World")
+</textarea>
+				</div>
+			<button type="button" id="submit"class="btn btn-primary float-right">Submit</button>
+			</div>
+		</div>
+	</div>
+
+
+	<div class="col-sm-6">
+		<div class="card">
+			<h4 class="card-header">Results</h4>
+			<div class="card-body">
+				<ul id="resultsList" class="list-group list-group-flush"></ul>
+			</div>
+		</div>
+	</div>
+</div>
 </body>
 </html>
 `
