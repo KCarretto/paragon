@@ -72,7 +72,9 @@ const debugHTML = `<!DOCTYPE html>
                         if (result.output != null){
                             addToResults(atob(result.output));
                         } else if (output.error != null) {
-							addTResults("error: "+output.error)
+							addToResults("error: "+output.error)
+						} else {
+							addToResults("error: the server did not return neither an output nor an error")
 						}
                     });
                 }
