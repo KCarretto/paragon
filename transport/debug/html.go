@@ -71,7 +71,7 @@ const debugHTML = `<!DOCTYPE html>
                     response.results.map(function(result){
                         if (result.output != null){
                             addToResults(atob(result.output));
-                        } else if (result.error != null) {
+                        } else if (result.error != "") {
 							addToResults("error: "+result.error)
 						} else {
 							addToResults("error: the server did not return neither an output nor an error")
