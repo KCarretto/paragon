@@ -68,7 +68,6 @@ func WriteFile(parser script.ArgParser) (script.Retval, error) {
 	return nil, err
 }
 
-
 // Move uses os.Rename to move a file from source to destination.
 //
 // @param srcFile: A string for the path of the source file.
