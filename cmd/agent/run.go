@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kcarretto/paragon/script"
+	"github.com/kcarretto/paragon/script/stdlib"
 	"github.com/kcarretto/paragon/transport"
 	"go.uber.org/zap"
 )
@@ -39,7 +41,13 @@ func run(ctx context.Context, logger *zap.Logger) {
 
 		for _, task := range payload.Tasks {
 			output := transport.NewResult(task)
-			code := script.New(task.ID, bytes.NewBuffer(task.Content), script.WithOutput(output)) // TODO: Add libraries, set output
+			code := script.New(
+				task.ID,
+				bytes.NewBuffer(task.Content),
+				script.WithOutput(output),
+				stdlib.Load(),
+			) // TODO: Add libraries, set output
+			fmt.Println(code.Libraries)
 			// TODO: Context timeout
 			if err := code.Exec(ctx); err != nil {
 				hLogger.Error("failed to execute script", zap.Error(err), zap.String("task_id", task.ID))
