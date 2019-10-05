@@ -9,13 +9,16 @@ import (
 // ReplaceString uses regexp.MustCompile to replace values in a string.
 //
 // @param inStr:   A string to have parts replaced.
+//
 // @param newStr:  A string that will replace the places where the pattern match in `inStr`. Also can reference backrefs
 // with `${1}`-like syntax.
+//
 // @param pattern: A string for the regular expression to pattern match with/generate capture groups.
+//
 //
 // @return (resultStr, nil) iff success; (nil, err) o/w
 //
-// Example:
+// @example
 //  load("sys", "read")
 //  load("sys", "write")
 //  load("sys", "replaceString")

@@ -21,7 +21,13 @@ func setBit(n uint32, pos uint) uint32 {
 //
 // @param file: A string for the path of the file.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "remove")
+//
+//  remove("/tmp/mysql.back")
 func Remove(parser script.ArgParser) (script.Retval, error) {
 	file, err := parser.GetString(0)
 	if err != nil {
@@ -38,7 +44,13 @@ func Remove(parser script.ArgParser) (script.Retval, error) {
 //
 // @param file: A string for the path of the file.
 //
+//
 // @return (fileContents, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "read")
+//
+//  print(read("/home/user/iptables.sh"))
 func ReadFile(parser script.ArgParser) (script.Retval, error) {
 	file, err := parser.GetString(0)
 	if err != nil {
@@ -51,9 +63,21 @@ func ReadFile(parser script.ArgParser) (script.Retval, error) {
 // WriteFile uses ioutil.WriteFile to write an entire file's contents, perms are set to 0644.
 //
 // @param file: A string for the path of the file.
+//
 // @param content: A string for the content of the file to be written to.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "read")
+//  load("sys", "write")
+//
+//  iptables_file = "/home/user/iptables.sh"
+//  iptables_script = read("/home/user/iptables.sh")
+//  iptables_script += "\n# Always flush when done :P
+//  iptables_script += "\niptables -F\n"
+//  write(iptables_file, iptables_script)
 func WriteFile(parser script.ArgParser) (script.Retval, error) {
 	file, err := parser.GetString(0)
 	if err != nil {
@@ -71,9 +95,18 @@ func WriteFile(parser script.ArgParser) (script.Retval, error) {
 // Move uses os.Rename to move a file from source to destination.
 //
 // @param srcFile: A string for the path of the source file.
+//
 // @param dstFile: A string for the path of the destination file.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "move")
+//
+//  # maybe just move it :P
+//  move("/etc/nginx/nginx.conf", "/home/user/nginx_conf")
+//  exec("systemctl stop nginx")
 func Move(parser script.ArgParser) (script.Retval, error) {
 	srcFile, err := parser.GetString(0)
 	if err != nil {
@@ -93,9 +126,16 @@ func Move(parser script.ArgParser) (script.Retval, error) {
 // Copy uses ioutil.ReadFile and ioutil.WriteFile to copy a file from source to destination.
 //
 // @param srcFile: A string for the path of the source file.
+//
 // @param dstFile: A string for the path of the destination file.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "copy")
+//
+//  copy("/tmp/payload", "/tmp/payload.bak")
 func Copy(parser script.ArgParser) (script.Retval, error) {
 	srcFile, err := parser.GetString(0)
 	if err != nil {
@@ -119,9 +159,16 @@ func Copy(parser script.ArgParser) (script.Retval, error) {
 // Exec uses os.Command to execute the passed string
 //
 // @param cmd:     A string for execution.
+//
 // @param ?disown: A bool that dictates if a process should be disowned or not. The default is false.
 //
+//
 // @return (stdoutStderr, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "exec")
+//
+//  print(exec("systemctl status mysql"))
 func Exec(parser script.ArgParser) (script.Retval, error) {
 	err := parser.RestrictKwargs("disown")
 	if err != nil {
@@ -149,9 +196,16 @@ func Exec(parser script.ArgParser) (script.Retval, error) {
 // Chown uses os.Chown to change the user/group ownership of a file/dir.
 //
 // @param file: A string for execution.
+//
 // @param owner: A string representing a user and/or group, separated by a ":" character.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "chown")
+//
+//  chown("/home/user/fileToBeOwned")
 func Chown(parser script.ArgParser) (script.Retval, error) {
 	file, err := parser.GetString(0)
 	if err != nil {
@@ -195,21 +249,40 @@ func Chown(parser script.ArgParser) (script.Retval, error) {
 // Chmod uses os.Chmod to change a file's permissions. All optional params are assumed to be false unless passed.
 //
 // @param file: A string for the path of the file.
+//
 // @param ?setUser: A bool for the set user bit.
+//
 // @param ?setGroup: A bool for the set group bit.
+//
 // @param ?setSticky: A bool for the sticky bit.
+//
 // @param ?ownerRead: A bool for the owner read permission.
+//
 // @param ?ownerWrite: A bool for the owner write permission. In Windows this is the only bit that matters (set file
 // to read only iff false; true o/w).
+//
 // @param ?ownerExec: A bool for the owner execute permission.
+//
 // @param ?groupRead: A bool for the group read permission.
+//
 // @param ?groupWrite: A bool for the group write permission.
+//
 // @param ?groupExec: A bool for the group execute permission.
+//
 // @param ?worldRead: A bool for the world read permission.
+//
 // @param ?worldWrite: A bool for the world write permission.
+//
 // @param ?worldExec: A bool for the world execute permission.
 //
+//
 // @return (nil, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "chmod")
+//
+//  # sets the file's perms to 0700
+//  chmod("/home/user/permsToBeChanged", ownerRead=True, ownerWrite=True, ownerExec=True)
 func Chmod(parser script.ArgParser) (script.Retval, error) {
 	err := parser.RestrictKwargs(
 		"setUser",
@@ -310,6 +383,17 @@ func Chmod(parser script.ArgParser) (script.Retval, error) {
 //  }
 //
 // @return (files, nil) iff success; (nil, err) o/w
+//
+// @example
+//  load("sys", "dir")
+//  load("sys", "remove")
+//
+//  def main():
+//      # loops need to be in functions, main is called automatically
+//      for entry in dir():
+//          # delete all backups :)
+//          if ".bak" in entry["name"]:
+//              remove(entry)
 func Dir(parser script.ArgParser) (script.Retval, error) {
 	dir, err := parser.GetString(0)
 	if errors.Is(err, script.ErrMissingArg) {
