@@ -31,7 +31,7 @@ func TestHTTP(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewBuffer(data))
 
 	srv := &c2.Server{
-		Logger: zap.NewNop(),
+		Log: zap.NewNop(),
 	}
 	srv.QueueTask(expectedTask, func(transport.Metadata) bool { return true })
 	srv.QueueTask(unexpectedTask, func(transport.Metadata) bool { return false })
