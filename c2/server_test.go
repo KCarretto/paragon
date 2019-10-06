@@ -1,10 +1,12 @@
 package c2_test
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 
 	"github.com/golang/mock/gomock"
+	"go.uber.org/zap"
 
 	"github.com/kcarretto/paragon/c2"
 	"github.com/kcarretto/paragon/c2/mocks"
@@ -29,9 +31,11 @@ func TestHandleMessage(t *testing.T) {
 		return len(p), nil
 	})
 
-	srv := &c2.Server{}
+	srv := &c2.Server{
+		Log: zap.NewNop(),
+	}
 	srv.QueueTask(expectedTask, func(agent transport.Metadata) bool { return true })
 
-	err = srv.HandleMessage(replyWriter, transport.Response{})
+	err = srv.HandleMessage(context.Background(), replyWriter, transport.Response{})
 	require.NoError(t, err)
 }
