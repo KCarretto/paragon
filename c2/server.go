@@ -23,7 +23,8 @@ type Server struct {
 
 // HandleMessage received from the agent, and write a reply to the provided writer.
 func (srv *Server) HandleMessage(w io.Writer, msg transport.Response) error {
-	// TODO: Get available tasks. srv.GetTasks(msg.Metadata)
+	// TODO: Handle results
+
 	tasks := srv.GetTasks(msg.Metadata)
 	reply := transport.Payload{
 		Tasks: tasks,
