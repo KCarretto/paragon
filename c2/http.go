@@ -9,8 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// HTTP handles agent messages sent from http.
-func (srv *Server) HTTP(w http.ResponseWriter, req *http.Request) {
+// ServeHTTP implements http.Handler to handle agent messages sent via http.
+func (srv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
 		srv.Logger.Error("Failed to read agent message", zap.Error(err))
