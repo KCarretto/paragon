@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package codec;
+
+option go_package = "github.com/kcarretto/paragon/api/codec";
+
+import "google/protobuf/timestamp.proto";
+
+
+message AgentMessage {
+  AgentMetadata metadata = 1;
+  repeated Result results = 2;
+  repeated string logs = 3;
+}
+
+message AgentMetadata {
+  string agentID = 1;
+  string machineUUID = 2;
+  string sessionID = 3;
+  string hostname = 4;
+  string primaryIP = 5;
+  string primaryMAC = 6;
+}
+
+message Result {
+  string id = 1;
+  repeated string output = 2;
+  string error = 3;
+  google.protobuf.Timestamp execStartTime = 4;
+  google.protobuf.Timestamp execStopTime = 5;
+}

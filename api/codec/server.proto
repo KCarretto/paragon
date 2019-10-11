@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package codec;
+
+option go_package = "github.com/kcarretto/paragon/api/codec";
+
+message ServerMessage {
+    repeated Task tasks = 1;
+}
+
+message Task {
+    string id = 1;
+    string content = 2;
+}
