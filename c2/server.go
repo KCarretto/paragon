@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"io"
 	"sync"
+	"time"
 
+	"github.com/kcarretto/paragon/api/events"
 	"github.com/kcarretto/paragon/transport"
 
+	"github.com/golang/protobuf/proto"
 	"go.uber.org/zap"
 	"gocloud.dev/pubsub"
 )
@@ -19,7 +22,7 @@ type Server struct {
 	TaskResults *pubsub.Topic
 
 	mu    sync.RWMutex
-	tasks []queuedTask
+	tasks []queueEntry
 }
 
 // HandleMessage received from the agent, and write a reply to the provided writer.
@@ -50,17 +53,26 @@ func (srv *Server) publishResults(ctx context.Context, msg transport.Response) {
 	}
 
 	for _, result := range msg.Results {
+		event := events.TaskExecuted{
+			Id:            result.ID,
+			Output:        string(result.Output),
+			Error:         result.Error,
+			ExecStartTime: result.ExecStartTime.Unix(),
+			ExecStopTime:  result.ExecStopTime.Unix(),
+			RecvTime:      time.Now().Unix(),
+		}
+
 		// TODO: Send all results, or only ones with data?
-		body, err := json.Marshal(result)
+		body, err := proto.Marshal(&event)
 		if err != nil {
 			srv.Log.Error("Failed to marshal result to json", zap.Error(err))
 		}
-		event := &pubsub.Message{
+		msg := &pubsub.Message{
 			Body: body,
-			// TODO: Add agent metadata
+			// TODO: Add c2 metadata
 		}
 		go func() {
-			if err = srv.TaskResults.Send(ctx, event); err != nil {
+			if err = srv.TaskResults.Send(ctx, msg); err != nil {
 				srv.Log.Error("Failed to publish task result", zap.Error(err))
 			}
 		}()
