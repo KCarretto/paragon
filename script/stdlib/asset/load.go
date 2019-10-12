@@ -33,5 +33,5 @@ func Load(parser script.ArgParser) (script.Retval, error) {
 	if err != nil {
 		return nil, err
 	}
-	return assetBin, nil
+	return string(assetBin), nil
 }
