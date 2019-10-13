@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -20,12 +21,7 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	// if err := vfsgen.Generate(Assets, vfsgen.Options{
-	// 	PackageName: "main",
-	// 	// BuildTags:    "",
-	// 	VariableName: "Scripts",
-	// 	Filename:     "scripts.gen.go",
-	// }); err != nil {
-	// 	log.Fatalln(err)
-	// }
+	if err := ioutil.WriteFile("main.gen.go", []byte(dropperMain), 0644); err != nil {
+		log.Fatalln(err)
+	}
 }
