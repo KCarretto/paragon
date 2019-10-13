@@ -4,15 +4,39 @@
 package stdlib
 
 import (
+	"net/http"
+
 	"github.com/kcarretto/paragon/script"
+	"github.com/kcarretto/paragon/script/stdlib/assets"
 	"github.com/kcarretto/paragon/script/stdlib/sys"
 )
 
-var libs = map[string]script.Library{
-	"sys": sys.Lib,
+// An Option enables configuration of stdlib dependencies.
+type Option func(*Dependencies)
+
+// Dependencies holds library dependencies that may be accessed by stdlib functions.
+type Dependencies struct {
+	Assets http.FileSystem
 }
 
 // Load is a script Option that loads the standard library into a script's execution environment
-func Load() script.Option {
+func Load(options ...Option) script.Option {
+	deps := Dependencies{}
+	for _, opt := range options {
+		opt(&deps)
+	}
+
+	libs := map[string]script.Library{
+		"sys":    sys.Import(),
+		"assets": assets.Import(deps.Assets),
+	}
+
 	return script.WithLibraries(libs)
+}
+
+// WithAssets loading assets from the provided filesystem.
+func WithAssets(fs http.FileSystem) Option {
+	return func(deps *Dependencies) {
+		deps.Assets = fs
+	}
 }
