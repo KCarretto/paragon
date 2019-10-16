@@ -2,44 +2,56 @@ package agent
 
 import (
 	"context"
-	"fmt"
+	"time"
 
-	"github.com/kcarretto/paragon/api/codec"
+	"go.uber.org/zap"
 )
 
-type AgentMessage codec.AgentMessage
-type ServerMessage codec.ServerMessage
-
-var ErrNoTransports = fmt.Errorf("all available transports failed to send message")
-
-type ServerMessageWriter interface{}
-type AgentMessageWriter interface{}
-
+// A Sender is responsible for transporting messages to a server.
 type Sender interface {
-	Send(ServerMessageWriter, AgentMessage) error
+	Send(ServerMessageWriter, Message) error
 }
 
+// A Receiver is responsible for handling messages sent by a server.
 type Receiver interface {
-	Receive(AgentMessageWriter, ServerMessage)
+	Receive(MessageWriter, ServerMessage)
 }
 
+// An Agent communicates with server(s) using the configured transport.
 type Agent struct {
-	Sender
 	Receiver
+	Log *zap.Logger
 
-	Transports []Sender
+	Transports []Transport
+
+	MaxIdleTime time.Duration
+	lastSend    time.Time
 }
 
-func (agent Agent) Send(w ServerMessageWriter, msg AgentMessage) error {
-	if agent.Sender != nil {
-		return agent.Sender.Send(w, msg)
+// Send messages to a server using the configured transports. Returns ErrNoTransports if all fail or
+// if none are configured.
+func (agent Agent) Send(w ServerMessageWriter, msg Message) error {
+	// Don't send empty messages unless it has been at least MaxIdleTime since the last send.
+	if msg.IsEmpty() && time.Since(agent.lastSend) <= agent.MaxIdleTime {
+		return nil
 	}
 
+	// Attempt to send using available transports.
 	for _, transport := range agent.Transports {
 		if err := transport.Send(w, msg); err != nil {
-			// TODO: Error Handler
+			transport.Log.Error(
+				"Failed to send message using transport",
+				zap.Error(err),
+				zap.Reflect("transport", transport),
+			)
 			continue
 		}
+
+		// When send is successful, update the timestamp
+		agent.lastSend = time.Now()
+
+		// Sleep the transport's interval on success
+		transport.Sleep()
 
 		return nil
 	}
@@ -47,16 +59,16 @@ func (agent Agent) Send(w ServerMessageWriter, msg AgentMessage) error {
 	return ErrNoTransports
 }
 
+// Run the agent, sending agent messages to a server using configured transports.
 func (agent Agent) Run(ctx context.Context) error {
-
-	var agentMsg AgentMessage
-
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
+			var agentMsg Message
 			var srvMsg ServerMessage
+
 			if err := agent.Send(&srvMsg, agentMsg); err != nil {
 				return err
 			}
