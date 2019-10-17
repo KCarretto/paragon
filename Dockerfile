@@ -13,7 +13,7 @@ COPY ./cmd /app/cmd
 COPY ./api /app/api
 COPY ./agent /app/agent
 COPY ./script /app/script
-RUN go build -tags=debug -o ./build/agent ./cmd/agent
+RUN go build -tags=debug,profile_cpu -o ./build/agent ./cmd/agent
 
 # Developer
 FROM build as developer
