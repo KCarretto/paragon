@@ -1,52 +1,52 @@
 package main
 
-import (
-	"context"
-	"net/http"
-	"os"
+// import (
+// 	"context"
+// 	"net/http"
+// 	"os"
 
-	"github.com/kcarretto/paragon/c2"
-	"go.uber.org/zap"
-)
+// 	"github.com/kcarretto/paragon/c2"
+// 	"go.uber.org/zap"
+// )
 
 func main() {
-	ctx := context.Background()
+	// ctx := context.Background()
 
-	logger, err := zap.NewDevelopment()
-	if err != nil {
-		panic(err)
-	}
+	// logger, err := zap.NewDevelopment()
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	httpAddr := os.Getenv("HTTP_ADDR")
-	if httpAddr == "" {
-		httpAddr = "127.0.0.1:8080"
-	}
+	// httpAddr := os.Getenv("HTTP_ADDR")
+	// if httpAddr == "" {
+	// 	httpAddr = "127.0.0.1:8080"
+	// }
 
-	resultTopic, err := openTopic(ctx, "tasks.result_received")
-	if err != nil {
-		logger.Panic("Failed to open pubsub topic", zap.Error(err))
-	}
-	defer resultTopic.Shutdown(ctx)
+	// resultTopic, err := openTopic(ctx, "tasks.result_received")
+	// if err != nil {
+	// 	logger.Panic("Failed to open pubsub topic", zap.Error(err))
+	// }
+	// defer resultTopic.Shutdown(ctx)
 
-	queueTopic, err := openSubscription(ctx, "tasks.queued")
-	if err != nil {
-		logger.Panic("Failed to subscribe to pubsub topic", zap.Error(err))
-	}
-	defer queueTopic.Shutdown(ctx)
+	// queueTopic, err := openSubscription(ctx, "tasks.queued")
+	// if err != nil {
+	// 	logger.Panic("Failed to subscribe to pubsub topic", zap.Error(err))
+	// }
+	// defer queueTopic.Shutdown(ctx)
 
-	srv := &c2.Server{
-		Log:         logger,
-		TaskResults: resultTopic,
-	}
+	// srv := &c2.Server{
+	// 	Log:         logger,
+	// 	TaskResults: resultTopic,
+	// }
 
-	go func() {
+	// go func() {
 
-	}()
+	// }()
 
-	logger.Info("Started C2 server", zap.String("http_addr", httpAddr))
-	if err := http.ListenAndServe(httpAddr, srv); err != nil {
-		logger.Panic("Failed to serve HTTP", zap.Error(err))
-	}
+	// logger.Info("Started C2 server", zap.String("http_addr", httpAddr))
+	// if err := http.ListenAndServe(httpAddr, srv); err != nil {
+	// 	logger.Panic("Failed to serve HTTP", zap.Error(err))
+	// }
 
 	// router := http.NewServeMux()
 	// router.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
