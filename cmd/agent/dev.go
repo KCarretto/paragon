@@ -5,8 +5,8 @@ package main
 import (
 	"io"
 
-	"github.com/kcarretto/paragon/transport"
-	"github.com/kcarretto/paragon/transport/http"
+	"github.com/kcarretto/paragon/agent"
+	// "github.com/kcarretto/paragon/agent/http"
 	"go.uber.org/zap"
 )
 
@@ -30,13 +30,17 @@ func getLogger() *zap.Logger {
 
 func configureLogger(logger *zap.Logger, buf io.Writer) {}
 
-func addTransports(logger *zap.Logger, receiver transport.PayloadWriter, registry *transport.Registry) {
-	registry.Add(transport.New(
-		"http",
-		http.Transport{
-			PayloadWriter: receiver,
-			Logger:        logger.Named("http"),
-			URL:           "http://127.0.0.1:8080",
-		},
-	))
+func getTransports(logger *zap.Logger) (transports []agent.Transport) {
+	// registry.Add()
+	return
 }
+// func addTransports(logger *zap.Logger, receiver transport.PayloadWriter, registry *transport.Registry) {
+// 	registry.Add(transport.New(
+// 		"http",
+// 		http.Transport{
+// 			PayloadWriter: receiver,
+// 			Logger:        logger.Named("http"),
+// 			URL:           "http://127.0.0.1:8080",
+// 		},
+// 	))
+// }

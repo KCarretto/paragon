@@ -1,0 +1,38 @@
+syntax = "proto3";
+
+package events;
+
+option go_package = "github.com/kcarretto/paragon/api/events";
+
+import "api/codec/agent.proto";
+
+// message AgentMetadata {
+//   string agentID = 1;
+//   string machineUUID = 2;
+//   string sessionID = 3;
+//   string hostname = 4;
+//   string primaryIP = 5;
+//   string primaryMAC = 6;
+// }
+
+message TaskQueued {
+  string id = 1;
+  string content = 2;
+  codec.AgentMetadata filter = 3;
+}
+
+message TaskClaimed {
+  string id = 1;
+  codec.AgentMetadata agent = 2;
+}
+
+message TaskExecuted {
+  string id = 1;
+  string output = 2;
+  string error = 3;
+  int64 execStartTime = 4;
+  int64 execStopTime = 5;
+  int64 recvTime = 6;
+
+  codec.AgentMetadata agent = 7;
+}
