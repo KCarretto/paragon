@@ -6,29 +6,28 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/kcarretto/paragon/agent"
-	"github.com/pkg/profile"
 	"go.uber.org/zap"
 )
 
-func runLoop() {
-	pprof := profile.Start(profile.NoShutdownHook)
-
+func run() bool {
 	// Initialize context
 	ctx, cancel := context.WithCancel(context.Background())
 
 	// Initialize logger
-	logger := getLogger()
+	logger := newLogger().Named("agent")
 
 	// Initialize Agent
 	paragon := &agent.Agent{
+		Log:         logger,
+		MaxIdleTime: 30 * time.Second,
 		Receiver: Receiver{
 			ctx,
-			logger.Named("agent.exec"),
+			logger.Named("exec"),
 		},
-		Log:        logger.Named("agent"),
-		Transports: getTransports(logger.Named("agent.transport")),
+		Transports: transports(logger.Named("transport")),
 	}
 
 	// Handle panic
@@ -55,25 +54,25 @@ func runLoop() {
 	// Wait for interupt
 	select {
 	case <-sigint:
-		if exitCode := handleInterupt(logger); exitCode != 0 {
-			pprof.Stop()
-			os.Exit(exitCode)
-		}
+		logger.Info("Received interupt signal")
 	case <-sigterm:
-		if exitCode := handleTerminate(logger); exitCode != 0 {
-			pprof.Stop()
-			os.Exit(exitCode)
-		}
+		logger.Error("Received terminate signal")
 	}
 
-	// After interupt, wait for threads to finish
+	// Wait for threads to finish
 	cancel()
 	wg.Wait()
+
+	return true
 }
 
 func main() {
+	// Enable profiling for the run if compiled
+	pprof := startProfile()
+	defer pprof.Stop()
 
-	for {
-		runLoop()
+	interupted := false
+	for !interupted {
+		interupted = run()
 	}
 }

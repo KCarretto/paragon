@@ -1,6 +1,7 @@
 # Build artifacts
 dist/**
 
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -13,3 +14,6 @@ dist/**
 
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
+
+# Profile output
+.stats/**

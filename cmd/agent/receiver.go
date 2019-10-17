@@ -11,12 +11,14 @@ import (
 	"go.uber.org/zap"
 )
 
+// Receiver is responsible for handling messages from the server.
 type Receiver struct {
 	context.Context
 
 	Log *zap.Logger
 }
 
+// Receive messages from the server, executing tasks as scripts.
 func (r Receiver) Receive(w agent.MessageWriter, msg agent.ServerMessage) {
 	r.Log.Debug("Received new payload from server",
 		zap.Int("num_tasks", len(msg.Tasks)),
@@ -33,7 +35,7 @@ func (r Receiver) Receive(w agent.MessageWriter, msg agent.ServerMessage) {
 			bytes.NewBufferString(task.Content),
 			script.WithOutput(result),
 			stdlib.Load(),
-		) // TODO: Add libraries, set output
+		)
 
 		err := code.Exec(r)
 		if err != nil {
