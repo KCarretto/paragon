@@ -61,18 +61,21 @@ func (agent Agent) Send(w ServerMessageWriter, msg Message) error {
 
 // Run the agent, sending agent messages to a server using configured transports.
 func (agent Agent) Run(ctx context.Context) error {
+	agent.Log.Debug("Starting agent execution")
+	var agentMsg Message
+
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 		default:
-			var agentMsg Message
 			var srvMsg ServerMessage
 
 			if err := agent.Send(&srvMsg, agentMsg); err != nil {
 				return err
 			}
 
+			agentMsg = Message{}
 			agent.Receive(&agentMsg, srvMsg)
 		}
 	}

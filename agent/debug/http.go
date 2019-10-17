@@ -8,7 +8,8 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/kcarretto/paragon/transport"
+	"github.com/kcarretto/paragon/agent"
+	"github.com/kcarretto/paragon/api/codec"
 	"go.uber.org/zap"
 )
 
@@ -20,46 +21,39 @@ func use(h http.HandlerFunc, middleware ...func(http.HandlerFunc) http.HandlerFu
 	return h
 }
 
-func (t *Transport) handleIndex(w http.ResponseWriter, req *http.Request) {
+func (transport *Sender) handleIndex(w http.ResponseWriter, req *http.Request) {
 
 	w.Write([]byte(debugHTML))
 	return
 }
 
-func (t *Transport) handleQueue(w http.ResponseWriter, req *http.Request) {
+// handleQueue handles an http request to queue a task.
+func (transport *Sender) handleQueue(w http.ResponseWriter, req *http.Request) {
+	// Read request data
 	data, err := ioutil.ReadAll(req.Body)
 	if err != nil {
-		t.Logger.Error("Failed to read request body", zap.Error(err))
+		transport.Log.Error("Failed to read request body", zap.Error(err))
 		msg := fmt.Sprintf("failed to read request body: %s", err.Error())
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
+	transport.Log.Debug("Request to queue task", zap.String("task", string(data)))
 
-	t.Logger.Debug("Request to queue task", zap.String("task", string(data)))
-	var task transport.Task
+	// Unmarshal request into task
+	var task codec.Task
 	if err := json.Unmarshal(data, &task); err != nil {
-		t.Logger.Error("Failed to parse request body", zap.Error(err))
+		transport.Log.Error("Failed to parse request body", zap.Error(err))
 		msg := fmt.Sprintf("failed to parse request body to json: %s", err.Error())
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
-	serverMsg, err := json.Marshal(
-		transport.Payload{
-			Tasks: []transport.Task{task},
-		},
-	)
-	if err != nil {
-		t.Logger.Error("Failed to marshal server message", zap.Error(err))
-		msg := fmt.Sprintf("failed to marshal server message: %s", err.Error())
-		http.Error(w, msg, http.StatusInternalServerError)
-		return
-	}
-
-	t.WritePayload(serverMsg)
+	// Queue the task
+	transport.QueueTask(&task)
 }
 
-func (t *Transport) handleResponses(w http.ResponseWriter, req *http.Request) {
+// handleMessages handles an http request to view agent messages
+func (transport *Sender) handleMessages(w http.ResponseWriter, req *http.Request) {
 	params := req.URL.Query()
 
 	offsetStr := params.Get("offset")
@@ -90,17 +84,17 @@ func (t *Transport) handleResponses(w http.ResponseWriter, req *http.Request) {
 		limit = 1
 	}
 
-	messages := []transport.Response{}
-	for i := offset; i < len(t.messages) && i <= offset+limit; i++ {
-		messages = append(messages, t.messages[i])
+	messages := []agent.Message{}
+	for i := offset; i < len(transport.messages) && i <= offset+limit; i++ {
+		messages = append(messages, transport.messages[i])
 	}
 
-	t.Logger.Debug(
+	transport.Log.Debug(
 		"Retrieving responses",
 		zap.Int("offset", offset),
 		zap.Int("limit", limit),
 		zap.Int("sent_messages", len(messages)),
-		zap.Int("total_messages", len(t.messages)),
+		zap.Int("total_messages", len(transport.messages)),
 	)
 
 	respData, err := json.Marshal(messages)
@@ -111,14 +105,13 @@ func (t *Transport) handleResponses(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	if _, err = w.Write(respData); err != nil {
-		t.Logger.Error("Failed to write response data to client", zap.Error(err))
+		transport.Log.Error("Failed to write response data to client", zap.Error(err))
 		http.Error(w, fmt.Sprintf("failed to write response data to client: %s", err.Error()), http.StatusInternalServerError)
 	}
-
 }
 
 // listenAndServe configures and runs an http server for agent debugging.
-func (t *Transport) listenAndServe() {
+func (transport *Sender) listenAndServe() {
 	router := http.NewServeMux()
 	var middleware []func(http.HandlerFunc) http.HandlerFunc
 
@@ -132,16 +125,22 @@ func (t *Transport) listenAndServe() {
 		middleware = append(middleware, prepareBasicAuth(username, password))
 	}
 
-	router.HandleFunc("/", use(t.handleIndex, middleware...))
-	router.HandleFunc("/queue", use(t.handleQueue, middleware...))
-	router.HandleFunc("/messages", use(t.handleResponses, middleware...))
-	http.Handle("/", router)
-
 	httpAddr := os.Getenv("DEBUG_API_ADDR")
 	if httpAddr == "" {
 		httpAddr = "127.0.0.1:8080"
 	}
 
-	t.Logger.Info("HTTP DEBUG ENABLED", zap.String("http_addr", httpAddr))
-	http.ListenAndServe(httpAddr, router)
+	router.HandleFunc("/", use(transport.handleIndex, middleware...))
+	router.HandleFunc("/queue", use(transport.handleQueue, middleware...))
+	router.HandleFunc("/messages", use(transport.handleMessages, middleware...))
+	transport.srv = &http.Server{
+		Addr:    httpAddr,
+		Handler: router,
+	}
+
+	transport.Log.Info("HTTP DEBUG ENABLED", zap.String("http_addr", httpAddr))
+	if err := transport.srv.ListenAndServe(); err != nil {
+		transport.Log.Error("HTTP Debug Server encountered an error while closing", zap.Error(err))
+	}
+	transport.Log.Info("HTTP Debug Server Closed")
 }

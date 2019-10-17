@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
+	"github.com/kcarretto/paragon/agent"
 	"github.com/pkg/profile"
 	"go.uber.org/zap"
 )
@@ -21,6 +21,16 @@ func runLoop() {
 	// Initialize logger
 	logger := getLogger()
 
+	// Initialize Agent
+	paragon := &agent.Agent{
+		Receiver: Receiver{
+			ctx,
+			logger.Named("agent.exec"),
+		},
+		Log:        logger.Named("agent"),
+		Transports: getTransports(logger.Named("agent.transport")),
+	}
+
 	// Handle panic
 	defer func() {
 		if err := recover(); err != nil {
@@ -31,10 +41,10 @@ func runLoop() {
 	// Run agent
 	var wg sync.WaitGroup
 	wg.Add(1)
-	go func(logger *zap.Logger) {
+	go func() {
 		defer wg.Done()
-		run(ctx, logger)
-	}(logger.With(zap.Time("agent_loop_start", time.Now())))
+		paragon.Run(ctx)
+	}()
 
 	// Listen for interupts
 	sigint := make(chan os.Signal, 1)
@@ -59,7 +69,6 @@ func runLoop() {
 	// After interupt, wait for threads to finish
 	cancel()
 	wg.Wait()
-
 }
 
 func main() {

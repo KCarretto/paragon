@@ -4,9 +4,10 @@ package main
 
 import (
 	"io"
+	"time"
 
-	"github.com/kcarretto/paragon/transport"
-	"github.com/kcarretto/paragon/transport/debug"
+	"github.com/kcarretto/paragon/agent"
+	"github.com/kcarretto/paragon/agent/debug"
 	"go.uber.org/zap"
 )
 
@@ -30,12 +31,16 @@ func getLogger() *zap.Logger {
 
 func configureLogger(logger *zap.Logger, buf io.Writer) {}
 
-func addTransports(logger *zap.Logger, receiver transport.PayloadWriter, registry *transport.Registry) {
-	registry.Add(transport.New(
-		"debug",
-		&debug.Transport{
-			Logger:        logger,
-			PayloadWriter: receiver,
+func getTransports(logger *zap.Logger) []agent.Transport {
+	return []agent.Transport{
+		agent.Transport{
+			Name:     "Debug",
+			Log:      logger.Named("debug"),
+			Interval: 5 * time.Second,
+			Jitter:   1 * time.Second,
+			Sender: &debug.Sender{
+				Log: logger.Named("debug"),
+			},
 		},
-	))
+	}
 }
