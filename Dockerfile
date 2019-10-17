@@ -10,7 +10,8 @@ RUN apk add alpine-sdk git \
 # Debug Build
 FROM base as build
 COPY ./cmd /app/cmd
-COPY ./transport /app/transport
+COPY ./api /app/api
+COPY ./agent /app/agent
 COPY ./script /app/script
 RUN go build -tags=debug -o ./build/agent ./cmd/agent
 

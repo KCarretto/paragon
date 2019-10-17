@@ -70,8 +70,9 @@ func TestAgentRun(t *testing.T) {
 	defer cancel()
 
 	testAgent := &agent.Agent{
-		Log:      logger,
-		Receiver: recv,
+		Log:         logger,
+		Receiver:    recv,
+		MaxIdleTime: time.Second * 1,
 		Transports: []agent.Transport{
 			agent.Transport{
 				Sender: sender,

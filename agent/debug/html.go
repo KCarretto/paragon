@@ -32,7 +32,7 @@ const debugHTML = `<!DOCTYPE html>
       "showMethod": "fadeIn",
       "hideMethod": "fadeOut"
 	}
-    
+
 	function addToResults(result) {
     	$('#resultsList').prepend(
     		$('<li class="list-group-item">').append(
@@ -45,7 +45,7 @@ const debugHTML = `<!DOCTYPE html>
     }
     function queueScript(){
     	let script = {
-            "content": btoa($("#scriptTextArea").val())
+            "content": $("#scriptTextArea").val()
         }
         $.ajax({
             url: '/queue',
@@ -70,7 +70,8 @@ const debugHTML = `<!DOCTYPE html>
             	if (response.results != null){
                     response.results.map(function(result){
                         if (result.output != null){
-                            addToResults(atob(result.output));
+							output = result.output.join("\n")
+                            addToResults(output);
                         } else if (result.error != "") {
 							addToResults("error: "+result.error)
 						} else {
