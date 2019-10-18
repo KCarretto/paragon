@@ -2,6 +2,8 @@ package teamserver
 
 import (
 	"context"
+	"encoding/json"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -23,10 +25,42 @@ type Server struct {
 	ExecutedSubscription *pubsub.Subscription
 }
 
+type rawTask struct {
+	Content string
+}
+
+func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var t rawTask
+		err := decoder.Decode(&t)
+		if err != nil {
+			http.Error(w, "improper task json sent", http.StatusBadRequest)
+			return
+		}
+		ctx := context.Background()
+		newTask, err := srv.EntClient.Task.Create().SetContent(t.Content).Save(ctx)
+		if err != nil {
+			http.Error(w, "unable to create new task", http.StatusInternalServerError)
+			return
+		}
+		if err := srv.QueueTask(ctx, newTask); err != nil {
+			http.Error(w, "unable to queue task to topic", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		http.Error(w, "404 not found.", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run(ctx context.Context) {
 	go srv.handleTasksClaimed(ctx)
 	go srv.handleTasksExecuted(ctx)
+	http.HandleFunc("/queueTask", srv.handleQueueTask)
+	http.ListenAndServe(":80", nil)
 }
 
 // QueueTask sends a given task (and some associated target data) to the `tasks.queued` topic
