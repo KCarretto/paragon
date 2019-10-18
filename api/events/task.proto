@@ -28,7 +28,7 @@ message TaskClaimed {
 
 message TaskExecuted {
   string id = 1;
-  string output = 2;
+  repeated string output = 2;
   string error = 3;
   int64 execStartTime = 4;
   int64 execStopTime = 5;
