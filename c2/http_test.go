@@ -25,7 +25,7 @@ func TestHTTP(t *testing.T) {
 
 	// Prepare server
 	srv := &c2.Server{
-		&c2.Queue{},
+		Queue: &c2.Queue{},
 	}
 
 	// Serve the http request

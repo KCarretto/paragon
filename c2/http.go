@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/api/events"
 )
 
 //ServeHTTP implements http.Handler to handle agent messages sent via http.
@@ -42,4 +44,20 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, fmt.Sprintf("Failed to write response data: %s", err.Error()), http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
+
+	// Handle task results
+	if srv.OnTaskExecuted == nil {
+		return
+	}
+	recvTime := time.Now()
+	for _, result := range msg.GetResults() {
+		srv.OnTaskExecuted(events.TaskExecuted{
+			Id:            result.GetId(),
+			Output:        result.GetOutput(),
+			Error:         result.GetError(),
+			ExecStartTime: result.GetExecStartTime().GetSeconds(),
+			ExecStopTime:  result.GetExecStopTime().GetSeconds(),
+			RecvTime:      recvTime.Unix(),
+		})
+	}
 }

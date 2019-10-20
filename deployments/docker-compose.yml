@@ -12,3 +12,10 @@ services:
       DEBUG_API_ADDR: "0.0.0.0:8080"
     ports:
       - "127.0.0.1:8080:8080"
+  c2:
+    build:
+      context: ../
+      dockerfile: "./deployments/c2.Dockerfile"
+      target: production
+    ports:
+      - "127.0.0.1:8080:8080"
