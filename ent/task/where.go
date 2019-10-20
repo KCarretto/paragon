@@ -869,6 +869,24 @@ func ErrorHasSuffix(v string) predicate.Task {
 	)
 }
 
+// ErrorIsNil applies the IsNil predicate on the "Error" field.
+func ErrorIsNil() predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.IsNull(s.C(FieldError)))
+		},
+	)
+}
+
+// ErrorNotNil applies the NotNil predicate on the "Error" field.
+func ErrorNotNil() predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.NotNull(s.C(FieldError)))
+		},
+	)
+}
+
 // ErrorEqualFold applies the EqualFold predicate on the "Error" field.
 func ErrorEqualFold(v string) predicate.Task {
 	return predicate.Task(

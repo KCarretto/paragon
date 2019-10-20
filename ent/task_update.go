@@ -29,6 +29,7 @@ type TaskUpdate struct {
 	Output             *[]string
 	clearOutput        bool
 	Error              *string
+	clearError         bool
 	SessionID          *string
 	clearSessionID     bool
 	target             map[int]struct{}
@@ -141,6 +142,21 @@ func (tu *TaskUpdate) ClearOutput() *TaskUpdate {
 // SetError sets the Error field.
 func (tu *TaskUpdate) SetError(s string) *TaskUpdate {
 	tu.Error = &s
+	return tu
+}
+
+// SetNillableError sets the Error field if the given value is not nil.
+func (tu *TaskUpdate) SetNillableError(s *string) *TaskUpdate {
+	if s != nil {
+		tu.SetError(*s)
+	}
+	return tu
+}
+
+// ClearError clears the value of Error.
+func (tu *TaskUpdate) ClearError() *TaskUpdate {
+	tu.Error = nil
+	tu.clearError = true
 	return tu
 }
 
@@ -301,6 +317,9 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := tu.Error; value != nil {
 		builder.Set(task.FieldError, *value)
 	}
+	if tu.clearError {
+		builder.SetNull(task.FieldError)
+	}
 	if value := tu.SessionID; value != nil {
 		builder.Set(task.FieldSessionID, *value)
 	}
@@ -354,6 +373,7 @@ type TaskUpdateOne struct {
 	Output             *[]string
 	clearOutput        bool
 	Error              *string
+	clearError         bool
 	SessionID          *string
 	clearSessionID     bool
 	target             map[int]struct{}
@@ -459,6 +479,21 @@ func (tuo *TaskUpdateOne) ClearOutput() *TaskUpdateOne {
 // SetError sets the Error field.
 func (tuo *TaskUpdateOne) SetError(s string) *TaskUpdateOne {
 	tuo.Error = &s
+	return tuo
+}
+
+// SetNillableError sets the Error field if the given value is not nil.
+func (tuo *TaskUpdateOne) SetNillableError(s *string) *TaskUpdateOne {
+	if s != nil {
+		tuo.SetError(*s)
+	}
+	return tuo
+}
+
+// ClearError clears the value of Error.
+func (tuo *TaskUpdateOne) ClearError() *TaskUpdateOne {
+	tuo.Error = nil
+	tuo.clearError = true
 	return tuo
 }
 
@@ -636,6 +671,11 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 	if value := tuo.Error; value != nil {
 		builder.Set(task.FieldError, *value)
 		t.Error = *value
+	}
+	if tuo.clearError {
+		var value string
+		t.Error = value
+		builder.SetNull(task.FieldError)
 	}
 	if value := tuo.SessionID; value != nil {
 		builder.Set(task.FieldSessionID, *value)

@@ -39,7 +39,10 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		ctx := context.Background()
-		newTask, err := srv.EntClient.Task.Create().SetContent(t.Content).Save(ctx)
+		newTask, err := srv.EntClient.Task.
+			Create().
+			SetContent(t.Content).
+			Save(ctx)
 		if err != nil {
 			http.Error(w, "unable to create new task", http.StatusInternalServerError)
 			return
@@ -60,7 +63,9 @@ func (srv *Server) Run(ctx context.Context) {
 	go srv.handleTasksClaimed(ctx)
 	go srv.handleTasksExecuted(ctx)
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
-	http.ListenAndServe("0.0.0.0:80", nil)
+	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
+		panic(err)
+	}
 }
 
 // QueueTask sends a given task (and some associated target data) to the `tasks.queued` topic
