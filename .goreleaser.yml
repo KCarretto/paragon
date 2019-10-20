@@ -38,10 +38,20 @@ archives:
 
 dockers:
   -
-    dockerfile: Dockerfile
+    dockerfile: deployments/agent.Dockerfile
     image_templates:
       - "kcarretto/{{.ProjectName}}:latest"
       - "kcarretto/{{.ProjectName}}:{{ .Tag }}"
+  -
+    dockerfile: deployments/c2.Dockerfile
+    image_templates:
+      - "ritredteam/paragon-c2:latest"
+      - "ritredteam/paragon-c2:{{ .Tag }}"
+  -
+    dockerfile: deployments/teamserver.Dockerfile
+    image_templates:
+      - "ritredteam/paragon-teamserver:latest"
+      - "ritredteam/paragon-teamserver:{{ .Tag }}"
 
 checksum:
   name_template: 'checksums.txt'
