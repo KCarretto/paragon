@@ -26,7 +26,7 @@ type Server struct {
 }
 
 type rawTask struct {
-	Content string
+	Content string `json:"content"`
 }
 
 func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {

@@ -18,5 +18,5 @@ RUN go build -tags=debug,profile_cpu -o ./build/agent ./cmd/agent
 # Developer
 FROM build as developer
 RUN apk add tmux vim
-EXPOSE 8080
+EXPOSE 80
 CMD ["./build/agent"]
