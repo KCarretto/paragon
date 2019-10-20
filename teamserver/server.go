@@ -28,7 +28,7 @@ type Server struct {
 type rawTask struct {
 	Content   string `json:"content"`
 	SessionID string `json:"sessionID"`
-	TaskID    int    `json:"taskID"`
+	TargetID  int    `json:"targetID"`
 }
 
 type rawTarget struct {
@@ -37,6 +37,10 @@ type rawTarget struct {
 	Hostname    string `json:"hostname"`
 	PrimaryIP   string `json:"primaryIP"`
 	PrimaryMAC  string `json:"primaryMAC"`
+}
+
+type iDResponse struct {
+	ID int `json:"id"`
 }
 
 func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
@@ -49,7 +53,7 @@ func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		ctx := context.Background()
-		_, err = srv.EntClient.Target.
+		newTarget, err := srv.EntClient.Target.
 			Create().
 			SetName(t.Name).
 			SetMachineUUID(t.MachineUUID).
@@ -61,6 +65,16 @@ func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unable to create new target", http.StatusInternalServerError)
 			return
 		}
+		resp := iDResponse{
+			ID: newTarget.ID,
+		}
+		respBody, err := json.Marshal(resp)
+		if err != nil {
+			http.Error(w, "unable to create response", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(respBody)
 	} else {
 		http.Error(w, "404 not found.", http.StatusNotFound)
 		return
@@ -78,7 +92,7 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		ctx := context.Background()
-		target, err := srv.EntClient.Target.Get(ctx, t.TaskID)
+		target, err := srv.EntClient.Target.Get(ctx, t.TargetID)
 		if err != nil {
 			http.Error(w, "improper target id given", http.StatusBadRequest)
 			return
@@ -93,6 +107,16 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unable to create new task", http.StatusInternalServerError)
 			return
 		}
+		resp := iDResponse{
+			ID: newTask.ID,
+		}
+		respBody, err := json.Marshal(resp)
+		if err != nil {
+			http.Error(w, "unable to create response", http.StatusInternalServerError)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write(respBody)
 		if err := srv.QueueTask(ctx, newTask); err != nil {
 			http.Error(w, "unable to queue task to topic", http.StatusInternalServerError)
 			return
@@ -170,6 +194,13 @@ func (srv *Server) handleTasksClaimed(ctx context.Context) {
 		if err := proto.Unmarshal(msg.Body, &event); err != nil {
 			srv.Log.Error("the task failed to be updated", zap.Error(err))
 		}
+		target := task.QueryTarget().FirstX(ctx)
+		target, err = target.Update().
+			SetLastSeen(time.Now()).
+			Save(ctx)
+		if err != nil {
+			srv.Log.Error("unable to update last seen on target", zap.Error(err))
+		}
 		msg.Ack()
 	}
 }
@@ -203,6 +234,13 @@ func (srv *Server) handleTasksExecuted(ctx context.Context) {
 			Save(ctx)
 		if err := proto.Unmarshal(msg.Body, &event); err != nil {
 			srv.Log.Error("the task failed to be updated", zap.Error(err))
+		}
+		target := task.QueryTarget().FirstX(ctx)
+		target, err = target.Update().
+			SetLastSeen(time.Now()).
+			Save(ctx)
+		if err != nil {
+			srv.Log.Error("unable to update last seen on target", zap.Error(err))
 		}
 		msg.Ack()
 	}
