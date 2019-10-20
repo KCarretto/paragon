@@ -18,7 +18,8 @@ import "api/codec/agent.proto";
 message TaskQueued {
   string id = 1;
   string content = 2;
-  codec.AgentMetadata filter = 3;
+  string sessionID = 3;
+  string machineUUID = 4;
 }
 
 message TaskClaimed {
