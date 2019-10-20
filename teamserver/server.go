@@ -75,11 +75,9 @@ func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(respBody)
-	} else {
-		http.Error(w, "404 not found.", http.StatusNotFound)
-		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
 }
 
 func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
@@ -121,11 +119,9 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unable to queue task to topic", http.StatusInternalServerError)
 			return
 		}
-	} else {
-		http.Error(w, "404 not found.", http.StatusNotFound)
-		return
 	}
-	w.WriteHeader(http.StatusOK)
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
 }
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
