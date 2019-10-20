@@ -40,8 +40,8 @@ dockers:
   -
     dockerfile: deployments/agent.Dockerfile
     image_templates:
-      - "kcarretto/{{.ProjectName}}:latest"
-      - "kcarretto/{{.ProjectName}}:{{ .Tag }}"
+      - "ritredteam/paragon-agent:latest"
+      - "ritredteam/paragon-agent:{{ .Tag }}"
   -
     dockerfile: deployments/c2.Dockerfile
     image_templates:
