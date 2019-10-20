@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kcarretto/paragon/ent"
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func getClient(ctx context.Context) *ent.Client {
