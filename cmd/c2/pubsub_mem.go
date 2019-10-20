@@ -2,20 +2,24 @@
 
 package main
 
-// import (
-// 	"context"
-// 	"fmt"
+import (
+	"context"
+	"fmt"
 
-// 	"gocloud.dev/pubsub"
-// 	_ "gocloud.dev/pubsub/mempubsub"
-// )
+	"gocloud.dev/pubsub"
+	_ "gocloud.dev/pubsub/mempubsub"
+)
 
-// func openTopic(ctx context.Context, topic string) (*pubsub.Topic, error) {
-// 	uri := fmt.Sprintf("mem://%s", topic)
-// 	return pubsub.OpenTopic(ctx, uri)
-// }
+func openTopic(ctx context.Context, topic string) (*pubsub.Topic, error) {
+	uri := fmt.Sprintf("mem://%s", topic)
+	return pubsub.OpenTopic(ctx, uri)
+}
 
-// func openSubscription(ctx context.Context, topic string) (*pubsub.Subscription, error) {
-// 	uri := fmt.Sprintf("mem://%s", topic)
-// 	return pubsub.OpenSubscription(ctx, uri)
-// }
+func openSubscription(ctx context.Context, topic string) (*pubsub.Subscription, error) {
+	if _, err := openTopic(ctx, topic); err != nil {
+		return nil, err
+	}
+
+	uri := fmt.Sprintf("mem://%s", topic)
+	return pubsub.OpenSubscription(ctx, uri)
+}

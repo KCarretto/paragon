@@ -25,10 +25,15 @@ func (q *Queue) ClaimTasks(agent *codec.AgentMetadata) (tasks []*codec.Task) {
 	defer q.mu.Unlock()
 
 	for i, event := range q.tasks {
-		if sessionID := event.GetSessionID(); sessionID != "" && sessionID != agent.SessionID {
+		filter := event.GetFilter()
+		if filter == nil {
 			continue
 		}
-		if machineUUID := event.GetMachineUUID(); machineUUID != "" && machineUUID != agent.MachineUUID {
+
+		if sessionID := filter.GetSessionID(); sessionID != "" && sessionID != agent.SessionID {
+			continue
+		}
+		if machineUUID := filter.GetMachineUUID(); machineUUID != "" && machineUUID != agent.MachineUUID {
 			continue
 		}
 

@@ -145,7 +145,7 @@ func (srv *Server) handleTasksExecuted(ctx context.Context) {
 		}
 		execStartTime := time.Unix(event.GetExecStartTime(), 0)
 		execStopTime := time.Unix(event.GetExecStopTime(), 0)
-		output := []string{event.GetOutput()}
+		output := event.GetOutput()
 		task, err = task.Update().
 			SetExecStartTime(execStartTime).
 			SetExecStopTime(execStopTime).

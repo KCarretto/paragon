@@ -6,20 +6,10 @@ option go_package = "github.com/kcarretto/paragon/api/events";
 
 import "api/codec/agent.proto";
 
-// message AgentMetadata {
-//   string agentID = 1;
-//   string machineUUID = 2;
-//   string sessionID = 3;
-//   string hostname = 4;
-//   string primaryIP = 5;
-//   string primaryMAC = 6;
-// }
-
 message TaskQueued {
   string id = 1;
   string content = 2;
-  string sessionID = 3;
-  string machineUUID = 4;
+  codec.AgentMetadata filter = 3;
 }
 
 message TaskClaimed {
