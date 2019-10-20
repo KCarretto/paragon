@@ -1,91 +1,57 @@
 package main
 
-// import (
-// 	"context"
-// 	"net/http"
-// 	"os"
+import (
+	"context"
+	"net/http"
+	"os"
 
-// 	"github.com/kcarretto/paragon/c2"
-// 	"go.uber.org/zap"
-// )
+	"github.com/kcarretto/paragon/c2"
+
+	"go.uber.org/zap"
+)
 
 func main() {
-	// ctx := context.Background()
+	ctx := context.Background()
 
-	// logger, err := zap.NewDevelopment()
-	// if err != nil {
-	// 	panic(err)
-	// }
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
 
-	// httpAddr := os.Getenv("HTTP_ADDR")
-	// if httpAddr == "" {
-	// 	httpAddr = "127.0.0.1:8080"
-	// }
+	execTopic, err := openTopic(ctx, "tasks.executed")
+	if err != nil {
+		logger.Panic("Failed to open pubsub topic", zap.Error(err))
+	}
+	defer execTopic.Shutdown(ctx)
 
-	// resultTopic, err := openTopic(ctx, "tasks.result_received")
-	// if err != nil {
-	// 	logger.Panic("Failed to open pubsub topic", zap.Error(err))
-	// }
-	// defer resultTopic.Shutdown(ctx)
+	claimTopic, err := openTopic(ctx, "tasks.claimed")
+	if err != nil {
+		logger.Panic("Failed to open pubsub topic", zap.Error(err))
+	}
+	defer claimTopic.Shutdown(ctx)
 
-	// queueTopic, err := openSubscription(ctx, "tasks.queued")
-	// if err != nil {
-	// 	logger.Panic("Failed to subscribe to pubsub topic", zap.Error(err))
-	// }
-	// defer queueTopic.Shutdown(ctx)
+	taskQueue, err := openSubscription(ctx, "tasks.queued")
+	if err != nil {
+		logger.Panic("Failed to subscribe to pubsub topic", zap.Error(err))
+	}
+	defer taskQueue.Shutdown(ctx)
 
-	// srv := &c2.Server{
-	// 	Log:         logger,
-	// 	TaskResults: resultTopic,
-	// }
+	httpAddr := "127.0.0.1:8080"
+	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
+		httpAddr = addr
+	}
 
-	// go func() {
+	srv := &c2.Server{
+		OnTaskExecuted: onExec(ctx, logger.Named("events.tasks.executed"), execTopic),
+		Queue: &c2.Queue{
+			OnClaim: onClaim(ctx, logger.Named("events.tasks.claimed"), claimTopic),
+		},
+	}
 
-	// }()
+	go listenForTasks(ctx, logger, srv, taskQueue)
 
-	// logger.Info("Started C2 server", zap.String("http_addr", httpAddr))
-	// if err := http.ListenAndServe(httpAddr, srv); err != nil {
-	// 	logger.Panic("Failed to serve HTTP", zap.Error(err))
-	// }
-
-	// router := http.NewServeMux()
-	// router.HandleFunc("/", func(w http.ResponseWriter, req *http.Request) {
-	// 	data, err := ioutil.ReadAll(req.Body)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	var agentResponse transport.Response
-	// 	if err := json.Unmarshal(data, &agentResponse); err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	fmt.Printf("\n\nReceived request: %+v\n", agentResponse)
-
-	// 	var tasks []transport.Task
-	// 	if rand.Intn(2) == 0 {
-	// 		task := transport.Task{
-	// 			ID:      "task1",
-	// 			Content: []byte(`print("Task from C2 ;)")`),
-	// 		}
-	// 		tasks = append(tasks, task)
-	// 	}
-
-	// 	resp := transport.Payload{
-	// 		Tasks: tasks,
-	// 	}
-
-	// 	respData, err := json.Marshal(resp)
-	// 	if err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	if _, err = w.Write(respData); err != nil {
-	// 		panic(err)
-	// 	}
-
-	// 	fmt.Println("Responded to agent")
-
-	// })
-
+	logger.Info("Starting HTTP Server", zap.String("addr", httpAddr))
+	if err := http.ListenAndServe(httpAddr, srv); err != nil {
+		panic(err)
+	}
 }
