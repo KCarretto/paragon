@@ -26,7 +26,46 @@ type Server struct {
 }
 
 type rawTask struct {
-	Content string `json:"content"`
+	Content   string `json:"content"`
+	SessionID string `json:"sessionID"`
+	TaskID    int    `json:"taskID"`
+}
+
+type rawTarget struct {
+	Name        string `json:"name"`
+	MachineUUID string `json:"machineUUID"`
+	Hostname    string `json:"hostname"`
+	PrimaryIP   string `json:"primaryIP"`
+	PrimaryMAC  string `json:"primaryMAC"`
+}
+
+func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var t rawTarget
+		err := decoder.Decode(&t)
+		if err != nil {
+			http.Error(w, "improper task json sent", http.StatusBadRequest)
+			return
+		}
+		ctx := context.Background()
+		_, err = srv.EntClient.Target.
+			Create().
+			SetName(t.Name).
+			SetMachineUUID(t.MachineUUID).
+			SetHostname(t.Hostname).
+			SetPrimaryIP(t.PrimaryIP).
+			SetPrimaryMAC(t.PrimaryMAC).
+			Save(ctx)
+		if err != nil {
+			http.Error(w, "unable to create new target", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		http.Error(w, "404 not found.", http.StatusNotFound)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
@@ -39,9 +78,16 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		ctx := context.Background()
+		target, err := srv.EntClient.Target.Get(ctx, t.TaskID)
+		if err != nil {
+			http.Error(w, "improper target id given", http.StatusBadRequest)
+			return
+		}
 		newTask, err := srv.EntClient.Task.
 			Create().
 			SetContent(t.Content).
+			SetSessionID(t.SessionID).
+			SetTarget(target).
 			Save(ctx)
 		if err != nil {
 			http.Error(w, "unable to create new task", http.StatusInternalServerError)
@@ -63,6 +109,7 @@ func (srv *Server) Run(ctx context.Context) {
 	go srv.handleTasksClaimed(ctx)
 	go srv.handleTasksExecuted(ctx)
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
+	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
 	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
 		panic(err)
 	}
@@ -70,10 +117,7 @@ func (srv *Server) Run(ctx context.Context) {
 
 // QueueTask sends a given task (and some associated target data) to the `tasks.queued` topic
 func (srv *Server) QueueTask(ctx context.Context, task *ent.Task) error {
-	target, err := task.QueryTarget().First(ctx)
-	if err != nil {
-		return err
-	}
+	target := task.QueryTarget().FirstX(ctx)
 	targetID := strconv.Itoa(target.ID)
 	agentMetadata := codec.AgentMetadata{
 		AgentID:     targetID,

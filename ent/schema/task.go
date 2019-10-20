@@ -50,6 +50,7 @@ func (Task) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("target", Target.Type).
 			Ref("tasks").
+			Required().
 			Unique().
 			Comment("A Task will be bound to a single Target"),
 	}

@@ -132,14 +132,6 @@ func (tc *TaskCreate) SetTargetID(id int) *TaskCreate {
 	return tc
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
-func (tc *TaskCreate) SetNillableTargetID(id *int) *TaskCreate {
-	if id != nil {
-		tc = tc.SetTargetID(*id)
-	}
-	return tc
-}
-
 // SetTarget sets the target edge to Target.
 func (tc *TaskCreate) SetTarget(t *Target) *TaskCreate {
 	return tc.SetTargetID(t.ID)
@@ -164,6 +156,9 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 	}
 	if len(tc.target) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	}
+	if tc.target == nil {
+		return nil, errors.New("ent: missing required edge \"target\"")
 	}
 	return tc.sqlSave(ctx)
 }

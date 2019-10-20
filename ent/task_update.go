@@ -190,14 +190,6 @@ func (tu *TaskUpdate) SetTargetID(id int) *TaskUpdate {
 	return tu
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
-func (tu *TaskUpdate) SetNillableTargetID(id *int) *TaskUpdate {
-	if id != nil {
-		tu = tu.SetTargetID(*id)
-	}
-	return tu
-}
-
 // SetTarget sets the target edge to Target.
 func (tu *TaskUpdate) SetTarget(t *Target) *TaskUpdate {
 	return tu.SetTargetID(t.ID)
@@ -223,6 +215,9 @@ func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if len(tu.target) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	}
+	if tu.clearedTarget && tu.target == nil {
+		return 0, errors.New("ent: clearing a unique edge \"target\"")
 	}
 	return tu.sqlSave(ctx)
 }
@@ -527,14 +522,6 @@ func (tuo *TaskUpdateOne) SetTargetID(id int) *TaskUpdateOne {
 	return tuo
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
-func (tuo *TaskUpdateOne) SetNillableTargetID(id *int) *TaskUpdateOne {
-	if id != nil {
-		tuo = tuo.SetTargetID(*id)
-	}
-	return tuo
-}
-
 // SetTarget sets the target edge to Target.
 func (tuo *TaskUpdateOne) SetTarget(t *Target) *TaskUpdateOne {
 	return tuo.SetTargetID(t.ID)
@@ -560,6 +547,9 @@ func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 	}
 	if len(tuo.target) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	}
+	if tuo.clearedTarget && tuo.target == nil {
+		return nil, errors.New("ent: clearing a unique edge \"target\"")
 	}
 	return tuo.sqlSave(ctx)
 }
