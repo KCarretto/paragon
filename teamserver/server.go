@@ -60,7 +60,7 @@ func (srv *Server) Run(ctx context.Context) {
 	go srv.handleTasksClaimed(ctx)
 	go srv.handleTasksExecuted(ctx)
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
-	http.ListenAndServe(":80", nil)
+	http.ListenAndServe("0.0.0.0:80", nil)
 }
 
 // QueueTask sends a given task (and some associated target data) to the `tasks.queued` topic

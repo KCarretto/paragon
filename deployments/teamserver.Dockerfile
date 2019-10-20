@@ -13,10 +13,10 @@ COPY ./cmd /app/cmd
 COPY ./api /app/api
 COPY ./teamserver /app/teamserver
 COPY ./ent /app/ent
-RUN go build -tags=debug,profile_cpu -o ./build/teamserver ./cmd/teamserver
+RUN go build -tags=debug,profile_cpu,gcp -o ./build/teamserver ./cmd/teamserver
 
 # Developer
 FROM build as developer
 RUN apk add tmux vim
-EXPOSE 8080
+EXPOSE 80
 CMD ["./build/teamserver"]
