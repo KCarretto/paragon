@@ -4,7 +4,7 @@ services:
   agent:
     build:
       context: ../
-      dockerfile: "./deployments/Dockerfile"
+      dockerfile: "./deployments/agent.Dockerfile"
       target: developer
     environment:
       DEBUG_API_USER: "admin"
