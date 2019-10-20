@@ -34,7 +34,7 @@ var (
 		{Name: "exec_stop_time", Type: field.TypeTime, Nullable: true},
 		{Name: "content", Type: field.TypeString},
 		{Name: "output", Type: field.TypeJSON, Nullable: true},
-		{Name: "error", Type: field.TypeString},
+		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "session_id", Type: field.TypeString, Nullable: true},
 		{Name: "target_id", Type: field.TypeInt, Nullable: true},
 	}

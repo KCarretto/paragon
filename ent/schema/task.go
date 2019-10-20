@@ -37,6 +37,7 @@ func (Task) Fields() []ent.Field {
 			Optional().
 			Comment("The different outputs from executing the task"),
 		field.String("Error").
+			Optional().
 			NotEmpty().
 			Comment("The error, if any, produced while executing the Task"),
 		field.String("SessionID").
@@ -49,6 +50,7 @@ func (Task) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.From("target", Target.Type).
 			Ref("tasks").
+			Required().
 			Unique().
 			Comment("A Task will be bound to a single Target"),
 	}

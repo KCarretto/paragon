@@ -29,6 +29,7 @@ type TaskUpdate struct {
 	Output             *[]string
 	clearOutput        bool
 	Error              *string
+	clearError         bool
 	SessionID          *string
 	clearSessionID     bool
 	target             map[int]struct{}
@@ -144,6 +145,21 @@ func (tu *TaskUpdate) SetError(s string) *TaskUpdate {
 	return tu
 }
 
+// SetNillableError sets the Error field if the given value is not nil.
+func (tu *TaskUpdate) SetNillableError(s *string) *TaskUpdate {
+	if s != nil {
+		tu.SetError(*s)
+	}
+	return tu
+}
+
+// ClearError clears the value of Error.
+func (tu *TaskUpdate) ClearError() *TaskUpdate {
+	tu.Error = nil
+	tu.clearError = true
+	return tu
+}
+
 // SetSessionID sets the SessionID field.
 func (tu *TaskUpdate) SetSessionID(s string) *TaskUpdate {
 	tu.SessionID = &s
@@ -174,14 +190,6 @@ func (tu *TaskUpdate) SetTargetID(id int) *TaskUpdate {
 	return tu
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
-func (tu *TaskUpdate) SetNillableTargetID(id *int) *TaskUpdate {
-	if id != nil {
-		tu = tu.SetTargetID(*id)
-	}
-	return tu
-}
-
 // SetTarget sets the target edge to Target.
 func (tu *TaskUpdate) SetTarget(t *Target) *TaskUpdate {
 	return tu.SetTargetID(t.ID)
@@ -207,6 +215,9 @@ func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if len(tu.target) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	}
+	if tu.clearedTarget && tu.target == nil {
+		return 0, errors.New("ent: clearing a unique edge \"target\"")
 	}
 	return tu.sqlSave(ctx)
 }
@@ -301,6 +312,9 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := tu.Error; value != nil {
 		builder.Set(task.FieldError, *value)
 	}
+	if tu.clearError {
+		builder.SetNull(task.FieldError)
+	}
 	if value := tu.SessionID; value != nil {
 		builder.Set(task.FieldSessionID, *value)
 	}
@@ -354,6 +368,7 @@ type TaskUpdateOne struct {
 	Output             *[]string
 	clearOutput        bool
 	Error              *string
+	clearError         bool
 	SessionID          *string
 	clearSessionID     bool
 	target             map[int]struct{}
@@ -462,6 +477,21 @@ func (tuo *TaskUpdateOne) SetError(s string) *TaskUpdateOne {
 	return tuo
 }
 
+// SetNillableError sets the Error field if the given value is not nil.
+func (tuo *TaskUpdateOne) SetNillableError(s *string) *TaskUpdateOne {
+	if s != nil {
+		tuo.SetError(*s)
+	}
+	return tuo
+}
+
+// ClearError clears the value of Error.
+func (tuo *TaskUpdateOne) ClearError() *TaskUpdateOne {
+	tuo.Error = nil
+	tuo.clearError = true
+	return tuo
+}
+
 // SetSessionID sets the SessionID field.
 func (tuo *TaskUpdateOne) SetSessionID(s string) *TaskUpdateOne {
 	tuo.SessionID = &s
@@ -492,14 +522,6 @@ func (tuo *TaskUpdateOne) SetTargetID(id int) *TaskUpdateOne {
 	return tuo
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
-func (tuo *TaskUpdateOne) SetNillableTargetID(id *int) *TaskUpdateOne {
-	if id != nil {
-		tuo = tuo.SetTargetID(*id)
-	}
-	return tuo
-}
-
 // SetTarget sets the target edge to Target.
 func (tuo *TaskUpdateOne) SetTarget(t *Target) *TaskUpdateOne {
 	return tuo.SetTargetID(t.ID)
@@ -525,6 +547,9 @@ func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 	}
 	if len(tuo.target) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	}
+	if tuo.clearedTarget && tuo.target == nil {
+		return nil, errors.New("ent: clearing a unique edge \"target\"")
 	}
 	return tuo.sqlSave(ctx)
 }
@@ -636,6 +661,11 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 	if value := tuo.Error; value != nil {
 		builder.Set(task.FieldError, *value)
 		t.Error = *value
+	}
+	if tuo.clearError {
+		var value string
+		t.Error = value
+		builder.SetNull(task.FieldError)
 	}
 	if value := tuo.SessionID; value != nil {
 		builder.Set(task.FieldSessionID, *value)

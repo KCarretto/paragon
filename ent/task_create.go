@@ -101,6 +101,14 @@ func (tc *TaskCreate) SetError(s string) *TaskCreate {
 	return tc
 }
 
+// SetNillableError sets the Error field if the given value is not nil.
+func (tc *TaskCreate) SetNillableError(s *string) *TaskCreate {
+	if s != nil {
+		tc.SetError(*s)
+	}
+	return tc
+}
+
 // SetSessionID sets the SessionID field.
 func (tc *TaskCreate) SetSessionID(s string) *TaskCreate {
 	tc.SessionID = &s
@@ -124,14 +132,6 @@ func (tc *TaskCreate) SetTargetID(id int) *TaskCreate {
 	return tc
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
-func (tc *TaskCreate) SetNillableTargetID(id *int) *TaskCreate {
-	if id != nil {
-		tc = tc.SetTargetID(*id)
-	}
-	return tc
-}
-
 // SetTarget sets the target edge to Target.
 func (tc *TaskCreate) SetTarget(t *Target) *TaskCreate {
 	return tc.SetTargetID(t.ID)
@@ -149,14 +149,16 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 	if err := task.ContentValidator(*tc.Content); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
-	if tc.Error == nil {
-		return nil, errors.New("ent: missing required field \"Error\"")
-	}
-	if err := task.ErrorValidator(*tc.Error); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
+	if tc.Error != nil {
+		if err := task.ErrorValidator(*tc.Error); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
+		}
 	}
 	if len(tc.target) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	}
+	if tc.target == nil {
+		return nil, errors.New("ent: missing required edge \"target\"")
 	}
 	return tc.sqlSave(ctx)
 }
