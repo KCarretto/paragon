@@ -3,7 +3,8 @@ version: "3.7"
 services:
   agent:
     build:
-      context: ./
+      context: ../
+      dockerfile: "./deployments/Dockerfile"
       target: developer
     environment:
       DEBUG_API_USER: "admin"
