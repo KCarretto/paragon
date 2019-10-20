@@ -1,6 +1,8 @@
 package c2
 
 import (
+	"sync"
+
 	"github.com/kcarretto/paragon/api/codec"
 	"github.com/kcarretto/paragon/api/events"
 )
@@ -9,14 +11,18 @@ import (
 type Queue struct {
 	tasks []events.TaskQueued
 
+	mu      sync.Mutex
 	OnClaim func(events.TaskClaimed)
 }
 
 // ClaimTasks for an agent with the provided metadata.
-func (q Queue) ClaimTasks(agent *codec.AgentMetadata) (tasks []*codec.Task) {
+func (q *Queue) ClaimTasks(agent *codec.AgentMetadata) (tasks []*codec.Task) {
 	if agent == nil {
 		return
 	}
+
+	q.mu.Lock()
+	defer q.mu.Unlock()
 
 	for i, event := range q.tasks {
 		if sessionID := event.GetSessionID(); sessionID != "" && sessionID != agent.SessionID {
@@ -46,12 +52,14 @@ func (q Queue) ClaimTasks(agent *codec.AgentMetadata) (tasks []*codec.Task) {
 }
 
 // ConsumeTasks adds tasks to the queue from queued events.
-func (q Queue) ConsumeTasks(tasks ...events.TaskQueued) {
+func (q *Queue) ConsumeTasks(tasks ...events.TaskQueued) {
+	q.mu.Lock()
 	q.tasks = append(q.tasks, tasks...)
+	q.mu.Unlock()
 }
 
 // pop a task from the queue by index, returns nil if the task does not exist.
-func (q Queue) pop(index int) (task *codec.Task) {
+func (q *Queue) pop(index int) (task *codec.Task) {
 	if index < 0 || index >= len(q.tasks) {
 		return nil
 	}
