@@ -7,4 +7,4 @@ const VERSION = "0.0.1"
 
 // TODO: Add python support via --python_out=.
 
-//go:generate protoc -I=../../ -I=. --go_out=paths=source_relative:. task.proto
+//go:generate protoc -I=../../ -I=. --go_out=paths=source_relative:. task.proto agent.proto

@@ -15,12 +15,17 @@ type Target struct {
 func (Target) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
+			Optional().
 			Comment("The name of the Target"),
 		field.String("MachineUUID").
+			Unique().
 			Comment("The machine UUID of the Target"),
 		field.String("PrimaryIP").
 			Optional().
 			Comment("The IP Address for the primary interface of the Target"),
+		field.String("PublicIP").
+			Optional().
+			Comment("The Public IP Address for the Target"),
 		field.String("PrimaryMAC").
 			Optional().
 			Comment("The MAC Address for the primary interface of the Target"),

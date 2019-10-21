@@ -47,6 +47,7 @@ func ExampleTarget() {
 		SetName("string").
 		SetMachineUUID("string").
 		SetPrimaryIP("string").
+		SetPublicIP("string").
 		SetPrimaryMAC("string").
 		SetHostname("string").
 		SetLastSeen(time.Now()).

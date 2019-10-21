@@ -19,6 +19,7 @@ type TargetCreate struct {
 	Name        *string
 	MachineUUID *string
 	PrimaryIP   *string
+	PublicIP    *string
 	PrimaryMAC  *string
 	Hostname    *string
 	LastSeen    *time.Time
@@ -28,6 +29,14 @@ type TargetCreate struct {
 // SetName sets the Name field.
 func (tc *TargetCreate) SetName(s string) *TargetCreate {
 	tc.Name = &s
+	return tc
+}
+
+// SetNillableName sets the Name field if the given value is not nil.
+func (tc *TargetCreate) SetNillableName(s *string) *TargetCreate {
+	if s != nil {
+		tc.SetName(*s)
+	}
 	return tc
 }
 
@@ -47,6 +56,20 @@ func (tc *TargetCreate) SetPrimaryIP(s string) *TargetCreate {
 func (tc *TargetCreate) SetNillablePrimaryIP(s *string) *TargetCreate {
 	if s != nil {
 		tc.SetPrimaryIP(*s)
+	}
+	return tc
+}
+
+// SetPublicIP sets the PublicIP field.
+func (tc *TargetCreate) SetPublicIP(s string) *TargetCreate {
+	tc.PublicIP = &s
+	return tc
+}
+
+// SetNillablePublicIP sets the PublicIP field if the given value is not nil.
+func (tc *TargetCreate) SetNillablePublicIP(s *string) *TargetCreate {
+	if s != nil {
+		tc.SetPublicIP(*s)
 	}
 	return tc
 }
@@ -115,9 +138,6 @@ func (tc *TargetCreate) AddTasks(t ...*Task) *TargetCreate {
 
 // Save creates the Target in the database.
 func (tc *TargetCreate) Save(ctx context.Context) (*Target, error) {
-	if tc.Name == nil {
-		return nil, errors.New("ent: missing required field \"Name\"")
-	}
 	if tc.MachineUUID == nil {
 		return nil, errors.New("ent: missing required field \"MachineUUID\"")
 	}
@@ -156,6 +176,10 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 	if value := tc.PrimaryIP; value != nil {
 		builder.Set(target.FieldPrimaryIP, *value)
 		t.PrimaryIP = *value
+	}
+	if value := tc.PublicIP; value != nil {
+		builder.Set(target.FieldPublicIP, *value)
+		t.PublicIP = *value
 	}
 	if value := tc.PrimaryMAC; value != nil {
 		builder.Set(target.FieldPrimaryMAC, *value)
