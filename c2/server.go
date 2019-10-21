@@ -1,12 +1,10 @@
 package c2
 
-import (
-	"github.com/kcarretto/paragon/api/events"
-)
+import "github.com/kcarretto/paragon/api/codec"
 
 // Server manages communication with agents.
 type Server struct {
 	*Queue
 
-	OnTaskExecuted func(events.TaskExecuted)
+	OnAgentMessage func(codec.AgentMessage)
 }
