@@ -43,6 +43,66 @@ type iDResponse struct {
 	ID int `json:"id"`
 }
 
+type messageData struct {
+	Data      []byte `json:"data"`
+	MessageID string `json:"messageId"`
+}
+
+type pubSubMessage struct {
+	Message      messageData `json:"message"`
+	Subscription string      `json:"subscription"`
+}
+
+func (srv *Server) handleTaskClaimed(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var message pubSubMessage
+		err := decoder.Decode(&message)
+		if err != nil {
+			http.Error(w, "improper pubsub message json sent", http.StatusBadRequest)
+			return
+		}
+		var event events.TaskClaimed
+		if err := proto.Unmarshal(message.Message.Data, &event); err != nil {
+			srv.Log.Error("failed to parse protobuf", zap.Error(err))
+		}
+		ctx := context.Background()
+		err = srv.taskClaimed(ctx, event)
+		if err != nil {
+			http.Error(w, "an error occured in updating the claimed task", http.StatusBadRequest)
+			return
+		}
+		return
+	}
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
+}
+
+func (srv *Server) handleTaskExecuted(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var message pubSubMessage
+		err := decoder.Decode(&message)
+		if err != nil {
+			http.Error(w, "improper pubsub message json sent", http.StatusBadRequest)
+			return
+		}
+		var event events.TaskExecuted
+		if err := proto.Unmarshal(message.Message.Data, &event); err != nil {
+			srv.Log.Error("failed to parse protobuf", zap.Error(err))
+		}
+		ctx := context.Background()
+		err = srv.taskExecuted(ctx, event)
+		if err != nil {
+			http.Error(w, "an error occured in updating the executed task", http.StatusBadRequest)
+			return
+		}
+		return
+	}
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
+}
+
 func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		decoder := json.NewDecoder(r.Body)
@@ -116,7 +176,7 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(respBody)
-		if err := srv.QueueTask(ctx, newTask); err != nil {
+		if err := srv.queueTask(ctx, newTask); err != nil {
 			http.Error(w, "unable to queue task to topic", http.StatusInternalServerError)
 			return
 		}
@@ -127,9 +187,10 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
-func (srv *Server) Run(ctx context.Context) {
-	go srv.handleTasksClaimed(ctx)
-	go srv.handleTasksExecuted(ctx)
+func (srv *Server) Run() {
+	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
+	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
+
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
 	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
 	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
@@ -138,7 +199,7 @@ func (srv *Server) Run(ctx context.Context) {
 }
 
 // QueueTask sends a given task (and some associated target data) to the `tasks.queued` topic
-func (srv *Server) QueueTask(ctx context.Context, task *ent.Task) error {
+func (srv *Server) queueTask(ctx context.Context, task *ent.Task) error {
 	target := task.QueryTarget().FirstX(ctx)
 	targetID := strconv.Itoa(target.ID)
 	agentMetadata := codec.AgentMetadata{
@@ -168,78 +229,58 @@ func (srv *Server) QueueTask(ctx context.Context, task *ent.Task) error {
 	return nil
 }
 
-func (srv *Server) handleTasksClaimed(ctx context.Context) {
-	for {
-		msg, err := srv.ClaimedSubscription.Receive(ctx)
-		if err != nil {
-			panic(err)
-		}
-		var event events.TaskClaimed
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("failed to parse protobuf", zap.Error(err))
-		}
-		taskID, err := strconv.Atoi(event.GetId())
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("task id passed was not an int", zap.Error(err))
-		}
-		task, err := srv.EntClient.Task.Get(ctx, taskID)
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("incorrect task id passed", zap.Error(err))
-		}
-		task, err = task.Update().
-			SetClaimTime(time.Now()).
-			Save(ctx)
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("the task failed to be updated", zap.Error(err))
-		}
-		target := task.QueryTarget().FirstX(ctx)
-		target, err = target.Update().
-			SetLastSeen(time.Now()).
-			Save(ctx)
-		if err != nil {
-			srv.Log.Error("unable to update last seen on target", zap.Error(err))
-		}
-		msg.Ack()
+func (srv *Server) taskClaimed(ctx context.Context, event events.TaskClaimed) error {
+	taskID, err := strconv.Atoi(event.GetId())
+	if err != nil {
+		return err
 	}
+	task, err := srv.EntClient.Task.Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	task, err = task.Update().
+		SetClaimTime(time.Now()).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	target := task.QueryTarget().FirstX(ctx)
+	target, err = target.Update().
+		SetLastSeen(time.Now()).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (srv *Server) handleTasksExecuted(ctx context.Context) {
-	for {
-		msg, err := srv.ClaimedSubscription.Receive(ctx)
-		if err != nil {
-			panic(err)
-		}
-		var event events.TaskExecuted
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("failed to parse protobuff", zap.Error(err))
-		}
-		taskID, err := strconv.Atoi(event.GetId())
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("task id passed was not an int", zap.Error(err))
-		}
-		task, err := srv.EntClient.Task.Get(ctx, taskID)
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("incorrect task id passed", zap.Error(err))
-		}
-		execStartTime := time.Unix(event.GetExecStartTime(), 0)
-		execStopTime := time.Unix(event.GetExecStopTime(), 0)
-		output := event.GetOutput()
-		task, err = task.Update().
-			SetExecStartTime(execStartTime).
-			SetExecStopTime(execStopTime).
-			SetOutput(output).
-			SetError(event.GetError()).
-			Save(ctx)
-		if err := proto.Unmarshal(msg.Body, &event); err != nil {
-			srv.Log.Error("the task failed to be updated", zap.Error(err))
-		}
-		target := task.QueryTarget().FirstX(ctx)
-		target, err = target.Update().
-			SetLastSeen(time.Now()).
-			Save(ctx)
-		if err != nil {
-			srv.Log.Error("unable to update last seen on target", zap.Error(err))
-		}
-		msg.Ack()
+func (srv *Server) taskExecuted(ctx context.Context, event events.TaskExecuted) error {
+	taskID, err := strconv.Atoi(event.GetId())
+	if err != nil {
+		return err
 	}
+	task, err := srv.EntClient.Task.Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	execStartTime := time.Unix(event.GetExecStartTime(), 0)
+	execStopTime := time.Unix(event.GetExecStopTime(), 0)
+	output := event.GetOutput()
+	task, err = task.Update().
+		SetExecStartTime(execStartTime).
+		SetExecStopTime(execStopTime).
+		SetOutput(output).
+		SetError(event.GetError()).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	target := task.QueryTarget().FirstX(ctx)
+	target, err = target.Update().
+		SetLastSeen(time.Now()).
+		Save(ctx)
+	if err != nil {
+		return err
+	}
+	return nil
 }
