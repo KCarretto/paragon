@@ -10,13 +10,34 @@ import (
 	"go.uber.org/zap"
 )
 
-func main() {
-	ctx := context.Background()
+// EnvDebug is the environment variable that determines if debug mode is enabled.
+const (
+	EnvDebug = "DEBUG"
+)
 
-	logger, err := zap.NewProduction()
+func isDebug() bool {
+	return os.Getenv(EnvDebug) != ""
+}
+
+func getLogger() (logger *zap.Logger) {
+	var err error
+
+	if isDebug() {
+		logger, err = zap.NewDevelopment()
+	} else {
+		logger, err = zap.NewProduction()
+	}
+
 	if err != nil {
 		panic(err)
 	}
+
+	return
+}
+
+func main() {
+	ctx := context.Background()
+	logger := getLogger()
 
 	execTopic, err := openTopic(ctx, "tasks.executed")
 	if err != nil {
@@ -30,12 +51,6 @@ func main() {
 	}
 	defer claimTopic.Shutdown(ctx)
 
-	taskQueue, err := openSubscription(ctx, "tasks.queued")
-	if err != nil {
-		logger.Panic("Failed to subscribe to pubsub topic", zap.Error(err))
-	}
-	defer taskQueue.Shutdown(ctx)
-
 	httpAddr := "127.0.0.1:8080"
 	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
 		httpAddr = addr
@@ -47,11 +62,15 @@ func main() {
 			OnClaim: onClaim(ctx, logger.Named("events.tasks.claimed"), claimTopic),
 		},
 	}
+	router := http.NewServeMux()
+	router.Handle("/", srv)
+	router.HandleFunc("/events/tasks/claimed", http.HandlerFunc(srv.ServeEventTaskClaimed))
+	router.HandleFunc("/events/tasks/queued", srv.ServeEventTaskQueued)
 
-	go listenForTasks(ctx, logger, srv, taskQueue)
+	handler := withLogging(logger.Named("http"), router)
 
 	logger.Info("Starting HTTP Server", zap.String("addr", httpAddr))
-	if err := http.ListenAndServe(httpAddr, srv); err != nil {
+	if err := http.ListenAndServe(httpAddr, handler); err != nil {
 		panic(err)
 	}
 }
