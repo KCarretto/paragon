@@ -18,11 +18,9 @@ import (
 
 // Server handles c2 messages and replies with new tasks for the c2 to send out.
 type Server struct {
-	Log                  *zap.Logger
-	EntClient            *ent.Client
-	QueuedTopic          *pubsub.Topic
-	ClaimedSubscription  *pubsub.Subscription
-	ExecutedSubscription *pubsub.Subscription
+	Log         *zap.Logger
+	EntClient   *ent.Client
+	QueuedTopic *pubsub.Topic
 }
 
 type rawTask struct {
