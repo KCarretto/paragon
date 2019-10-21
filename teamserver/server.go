@@ -294,7 +294,7 @@ func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "404 not found.", http.StatusNotFound)
 }
 
-func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
+func (srv *Server) handleMakeTask(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		decoder := json.NewDecoder(r.Body)
 		var t rawTask
@@ -346,7 +346,8 @@ func (srv *Server) Run() {
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 
-	http.HandleFunc("/queueTask", srv.handleQueueTask)
+	http.HandleFunc("/makeTask", srv.handleMakeTask)
+	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
 	http.HandleFunc("/getTask", srv.handleGetTask)
 	http.HandleFunc("/getTarget", srv.handleGetTarget)
 	http.HandleFunc("/listTargets", srv.handleListTargets)
