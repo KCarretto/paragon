@@ -39,6 +39,12 @@ func main() {
 	ctx := context.Background()
 	logger := getLogger()
 
+	checkinTopic, err := openTopic(ctx, "agent.checkin")
+	if err != nil {
+		logger.Panic("Failed to open pubsub topic", zap.Error(err))
+	}
+	defer checkinTopic.Shutdown(ctx)
+
 	execTopic, err := openTopic(ctx, "tasks.executed")
 	if err != nil {
 		logger.Panic("Failed to open pubsub topic", zap.Error(err))
@@ -57,7 +63,7 @@ func main() {
 	}
 
 	srv := &c2.Server{
-		OnTaskExecuted: onExec(ctx, logger.Named("events.tasks.executed"), execTopic),
+		OnAgentMessage: onAgentMsg(ctx, logger.Named("events.agent.checkin"), checkinTopic, execTopic),
 		Queue: &c2.Queue{
 			OnClaim: onClaim(ctx, logger.Named("events.tasks.claimed"), claimTopic),
 		},

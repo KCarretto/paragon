@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/kcarretto/paragon/api/codec"
 	"github.com/kcarretto/paragon/api/events"
@@ -77,20 +76,11 @@ func (srv *Server) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	// Handle task results
-	if srv.OnTaskExecuted == nil {
+	if srv.OnAgentMessage == nil {
 		return
 	}
-	recvTime := time.Now()
-	for _, result := range msg.GetResults() {
-		srv.OnTaskExecuted(events.TaskExecuted{
-			Id:            result.GetId(),
-			Output:        result.GetOutput(),
-			Error:         result.GetError(),
-			ExecStartTime: result.GetExecStartTime().GetSeconds(),
-			ExecStopTime:  result.GetExecStopTime().GetSeconds(),
-			RecvTime:      recvTime.Unix(),
-		})
-	}
+	srv.OnAgentMessage(msg)
+
 }
 
 // ServeEventTaskQueued is an HTTP handler for TaskQueued events.
