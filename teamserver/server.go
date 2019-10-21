@@ -51,6 +51,26 @@ type pubSubMessage struct {
 	Subscription string      `json:"subscription"`
 }
 
+
+func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	data := map[string]interface{}{
+		"status":         "OK",
+	}
+	resp, err := json.Marshal(data)
+	if err != nil {
+		http.Error(
+			w,
+			"failed to marshal the json for the status"
+			http.StatusInternalServerError,
+		)
+	}
+
+	if _, err = w.Write(resp); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to write response data: %s", err.Error()), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+}
+
 func (srv *Server) handleTaskClaimed(w http.ResponseWriter, r *http.Request) {
 	if r.Method == "POST" {
 		decoder := json.NewDecoder(r.Body)
@@ -189,6 +209,7 @@ func (srv *Server) Run() {
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 
+	http.HandleFunc("/status", srv.handleStatus)
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
 	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
 	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
