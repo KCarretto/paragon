@@ -24,14 +24,6 @@ type rawTask struct {
 	TargetID  int    `json:"targetID"`
 }
 
-type rawTarget struct {
-	Name        string `json:"name"`
-	MachineUUID string `json:"machineUUID"`
-	Hostname    string `json:"hostname"`
-	PrimaryIP   string `json:"primaryIP"`
-	PrimaryMAC  string `json:"primaryMAC"`
-}
-
 type iDStruct struct {
 	ID int `json:"id"`
 }
@@ -66,11 +58,11 @@ func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) Run() {
 	http.HandleFunc("/status", srv.handleStatus)
 
+	http.HandleFunc("/events/agent/checkin", srv.handleAgentCheckin)
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 
 	http.HandleFunc("/makeTask", srv.handleMakeTask)
-	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
 	http.HandleFunc("/getTask", srv.handleGetTask)
 	http.HandleFunc("/getTarget", srv.handleGetTarget)
 	http.HandleFunc("/listTargets", srv.handleListTargets)
