@@ -58,23 +58,11 @@ func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) Run() {
 	http.HandleFunc("/status", srv.handleStatus)
 
-<<<<<<< HEAD
 	http.HandleFunc("/events/agent/checkin", srv.handleAgentCheckin)
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 
 	http.HandleFunc("/makeTask", srv.handleMakeTask)
-=======
-	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
-	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
-
-<<<<<<< HEAD
-	http.HandleFunc("/queueTask", srv.handleQueueTask)
->>>>>>> added basic http ednpoints on teamserver and gloabl unique ids :P
-=======
-	http.HandleFunc("/makeTask", srv.handleMakeTask)
-	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
->>>>>>> accidently deletion :/
 	http.HandleFunc("/getTask", srv.handleGetTask)
 	http.HandleFunc("/getTarget", srv.handleGetTarget)
 	http.HandleFunc("/listTargets", srv.handleListTargets)
