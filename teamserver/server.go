@@ -38,7 +38,7 @@ type rawTarget struct {
 	PrimaryMAC  string `json:"primaryMAC"`
 }
 
-type iDResponse struct {
+type iDStruct struct {
 	ID int `json:"id"`
 }
 
@@ -58,17 +58,152 @@ func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	}
 	resp, err := json.Marshal(data)
 	if err != nil {
-		http.Error(
-			w,
-			"failed to marshal the json for the status",
-			http.StatusInternalServerError,
-		)
+		http.Error(w, "failed to marshal the json for the status", http.StatusInternalServerError)
+		return
 	}
 
 	if _, err = w.Write(resp); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to write response data: %s", err.Error()), http.StatusInternalServerError)
 	}
 	w.Header().Set("Content-Type", "application/json")
+}
+
+func (srv *Server) handleGetTask(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var message iDStruct
+		err := decoder.Decode(&message)
+		if err != nil {
+			http.Error(w, "improper id struct sent", http.StatusBadRequest)
+			return
+		}
+		ctx := context.Background()
+		task, err := srv.EntClient.Task.Get(ctx, message.ID)
+
+		data := map[string]interface{}{
+			"id":            task.ID,
+			"queueTime":     task.QueueTime.Unix(),
+			"claimTime":     task.ClaimTime.Unix(),
+			"execStartTime": task.ExecStartTime.Unix(),
+			"execStopTime":  task.ExecStopTime.Unix(),
+			"content":       task.Content,
+			"output":        task.Output,
+			"error":         task.Error,
+			"sessionID":     task.SessionID,
+		}
+		resp, err := json.Marshal(data)
+		if err != nil {
+			http.Error(w, "failed to marshal the json for the task", http.StatusInternalServerError)
+			return
+		}
+		if _, err = w.Write(resp); err != nil {
+			http.Error(w, "Failed to write response data", http.StatusInternalServerError)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		return
+	}
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
+}
+
+func (srv *Server) handleGetTarget(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var message iDStruct
+		err := decoder.Decode(&message)
+		if err != nil {
+			http.Error(w, "improper id struct sent", http.StatusBadRequest)
+			return
+		}
+		ctx := context.Background()
+		target, err := srv.EntClient.Target.Get(ctx, message.ID)
+
+		data := map[string]interface{}{
+			"id":          target.ID,
+			"name":        target.Name,
+			"machineUUID": target.MachineUUID,
+			"primaryIP":   target.PrimaryIP,
+			"primaryMAC":  target.PrimaryMAC,
+			"hostname":    target.Hostname,
+			"lastSeen":    target.LastSeen,
+		}
+		resp, err := json.Marshal(data)
+		if err != nil {
+			http.Error(w, "failed to marshal the json for the target", http.StatusInternalServerError)
+			return
+		}
+		if _, err = w.Write(resp); err != nil {
+			http.Error(w, "Failed to write response data", http.StatusInternalServerError)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		return
+	}
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
+}
+
+func (srv *Server) handleListTargets(w http.ResponseWriter, r *http.Request) {
+	ctx := context.Background()
+	targets, err := srv.EntClient.Target.Query().All(ctx)
+	if err != nil {
+		http.Error(w, "failed to query the ent db for targets", http.StatusInternalServerError)
+		return
+	}
+	var targetIDs []int
+	for _, target := range targets {
+		targetIDs = append(targetIDs, target.ID)
+	}
+	data := map[string]interface{}{
+		"ids": targetIDs,
+	}
+	resp, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, "failed to marshal the json for the ids", http.StatusInternalServerError)
+		return
+	}
+	if _, err = w.Write(resp); err != nil {
+		http.Error(w, "Failed to write response data", http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
+}
+
+func (srv *Server) handleListTasksForTarget(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "POST" {
+		decoder := json.NewDecoder(r.Body)
+		var message iDStruct
+		err := decoder.Decode(&message)
+		if err != nil {
+			http.Error(w, "improper id struct sent", http.StatusBadRequest)
+			return
+		}
+		ctx := context.Background()
+		target, err := srv.EntClient.Target.Get(ctx, message.ID)
+		if err != nil {
+			http.Error(w, "failed to lookup target with given id", http.StatusBadRequest)
+			return
+		}
+
+		tasks, err := target.QueryTasks().All(ctx)
+		var taskIDs []int
+		for _, task := range tasks {
+			taskIDs = append(taskIDs, task.ID)
+		}
+		data := map[string]interface{}{
+			"ids": taskIDs,
+		}
+		resp, err := json.Marshal(data)
+		if err != nil {
+			http.Error(w, "failed to marshal the json for the ids", http.StatusInternalServerError)
+			return
+		}
+		if _, err = w.Write(resp); err != nil {
+			http.Error(w, "Failed to write response data", http.StatusInternalServerError)
+		}
+		w.Header().Set("Content-Type", "application/json")
+		return
+	}
+
+	http.Error(w, "404 not found.", http.StatusNotFound)
 }
 
 func (srv *Server) handleTaskClaimed(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +222,7 @@ func (srv *Server) handleTaskClaimed(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
 		err = srv.taskClaimed(ctx, event)
 		if err != nil {
-			http.Error(w, "an error occured in updating the claimed task", http.StatusBadRequest)
+			http.Error(w, "an error occured in updating the claimed task", http.StatusInternalServerError)
 			return
 		}
 		return
@@ -112,7 +247,7 @@ func (srv *Server) handleTaskExecuted(w http.ResponseWriter, r *http.Request) {
 		ctx := context.Background()
 		err = srv.taskExecuted(ctx, event)
 		if err != nil {
-			http.Error(w, "an error occured in updating the executed task", http.StatusBadRequest)
+			http.Error(w, "an error occured in updating the executed task", http.StatusInternalServerError)
 			return
 		}
 		return
@@ -143,7 +278,7 @@ func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unable to create new target", http.StatusInternalServerError)
 			return
 		}
-		resp := iDResponse{
+		resp := iDStruct{
 			ID: newTarget.ID,
 		}
 		respBody, err := json.Marshal(resp)
@@ -184,7 +319,7 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unable to create new task", http.StatusInternalServerError)
 			return
 		}
-		resp := iDResponse{
+		resp := iDStruct{
 			ID: newTask.ID,
 		}
 		respBody, err := json.Marshal(resp)
@@ -206,12 +341,16 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run() {
+	http.HandleFunc("/status", srv.handleStatus)
+
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
-	http.HandleFunc("/status", srv.handleStatus)
-	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
+	http.HandleFunc("/getTask", srv.handleGetTask)
+	http.HandleFunc("/getTarget", srv.handleGetTarget)
+	http.HandleFunc("/listTargets", srv.handleListTargets)
+	http.HandleFunc("/listTasksForTarget", srv.handleListTasksForTarget)
 	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
 		panic(err)
 	}
