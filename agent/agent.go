@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"github.com/kcarretto/paragon/api/codec"
+
 	"go.uber.org/zap"
 )
 
@@ -20,8 +22,8 @@ type Receiver interface {
 // An Agent communicates with server(s) using the configured transport.
 type Agent struct {
 	Receiver
-	Log *zap.Logger
-
+	Log        *zap.Logger
+	Metadata   *codec.AgentMetadata
 	Transports []Transport
 
 	MaxIdleTime time.Duration
@@ -35,6 +37,8 @@ func (agent Agent) Send(w ServerMessageWriter, msg Message) error {
 	if msg.IsEmpty() && time.Since(agent.lastSend) <= agent.MaxIdleTime {
 		return nil
 	}
+
+	agent.Log.Debug("Agent sending message", zap.Reflect("agent_msg", msg))
 
 	// Attempt to send using available transports.
 	for _, transport := range agent.Transports {
@@ -62,7 +66,9 @@ func (agent Agent) Send(w ServerMessageWriter, msg Message) error {
 // Run the agent, sending agent messages to a server using configured transports.
 func (agent Agent) Run(ctx context.Context) error {
 	agent.Log.Debug("Starting agent execution")
-	var agentMsg Message
+	agentMsg := Message{
+		Metadata: agent.Metadata,
+	}
 
 	for {
 		select {
@@ -74,8 +80,11 @@ func (agent Agent) Run(ctx context.Context) error {
 			if err := agent.Send(&srvMsg, agentMsg); err != nil {
 				return err
 			}
+			agent.Log.Debug("Agent received message", zap.Reflect("srv_msg", srvMsg))
 
-			agentMsg = Message{}
+			agentMsg = Message{
+				Metadata: agent.Metadata,
+			}
 			agent.Receive(&agentMsg, srvMsg)
 		}
 	}

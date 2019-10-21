@@ -5,7 +5,7 @@ services:
     build:
       context: ../
       dockerfile: "./deployments/agent.Dockerfile"
-      target: developer
+      target: debug
     environment:
       DEBUG_API_USER: "admin"
       DEBUG_API_PASSWORD: "password123"
