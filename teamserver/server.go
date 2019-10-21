@@ -187,7 +187,7 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 }
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
-func (srv *Server) Run(ctx context.Context) {
+func (srv *Server) Run() {
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 

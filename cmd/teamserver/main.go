@@ -37,5 +37,5 @@ func main() {
 		ClaimedSubscription:  claimedSubscription,
 		ExecutedSubscription: executedSubscription,
 	}
-	server.Run(ctx)
+	server.Run()
 }
