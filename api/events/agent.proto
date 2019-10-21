@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package events;
+
+option go_package = "github.com/kcarretto/paragon/api/events";
+
+import "api/codec/agent.proto";
+
+message AgentCheckin {
+  string publicIP = 1;
+  int64 SeenTime = 2;
+  codec.AgentMetadata agent = 3;
+}
