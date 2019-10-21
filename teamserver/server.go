@@ -209,7 +209,6 @@ func (srv *Server) Run() {
 	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
 	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
 
-	http.HandleFunc("/status", srv.handleStatus)
 	http.HandleFunc("/queueTask", srv.handleQueueTask)
 	http.HandleFunc("/makeTarget", srv.handleMakeTarget)
 	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
