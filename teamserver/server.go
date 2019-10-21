@@ -3,6 +3,7 @@ package teamserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -49,6 +50,25 @@ type messageData struct {
 type pubSubMessage struct {
 	Message      messageData `json:"message"`
 	Subscription string      `json:"subscription"`
+}
+
+func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
+	data := map[string]interface{}{
+		"status": "OK",
+	}
+	resp, err := json.Marshal(data)
+	if err != nil {
+		http.Error(
+			w,
+			"failed to marshal the json for the status",
+			http.StatusInternalServerError,
+		)
+	}
+
+	if _, err = w.Write(resp); err != nil {
+		http.Error(w, fmt.Sprintf("Failed to write response data: %s", err.Error()), http.StatusInternalServerError)
+	}
+	w.Header().Set("Content-Type", "application/json")
 }
 
 func (srv *Server) handleTaskClaimed(w http.ResponseWriter, r *http.Request) {
