@@ -4,10 +4,12 @@ go 1.13
 
 require (
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/facebookincubator/ent v0.0.0-20191017212932-c3135d03a644
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.3.2
+	github.com/google/uuid v1.1.1
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.3.0

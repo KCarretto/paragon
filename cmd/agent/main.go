@@ -30,6 +30,8 @@ func run() bool {
 		Transports: transports(logger.Named("transport")),
 	}
 
+	agent.CollectMetadata(paragon)
+
 	// Handle panic
 	defer func() {
 		if err := recover(); err != nil {

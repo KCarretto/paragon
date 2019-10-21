@@ -21,8 +21,6 @@ RUN go build -tags=debug,profile_cpu -o ./build/agent ./cmd/agent
 FROM alpine:3.10.2 as debug
 WORKDIR /app
 COPY --from=build-debug /app/build/agent /agent
-EXPOSE 443
-EXPOSE 80
 EXPOSE 8080
 CMD ["/agent"]
 
