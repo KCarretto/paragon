@@ -44,7 +44,18 @@ func run() bool {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		paragon.Run(ctx)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			// TODO: Handle ErrNoTransports
+			if err := paragon.Run(ctx); err != nil {
+				paragon.Log.Error("All transports failed to send message", zap.Error(err))
+				time.Sleep(5 * time.Second)
+			}
+		}
 	}()
 
 	// Listen for interupts
