@@ -75,6 +75,7 @@ func (srv *Server) handleMakeTarget(w http.ResponseWriter, r *http.Request) {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write(respBody)
+		return
 	}
 
 	http.Error(w, "404 not found.", http.StatusNotFound)
@@ -119,6 +120,7 @@ func (srv *Server) handleQueueTask(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "unable to queue task to topic", http.StatusInternalServerError)
 			return
 		}
+		return
 	}
 
 	http.Error(w, "404 not found.", http.StatusNotFound)
