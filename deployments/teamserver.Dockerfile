@@ -15,8 +15,11 @@ COPY ./teamserver /app/teamserver
 COPY ./ent /app/ent
 RUN go build -tags=debug,profile_cpu,gcp -o ./build/teamserver ./cmd/teamserver
 
-# Developer
-FROM build as developer
-RUN apk add tmux vim
+# Production
+FROM alpine:3.10.2 as production
+WORKDIR /app
+COPY --from=build /app/build/teamserver /teamserver
+EXPOSE 443
 EXPOSE 80
-CMD ["./build/teamserver"]
+EXPOSE 8080
+CMD ["/teamserver"]
