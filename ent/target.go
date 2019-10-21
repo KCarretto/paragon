@@ -21,6 +21,8 @@ type Target struct {
 	MachineUUID string `json:"MachineUUID,omitempty"`
 	// PrimaryIP holds the value of the "PrimaryIP" field.
 	PrimaryIP string `json:"PrimaryIP,omitempty"`
+	// PublicIP holds the value of the "PublicIP" field.
+	PublicIP string `json:"PublicIP,omitempty"`
 	// PrimaryMAC holds the value of the "PrimaryMAC" field.
 	PrimaryMAC string `json:"PrimaryMAC,omitempty"`
 	// Hostname holds the value of the "Hostname" field.
@@ -36,6 +38,7 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 		Name        sql.NullString
 		MachineUUID sql.NullString
 		PrimaryIP   sql.NullString
+		PublicIP    sql.NullString
 		PrimaryMAC  sql.NullString
 		Hostname    sql.NullString
 		LastSeen    sql.NullTime
@@ -46,6 +49,7 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 		&vt.Name,
 		&vt.MachineUUID,
 		&vt.PrimaryIP,
+		&vt.PublicIP,
 		&vt.PrimaryMAC,
 		&vt.Hostname,
 		&vt.LastSeen,
@@ -56,6 +60,7 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 	t.Name = vt.Name.String
 	t.MachineUUID = vt.MachineUUID.String
 	t.PrimaryIP = vt.PrimaryIP.String
+	t.PublicIP = vt.PublicIP.String
 	t.PrimaryMAC = vt.PrimaryMAC.String
 	t.Hostname = vt.Hostname.String
 	t.LastSeen = vt.LastSeen.Time
@@ -96,6 +101,8 @@ func (t *Target) String() string {
 	builder.WriteString(t.MachineUUID)
 	builder.WriteString(", PrimaryIP=")
 	builder.WriteString(t.PrimaryIP)
+	builder.WriteString(", PublicIP=")
+	builder.WriteString(t.PublicIP)
 	builder.WriteString(", PrimaryMAC=")
 	builder.WriteString(t.PrimaryMAC)
 	builder.WriteString(", Hostname=")

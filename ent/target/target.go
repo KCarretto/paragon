@@ -13,6 +13,8 @@ const (
 	FieldMachineUUID = "machine_uuid"
 	// FieldPrimaryIP holds the string denoting the primaryip vertex property in the database.
 	FieldPrimaryIP = "primary_ip"
+	// FieldPublicIP holds the string denoting the publicip vertex property in the database.
+	FieldPublicIP = "public_ip"
 	// FieldPrimaryMAC holds the string denoting the primarymac vertex property in the database.
 	FieldPrimaryMAC = "primary_mac"
 	// FieldHostname holds the string denoting the hostname vertex property in the database.
@@ -37,6 +39,7 @@ var Columns = []string{
 	FieldName,
 	FieldMachineUUID,
 	FieldPrimaryIP,
+	FieldPublicIP,
 	FieldPrimaryMAC,
 	FieldHostname,
 	FieldLastSeen,

@@ -17,9 +17,12 @@ import (
 type TargetUpdate struct {
 	config
 	Name            *string
+	clearName       bool
 	MachineUUID     *string
 	PrimaryIP       *string
 	clearPrimaryIP  bool
+	PublicIP        *string
+	clearPublicIP   bool
 	PrimaryMAC      *string
 	clearPrimaryMAC bool
 	Hostname        *string
@@ -40,6 +43,21 @@ func (tu *TargetUpdate) Where(ps ...predicate.Target) *TargetUpdate {
 // SetName sets the Name field.
 func (tu *TargetUpdate) SetName(s string) *TargetUpdate {
 	tu.Name = &s
+	return tu
+}
+
+// SetNillableName sets the Name field if the given value is not nil.
+func (tu *TargetUpdate) SetNillableName(s *string) *TargetUpdate {
+	if s != nil {
+		tu.SetName(*s)
+	}
+	return tu
+}
+
+// ClearName clears the value of Name.
+func (tu *TargetUpdate) ClearName() *TargetUpdate {
+	tu.Name = nil
+	tu.clearName = true
 	return tu
 }
 
@@ -67,6 +85,27 @@ func (tu *TargetUpdate) SetNillablePrimaryIP(s *string) *TargetUpdate {
 func (tu *TargetUpdate) ClearPrimaryIP() *TargetUpdate {
 	tu.PrimaryIP = nil
 	tu.clearPrimaryIP = true
+	return tu
+}
+
+// SetPublicIP sets the PublicIP field.
+func (tu *TargetUpdate) SetPublicIP(s string) *TargetUpdate {
+	tu.PublicIP = &s
+	return tu
+}
+
+// SetNillablePublicIP sets the PublicIP field if the given value is not nil.
+func (tu *TargetUpdate) SetNillablePublicIP(s *string) *TargetUpdate {
+	if s != nil {
+		tu.SetPublicIP(*s)
+	}
+	return tu
+}
+
+// ClearPublicIP clears the value of PublicIP.
+func (tu *TargetUpdate) ClearPublicIP() *TargetUpdate {
+	tu.PublicIP = nil
+	tu.clearPublicIP = true
 	return tu
 }
 
@@ -234,6 +273,9 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := tu.Name; value != nil {
 		builder.Set(target.FieldName, *value)
 	}
+	if tu.clearName {
+		builder.SetNull(target.FieldName)
+	}
 	if value := tu.MachineUUID; value != nil {
 		builder.Set(target.FieldMachineUUID, *value)
 	}
@@ -242,6 +284,12 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	}
 	if tu.clearPrimaryIP {
 		builder.SetNull(target.FieldPrimaryIP)
+	}
+	if value := tu.PublicIP; value != nil {
+		builder.Set(target.FieldPublicIP, *value)
+	}
+	if tu.clearPublicIP {
+		builder.SetNull(target.FieldPublicIP)
 	}
 	if value := tu.PrimaryMAC; value != nil {
 		builder.Set(target.FieldPrimaryMAC, *value)
@@ -314,9 +362,12 @@ type TargetUpdateOne struct {
 	config
 	id              int
 	Name            *string
+	clearName       bool
 	MachineUUID     *string
 	PrimaryIP       *string
 	clearPrimaryIP  bool
+	PublicIP        *string
+	clearPublicIP   bool
 	PrimaryMAC      *string
 	clearPrimaryMAC bool
 	Hostname        *string
@@ -330,6 +381,21 @@ type TargetUpdateOne struct {
 // SetName sets the Name field.
 func (tuo *TargetUpdateOne) SetName(s string) *TargetUpdateOne {
 	tuo.Name = &s
+	return tuo
+}
+
+// SetNillableName sets the Name field if the given value is not nil.
+func (tuo *TargetUpdateOne) SetNillableName(s *string) *TargetUpdateOne {
+	if s != nil {
+		tuo.SetName(*s)
+	}
+	return tuo
+}
+
+// ClearName clears the value of Name.
+func (tuo *TargetUpdateOne) ClearName() *TargetUpdateOne {
+	tuo.Name = nil
+	tuo.clearName = true
 	return tuo
 }
 
@@ -357,6 +423,27 @@ func (tuo *TargetUpdateOne) SetNillablePrimaryIP(s *string) *TargetUpdateOne {
 func (tuo *TargetUpdateOne) ClearPrimaryIP() *TargetUpdateOne {
 	tuo.PrimaryIP = nil
 	tuo.clearPrimaryIP = true
+	return tuo
+}
+
+// SetPublicIP sets the PublicIP field.
+func (tuo *TargetUpdateOne) SetPublicIP(s string) *TargetUpdateOne {
+	tuo.PublicIP = &s
+	return tuo
+}
+
+// SetNillablePublicIP sets the PublicIP field if the given value is not nil.
+func (tuo *TargetUpdateOne) SetNillablePublicIP(s *string) *TargetUpdateOne {
+	if s != nil {
+		tuo.SetPublicIP(*s)
+	}
+	return tuo
+}
+
+// ClearPublicIP clears the value of PublicIP.
+func (tuo *TargetUpdateOne) ClearPublicIP() *TargetUpdateOne {
+	tuo.PublicIP = nil
+	tuo.clearPublicIP = true
 	return tuo
 }
 
@@ -528,6 +615,11 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 		builder.Set(target.FieldName, *value)
 		t.Name = *value
 	}
+	if tuo.clearName {
+		var value string
+		t.Name = value
+		builder.SetNull(target.FieldName)
+	}
 	if value := tuo.MachineUUID; value != nil {
 		builder.Set(target.FieldMachineUUID, *value)
 		t.MachineUUID = *value
@@ -540,6 +632,15 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 		var value string
 		t.PrimaryIP = value
 		builder.SetNull(target.FieldPrimaryIP)
+	}
+	if value := tuo.PublicIP; value != nil {
+		builder.Set(target.FieldPublicIP, *value)
+		t.PublicIP = *value
+	}
+	if tuo.clearPublicIP {
+		var value string
+		t.PublicIP = value
+		builder.SetNull(target.FieldPublicIP)
 	}
 	if value := tuo.PrimaryMAC; value != nil {
 		builder.Set(target.FieldPrimaryMAC, *value)
