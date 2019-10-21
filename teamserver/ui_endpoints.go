@@ -106,6 +106,7 @@ func (srv *Server) handleGetTarget(w http.ResponseWriter, r *http.Request) {
 			"name":        target.Name,
 			"machineUUID": target.MachineUUID,
 			"primaryIP":   target.PrimaryIP,
+			"publicIP":    target.PublicIP,
 			"primaryMAC":  target.PrimaryMAC,
 			"hostname":    target.Hostname,
 			"lastSeen":    target.LastSeen,
