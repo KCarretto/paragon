@@ -28,6 +28,7 @@ func (srv *Server) handleAgentCheckin(w http.ResponseWriter, r *http.Request) {
 		if err = srv.agentCheckin(ctx, event); err != nil {
 			http.Error(w, "Failed to upset the agent checkin to the target", http.StatusInternalServerError)
 		}
+		return
 	}
 
 	http.Error(w, "404 not found.", http.StatusNotFound)
