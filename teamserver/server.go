@@ -3,6 +3,7 @@ package teamserver
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -51,16 +52,15 @@ type pubSubMessage struct {
 	Subscription string      `json:"subscription"`
 }
 
-
 func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	data := map[string]interface{}{
-		"status":         "OK",
+		"status": "OK",
 	}
 	resp, err := json.Marshal(data)
 	if err != nil {
 		http.Error(
 			w,
-			"failed to marshal the json for the status"
+			"failed to marshal the json for the status",
 			http.StatusInternalServerError,
 		)
 	}
