@@ -64,7 +64,8 @@ func main() {
 	}
 	router := http.NewServeMux()
 	router.Handle("/", srv)
-	router.HandleFunc("/events/tasks/claimed", http.HandlerFunc(srv.ServeEventTaskClaimed))
+	router.HandleFunc("/status", srv.ServeStatus)
+	router.HandleFunc("/events/tasks/claimed", srv.ServeEventTaskClaimed)
 	router.HandleFunc("/events/tasks/queued", srv.ServeEventTaskQueued)
 
 	handler := withLogging(logger.Named("http"), router)
