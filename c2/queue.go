@@ -63,6 +63,19 @@ func (q *Queue) ConsumeTasks(tasks ...events.TaskQueued) {
 	q.mu.Unlock()
 }
 
+// RemoveTask removes a task from the queue based on ID. If no task exists, RemoveTask is a no-op.
+func (q *Queue) RemoveTask(id string) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+
+	for i, event := range q.tasks {
+		if event.GetId() == id {
+			q.tasks = append(q.tasks[:i], q.tasks[i+1:]...)
+			return
+		}
+	}
+}
+
 // pop a task from the queue by index, returns nil if the task does not exist.
 func (q *Queue) pop(index int) (task *codec.Task) {
 	if index < 0 || index >= len(q.tasks) {
