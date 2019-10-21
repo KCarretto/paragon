@@ -19,3 +19,10 @@ services:
       target: production
     ports:
       - "127.0.0.1:8080:8080"
+  teamserver:
+    build:
+      context: ../
+      dockerfile: "./deployments/teamserver.Dockerfile"
+      target: production
+    ports:
+      - "127.0.0.1:8080:8080"
