@@ -137,6 +137,15 @@ func PrimaryIP(v string) predicate.Target {
 	)
 }
 
+// PublicIP applies equality check predicate on the "PublicIP" field. It's identical to PublicIPEQ.
+func PublicIP(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
 // PrimaryMAC applies equality check predicate on the "PrimaryMAC" field. It's identical to PrimaryMACEQ.
 func PrimaryMAC(v string) predicate.Target {
 	return predicate.Target(
@@ -279,6 +288,24 @@ func NameHasSuffix(v string) predicate.Target {
 	return predicate.Target(
 		func(s *sql.Selector) {
 			s.Where(sql.HasSuffix(s.C(FieldName), v))
+		},
+	)
+}
+
+// NameIsNil applies the IsNil predicate on the "Name" field.
+func NameIsNil() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.IsNull(s.C(FieldName)))
+		},
+	)
+}
+
+// NameNotNil applies the NotNil predicate on the "Name" field.
+func NameNotNil() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.NotNull(s.C(FieldName)))
 		},
 	)
 }
@@ -589,6 +616,161 @@ func PrimaryIPContainsFold(v string) predicate.Target {
 	return predicate.Target(
 		func(s *sql.Selector) {
 			s.Where(sql.ContainsFold(s.C(FieldPrimaryIP), v))
+		},
+	)
+}
+
+// PublicIPEQ applies the EQ predicate on the "PublicIP" field.
+func PublicIPEQ(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPNEQ applies the NEQ predicate on the "PublicIP" field.
+func PublicIPNEQ(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.NEQ(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPIn applies the In predicate on the "PublicIP" field.
+func PublicIPIn(vs ...string) predicate.Target {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Target(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.In(s.C(FieldPublicIP), v...))
+		},
+	)
+}
+
+// PublicIPNotIn applies the NotIn predicate on the "PublicIP" field.
+func PublicIPNotIn(vs ...string) predicate.Target {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Target(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.NotIn(s.C(FieldPublicIP), v...))
+		},
+	)
+}
+
+// PublicIPGT applies the GT predicate on the "PublicIP" field.
+func PublicIPGT(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.GT(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPGTE applies the GTE predicate on the "PublicIP" field.
+func PublicIPGTE(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.GTE(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPLT applies the LT predicate on the "PublicIP" field.
+func PublicIPLT(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.LT(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPLTE applies the LTE predicate on the "PublicIP" field.
+func PublicIPLTE(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.LTE(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPContains applies the Contains predicate on the "PublicIP" field.
+func PublicIPContains(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.Contains(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPHasPrefix applies the HasPrefix predicate on the "PublicIP" field.
+func PublicIPHasPrefix(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.HasPrefix(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPHasSuffix applies the HasSuffix predicate on the "PublicIP" field.
+func PublicIPHasSuffix(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.HasSuffix(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPIsNil applies the IsNil predicate on the "PublicIP" field.
+func PublicIPIsNil() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.IsNull(s.C(FieldPublicIP)))
+		},
+	)
+}
+
+// PublicIPNotNil applies the NotNil predicate on the "PublicIP" field.
+func PublicIPNotNil() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.NotNull(s.C(FieldPublicIP)))
+		},
+	)
+}
+
+// PublicIPEqualFold applies the EqualFold predicate on the "PublicIP" field.
+func PublicIPEqualFold(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.EqualFold(s.C(FieldPublicIP), v))
+		},
+	)
+}
+
+// PublicIPContainsFold applies the ContainsFold predicate on the "PublicIP" field.
+func PublicIPContainsFold(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.ContainsFold(s.C(FieldPublicIP), v))
 		},
 	)
 }

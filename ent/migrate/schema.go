@@ -11,9 +11,10 @@ var (
 	// TargetsColumns holds the columns for the "targets" table.
 	TargetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
-		{Name: "machine_uuid", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Nullable: true},
+		{Name: "machine_uuid", Type: field.TypeString, Unique: true},
 		{Name: "primary_ip", Type: field.TypeString, Nullable: true},
+		{Name: "public_ip", Type: field.TypeString, Nullable: true},
 		{Name: "primary_mac", Type: field.TypeString, Nullable: true},
 		{Name: "hostname", Type: field.TypeString, Nullable: true},
 		{Name: "last_seen", Type: field.TypeTime, Nullable: true},

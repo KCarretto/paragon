@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/ent/migrate"
 	_ "github.com/mattn/go-sqlite3"
 )
 
@@ -12,8 +13,10 @@ func getClient(ctx context.Context) *ent.Client {
 	if err != nil {
 		panic(err)
 	}
-	if err = client.Schema.Create(ctx); err != nil {
-		panic(err)
-	}
+
+	if err := client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
+        panic(err)
+    }
+
 	return client
 }
