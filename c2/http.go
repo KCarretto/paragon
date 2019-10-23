@@ -93,7 +93,7 @@ func (srv *Server) ServeEventTaskQueued(w http.ResponseWriter, req *http.Request
 	}
 
 	// Decode event message
-	var msg pubsubMsg
+	var msg pubsubEvent
 	if err := json.Unmarshal(data, &msg); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to unmarshal request: %s", err.Error()), http.StatusBadRequest)
 		return
@@ -101,7 +101,7 @@ func (srv *Server) ServeEventTaskQueued(w http.ResponseWriter, req *http.Request
 
 	// Decode event
 	var event events.TaskQueued
-	if err := proto.Unmarshal(msg.Data, &event); err != nil {
+	if err := proto.Unmarshal(msg.Message.Data, &event); err != nil {
 		http.Error(w, fmt.Sprintf("Failed to unmarshal event: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
