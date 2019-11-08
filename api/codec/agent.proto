@@ -2,10 +2,23 @@ syntax = "proto3";
 
 package codec;
 
-option go_package = "github.com/kcarretto/paragon/api/codec";
-
 import "google/protobuf/timestamp.proto";
 
+/*
+ * Golang Options
+ */
+// Install: go get -u github.com/gogo/protobuf
+import "gogoproto/gogo.proto";
+
+// Tests
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Performance
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
 
 message AgentMessage {
   AgentMetadata metadata = 1;
@@ -26,6 +39,6 @@ message Result {
   string id = 1;
   repeated string output = 2;
   string error = 3;
-  google.protobuf.Timestamp execStartTime = 4;
-  google.protobuf.Timestamp execStopTime = 5;
+  google.protobuf.Timestamp execStartTime = 4; // TODO: [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp execStopTime = 5;  // TODO: [(gogoproto.stdtime) = true];
 }
