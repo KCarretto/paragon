@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 
-	"github.com/kcarretto/paragon/teamserver"
+	"github.com/kcarretto/paragon/pkg/teamserver"
 )
 
 func main() {
