@@ -7,21 +7,14 @@ package codec
 import (
 	"time"
 
-	timestamp "github.com/golang/protobuf/ptypes/timestamp"
+	types "github.com/gogo/protobuf/types"
 )
-
-// VERSION describes the currently built version of codec.
-const VERSION = "0.0.1"
-
-// TODO: Add python support via --python_out=.
-
-//go:generate protoc -I=../vendor/ -I=../../ -I=. --go_out=paths=source_relative:. agent.proto server.proto
 
 // Start recording results for task execution.
 func (m *Result) Start() {
 	start := time.Now()
 
-	m.ExecStartTime = &timestamp.Timestamp{
+	m.ExecStartTime = &types.Timestamp{
 		Seconds: start.Unix(),
 		Nanos:   int32(start.Nanosecond()),
 	}
@@ -36,7 +29,7 @@ func (m *Result) Write(p []byte) (int, error) {
 // CloseWithError marks the end of task execution, and provides any error the task resulted in.
 func (m *Result) CloseWithError(err error) {
 	stop := time.Now()
-	m.ExecStopTime = &timestamp.Timestamp{
+	m.ExecStopTime = &types.Timestamp{
 		Seconds: stop.Unix(),
 		Nanos:   int32(stop.Nanosecond()),
 	}

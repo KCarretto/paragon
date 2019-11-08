@@ -7,9 +7,12 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/facebookincubator/ent v0.0.0-20191020153013-8e3a17550af6
 	github.com/go-ole/go-ole v1.2.4 // indirect
+	github.com/gogo/googleapis v1.3.0
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.3.1
 	github.com/golang/protobuf v1.3.2
 	github.com/google/uuid v1.1.1
+	github.com/grpc-ecosystem/grpc-gateway v1.12.1
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/pkg/errors v0.8.1
 	github.com/pkg/profile v1.3.0
@@ -23,4 +26,7 @@ require (
 	go.uber.org/multierr v1.2.0 // indirect
 	go.uber.org/zap v1.10.0
 	gocloud.dev v0.17.0
+	google.golang.org/genproto v0.0.0-20191028173616-919d9bdd9fe6 // indirect
+	google.golang.org/grpc v1.24.0
+	gopkg.in/yaml.v2 v2.2.5 // indirect
 )

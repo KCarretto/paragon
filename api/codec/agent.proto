@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package codec;
 
-option go_package = "github.com/kcarretto/paragon/api/codec";
-
 import "google/protobuf/timestamp.proto";
 
 
@@ -26,6 +24,6 @@ message Result {
   string id = 1;
   repeated string output = 2;
   string error = 3;
-  google.protobuf.Timestamp execStartTime = 4;
-  google.protobuf.Timestamp execStopTime = 5;
+  google.protobuf.Timestamp execStartTime = 4; // TODO: [(gogoproto.stdtime) = true];
+  google.protobuf.Timestamp execStopTime = 5;  // TODO: [(gogoproto.stdtime) = true];
 }

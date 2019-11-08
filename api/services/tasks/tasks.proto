@@ -1,0 +1,47 @@
+syntax = "proto3";
+
+package tasks;
+
+/*
+ * Golang Options
+ */
+
+// Install: go get -u github.com/gogo/protobuf@v1.3.1
+import "gogoproto/gogo.proto";
+
+// Tests
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Performance
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+// Enable registration with golang/protobuf for the grpc-gateway.
+option (gogoproto.goproto_registration) = true;
+// Enable generation of XXX_MessageName methods for grpc-go/status.
+option (gogoproto.messagename_all) = true;
+
+/*
+ * gRPC Gateway Options
+ */
+
+// Install: go get -u github.com/gogo/googleapis@v1.3.0
+import "google/api/annotations.proto";
+
+/*
+ * Service
+ */
+service Tasks {
+    rpc QueueTask(QueueTaskRequest) returns (QueueTaskResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/tasks/queue"
+            body: "*"
+        };
+    }
+}
+
+message QueueTaskRequest {}
+message QueueTaskResponse {}
