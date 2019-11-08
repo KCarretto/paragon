@@ -18,8 +18,8 @@ before_install:
 
 script:
   - $GOPATH/bin/golangci-lint run --verbose
-  - $GOPATH/bin/golangci-lint run | reviewdog -f=golangci-lint -reporter=github-pr-review
-  - $GOPATH/bin/golint ./... | reviewdog -f=golint -reporter=github-pr-review
+  # - $GOPATH/bin/golangci-lint run | reviewdog -f=golangci-lint -reporter=github-pr-review
+  # - $GOPATH/bin/golint ./... | reviewdog -f=golint -reporter=github-pr-review
   - $GOPATH/bin/goveralls -service=travis-ci
 
 after_success:
