@@ -2,7 +2,7 @@ FROM golang:1.13.1-alpine as dev
 WORKDIR /app
 RUN apk add alpine-sdk git protobuf-dev libgcc libstdc++ \
     && mkdir /go/tools \
-    && echo 'export PATH=/go/tools/bin:$PATH' > /etc/profile \
+    && ln -s /go/bin /go/tools/bin \
     && mkdir /tmp/goinstall \
     && cd /tmp/goinstall \
     && go mod init goinstall \
