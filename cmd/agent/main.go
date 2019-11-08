@@ -8,7 +8,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/kcarretto/paragon/agent"
+	"github.com/kcarretto/paragon/pkg/agent"
 	"go.uber.org/zap"
 )
 

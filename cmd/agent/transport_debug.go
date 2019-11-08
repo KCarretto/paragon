@@ -5,8 +5,8 @@ package main
 import (
 	"time"
 
-	"github.com/kcarretto/paragon/agent"
-	"github.com/kcarretto/paragon/agent/debug"
+	"github.com/kcarretto/paragon/pkg/agent"
+	"github.com/kcarretto/paragon/pkg/agent/debug"
 	"go.uber.org/zap"
 )
 

@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/kcarretto/paragon/c2"
+	"github.com/kcarretto/paragon/pkg/c2"
 
 	"go.uber.org/zap"
 )

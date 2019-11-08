@@ -7,8 +7,8 @@ import (
 	"os"
 	"time"
 
-	"github.com/kcarretto/paragon/agent"
-	"github.com/kcarretto/paragon/agent/http"
+	"github.com/kcarretto/paragon/pkg/agent"
+	"github.com/kcarretto/paragon/pkg/agent/http"
 	"go.uber.org/zap"
 )
 

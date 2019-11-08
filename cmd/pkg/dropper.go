@@ -5,7 +5,7 @@ const dropperMain = `package main
 import (
 	"context"
 
-	"github.com/kcarretto/paragon/drop"
+	"github.com/kcarretto/paragon/pkg/drop"
 )
 
 func main() {
