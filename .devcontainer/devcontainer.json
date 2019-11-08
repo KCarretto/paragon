@@ -1,0 +1,86 @@
+// For format details, see https://aka.ms/vscode-remote/devcontainer.json or the definition README at
+// https://github.com/microsoft/vscode-dev-containers/tree/master/containers/docker-existing-dockerfile
+{
+	"name": "Paragon Dev",
+	// Sets the run context to one level up instead of the .devcontainer folder.
+	"context": "..",
+	// Update the 'dockerFile' property if you aren't using the standard 'Dockerfile' filename.
+	"dockerFile": "../docker/dev.Dockerfile",
+	// The optional 'runArgs' property can be used to specify additional runtime arguments.
+	"runArgs": [
+		// Uncomment the next line to use Docker from inside the container. See https://aka.ms/vscode-remote/samples/docker-in-docker for details.
+		// "-v","/var/run/docker.sock:/var/run/docker.sock",
+		// Uncomment the next line if you will be using a ptrace-based debugger like C++, Go, and Rust.
+		// "--cap-add=SYS_PTRACE", "--security-opt", "seccomp=unconfined"
+		// You may want to add a non-root user to your Dockerfile. On Linux, this will prevent
+		// new files getting created as root. See https://aka.ms/vscode-remote/containers/non-root-user
+		// for the needed Dockerfile updates and then uncomment the next line.
+		// "-u", "vscode"
+	],
+	// Use 'settings' to set *default* container specific settings.json values on container create.
+	// You can edit these settings after create using File > Preferences > Settings > Remote.
+	"settings": {
+		// This will ignore your local shell user setting for Linux since shells like zsh are typically
+		// not in base container images. You can also update this to an specific shell to ensure VS Code
+		// uses the right one for terminals and tasks. For example, /bin/bash (or /bin/ash for Alpine).
+		/*
+		 * VSCode
+		 */
+		"terminal.integrated.shell.linux": null,
+		"telemetry.enableTelemetry": false,
+		"telemetry.enableCrashReporter": false,
+		"editor.rulers": [
+			100
+		],
+		"trailing-spaces.trimOnSave": true,
+		/*
+		 * GIT
+		 */
+		"git.autofetch": true,
+		"editor.formatOnSave": true,
+		"editor.formatOnType": true,
+		/*
+		 * Protobuf
+		 */
+		"protoc": {
+			"path": "/usr/bin/protoc",
+			"options": [
+				"-I=${GOPATH}/pkg/mod/",
+				"-I=/workspaces/paragon/",
+				"-I=${GOPATH}/pkg/mod/github.com/gogo/googleapis@v1.3.0/",
+				"-I=${GOPATH}/pkg/mod/github.com/gogo/protobuf@v1.3.1/",
+				"--gogoslick_out=plugins=grpc,Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,Mgoogle/api/annotations.proto=github.com/gogo/googleapis/google/api:.",
+				"--grpc-gateway_out=allow_patch_feature=false,Mgoogle/api/annotations.proto=github.com/gogo/googleapis/google/api:."
+			]
+		},
+		/*
+		 * Golang
+		 */
+		"go.useLanguageServer": true,
+		"go.toolsGopath": "/go/tools",
+		"go.autocompleteUnimportedPackages": true,
+		"go.gotoSymbol.includeImports": true,
+		"go.lintOnSave": "workspace",
+		"go.vetOnSave": "workspace",
+		"go.buildOnSave": "workspace",
+		"go.buildTags": "dev",
+		"go.generateTestsFlags": [
+			"-exported",
+		],
+	},
+	// Uncomment the next line if you want to publish any ports.
+	"appPort": [
+		"127.0.0.1:80:80",
+		"127.0.0.1:8080:8080",
+		"127.0.0.1:443:443"
+	],
+	// Uncomment the next line to run commands after the container is created - for example installing git.
+	// "postCreateCommand": "",
+	"extensions": [
+		"mikestead.dotenv",
+		"ms-azuretools.vscode-docker",
+		"ms-vscode.go",
+		"shardulm94.trailing-spaces",
+		"zxh404.vscode-proto3",
+	]
+}

@@ -10,6 +10,7 @@ import (
 	codec "github.com/kcarretto/paragon/api/codec"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
 )
@@ -23,7 +24,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type TaskQueued struct {
 	Id      string               `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
@@ -44,7 +45,7 @@ func (m *TaskQueued) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_TaskQueued.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -102,7 +103,7 @@ func (m *TaskClaimed) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_TaskClaimed.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -158,7 +159,7 @@ func (m *TaskExecuted) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_TaskExecuted.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -420,7 +421,7 @@ func valueToGoStringTask(v interface{}, typ string) string {
 func (m *TaskQueued) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -428,39 +429,48 @@ func (m *TaskQueued) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TaskQueued) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TaskQueued) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Id) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(len(m.Id)))
-		i += copy(dAtA[i:], m.Id)
+	if m.Filter != nil {
+		{
+			size, err := m.Filter.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTask(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1a
 	}
 	if len(m.Content) > 0 {
-		dAtA[i] = 0x12
-		i++
+		i -= len(m.Content)
+		copy(dAtA[i:], m.Content)
 		i = encodeVarintTask(dAtA, i, uint64(len(m.Content)))
-		i += copy(dAtA[i:], m.Content)
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.Filter != nil {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(m.Filter.Size()))
-		n1, err := m.Filter.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintTask(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *TaskClaimed) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -468,33 +478,41 @@ func (m *TaskClaimed) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TaskClaimed) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TaskClaimed) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Id) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(len(m.Id)))
-		i += copy(dAtA[i:], m.Id)
-	}
 	if m.Agent != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(m.Agent.Size()))
-		n2, err := m.Agent.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+		{
+			size, err := m.Agent.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintTask(dAtA, i, uint64(size))
 		}
-		i += n2
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintTask(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TaskExecuted) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -502,79 +520,84 @@ func (m *TaskExecuted) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TaskExecuted) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TaskExecuted) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Id) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(len(m.Id)))
-		i += copy(dAtA[i:], m.Id)
-	}
-	if len(m.Output) > 0 {
-		for _, s := range m.Output {
-			dAtA[i] = 0x12
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+	if m.Agent != nil {
+		{
+			size, err := m.Agent.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
 			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+			i -= size
+			i = encodeVarintTask(dAtA, i, uint64(size))
 		}
-	}
-	if len(m.Error) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(len(m.Error)))
-		i += copy(dAtA[i:], m.Error)
-	}
-	if m.ExecStartTime != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(m.ExecStartTime))
-	}
-	if m.ExecStopTime != 0 {
-		dAtA[i] = 0x28
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(m.ExecStopTime))
+		i--
+		dAtA[i] = 0x3a
 	}
 	if m.RecvTime != 0 {
-		dAtA[i] = 0x30
-		i++
 		i = encodeVarintTask(dAtA, i, uint64(m.RecvTime))
+		i--
+		dAtA[i] = 0x30
 	}
-	if m.Agent != nil {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintTask(dAtA, i, uint64(m.Agent.Size()))
-		n3, err := m.Agent.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+	if m.ExecStopTime != 0 {
+		i = encodeVarintTask(dAtA, i, uint64(m.ExecStopTime))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.ExecStartTime != 0 {
+		i = encodeVarintTask(dAtA, i, uint64(m.ExecStartTime))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintTask(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Output) > 0 {
+		for iNdEx := len(m.Output) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Output[iNdEx])
+			copy(dAtA[i:], m.Output[iNdEx])
+			i = encodeVarintTask(dAtA, i, uint64(len(m.Output[iNdEx])))
+			i--
+			dAtA[i] = 0x12
 		}
-		i += n3
 	}
-	return i, nil
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintTask(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintTask(dAtA []byte, offset int, v uint64) int {
+	offset -= sovTask(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedTaskQueued(r randyTask, easy bool) *TaskQueued {
 	this := &TaskQueued{}
 	this.Id = string(randStringTask(r))
 	this.Content = string(randStringTask(r))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Filter = codec.NewPopulatedAgentMetadata(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -585,7 +608,7 @@ func NewPopulatedTaskQueued(r randyTask, easy bool) *TaskQueued {
 func NewPopulatedTaskClaimed(r randyTask, easy bool) *TaskClaimed {
 	this := &TaskClaimed{}
 	this.Id = string(randStringTask(r))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Agent = codec.NewPopulatedAgentMetadata(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -614,7 +637,7 @@ func NewPopulatedTaskExecuted(r randyTask, easy bool) *TaskExecuted {
 	if r.Intn(2) == 0 {
 		this.RecvTime *= -1
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Agent = codec.NewPopulatedAgentMetadata(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -769,14 +792,7 @@ func (m *TaskExecuted) Size() (n int) {
 }
 
 func sovTask(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozTask(x uint64) (n int) {
 	return sovTask(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -1347,6 +1363,7 @@ func (m *TaskExecuted) Unmarshal(dAtA []byte) error {
 func skipTask(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -1378,10 +1395,8 @@ func skipTask(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -1402,55 +1417,30 @@ func skipTask(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthTask
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthTask
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowTask
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipTask(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthTask
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupTask
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthTask
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthTask = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowTask   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthTask        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowTask          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupTask = fmt.Errorf("proto: unexpected end of group")
 )

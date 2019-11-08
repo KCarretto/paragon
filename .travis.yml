@@ -9,7 +9,7 @@ env:
 
 before_install:
   - go get github.com/mattn/goveralls
-  - go get -u github.com/reviewdog/reviewdog/cmd/reviewdog
+  # - go get -u github.com/reviewdog/reviewdog/cmd/reviewdog
   - go get -u golang.org/x/lint/golint
 
   # Lock linter version to env: $GOLANGCI_LINT_VERSION

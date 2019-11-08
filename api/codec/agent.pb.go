@@ -10,6 +10,7 @@ import (
 	types "github.com/gogo/protobuf/types"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 	reflect "reflect"
 	strings "strings"
 )
@@ -23,7 +24,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type AgentMessage struct {
 	Metadata *AgentMetadata `protobuf:"bytes,1,opt,name=metadata,proto3" json:"metadata,omitempty"`
@@ -44,7 +45,7 @@ func (m *AgentMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_AgentMessage.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -106,7 +107,7 @@ func (m *AgentMetadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return xxx_messageInfo_AgentMetadata.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -188,7 +189,7 @@ func (m *Result) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Result.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -461,7 +462,7 @@ func valueToGoStringAgent(v interface{}, typ string) string {
 func (m *AgentMessage) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -469,54 +470,57 @@ func (m *AgentMessage) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AgentMessage) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AgentMessage) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Metadata != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(m.Metadata.Size()))
-		n1, err := m.Metadata.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
+	if len(m.Logs) > 0 {
+		for iNdEx := len(m.Logs) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Logs[iNdEx])
+			copy(dAtA[i:], m.Logs[iNdEx])
+			i = encodeVarintAgent(dAtA, i, uint64(len(m.Logs[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
 		}
-		i += n1
 	}
 	if len(m.Results) > 0 {
-		for _, msg := range m.Results {
+		for iNdEx := len(m.Results) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Results[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintAgent(dAtA, i, uint64(size))
+			}
+			i--
 			dAtA[i] = 0x12
-			i++
-			i = encodeVarintAgent(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
+		}
+	}
+	if m.Metadata != nil {
+		{
+			size, err := m.Metadata.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
-			i += n
+			i -= size
+			i = encodeVarintAgent(dAtA, i, uint64(size))
 		}
+		i--
+		dAtA[i] = 0xa
 	}
-	if len(m.Logs) > 0 {
-		for _, s := range m.Logs {
-			dAtA[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *AgentMetadata) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -524,53 +528,64 @@ func (m *AgentMetadata) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AgentMetadata) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AgentMetadata) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.AgentID) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.AgentID)))
-		i += copy(dAtA[i:], m.AgentID)
-	}
-	if len(m.MachineUUID) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.MachineUUID)))
-		i += copy(dAtA[i:], m.MachineUUID)
-	}
-	if len(m.SessionID) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.SessionID)))
-		i += copy(dAtA[i:], m.SessionID)
-	}
-	if len(m.Hostname) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.Hostname)))
-		i += copy(dAtA[i:], m.Hostname)
+	if len(m.PrimaryMAC) > 0 {
+		i -= len(m.PrimaryMAC)
+		copy(dAtA[i:], m.PrimaryMAC)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.PrimaryMAC)))
+		i--
+		dAtA[i] = 0x32
 	}
 	if len(m.PrimaryIP) > 0 {
-		dAtA[i] = 0x2a
-		i++
+		i -= len(m.PrimaryIP)
+		copy(dAtA[i:], m.PrimaryIP)
 		i = encodeVarintAgent(dAtA, i, uint64(len(m.PrimaryIP)))
-		i += copy(dAtA[i:], m.PrimaryIP)
+		i--
+		dAtA[i] = 0x2a
 	}
-	if len(m.PrimaryMAC) > 0 {
-		dAtA[i] = 0x32
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.PrimaryMAC)))
-		i += copy(dAtA[i:], m.PrimaryMAC)
+	if len(m.Hostname) > 0 {
+		i -= len(m.Hostname)
+		copy(dAtA[i:], m.Hostname)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.Hostname)))
+		i--
+		dAtA[i] = 0x22
 	}
-	return i, nil
+	if len(m.SessionID) > 0 {
+		i -= len(m.SessionID)
+		copy(dAtA[i:], m.SessionID)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.SessionID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.MachineUUID) > 0 {
+		i -= len(m.MachineUUID)
+		copy(dAtA[i:], m.MachineUUID)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.MachineUUID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.AgentID) > 0 {
+		i -= len(m.AgentID)
+		copy(dAtA[i:], m.AgentID)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.AgentID)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Result) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -578,75 +593,82 @@ func (m *Result) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Result) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Result) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Id) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.Id)))
-		i += copy(dAtA[i:], m.Id)
-	}
-	if len(m.Output) > 0 {
-		for _, s := range m.Output {
-			dAtA[i] = 0x12
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+	if m.ExecStopTime != nil {
+		{
+			size, err := m.ExecStopTime.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
 			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+			i -= size
+			i = encodeVarintAgent(dAtA, i, uint64(size))
 		}
-	}
-	if len(m.Error) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(len(m.Error)))
-		i += copy(dAtA[i:], m.Error)
+		i--
+		dAtA[i] = 0x2a
 	}
 	if m.ExecStartTime != nil {
+		{
+			size, err := m.ExecStartTime.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintAgent(dAtA, i, uint64(size))
+		}
+		i--
 		dAtA[i] = 0x22
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(m.ExecStartTime.Size()))
-		n2, err := m.ExecStartTime.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n2
 	}
-	if m.ExecStopTime != nil {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintAgent(dAtA, i, uint64(m.ExecStopTime.Size()))
-		n3, err := m.ExecStopTime.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n3
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x1a
 	}
-	return i, nil
+	if len(m.Output) > 0 {
+		for iNdEx := len(m.Output) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Output[iNdEx])
+			copy(dAtA[i:], m.Output[iNdEx])
+			i = encodeVarintAgent(dAtA, i, uint64(len(m.Output[iNdEx])))
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.Id) > 0 {
+		i -= len(m.Id)
+		copy(dAtA[i:], m.Id)
+		i = encodeVarintAgent(dAtA, i, uint64(len(m.Id)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintAgent(dAtA []byte, offset int, v uint64) int {
+	offset -= sovAgent(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedAgentMessage(r randyAgent, easy bool) *AgentMessage {
 	this := &AgentMessage{}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Metadata = NewPopulatedAgentMetadata(r, easy)
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v1 := r.Intn(5)
 		this.Results = make([]*Result, v1)
 		for i := 0; i < v1; i++ {
@@ -685,10 +707,10 @@ func NewPopulatedResult(r randyAgent, easy bool) *Result {
 		this.Output[i] = string(randStringAgent(r))
 	}
 	this.Error = string(randStringAgent(r))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.ExecStartTime = types.NewPopulatedTimestamp(r, easy)
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.ExecStopTime = types.NewPopulatedTimestamp(r, easy)
 	}
 	if !easy && r.Intn(10) != 0 {
@@ -858,14 +880,7 @@ func (m *Result) Size() (n int) {
 }
 
 func sovAgent(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozAgent(x uint64) (n int) {
 	return sovAgent(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -874,9 +889,14 @@ func (this *AgentMessage) String() string {
 	if this == nil {
 		return "nil"
 	}
+	repeatedStringForResults := "[]*Result{"
+	for _, f := range this.Results {
+		repeatedStringForResults += strings.Replace(f.String(), "Result", "Result", 1) + ","
+	}
+	repeatedStringForResults += "}"
 	s := strings.Join([]string{`&AgentMessage{`,
-		`Metadata:` + strings.Replace(fmt.Sprintf("%v", this.Metadata), "AgentMetadata", "AgentMetadata", 1) + `,`,
-		`Results:` + strings.Replace(fmt.Sprintf("%v", this.Results), "Result", "Result", 1) + `,`,
+		`Metadata:` + strings.Replace(this.Metadata.String(), "AgentMetadata", "AgentMetadata", 1) + `,`,
+		`Results:` + repeatedStringForResults + `,`,
 		`Logs:` + fmt.Sprintf("%v", this.Logs) + `,`,
 		`}`,
 	}, "")
@@ -1543,6 +1563,7 @@ func (m *Result) Unmarshal(dAtA []byte) error {
 func skipAgent(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -1574,10 +1595,8 @@ func skipAgent(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -1598,55 +1617,30 @@ func skipAgent(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthAgent
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthAgent
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowAgent
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipAgent(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthAgent
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupAgent
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthAgent
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthAgent = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowAgent   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthAgent        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowAgent          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupAgent = fmt.Errorf("proto: unexpected end of group")
 )
