@@ -4,6 +4,22 @@ package events;
 
 import "api/codec/agent.proto";
 
+/*
+ * Golang Options
+ */
+// Install: go get -u github.com/gogo/protobuf
+import "gogoproto/gogo.proto";
+
+// Tests
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Performance
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
 message TaskQueued {
   string id = 1;
   string content = 2;
