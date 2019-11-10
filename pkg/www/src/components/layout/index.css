@@ -1,0 +1,10 @@
+.XLayout {
+    min-height: 100vh;
+}
+.XSidebar {
+    max-width: 160px;
+}
+.XContent {
+    width: calc(100% - 150px);
+    margin-right: 100px;
+}
