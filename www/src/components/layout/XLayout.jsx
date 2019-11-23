@@ -8,11 +8,6 @@ const XLayout = (props) => (
     <Router>
         <Switch>
             <XSidebar routeMap={props.routeMap}>
-                {props.routeMap ? props.routeMap.map((value, index) => {
-                    return <div route_group={value.title} key={index}>
-                        {value.routes}
-                    </div>
-                }) : []}
                 {props.children}
             </XSidebar>
         </Switch>
