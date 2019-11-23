@@ -80,6 +80,10 @@ func (*FetchRequest) XXX_MessageName() string {
 }
 
 type FetchResponse struct {
+	Name    string  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Content string  `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Tags    []int64 `protobuf:"varint,3,rep,packed,name=tags,proto3" json:"tags,omitempty"`
+	Tasks   []int64 `protobuf:"varint,4,rep,packed,name=tasks,proto3" json:"tasks,omitempty"`
 }
 
 func (m *FetchResponse) Reset()      { *m = FetchResponse{} }
@@ -114,12 +118,42 @@ func (m *FetchResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FetchResponse proto.InternalMessageInfo
 
+func (m *FetchResponse) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetContent() string {
+	if m != nil {
+		return m.Content
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetTags() []int64 {
+	if m != nil {
+		return m.Tags
+	}
+	return nil
+}
+
+func (m *FetchResponse) GetTasks() []int64 {
+	if m != nil {
+		return m.Tasks
+	}
+	return nil
+}
+
 func (*FetchResponse) XXX_MessageName() string {
 	return "jobs.FetchResponse"
 }
 
 type FindRequest struct {
 	Filter string `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	Offset int64  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit  int64  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
 func (m *FindRequest) Reset()      { *m = FindRequest{} }
@@ -161,11 +195,27 @@ func (m *FindRequest) GetFilter() string {
 	return ""
 }
 
+func (m *FindRequest) GetOffset() int64 {
+	if m != nil {
+		return m.Offset
+	}
+	return 0
+}
+
+func (m *FindRequest) GetLimit() int64 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
+
 func (*FindRequest) XXX_MessageName() string {
 	return "jobs.FindRequest"
 }
 
 type FindResponse struct {
+	Ids       []int64 `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	NewOffset int64   `protobuf:"varint,2,opt,name=newOffset,proto3" json:"newOffset,omitempty"`
 }
 
 func (m *FindResponse) Reset()      { *m = FindResponse{} }
@@ -200,11 +250,28 @@ func (m *FindResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FindResponse proto.InternalMessageInfo
 
+func (m *FindResponse) GetIds() []int64 {
+	if m != nil {
+		return m.Ids
+	}
+	return nil
+}
+
+func (m *FindResponse) GetNewOffset() int64 {
+	if m != nil {
+		return m.NewOffset
+	}
+	return 0
+}
+
 func (*FindResponse) XXX_MessageName() string {
 	return "jobs.FindResponse"
 }
 
 type CreateRequest struct {
+	Name    string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Content string   `protobuf:"bytes,2,opt,name=content,proto3" json:"content,omitempty"`
+	Tags    []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
 }
 
 func (m *CreateRequest) Reset()      { *m = CreateRequest{} }
@@ -239,11 +306,33 @@ func (m *CreateRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CreateRequest proto.InternalMessageInfo
 
+func (m *CreateRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *CreateRequest) GetContent() string {
+	if m != nil {
+		return m.Content
+	}
+	return ""
+}
+
+func (m *CreateRequest) GetTags() []string {
+	if m != nil {
+		return m.Tags
+	}
+	return nil
+}
+
 func (*CreateRequest) XXX_MessageName() string {
 	return "jobs.CreateRequest"
 }
 
 type CreateResponse struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (m *CreateResponse) Reset()      { *m = CreateResponse{} }
@@ -278,11 +367,19 @@ func (m *CreateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CreateResponse proto.InternalMessageInfo
 
+func (m *CreateResponse) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
 func (*CreateResponse) XXX_MessageName() string {
 	return "jobs.CreateResponse"
 }
 
 type QueueRequest struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (m *QueueRequest) Reset()      { *m = QueueRequest{} }
@@ -317,11 +414,19 @@ func (m *QueueRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueueRequest proto.InternalMessageInfo
 
+func (m *QueueRequest) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
 func (*QueueRequest) XXX_MessageName() string {
 	return "jobs.QueueRequest"
 }
 
 type QueueResponse struct {
+	Ids []int64 `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
 }
 
 func (m *QueueResponse) Reset()      { *m = QueueResponse{} }
@@ -356,6 +461,13 @@ func (m *QueueResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueueResponse proto.InternalMessageInfo
 
+func (m *QueueResponse) GetIds() []int64 {
+	if m != nil {
+		return m.Ids
+	}
+	return nil
+}
+
 func (*QueueResponse) XXX_MessageName() string {
 	return "jobs.QueueResponse"
 }
@@ -382,32 +494,39 @@ func init() { proto.RegisterFile("jobs.proto", fileDescriptor_45644d4410f878a7) 
 func init() { golang_proto.RegisterFile("jobs.proto", fileDescriptor_45644d4410f878a7) }
 
 var fileDescriptor_45644d4410f878a7 = []byte{
-	// 398 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x52, 0x31, 0x6b, 0xdb, 0x40,
-	0x18, 0xd5, 0xa9, 0xb6, 0xa1, 0x5f, 0x6d, 0xb9, 0x3e, 0x9b, 0xd6, 0x15, 0xed, 0x47, 0x39, 0x28,
-	0x14, 0x0f, 0x16, 0x6d, 0x37, 0x8f, 0x6d, 0x31, 0xa5, 0x1d, 0x4a, 0xdd, 0x5f, 0x20, 0x5b, 0x67,
-	0x55, 0xc5, 0xe8, 0x6c, 0x4b, 0xee, 0x52, 0x02, 0x21, 0xbf, 0x20, 0x90, 0x3f, 0x91, 0x9f, 0x90,
-	0x31, 0x90, 0xc5, 0xa3, 0x21, 0x8b, 0xc7, 0xe8, 0x94, 0x21, 0xa3, 0xc7, 0x8c, 0x41, 0xa7, 0x53,
-	0x62, 0x2d, 0xd9, 0xee, 0x7b, 0xdf, 0x7b, 0x8f, 0xef, 0x3d, 0x0e, 0xe0, 0xaf, 0x18, 0x47, 0xfd,
-	0xf9, 0x52, 0xc4, 0x82, 0x56, 0xb2, 0xb7, 0xdd, 0xf1, 0x85, 0x2f, 0x14, 0xe0, 0x64, 0xaf, 0x7c,
-	0x67, 0xbf, 0xf6, 0x85, 0xf0, 0x67, 0xdc, 0x71, 0xe7, 0x81, 0xe3, 0x86, 0xa1, 0x88, 0xdd, 0x38,
-	0x10, 0xa1, 0x56, 0x32, 0x84, 0xfa, 0x90, 0xc7, 0x93, 0x3f, 0x23, 0xbe, 0x58, 0xf1, 0x28, 0xa6,
-	0x16, 0x98, 0x81, 0xd7, 0x25, 0x6f, 0xc9, 0xfb, 0x27, 0x23, 0x33, 0xf0, 0x58, 0x13, 0x1a, 0x7a,
-	0x1f, 0xcd, 0x45, 0x18, 0x71, 0xf6, 0x0e, 0x9e, 0x0d, 0x83, 0xd0, 0x2b, 0xf8, 0x2f, 0xa0, 0x36,
-	0x0d, 0x66, 0x31, 0x5f, 0x2a, 0xcd, 0xd3, 0x91, 0x9e, 0x98, 0x05, 0xf5, 0x9c, 0xa6, 0x65, 0x4d,
-	0x68, 0x7c, 0x59, 0x72, 0x37, 0xe6, 0x5a, 0xc8, 0x9e, 0x83, 0x55, 0x00, 0x9a, 0x62, 0x41, 0xfd,
-	0xd7, 0x8a, 0xaf, 0xee, 0x19, 0x4d, 0x68, 0xe8, 0x39, 0x27, 0x7c, 0xbc, 0x30, 0xa1, 0xf2, 0x5d,
-	0x8c, 0x23, 0xfa, 0x03, 0xaa, 0xea, 0x28, 0x4a, 0xfb, 0xaa, 0x84, 0xfd, 0x04, 0x76, 0xbb, 0x84,
-	0x69, 0xef, 0x57, 0x47, 0x97, 0xd7, 0x27, 0x66, 0x9b, 0xb6, 0x54, 0x0d, 0xff, 0x3e, 0x38, 0x19,
-	0xc7, 0xf9, 0x1f, 0x78, 0x07, 0xf4, 0x1b, 0x54, 0xb2, 0x4b, 0x69, 0x4b, 0xeb, 0x1e, 0xc2, 0xd9,
-	0x74, 0x1f, 0x7a, 0xd4, 0x69, 0x9a, 0x39, 0xfc, 0x86, 0x5a, 0x1e, 0x89, 0xea, 0x1b, 0x4a, 0x89,
-	0xed, 0x4e, 0x19, 0xd4, 0x7e, 0xa8, 0xfc, 0xba, 0xac, 0x5d, 0xf2, 0x9b, 0x28, 0xd2, 0x80, 0xf4,
-	0xe8, 0x4f, 0xa8, 0xaa, 0x16, 0x8a, 0xac, 0xfb, 0x15, 0x15, 0x59, 0x4b, 0x35, 0xb1, 0x37, 0xca,
-	0xf1, 0x25, 0xa3, 0x25, 0xc7, 0x45, 0xc6, 0x19, 0x90, 0xde, 0xe7, 0xaf, 0x9b, 0x04, 0x8d, 0x6d,
-	0x82, 0xc6, 0x2e, 0x41, 0x72, 0x9b, 0x20, 0x39, 0x94, 0x48, 0x4e, 0x25, 0x92, 0x33, 0x89, 0x64,
-	0x2d, 0x91, 0x6c, 0x24, 0x92, 0x2b, 0x89, 0xe4, 0x46, 0xa2, 0xb1, 0x93, 0x48, 0x8e, 0x53, 0x34,
-	0xce, 0x53, 0x24, 0xeb, 0x14, 0xc9, 0x26, 0x45, 0x63, 0x9b, 0xa2, 0x31, 0xae, 0xa9, 0xef, 0xf3,
-	0xe9, 0x2e, 0x00, 0x00, 0xff, 0xff, 0x5e, 0xc9, 0xd9, 0x44, 0x86, 0x02, 0x00, 0x00,
+	// 504 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x93, 0xbf, 0x6f, 0xd3, 0x40,
+	0x14, 0xc7, 0x7d, 0x71, 0x12, 0x94, 0x47, 0x12, 0xd1, 0x4b, 0x04, 0x26, 0x2a, 0x4f, 0xe1, 0xa6,
+	0xaa, 0x43, 0x2d, 0x60, 0xeb, 0xc0, 0x40, 0x51, 0x07, 0x18, 0xaa, 0xba, 0x7f, 0x81, 0x13, 0x5f,
+	0xcc, 0x41, 0xea, 0x4b, 0x73, 0x17, 0x18, 0x10, 0x12, 0xe2, 0x2f, 0x40, 0xe2, 0x9f, 0xe0, 0x4f,
+	0x60, 0x42, 0x8c, 0x1d, 0x23, 0xb1, 0x74, 0x24, 0x36, 0x03, 0x63, 0x47, 0x46, 0xe4, 0xf3, 0x59,
+	0xb5, 0x91, 0xba, 0x74, 0x7b, 0xef, 0xfb, 0x9e, 0x3f, 0xef, 0xd7, 0x19, 0xe0, 0xb5, 0x9c, 0xa8,
+	0xbd, 0xc5, 0x52, 0x6a, 0x49, 0x9b, 0xb9, 0x3d, 0x1a, 0xc6, 0x32, 0x96, 0x46, 0xf0, 0x73, 0xab,
+	0x88, 0x8d, 0xb6, 0x63, 0x29, 0xe3, 0x39, 0xf7, 0xc3, 0x85, 0xf0, 0xc3, 0x24, 0x91, 0x3a, 0xd4,
+	0x42, 0x26, 0xf6, 0x4b, 0x86, 0xd0, 0x3d, 0xe4, 0x7a, 0xfa, 0x2a, 0xe0, 0x67, 0x2b, 0xae, 0x34,
+	0xed, 0x43, 0x43, 0x44, 0x1e, 0x19, 0x93, 0x1d, 0x37, 0x68, 0x88, 0x88, 0xc5, 0xd0, 0xb3, 0x71,
+	0xb5, 0x90, 0x89, 0xe2, 0x94, 0x42, 0x33, 0x09, 0x4f, 0xb9, 0x49, 0xe9, 0x04, 0xc6, 0xa6, 0x1e,
+	0xdc, 0x9a, 0xca, 0x44, 0xf3, 0x44, 0x7b, 0x0d, 0x23, 0x97, 0x6e, 0x9e, 0xad, 0xc3, 0x58, 0x79,
+	0xee, 0xd8, 0xdd, 0x71, 0x03, 0x63, 0xd3, 0x21, 0xb4, 0x74, 0xa8, 0xde, 0x28, 0xaf, 0x69, 0xc4,
+	0xc2, 0x61, 0x27, 0x70, 0xfb, 0x50, 0x24, 0x51, 0xd9, 0xc7, 0x5d, 0x68, 0xcf, 0xc4, 0x5c, 0xf3,
+	0xa5, 0x2d, 0x64, 0xbd, 0x5c, 0x97, 0xb3, 0x99, 0xe2, 0x45, 0x25, 0x37, 0xb0, 0x5e, 0x0e, 0x9d,
+	0x8b, 0x53, 0xa1, 0x3d, 0xd7, 0xc8, 0x85, 0xc3, 0x9e, 0x42, 0xb7, 0x80, 0xda, 0xe6, 0xef, 0x80,
+	0x2b, 0x22, 0xe5, 0x11, 0x53, 0x38, 0x37, 0xe9, 0x36, 0x74, 0x12, 0xfe, 0xee, 0xa8, 0x8a, 0xbc,
+	0x12, 0xd8, 0x31, 0xf4, 0x0e, 0x96, 0x3c, 0xd4, 0xbc, 0x6c, 0xeb, 0xe6, 0xd3, 0x77, 0x8a, 0xe9,
+	0xd9, 0x18, 0xfa, 0x25, 0xd2, 0x36, 0xf5, 0xff, 0xca, 0x11, 0xba, 0xc7, 0x2b, 0xbe, 0xe2, 0xd7,
+	0x9d, 0xe4, 0x21, 0xf4, 0x6c, 0xfc, 0xba, 0xa9, 0x1e, 0x7f, 0x6f, 0x40, 0xf3, 0x85, 0x9c, 0x28,
+	0xfa, 0x12, 0x5a, 0xe6, 0x7c, 0x94, 0xee, 0x99, 0xe7, 0x52, 0xbd, 0xf5, 0x68, 0x50, 0xd3, 0x0a,
+	0x18, 0xbb, 0xff, 0xe9, 0xe7, 0xef, 0x2f, 0x8d, 0x01, 0xdd, 0x32, 0x0f, 0xe6, 0xed, 0x23, 0x3f,
+	0xcf, 0xf1, 0xdf, 0x8b, 0xe8, 0x03, 0x3d, 0x80, 0x66, 0xbe, 0x4d, 0xba, 0x65, 0xbf, 0xbb, 0x3a,
+	0xd7, 0x88, 0x56, 0x25, 0x4b, 0x1a, 0x1a, 0x52, 0x9f, 0x76, 0xab, 0x24, 0x7a, 0x02, 0xed, 0x62,
+	0x7e, 0x6a, 0xcb, 0xd7, 0x16, 0x3c, 0x1a, 0xd6, 0x45, 0x8b, 0x42, 0x83, 0xf2, 0xd8, 0xa0, 0xd6,
+	0xd4, 0xd4, 0x24, 0xed, 0x93, 0x5d, 0x7a, 0x04, 0x2d, 0xb3, 0x92, 0x72, 0xcc, 0xea, 0xfe, 0xca,
+	0x31, 0x6b, 0x3b, 0x63, 0x0f, 0x0c, 0xf1, 0x1e, 0xa3, 0x35, 0xe2, 0x59, 0x9e, 0xb3, 0x4f, 0x76,
+	0x9f, 0x3d, 0x5f, 0x6f, 0xd0, 0xb9, 0xd8, 0xa0, 0x73, 0xb9, 0x41, 0xf2, 0x77, 0x83, 0xe4, 0x63,
+	0x8a, 0xe4, 0x6b, 0x8a, 0xe4, 0x5b, 0x8a, 0xe4, 0x3c, 0x45, 0xb2, 0x4e, 0x91, 0xfc, 0x4a, 0x91,
+	0xfc, 0x49, 0xd1, 0xb9, 0x4c, 0x91, 0x7c, 0xce, 0xd0, 0xf9, 0x91, 0x21, 0x39, 0xcf, 0x90, 0xac,
+	0x33, 0x74, 0x2e, 0x32, 0x74, 0x26, 0x6d, 0xf3, 0x8f, 0x3d, 0xf9, 0x17, 0x00, 0x00, 0xff, 0xff,
+	0x30, 0x8c, 0x0e, 0x9a, 0xab, 0x03, 0x00, 0x00,
 }
 
 func (this *FetchRequest) Equal(that interface{}) bool {
@@ -453,6 +572,28 @@ func (this *FetchResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.Content != that1.Content {
+		return false
+	}
+	if len(this.Tags) != len(that1.Tags) {
+		return false
+	}
+	for i := range this.Tags {
+		if this.Tags[i] != that1.Tags[i] {
+			return false
+		}
+	}
+	if len(this.Tasks) != len(that1.Tasks) {
+		return false
+	}
+	for i := range this.Tasks {
+		if this.Tasks[i] != that1.Tasks[i] {
+			return false
+		}
+	}
 	return true
 }
 func (this *FindRequest) Equal(that interface{}) bool {
@@ -477,6 +618,12 @@ func (this *FindRequest) Equal(that interface{}) bool {
 	if this.Filter != that1.Filter {
 		return false
 	}
+	if this.Offset != that1.Offset {
+		return false
+	}
+	if this.Limit != that1.Limit {
+		return false
+	}
 	return true
 }
 func (this *FindResponse) Equal(that interface{}) bool {
@@ -496,6 +643,17 @@ func (this *FindResponse) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
+		return false
+	}
+	if len(this.Ids) != len(that1.Ids) {
+		return false
+	}
+	for i := range this.Ids {
+		if this.Ids[i] != that1.Ids[i] {
+			return false
+		}
+	}
+	if this.NewOffset != that1.NewOffset {
 		return false
 	}
 	return true
@@ -519,6 +677,20 @@ func (this *CreateRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.Content != that1.Content {
+		return false
+	}
+	if len(this.Tags) != len(that1.Tags) {
+		return false
+	}
+	for i := range this.Tags {
+		if this.Tags[i] != that1.Tags[i] {
+			return false
+		}
+	}
 	return true
 }
 func (this *CreateResponse) Equal(that interface{}) bool {
@@ -538,6 +710,9 @@ func (this *CreateResponse) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
 		return false
 	}
 	return true
@@ -561,6 +736,9 @@ func (this *QueueRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Id != that1.Id {
+		return false
+	}
 	return true
 }
 func (this *QueueResponse) Equal(that interface{}) bool {
@@ -582,6 +760,14 @@ func (this *QueueResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if len(this.Ids) != len(that1.Ids) {
+		return false
+	}
+	for i := range this.Ids {
+		if this.Ids[i] != that1.Ids[i] {
+			return false
+		}
+	}
 	return true
 }
 func (this *FetchRequest) GoString() string {
@@ -598,8 +784,12 @@ func (this *FetchResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 8)
 	s = append(s, "&jobs.FetchResponse{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Content: "+fmt.Sprintf("%#v", this.Content)+",\n")
+	s = append(s, "Tags: "+fmt.Sprintf("%#v", this.Tags)+",\n")
+	s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -607,9 +797,11 @@ func (this *FindRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 7)
 	s = append(s, "&jobs.FindRequest{")
 	s = append(s, "Filter: "+fmt.Sprintf("%#v", this.Filter)+",\n")
+	s = append(s, "Offset: "+fmt.Sprintf("%#v", this.Offset)+",\n")
+	s = append(s, "Limit: "+fmt.Sprintf("%#v", this.Limit)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -617,8 +809,10 @@ func (this *FindResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 6)
 	s = append(s, "&jobs.FindResponse{")
+	s = append(s, "Ids: "+fmt.Sprintf("%#v", this.Ids)+",\n")
+	s = append(s, "NewOffset: "+fmt.Sprintf("%#v", this.NewOffset)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -626,8 +820,11 @@ func (this *CreateRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 7)
 	s = append(s, "&jobs.CreateRequest{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "Content: "+fmt.Sprintf("%#v", this.Content)+",\n")
+	s = append(s, "Tags: "+fmt.Sprintf("%#v", this.Tags)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -635,8 +832,9 @@ func (this *CreateResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&jobs.CreateResponse{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -644,8 +842,9 @@ func (this *QueueRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&jobs.QueueRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -653,8 +852,9 @@ func (this *QueueResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&jobs.QueueResponse{")
+	s = append(s, "Ids: "+fmt.Sprintf("%#v", this.Ids)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -919,6 +1119,58 @@ func (m *FetchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Tasks) > 0 {
+		dAtA2 := make([]byte, len(m.Tasks)*10)
+		var j1 int
+		for _, num1 := range m.Tasks {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA2[j1] = uint8(num)
+			j1++
+		}
+		i -= j1
+		copy(dAtA[i:], dAtA2[:j1])
+		i = encodeVarintJobs(dAtA, i, uint64(j1))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Tags) > 0 {
+		dAtA4 := make([]byte, len(m.Tags)*10)
+		var j3 int
+		for _, num1 := range m.Tags {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j3++
+			}
+			dAtA4[j3] = uint8(num)
+			j3++
+		}
+		i -= j3
+		copy(dAtA[i:], dAtA4[:j3])
+		i = encodeVarintJobs(dAtA, i, uint64(j3))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Content) > 0 {
+		i -= len(m.Content)
+		copy(dAtA[i:], m.Content)
+		i = encodeVarintJobs(dAtA, i, uint64(len(m.Content)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintJobs(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -942,6 +1194,16 @@ func (m *FindRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Limit != 0 {
+		i = encodeVarintJobs(dAtA, i, uint64(m.Limit))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Offset != 0 {
+		i = encodeVarintJobs(dAtA, i, uint64(m.Offset))
+		i--
+		dAtA[i] = 0x10
+	}
 	if len(m.Filter) > 0 {
 		i -= len(m.Filter)
 		copy(dAtA[i:], m.Filter)
@@ -972,6 +1234,30 @@ func (m *FindResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.NewOffset != 0 {
+		i = encodeVarintJobs(dAtA, i, uint64(m.NewOffset))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Ids) > 0 {
+		dAtA6 := make([]byte, len(m.Ids)*10)
+		var j5 int
+		for _, num1 := range m.Ids {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA6[j5] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j5++
+			}
+			dAtA6[j5] = uint8(num)
+			j5++
+		}
+		i -= j5
+		copy(dAtA[i:], dAtA6[:j5])
+		i = encodeVarintJobs(dAtA, i, uint64(j5))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -995,6 +1281,29 @@ func (m *CreateRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Tags) > 0 {
+		for iNdEx := len(m.Tags) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Tags[iNdEx])
+			copy(dAtA[i:], m.Tags[iNdEx])
+			i = encodeVarintJobs(dAtA, i, uint64(len(m.Tags[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Content) > 0 {
+		i -= len(m.Content)
+		copy(dAtA[i:], m.Content)
+		i = encodeVarintJobs(dAtA, i, uint64(len(m.Content)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintJobs(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1018,6 +1327,11 @@ func (m *CreateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Id != 0 {
+		i = encodeVarintJobs(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1041,6 +1355,11 @@ func (m *QueueRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Id != 0 {
+		i = encodeVarintJobs(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1064,6 +1383,25 @@ func (m *QueueResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Ids) > 0 {
+		dAtA8 := make([]byte, len(m.Ids)*10)
+		var j7 int
+		for _, num1 := range m.Ids {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA8[j7] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j7++
+			}
+			dAtA8[j7] = uint8(num)
+			j7++
+		}
+		i -= j7
+		copy(dAtA[i:], dAtA8[:j7])
+		i = encodeVarintJobs(dAtA, i, uint64(j7))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1091,6 +1429,24 @@ func NewPopulatedFetchRequest(r randyJobs, easy bool) *FetchRequest {
 
 func NewPopulatedFetchResponse(r randyJobs, easy bool) *FetchResponse {
 	this := &FetchResponse{}
+	this.Name = string(randStringJobs(r))
+	this.Content = string(randStringJobs(r))
+	v1 := r.Intn(10)
+	this.Tags = make([]int64, v1)
+	for i := 0; i < v1; i++ {
+		this.Tags[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Tags[i] *= -1
+		}
+	}
+	v2 := r.Intn(10)
+	this.Tasks = make([]int64, v2)
+	for i := 0; i < v2; i++ {
+		this.Tasks[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Tasks[i] *= -1
+		}
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1099,6 +1455,14 @@ func NewPopulatedFetchResponse(r randyJobs, easy bool) *FetchResponse {
 func NewPopulatedFindRequest(r randyJobs, easy bool) *FindRequest {
 	this := &FindRequest{}
 	this.Filter = string(randStringJobs(r))
+	this.Offset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Offset *= -1
+	}
+	this.Limit = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Limit *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1106,6 +1470,18 @@ func NewPopulatedFindRequest(r randyJobs, easy bool) *FindRequest {
 
 func NewPopulatedFindResponse(r randyJobs, easy bool) *FindResponse {
 	this := &FindResponse{}
+	v3 := r.Intn(10)
+	this.Ids = make([]int64, v3)
+	for i := 0; i < v3; i++ {
+		this.Ids[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Ids[i] *= -1
+		}
+	}
+	this.NewOffset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.NewOffset *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1113,6 +1489,13 @@ func NewPopulatedFindResponse(r randyJobs, easy bool) *FindResponse {
 
 func NewPopulatedCreateRequest(r randyJobs, easy bool) *CreateRequest {
 	this := &CreateRequest{}
+	this.Name = string(randStringJobs(r))
+	this.Content = string(randStringJobs(r))
+	v4 := r.Intn(10)
+	this.Tags = make([]string, v4)
+	for i := 0; i < v4; i++ {
+		this.Tags[i] = string(randStringJobs(r))
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1120,6 +1503,10 @@ func NewPopulatedCreateRequest(r randyJobs, easy bool) *CreateRequest {
 
 func NewPopulatedCreateResponse(r randyJobs, easy bool) *CreateResponse {
 	this := &CreateResponse{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1127,6 +1514,10 @@ func NewPopulatedCreateResponse(r randyJobs, easy bool) *CreateResponse {
 
 func NewPopulatedQueueRequest(r randyJobs, easy bool) *QueueRequest {
 	this := &QueueRequest{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1134,6 +1525,14 @@ func NewPopulatedQueueRequest(r randyJobs, easy bool) *QueueRequest {
 
 func NewPopulatedQueueResponse(r randyJobs, easy bool) *QueueResponse {
 	this := &QueueResponse{}
+	v5 := r.Intn(10)
+	this.Ids = make([]int64, v5)
+	for i := 0; i < v5; i++ {
+		this.Ids[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Ids[i] *= -1
+		}
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1158,9 +1557,9 @@ func randUTF8RuneJobs(r randyJobs) rune {
 	return rune(ru + 61)
 }
 func randStringJobs(r randyJobs) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v6 := r.Intn(100)
+	tmps := make([]rune, v6)
+	for i := 0; i < v6; i++ {
 		tmps[i] = randUTF8RuneJobs(r)
 	}
 	return string(tmps)
@@ -1182,11 +1581,11 @@ func randFieldJobs(dAtA []byte, r randyJobs, fieldNumber int, wire int) []byte {
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateJobs(dAtA, uint64(key))
-		v2 := r.Int63()
+		v7 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v7 *= -1
 		}
-		dAtA = encodeVarintPopulateJobs(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateJobs(dAtA, uint64(v7))
 	case 1:
 		dAtA = encodeVarintPopulateJobs(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -1229,6 +1628,28 @@ func (m *FetchResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovJobs(uint64(l))
+	}
+	l = len(m.Content)
+	if l > 0 {
+		n += 1 + l + sovJobs(uint64(l))
+	}
+	if len(m.Tags) > 0 {
+		l = 0
+		for _, e := range m.Tags {
+			l += sovJobs(uint64(e))
+		}
+		n += 1 + sovJobs(uint64(l)) + l
+	}
+	if len(m.Tasks) > 0 {
+		l = 0
+		for _, e := range m.Tasks {
+			l += sovJobs(uint64(e))
+		}
+		n += 1 + sovJobs(uint64(l)) + l
+	}
 	return n
 }
 
@@ -1242,6 +1663,12 @@ func (m *FindRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovJobs(uint64(l))
 	}
+	if m.Offset != 0 {
+		n += 1 + sovJobs(uint64(m.Offset))
+	}
+	if m.Limit != 0 {
+		n += 1 + sovJobs(uint64(m.Limit))
+	}
 	return n
 }
 
@@ -1251,6 +1678,16 @@ func (m *FindResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if len(m.Ids) > 0 {
+		l = 0
+		for _, e := range m.Ids {
+			l += sovJobs(uint64(e))
+		}
+		n += 1 + sovJobs(uint64(l)) + l
+	}
+	if m.NewOffset != 0 {
+		n += 1 + sovJobs(uint64(m.NewOffset))
+	}
 	return n
 }
 
@@ -1260,6 +1697,20 @@ func (m *CreateRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovJobs(uint64(l))
+	}
+	l = len(m.Content)
+	if l > 0 {
+		n += 1 + l + sovJobs(uint64(l))
+	}
+	if len(m.Tags) > 0 {
+		for _, s := range m.Tags {
+			l = len(s)
+			n += 1 + l + sovJobs(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -1269,6 +1720,9 @@ func (m *CreateResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Id != 0 {
+		n += 1 + sovJobs(uint64(m.Id))
+	}
 	return n
 }
 
@@ -1278,6 +1732,9 @@ func (m *QueueRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Id != 0 {
+		n += 1 + sovJobs(uint64(m.Id))
+	}
 	return n
 }
 
@@ -1287,6 +1744,13 @@ func (m *QueueResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if len(m.Ids) > 0 {
+		l = 0
+		for _, e := range m.Ids {
+			l += sovJobs(uint64(e))
+		}
+		n += 1 + sovJobs(uint64(l)) + l
+	}
 	return n
 }
 
@@ -1311,6 +1775,10 @@ func (this *FetchResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FetchResponse{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Content:` + fmt.Sprintf("%v", this.Content) + `,`,
+		`Tags:` + fmt.Sprintf("%v", this.Tags) + `,`,
+		`Tasks:` + fmt.Sprintf("%v", this.Tasks) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1321,6 +1789,8 @@ func (this *FindRequest) String() string {
 	}
 	s := strings.Join([]string{`&FindRequest{`,
 		`Filter:` + fmt.Sprintf("%v", this.Filter) + `,`,
+		`Offset:` + fmt.Sprintf("%v", this.Offset) + `,`,
+		`Limit:` + fmt.Sprintf("%v", this.Limit) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1330,6 +1800,8 @@ func (this *FindResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FindResponse{`,
+		`Ids:` + fmt.Sprintf("%v", this.Ids) + `,`,
+		`NewOffset:` + fmt.Sprintf("%v", this.NewOffset) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1339,6 +1811,9 @@ func (this *CreateRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CreateRequest{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`Content:` + fmt.Sprintf("%v", this.Content) + `,`,
+		`Tags:` + fmt.Sprintf("%v", this.Tags) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1348,6 +1823,7 @@ func (this *CreateResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CreateResponse{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1357,6 +1833,7 @@ func (this *QueueRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&QueueRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1366,6 +1843,7 @@ func (this *QueueResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&QueueResponse{`,
+		`Ids:` + fmt.Sprintf("%v", this.Ids) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1479,6 +1957,222 @@ func (m *FetchResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FetchResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthJobs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthJobs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Content", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthJobs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthJobs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Content = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Tags = append(m.Tags, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthJobs
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthJobs
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Tags) == 0 {
+					m.Tags = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowJobs
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Tags = append(m.Tags, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tags", wireType)
+			}
+		case 4:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Tasks = append(m.Tasks, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthJobs
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthJobs
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Tasks) == 0 {
+					m.Tasks = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowJobs
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Tasks = append(m.Tasks, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])
@@ -1564,6 +2258,44 @@ func (m *FindRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Filter = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Offset", wireType)
+			}
+			m.Offset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Offset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			m.Limit = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Limit |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])
@@ -1617,6 +2349,101 @@ func (m *FindResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FindResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Ids = append(m.Ids, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthJobs
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthJobs
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Ids) == 0 {
+					m.Ids = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowJobs
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Ids = append(m.Ids, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewOffset", wireType)
+			}
+			m.NewOffset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NewOffset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])
@@ -1670,6 +2497,102 @@ func (m *CreateRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: CreateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthJobs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthJobs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Content", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthJobs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthJobs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Content = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tags", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthJobs
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthJobs
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Tags = append(m.Tags, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])
@@ -1723,6 +2646,25 @@ func (m *CreateResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: CreateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])
@@ -1776,6 +2718,25 @@ func (m *QueueRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: QueueRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowJobs
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])
@@ -1829,6 +2790,82 @@ func (m *QueueResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: QueueResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Ids = append(m.Ids, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowJobs
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthJobs
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthJobs
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Ids) == 0 {
+					m.Ids = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowJobs
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Ids = append(m.Ids, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipJobs(dAtA[iNdEx:])

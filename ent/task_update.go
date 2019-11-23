@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
-	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -32,8 +32,10 @@ type TaskUpdate struct {
 	clearError         bool
 	SessionID          *string
 	clearSessionID     bool
-	target             map[int]struct{}
-	clearedTarget      bool
+	tags               map[int]struct{}
+	job                map[int]struct{}
+	removedTags        map[int]struct{}
+	clearedJob         bool
 	predicates         []predicate.Task
 }
 
@@ -181,23 +183,63 @@ func (tu *TaskUpdate) ClearSessionID() *TaskUpdate {
 	return tu
 }
 
-// SetTargetID sets the target edge to Target by id.
-func (tu *TaskUpdate) SetTargetID(id int) *TaskUpdate {
-	if tu.target == nil {
-		tu.target = make(map[int]struct{})
+// AddTagIDs adds the tags edge to Tag by ids.
+func (tu *TaskUpdate) AddTagIDs(ids ...int) *TaskUpdate {
+	if tu.tags == nil {
+		tu.tags = make(map[int]struct{})
 	}
-	tu.target[id] = struct{}{}
+	for i := range ids {
+		tu.tags[ids[i]] = struct{}{}
+	}
 	return tu
 }
 
-// SetTarget sets the target edge to Target.
-func (tu *TaskUpdate) SetTarget(t *Target) *TaskUpdate {
-	return tu.SetTargetID(t.ID)
+// AddTags adds the tags edges to Tag.
+func (tu *TaskUpdate) AddTags(t ...*Tag) *TaskUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.AddTagIDs(ids...)
 }
 
-// ClearTarget clears the target edge to Target.
-func (tu *TaskUpdate) ClearTarget() *TaskUpdate {
-	tu.clearedTarget = true
+// SetJobID sets the job edge to Job by id.
+func (tu *TaskUpdate) SetJobID(id int) *TaskUpdate {
+	if tu.job == nil {
+		tu.job = make(map[int]struct{})
+	}
+	tu.job[id] = struct{}{}
+	return tu
+}
+
+// SetJob sets the job edge to Job.
+func (tu *TaskUpdate) SetJob(j *Job) *TaskUpdate {
+	return tu.SetJobID(j.ID)
+}
+
+// RemoveTagIDs removes the tags edge to Tag by ids.
+func (tu *TaskUpdate) RemoveTagIDs(ids ...int) *TaskUpdate {
+	if tu.removedTags == nil {
+		tu.removedTags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tu.removedTags[ids[i]] = struct{}{}
+	}
+	return tu
+}
+
+// RemoveTags removes tags edges to Tag.
+func (tu *TaskUpdate) RemoveTags(t ...*Tag) *TaskUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.RemoveTagIDs(ids...)
+}
+
+// ClearJob clears the job edge to Job.
+func (tu *TaskUpdate) ClearJob() *TaskUpdate {
+	tu.clearedJob = true
 	return tu
 }
 
@@ -213,11 +255,11 @@ func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
 		}
 	}
-	if len(tu.target) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	if len(tu.job) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}
-	if tu.clearedTarget && tu.target == nil {
-		return 0, errors.New("ent: clearing a unique edge \"target\"")
+	if tu.clearedJob && tu.job == nil {
+		return 0, errors.New("ent: clearing a unique edge \"job\"")
 	}
 	return tu.sqlSave(ctx)
 }
@@ -327,19 +369,49 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			return 0, rollback(tx, err)
 		}
 	}
-	if tu.clearedTarget {
-		query, args := sql.Update(task.TargetTable).
-			SetNull(task.TargetColumn).
-			Where(sql.InInts(target.FieldID, ids...)).
+	if len(tu.removedTags) > 0 {
+		eids := make([]int, len(tu.removedTags))
+		for eid := range tu.removedTags {
+			eids = append(eids, eid)
+		}
+		query, args := sql.Delete(task.TagsTable).
+			Where(sql.InInts(task.TagsPrimaryKey[0], ids...)).
+			Where(sql.InInts(task.TagsPrimaryKey[1], eids...)).
 			Query()
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return 0, rollback(tx, err)
 		}
 	}
-	if len(tu.target) > 0 {
-		for eid := range tu.target {
-			query, args := sql.Update(task.TargetTable).
-				Set(task.TargetColumn, eid).
+	if len(tu.tags) > 0 {
+		values := make([][]int, 0, len(ids))
+		for _, id := range ids {
+			for eid := range tu.tags {
+				values = append(values, []int{id, eid})
+			}
+		}
+		builder := sql.Insert(task.TagsTable).
+			Columns(task.TagsPrimaryKey[0], task.TagsPrimaryKey[1])
+		for _, v := range values {
+			builder.Values(v[0], v[1])
+		}
+		query, args := builder.Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if tu.clearedJob {
+		query, args := sql.Update(task.JobTable).
+			SetNull(task.JobColumn).
+			Where(sql.InInts(job.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(tu.job) > 0 {
+		for eid := range tu.job {
+			query, args := sql.Update(task.JobTable).
+				Set(task.JobColumn, eid).
 				Where(sql.InInts(task.FieldID, ids...)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {
@@ -371,8 +443,10 @@ type TaskUpdateOne struct {
 	clearError         bool
 	SessionID          *string
 	clearSessionID     bool
-	target             map[int]struct{}
-	clearedTarget      bool
+	tags               map[int]struct{}
+	job                map[int]struct{}
+	removedTags        map[int]struct{}
+	clearedJob         bool
 }
 
 // SetQueueTime sets the QueueTime field.
@@ -513,23 +587,63 @@ func (tuo *TaskUpdateOne) ClearSessionID() *TaskUpdateOne {
 	return tuo
 }
 
-// SetTargetID sets the target edge to Target by id.
-func (tuo *TaskUpdateOne) SetTargetID(id int) *TaskUpdateOne {
-	if tuo.target == nil {
-		tuo.target = make(map[int]struct{})
+// AddTagIDs adds the tags edge to Tag by ids.
+func (tuo *TaskUpdateOne) AddTagIDs(ids ...int) *TaskUpdateOne {
+	if tuo.tags == nil {
+		tuo.tags = make(map[int]struct{})
 	}
-	tuo.target[id] = struct{}{}
+	for i := range ids {
+		tuo.tags[ids[i]] = struct{}{}
+	}
 	return tuo
 }
 
-// SetTarget sets the target edge to Target.
-func (tuo *TaskUpdateOne) SetTarget(t *Target) *TaskUpdateOne {
-	return tuo.SetTargetID(t.ID)
+// AddTags adds the tags edges to Tag.
+func (tuo *TaskUpdateOne) AddTags(t ...*Tag) *TaskUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.AddTagIDs(ids...)
 }
 
-// ClearTarget clears the target edge to Target.
-func (tuo *TaskUpdateOne) ClearTarget() *TaskUpdateOne {
-	tuo.clearedTarget = true
+// SetJobID sets the job edge to Job by id.
+func (tuo *TaskUpdateOne) SetJobID(id int) *TaskUpdateOne {
+	if tuo.job == nil {
+		tuo.job = make(map[int]struct{})
+	}
+	tuo.job[id] = struct{}{}
+	return tuo
+}
+
+// SetJob sets the job edge to Job.
+func (tuo *TaskUpdateOne) SetJob(j *Job) *TaskUpdateOne {
+	return tuo.SetJobID(j.ID)
+}
+
+// RemoveTagIDs removes the tags edge to Tag by ids.
+func (tuo *TaskUpdateOne) RemoveTagIDs(ids ...int) *TaskUpdateOne {
+	if tuo.removedTags == nil {
+		tuo.removedTags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tuo.removedTags[ids[i]] = struct{}{}
+	}
+	return tuo
+}
+
+// RemoveTags removes tags edges to Tag.
+func (tuo *TaskUpdateOne) RemoveTags(t ...*Tag) *TaskUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.RemoveTagIDs(ids...)
+}
+
+// ClearJob clears the job edge to Job.
+func (tuo *TaskUpdateOne) ClearJob() *TaskUpdateOne {
+	tuo.clearedJob = true
 	return tuo
 }
 
@@ -545,11 +659,11 @@ func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 			return nil, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
 		}
 	}
-	if len(tuo.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	if len(tuo.job) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}
-	if tuo.clearedTarget && tuo.target == nil {
-		return nil, errors.New("ent: clearing a unique edge \"target\"")
+	if tuo.clearedJob && tuo.job == nil {
+		return nil, errors.New("ent: clearing a unique edge \"job\"")
 	}
 	return tuo.sqlSave(ctx)
 }
@@ -682,19 +796,49 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 			return nil, rollback(tx, err)
 		}
 	}
-	if tuo.clearedTarget {
-		query, args := sql.Update(task.TargetTable).
-			SetNull(task.TargetColumn).
-			Where(sql.InInts(target.FieldID, ids...)).
+	if len(tuo.removedTags) > 0 {
+		eids := make([]int, len(tuo.removedTags))
+		for eid := range tuo.removedTags {
+			eids = append(eids, eid)
+		}
+		query, args := sql.Delete(task.TagsTable).
+			Where(sql.InInts(task.TagsPrimaryKey[0], ids...)).
+			Where(sql.InInts(task.TagsPrimaryKey[1], eids...)).
 			Query()
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return nil, rollback(tx, err)
 		}
 	}
-	if len(tuo.target) > 0 {
-		for eid := range tuo.target {
-			query, args := sql.Update(task.TargetTable).
-				Set(task.TargetColumn, eid).
+	if len(tuo.tags) > 0 {
+		values := make([][]int, 0, len(ids))
+		for _, id := range ids {
+			for eid := range tuo.tags {
+				values = append(values, []int{id, eid})
+			}
+		}
+		builder := sql.Insert(task.TagsTable).
+			Columns(task.TagsPrimaryKey[0], task.TagsPrimaryKey[1])
+		for _, v := range values {
+			builder.Values(v[0], v[1])
+		}
+		query, args := builder.Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if tuo.clearedJob {
+		query, args := sql.Update(task.JobTable).
+			SetNull(task.JobColumn).
+			Where(sql.InInts(job.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(tuo.job) > 0 {
+		for eid := range tuo.job {
+			query, args := sql.Update(task.JobTable).
+				Set(task.JobColumn, eid).
 				Where(sql.InInts(task.FieldID, ids...)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {

@@ -12,16 +12,9 @@ func main() {
 	client := getClient(ctx)
 	defer client.Close()
 
-	queuedTopic, err := openTopic(ctx, "tasks.queued")
-	if err != nil {
-		panic(err)
-	}
-	defer queuedTopic.Shutdown(ctx)
-
 	server := teamserver.Server{
-		Log:         newLogger(),
-		EntClient:   client,
-		QueuedTopic: queuedTopic,
+		Log:       newLogger(),
+		EntClient: client,
 	}
 	server.Run()
 }

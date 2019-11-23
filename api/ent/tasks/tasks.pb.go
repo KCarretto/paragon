@@ -80,6 +80,16 @@ func (*FetchRequest) XXX_MessageName() string {
 }
 
 type FetchResponse struct {
+	QueueTime     int64    `protobuf:"varint,1,opt,name=queueTime,proto3" json:"queueTime,omitempty"`
+	ClaimTime     int64    `protobuf:"varint,2,opt,name=claimTime,proto3" json:"claimTime,omitempty"`
+	ExecStartTime int64    `protobuf:"varint,3,opt,name=execStartTime,proto3" json:"execStartTime,omitempty"`
+	ExecStopTime  int64    `protobuf:"varint,4,opt,name=execStopTime,proto3" json:"execStopTime,omitempty"`
+	Content       string   `protobuf:"bytes,5,opt,name=content,proto3" json:"content,omitempty"`
+	Output        []string `protobuf:"bytes,6,rep,name=output,proto3" json:"output,omitempty"`
+	Error         string   `protobuf:"bytes,7,opt,name=error,proto3" json:"error,omitempty"`
+	SessionID     string   `protobuf:"bytes,8,opt,name=sessionID,proto3" json:"sessionID,omitempty"`
+	Tags          []int64  `protobuf:"varint,9,rep,packed,name=tags,proto3" json:"tags,omitempty"`
+	Job           int64    `protobuf:"varint,10,opt,name=job,proto3" json:"job,omitempty"`
 }
 
 func (m *FetchResponse) Reset()      { *m = FetchResponse{} }
@@ -114,12 +124,84 @@ func (m *FetchResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FetchResponse proto.InternalMessageInfo
 
+func (m *FetchResponse) GetQueueTime() int64 {
+	if m != nil {
+		return m.QueueTime
+	}
+	return 0
+}
+
+func (m *FetchResponse) GetClaimTime() int64 {
+	if m != nil {
+		return m.ClaimTime
+	}
+	return 0
+}
+
+func (m *FetchResponse) GetExecStartTime() int64 {
+	if m != nil {
+		return m.ExecStartTime
+	}
+	return 0
+}
+
+func (m *FetchResponse) GetExecStopTime() int64 {
+	if m != nil {
+		return m.ExecStopTime
+	}
+	return 0
+}
+
+func (m *FetchResponse) GetContent() string {
+	if m != nil {
+		return m.Content
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetOutput() []string {
+	if m != nil {
+		return m.Output
+	}
+	return nil
+}
+
+func (m *FetchResponse) GetError() string {
+	if m != nil {
+		return m.Error
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetSessionID() string {
+	if m != nil {
+		return m.SessionID
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetTags() []int64 {
+	if m != nil {
+		return m.Tags
+	}
+	return nil
+}
+
+func (m *FetchResponse) GetJob() int64 {
+	if m != nil {
+		return m.Job
+	}
+	return 0
+}
+
 func (*FetchResponse) XXX_MessageName() string {
 	return "tasks.FetchResponse"
 }
 
 type FindRequest struct {
 	Filter string `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	Offset int64  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit  int64  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
 func (m *FindRequest) Reset()      { *m = FindRequest{} }
@@ -161,11 +243,27 @@ func (m *FindRequest) GetFilter() string {
 	return ""
 }
 
+func (m *FindRequest) GetOffset() int64 {
+	if m != nil {
+		return m.Offset
+	}
+	return 0
+}
+
+func (m *FindRequest) GetLimit() int64 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
+
 func (*FindRequest) XXX_MessageName() string {
 	return "tasks.FindRequest"
 }
 
 type FindResponse struct {
+	Ids       []int64 `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	NewOffset int64   `protobuf:"varint,2,opt,name=newOffset,proto3" json:"newOffset,omitempty"`
 }
 
 func (m *FindResponse) Reset()      { *m = FindResponse{} }
@@ -200,11 +298,26 @@ func (m *FindResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FindResponse proto.InternalMessageInfo
 
+func (m *FindResponse) GetIds() []int64 {
+	if m != nil {
+		return m.Ids
+	}
+	return nil
+}
+
+func (m *FindResponse) GetNewOffset() int64 {
+	if m != nil {
+		return m.NewOffset
+	}
+	return 0
+}
+
 func (*FindResponse) XXX_MessageName() string {
 	return "tasks.FindResponse"
 }
 
 type ClaimRequest struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (m *ClaimRequest) Reset()      { *m = ClaimRequest{} }
@@ -238,6 +351,13 @@ func (m *ClaimRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ClaimRequest proto.InternalMessageInfo
+
+func (m *ClaimRequest) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
 
 func (*ClaimRequest) XXX_MessageName() string {
 	return "tasks.ClaimRequest"
@@ -300,29 +420,41 @@ func init() { proto.RegisterFile("tasks.proto", fileDescriptor_b3834c8ef8464a3f)
 func init() { golang_proto.RegisterFile("tasks.proto", fileDescriptor_b3834c8ef8464a3f) }
 
 var fileDescriptor_b3834c8ef8464a3f = []byte{
-	// 352 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x91, 0xc1, 0x4a, 0xeb, 0x40,
-	0x14, 0x86, 0x73, 0x7a, 0x6f, 0x0a, 0x77, 0xda, 0xdb, 0x0b, 0xd3, 0x72, 0x29, 0x41, 0x0e, 0x12,
-	0x10, 0xc4, 0x45, 0x83, 0xba, 0x73, 0xa9, 0xd2, 0x8d, 0xe0, 0x22, 0xf8, 0x02, 0xd1, 0x4c, 0xe3,
-	0x60, 0xcd, 0xb4, 0xcd, 0xd4, 0x8d, 0x08, 0xe2, 0x13, 0x08, 0xbe, 0x84, 0x8f, 0xe0, 0xd2, 0x65,
-	0x97, 0x05, 0x37, 0x5d, 0x9a, 0x89, 0x0b, 0x97, 0x5d, 0x76, 0x29, 0x99, 0x4c, 0x6b, 0xb3, 0x71,
-	0x97, 0x73, 0xce, 0xff, 0xff, 0xf9, 0x7e, 0x86, 0xd4, 0x64, 0x90, 0x5c, 0x25, 0x9d, 0xc1, 0x48,
-	0x48, 0x41, 0x6d, 0x3d, 0x38, 0xad, 0x48, 0x44, 0x42, 0x6f, 0xbc, 0xfc, 0xab, 0x38, 0x3a, 0x1b,
-	0x91, 0x10, 0x51, 0x9f, 0x79, 0xc1, 0x80, 0x7b, 0x41, 0x1c, 0x0b, 0x19, 0x48, 0x2e, 0x62, 0x63,
-	0x75, 0x91, 0xd4, 0xbb, 0x4c, 0x5e, 0x5c, 0xfa, 0x6c, 0x38, 0x66, 0x89, 0xa4, 0x0d, 0x52, 0xe1,
-	0x61, 0x1b, 0x36, 0x61, 0xfb, 0x97, 0x5f, 0xe1, 0xa1, 0xfb, 0x8f, 0xfc, 0x35, 0xf7, 0x64, 0x20,
-	0xe2, 0x84, 0xb9, 0x5b, 0xa4, 0xd6, 0xe5, 0x71, 0xb8, 0xd4, 0xff, 0x27, 0xd5, 0x1e, 0xef, 0x4b,
-	0x36, 0xd2, 0x9e, 0x3f, 0xbe, 0x99, 0xdc, 0x06, 0xa9, 0x17, 0x32, 0x63, 0x6b, 0x90, 0xfa, 0x51,
-	0x3f, 0xe0, 0xd7, 0xc6, 0x97, 0xe7, 0x9a, 0xb9, 0x10, 0xec, 0x2d, 0x80, 0xd8, 0x67, 0x79, 0x0d,
-	0x7a, 0x4a, 0x6c, 0xfd, 0x4b, 0xda, 0xec, 0x14, 0x25, 0xd7, 0x01, 0x9d, 0x56, 0x79, 0x69, 0xe2,
-	0x9d, 0x87, 0xb7, 0x8f, 0xa7, 0x4a, 0x8b, 0x52, 0x5d, 0xf3, 0x66, 0xd7, 0xd3, 0x22, 0xef, 0x96,
-	0x87, 0x77, 0xf4, 0x84, 0xfc, 0xce, 0x51, 0x28, 0x5d, 0x3a, 0xbf, 0xf1, 0x9d, 0x66, 0x69, 0xf7,
-	0x73, 0x58, 0x2f, 0x0f, 0xf1, 0x89, 0xad, 0xb9, 0x57, 0x70, 0xeb, 0xad, 0x56, 0x70, 0xa5, 0x6a,
-	0x2e, 0xea, 0xbc, 0xb6, 0xdb, 0x2c, 0xe7, 0x0d, 0xc7, 0x6c, 0xcc, 0x0e, 0x60, 0xe7, 0xf0, 0x78,
-	0x9a, 0xa2, 0x35, 0x4b, 0xd1, 0x9a, 0xa7, 0x08, 0x8b, 0x14, 0xe1, 0x5e, 0x21, 0x3c, 0x2b, 0x84,
-	0x17, 0x85, 0x30, 0x51, 0x08, 0x53, 0x85, 0xf0, 0xae, 0x10, 0x3e, 0x15, 0x5a, 0x73, 0x85, 0xf0,
-	0x98, 0xa1, 0xf5, 0x9a, 0x21, 0x4c, 0x32, 0x84, 0x69, 0x86, 0xd6, 0x2c, 0x43, 0xeb, 0xbc, 0xaa,
-	0x1f, 0x74, 0xff, 0x2b, 0x00, 0x00, 0xff, 0xff, 0x67, 0xd1, 0xee, 0x74, 0x1a, 0x02, 0x00, 0x00,
+	// 537 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x53, 0xbd, 0x6e, 0x13, 0x4d,
+	0x14, 0xdd, 0xf1, 0x7a, 0x9d, 0xcf, 0x37, 0xf6, 0x97, 0x68, 0x6c, 0xa2, 0x91, 0x15, 0x8d, 0xac,
+	0x15, 0x85, 0x45, 0x11, 0x0b, 0xe8, 0x28, 0x28, 0x20, 0xb2, 0x44, 0x03, 0xd2, 0x26, 0x2f, 0xb0,
+	0xb1, 0xc7, 0x66, 0xc0, 0xde, 0x71, 0x76, 0xc6, 0x80, 0x84, 0x90, 0x10, 0x4f, 0x80, 0xc4, 0x13,
+	0xd0, 0xf1, 0x08, 0x94, 0x94, 0x29, 0x2d, 0xd1, 0xa4, 0xc4, 0xbb, 0x14, 0x94, 0x91, 0x68, 0x28,
+	0xd1, 0xdc, 0x1d, 0xff, 0x6c, 0x41, 0x77, 0xcf, 0xb9, 0x67, 0xee, 0x9e, 0x39, 0x73, 0x17, 0xf6,
+	0x4d, 0xac, 0x5f, 0xea, 0x93, 0x79, 0xaa, 0x8c, 0xa2, 0x01, 0x82, 0x4e, 0x7b, 0xa2, 0x26, 0x0a,
+	0x99, 0xbe, 0xad, 0x8a, 0x66, 0xe7, 0x78, 0xa2, 0xd4, 0x64, 0x2a, 0xfa, 0xf1, 0x5c, 0xf6, 0xe3,
+	0x24, 0x51, 0x26, 0x36, 0x52, 0x25, 0xee, 0x68, 0xc8, 0xa1, 0x31, 0x10, 0x66, 0xf8, 0x3c, 0x12,
+	0x97, 0x0b, 0xa1, 0x0d, 0xfd, 0x1f, 0x2a, 0x72, 0xc4, 0x48, 0x97, 0xf4, 0xfc, 0xa8, 0x22, 0x47,
+	0xe1, 0xe7, 0x0a, 0x34, 0x9d, 0x40, 0xcf, 0x55, 0xa2, 0x05, 0x3d, 0x86, 0xfa, 0xe5, 0x42, 0x2c,
+	0xc4, 0xb9, 0x9c, 0x09, 0x27, 0xdc, 0x12, 0xb6, 0x3b, 0x9c, 0xc6, 0x72, 0x86, 0xdd, 0x4a, 0xd1,
+	0xdd, 0x10, 0xf4, 0x36, 0x34, 0xc5, 0x1b, 0x31, 0x3c, 0x33, 0x71, 0x6a, 0x50, 0xe1, 0xa3, 0xa2,
+	0x4c, 0xd2, 0x10, 0x1a, 0x05, 0xa1, 0xe6, 0x28, 0xaa, 0xa2, 0xa8, 0xc4, 0x51, 0x06, 0x7b, 0x43,
+	0x95, 0x18, 0x91, 0x18, 0x16, 0x74, 0x49, 0xaf, 0x1e, 0xad, 0x21, 0x3d, 0x82, 0x9a, 0x5a, 0x98,
+	0xf9, 0xc2, 0xb0, 0x5a, 0xd7, 0xef, 0xd5, 0x23, 0x87, 0x68, 0x1b, 0x02, 0x91, 0xa6, 0x2a, 0x65,
+	0x7b, 0xa8, 0x2f, 0x80, 0xf5, 0xab, 0x85, 0xd6, 0x52, 0x25, 0x4f, 0x4e, 0xd9, 0x7f, 0xd8, 0xd9,
+	0x12, 0x94, 0x42, 0xd5, 0xc4, 0x13, 0xcd, 0xea, 0x5d, 0xbf, 0xe7, 0x47, 0x58, 0xd3, 0x43, 0xf0,
+	0x5f, 0xa8, 0x0b, 0x06, 0x68, 0xca, 0x96, 0xe1, 0x19, 0xec, 0x0f, 0x64, 0x32, 0x5a, 0x47, 0x78,
+	0x04, 0xb5, 0xb1, 0x9c, 0x1a, 0x91, 0x62, 0x3a, 0xf5, 0xc8, 0x21, 0x34, 0x36, 0x1e, 0x6b, 0x61,
+	0x5c, 0x2e, 0x0e, 0x59, 0x63, 0x53, 0x39, 0x93, 0xc6, 0x85, 0x51, 0x80, 0xf0, 0x21, 0x34, 0x8a,
+	0xa1, 0x2e, 0xf6, 0x43, 0xf0, 0xe5, 0x48, 0x33, 0x82, 0x4e, 0x6c, 0x69, 0xad, 0x27, 0xe2, 0xf5,
+	0xb3, 0xdd, 0x91, 0x5b, 0xc2, 0x3e, 0xec, 0x63, 0x9b, 0xfb, 0xbf, 0x1e, 0xf6, 0x00, 0x9a, 0xae,
+	0x5f, 0x7c, 0xe0, 0xde, 0x6f, 0x02, 0xc1, 0xb9, 0xdd, 0x23, 0xfa, 0x14, 0x02, 0x7c, 0x72, 0xda,
+	0x3a, 0x29, 0xb6, 0x6c, 0x77, 0x43, 0x3a, 0xed, 0x32, 0x59, 0x9c, 0x0e, 0x3b, 0x1f, 0xbe, 0xff,
+	0xfc, 0x54, 0x69, 0x53, 0x8a, 0x7b, 0xf6, 0xea, 0x6e, 0x1f, 0x45, 0xfd, 0xb7, 0x72, 0xf4, 0x8e,
+	0x0e, 0xa0, 0x6a, 0xaf, 0x42, 0xe9, 0xfa, 0xe4, 0x36, 0xac, 0x4e, 0xab, 0xc4, 0xb9, 0x61, 0xb7,
+	0x70, 0xd8, 0x01, 0x6d, 0x96, 0x86, 0xd1, 0x08, 0x02, 0xb4, 0xbc, 0xf1, 0xb5, 0x7b, 0xc1, 0x8d,
+	0xaf, 0xd2, 0xad, 0x42, 0x8e, 0xa3, 0x58, 0xd8, 0x2a, 0xfb, 0xc2, 0x95, 0x7c, 0x40, 0xee, 0x3c,
+	0x3a, 0x5d, 0xae, 0xb8, 0x77, 0xbd, 0xe2, 0xde, 0xcd, 0x8a, 0x93, 0x3f, 0x2b, 0x4e, 0xde, 0x67,
+	0x9c, 0x7c, 0xc9, 0x38, 0xf9, 0x9a, 0x71, 0x72, 0x95, 0x71, 0xb2, 0xcc, 0x38, 0xf9, 0x91, 0x71,
+	0xf2, 0x2b, 0xe3, 0xde, 0x4d, 0xc6, 0xc9, 0xc7, 0x9c, 0x7b, 0xdf, 0x72, 0x4e, 0xae, 0x72, 0x4e,
+	0x96, 0x39, 0xf7, 0xae, 0x73, 0xee, 0x5d, 0xd4, 0xf0, 0x67, 0xba, 0xff, 0x37, 0x00, 0x00, 0xff,
+	0xff, 0x08, 0xdb, 0x16, 0xd8, 0x96, 0x03, 0x00, 0x00,
 }
 
 func (this *FetchRequest) Equal(that interface{}) bool {
@@ -368,6 +500,46 @@ func (this *FetchResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.QueueTime != that1.QueueTime {
+		return false
+	}
+	if this.ClaimTime != that1.ClaimTime {
+		return false
+	}
+	if this.ExecStartTime != that1.ExecStartTime {
+		return false
+	}
+	if this.ExecStopTime != that1.ExecStopTime {
+		return false
+	}
+	if this.Content != that1.Content {
+		return false
+	}
+	if len(this.Output) != len(that1.Output) {
+		return false
+	}
+	for i := range this.Output {
+		if this.Output[i] != that1.Output[i] {
+			return false
+		}
+	}
+	if this.Error != that1.Error {
+		return false
+	}
+	if this.SessionID != that1.SessionID {
+		return false
+	}
+	if len(this.Tags) != len(that1.Tags) {
+		return false
+	}
+	for i := range this.Tags {
+		if this.Tags[i] != that1.Tags[i] {
+			return false
+		}
+	}
+	if this.Job != that1.Job {
+		return false
+	}
 	return true
 }
 func (this *FindRequest) Equal(that interface{}) bool {
@@ -392,6 +564,12 @@ func (this *FindRequest) Equal(that interface{}) bool {
 	if this.Filter != that1.Filter {
 		return false
 	}
+	if this.Offset != that1.Offset {
+		return false
+	}
+	if this.Limit != that1.Limit {
+		return false
+	}
 	return true
 }
 func (this *FindResponse) Equal(that interface{}) bool {
@@ -413,6 +591,17 @@ func (this *FindResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if len(this.Ids) != len(that1.Ids) {
+		return false
+	}
+	for i := range this.Ids {
+		if this.Ids[i] != that1.Ids[i] {
+			return false
+		}
+	}
+	if this.NewOffset != that1.NewOffset {
+		return false
+	}
 	return true
 }
 func (this *ClaimRequest) Equal(that interface{}) bool {
@@ -432,6 +621,9 @@ func (this *ClaimRequest) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
 		return false
 	}
 	return true
@@ -471,8 +663,18 @@ func (this *FetchResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 14)
 	s = append(s, "&tasks.FetchResponse{")
+	s = append(s, "QueueTime: "+fmt.Sprintf("%#v", this.QueueTime)+",\n")
+	s = append(s, "ClaimTime: "+fmt.Sprintf("%#v", this.ClaimTime)+",\n")
+	s = append(s, "ExecStartTime: "+fmt.Sprintf("%#v", this.ExecStartTime)+",\n")
+	s = append(s, "ExecStopTime: "+fmt.Sprintf("%#v", this.ExecStopTime)+",\n")
+	s = append(s, "Content: "+fmt.Sprintf("%#v", this.Content)+",\n")
+	s = append(s, "Output: "+fmt.Sprintf("%#v", this.Output)+",\n")
+	s = append(s, "Error: "+fmt.Sprintf("%#v", this.Error)+",\n")
+	s = append(s, "SessionID: "+fmt.Sprintf("%#v", this.SessionID)+",\n")
+	s = append(s, "Tags: "+fmt.Sprintf("%#v", this.Tags)+",\n")
+	s = append(s, "Job: "+fmt.Sprintf("%#v", this.Job)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -480,9 +682,11 @@ func (this *FindRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 7)
 	s = append(s, "&tasks.FindRequest{")
 	s = append(s, "Filter: "+fmt.Sprintf("%#v", this.Filter)+",\n")
+	s = append(s, "Offset: "+fmt.Sprintf("%#v", this.Offset)+",\n")
+	s = append(s, "Limit: "+fmt.Sprintf("%#v", this.Limit)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -490,8 +694,10 @@ func (this *FindResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 6)
 	s = append(s, "&tasks.FindResponse{")
+	s = append(s, "Ids: "+fmt.Sprintf("%#v", this.Ids)+",\n")
+	s = append(s, "NewOffset: "+fmt.Sprintf("%#v", this.NewOffset)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -499,8 +705,9 @@ func (this *ClaimRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&tasks.ClaimRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -734,6 +941,80 @@ func (m *FetchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Job != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.Job))
+		i--
+		dAtA[i] = 0x50
+	}
+	if len(m.Tags) > 0 {
+		dAtA2 := make([]byte, len(m.Tags)*10)
+		var j1 int
+		for _, num1 := range m.Tags {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA2[j1] = uint8(num)
+			j1++
+		}
+		i -= j1
+		copy(dAtA[i:], dAtA2[:j1])
+		i = encodeVarintTasks(dAtA, i, uint64(j1))
+		i--
+		dAtA[i] = 0x4a
+	}
+	if len(m.SessionID) > 0 {
+		i -= len(m.SessionID)
+		copy(dAtA[i:], m.SessionID)
+		i = encodeVarintTasks(dAtA, i, uint64(len(m.SessionID)))
+		i--
+		dAtA[i] = 0x42
+	}
+	if len(m.Error) > 0 {
+		i -= len(m.Error)
+		copy(dAtA[i:], m.Error)
+		i = encodeVarintTasks(dAtA, i, uint64(len(m.Error)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.Output) > 0 {
+		for iNdEx := len(m.Output) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Output[iNdEx])
+			copy(dAtA[i:], m.Output[iNdEx])
+			i = encodeVarintTasks(dAtA, i, uint64(len(m.Output[iNdEx])))
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.Content) > 0 {
+		i -= len(m.Content)
+		copy(dAtA[i:], m.Content)
+		i = encodeVarintTasks(dAtA, i, uint64(len(m.Content)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if m.ExecStopTime != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.ExecStopTime))
+		i--
+		dAtA[i] = 0x20
+	}
+	if m.ExecStartTime != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.ExecStartTime))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.ClaimTime != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.ClaimTime))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.QueueTime != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.QueueTime))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -757,6 +1038,16 @@ func (m *FindRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Limit != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.Limit))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Offset != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.Offset))
+		i--
+		dAtA[i] = 0x10
+	}
 	if len(m.Filter) > 0 {
 		i -= len(m.Filter)
 		copy(dAtA[i:], m.Filter)
@@ -787,6 +1078,30 @@ func (m *FindResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.NewOffset != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.NewOffset))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Ids) > 0 {
+		dAtA4 := make([]byte, len(m.Ids)*10)
+		var j3 int
+		for _, num1 := range m.Ids {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j3++
+			}
+			dAtA4[j3] = uint8(num)
+			j3++
+		}
+		i -= j3
+		copy(dAtA[i:], dAtA4[:j3])
+		i = encodeVarintTasks(dAtA, i, uint64(j3))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -810,6 +1125,11 @@ func (m *ClaimRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Id != 0 {
+		i = encodeVarintTasks(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -860,6 +1180,42 @@ func NewPopulatedFetchRequest(r randyTasks, easy bool) *FetchRequest {
 
 func NewPopulatedFetchResponse(r randyTasks, easy bool) *FetchResponse {
 	this := &FetchResponse{}
+	this.QueueTime = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.QueueTime *= -1
+	}
+	this.ClaimTime = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.ClaimTime *= -1
+	}
+	this.ExecStartTime = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.ExecStartTime *= -1
+	}
+	this.ExecStopTime = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.ExecStopTime *= -1
+	}
+	this.Content = string(randStringTasks(r))
+	v1 := r.Intn(10)
+	this.Output = make([]string, v1)
+	for i := 0; i < v1; i++ {
+		this.Output[i] = string(randStringTasks(r))
+	}
+	this.Error = string(randStringTasks(r))
+	this.SessionID = string(randStringTasks(r))
+	v2 := r.Intn(10)
+	this.Tags = make([]int64, v2)
+	for i := 0; i < v2; i++ {
+		this.Tags[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Tags[i] *= -1
+		}
+	}
+	this.Job = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Job *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -868,6 +1224,14 @@ func NewPopulatedFetchResponse(r randyTasks, easy bool) *FetchResponse {
 func NewPopulatedFindRequest(r randyTasks, easy bool) *FindRequest {
 	this := &FindRequest{}
 	this.Filter = string(randStringTasks(r))
+	this.Offset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Offset *= -1
+	}
+	this.Limit = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Limit *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -875,6 +1239,18 @@ func NewPopulatedFindRequest(r randyTasks, easy bool) *FindRequest {
 
 func NewPopulatedFindResponse(r randyTasks, easy bool) *FindResponse {
 	this := &FindResponse{}
+	v3 := r.Intn(10)
+	this.Ids = make([]int64, v3)
+	for i := 0; i < v3; i++ {
+		this.Ids[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Ids[i] *= -1
+		}
+	}
+	this.NewOffset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.NewOffset *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -882,6 +1258,10 @@ func NewPopulatedFindResponse(r randyTasks, easy bool) *FindResponse {
 
 func NewPopulatedClaimRequest(r randyTasks, easy bool) *ClaimRequest {
 	this := &ClaimRequest{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -913,9 +1293,9 @@ func randUTF8RuneTasks(r randyTasks) rune {
 	return rune(ru + 61)
 }
 func randStringTasks(r randyTasks) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v4 := r.Intn(100)
+	tmps := make([]rune, v4)
+	for i := 0; i < v4; i++ {
 		tmps[i] = randUTF8RuneTasks(r)
 	}
 	return string(tmps)
@@ -937,11 +1317,11 @@ func randFieldTasks(dAtA []byte, r randyTasks, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateTasks(dAtA, uint64(key))
-		v2 := r.Int63()
+		v5 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v5 *= -1
 		}
-		dAtA = encodeVarintPopulateTasks(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateTasks(dAtA, uint64(v5))
 	case 1:
 		dAtA = encodeVarintPopulateTasks(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -984,6 +1364,46 @@ func (m *FetchResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.QueueTime != 0 {
+		n += 1 + sovTasks(uint64(m.QueueTime))
+	}
+	if m.ClaimTime != 0 {
+		n += 1 + sovTasks(uint64(m.ClaimTime))
+	}
+	if m.ExecStartTime != 0 {
+		n += 1 + sovTasks(uint64(m.ExecStartTime))
+	}
+	if m.ExecStopTime != 0 {
+		n += 1 + sovTasks(uint64(m.ExecStopTime))
+	}
+	l = len(m.Content)
+	if l > 0 {
+		n += 1 + l + sovTasks(uint64(l))
+	}
+	if len(m.Output) > 0 {
+		for _, s := range m.Output {
+			l = len(s)
+			n += 1 + l + sovTasks(uint64(l))
+		}
+	}
+	l = len(m.Error)
+	if l > 0 {
+		n += 1 + l + sovTasks(uint64(l))
+	}
+	l = len(m.SessionID)
+	if l > 0 {
+		n += 1 + l + sovTasks(uint64(l))
+	}
+	if len(m.Tags) > 0 {
+		l = 0
+		for _, e := range m.Tags {
+			l += sovTasks(uint64(e))
+		}
+		n += 1 + sovTasks(uint64(l)) + l
+	}
+	if m.Job != 0 {
+		n += 1 + sovTasks(uint64(m.Job))
+	}
 	return n
 }
 
@@ -997,6 +1417,12 @@ func (m *FindRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTasks(uint64(l))
 	}
+	if m.Offset != 0 {
+		n += 1 + sovTasks(uint64(m.Offset))
+	}
+	if m.Limit != 0 {
+		n += 1 + sovTasks(uint64(m.Limit))
+	}
 	return n
 }
 
@@ -1006,6 +1432,16 @@ func (m *FindResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if len(m.Ids) > 0 {
+		l = 0
+		for _, e := range m.Ids {
+			l += sovTasks(uint64(e))
+		}
+		n += 1 + sovTasks(uint64(l)) + l
+	}
+	if m.NewOffset != 0 {
+		n += 1 + sovTasks(uint64(m.NewOffset))
+	}
 	return n
 }
 
@@ -1015,6 +1451,9 @@ func (m *ClaimRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Id != 0 {
+		n += 1 + sovTasks(uint64(m.Id))
+	}
 	return n
 }
 
@@ -1048,6 +1487,16 @@ func (this *FetchResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FetchResponse{`,
+		`QueueTime:` + fmt.Sprintf("%v", this.QueueTime) + `,`,
+		`ClaimTime:` + fmt.Sprintf("%v", this.ClaimTime) + `,`,
+		`ExecStartTime:` + fmt.Sprintf("%v", this.ExecStartTime) + `,`,
+		`ExecStopTime:` + fmt.Sprintf("%v", this.ExecStopTime) + `,`,
+		`Content:` + fmt.Sprintf("%v", this.Content) + `,`,
+		`Output:` + fmt.Sprintf("%v", this.Output) + `,`,
+		`Error:` + fmt.Sprintf("%v", this.Error) + `,`,
+		`SessionID:` + fmt.Sprintf("%v", this.SessionID) + `,`,
+		`Tags:` + fmt.Sprintf("%v", this.Tags) + `,`,
+		`Job:` + fmt.Sprintf("%v", this.Job) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1058,6 +1507,8 @@ func (this *FindRequest) String() string {
 	}
 	s := strings.Join([]string{`&FindRequest{`,
 		`Filter:` + fmt.Sprintf("%v", this.Filter) + `,`,
+		`Offset:` + fmt.Sprintf("%v", this.Offset) + `,`,
+		`Limit:` + fmt.Sprintf("%v", this.Limit) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1067,6 +1518,8 @@ func (this *FindResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FindResponse{`,
+		`Ids:` + fmt.Sprintf("%v", this.Ids) + `,`,
+		`NewOffset:` + fmt.Sprintf("%v", this.NewOffset) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1076,6 +1529,7 @@ func (this *ClaimRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&ClaimRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1198,6 +1652,305 @@ func (m *FetchResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FetchResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field QueueTime", wireType)
+			}
+			m.QueueTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.QueueTime |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimTime", wireType)
+			}
+			m.ClaimTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ClaimTime |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExecStartTime", wireType)
+			}
+			m.ExecStartTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ExecStartTime |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 4:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ExecStopTime", wireType)
+			}
+			m.ExecStopTime = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.ExecStopTime |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Content", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTasks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTasks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Content = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Output", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTasks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTasks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Output = append(m.Output, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Error", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTasks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTasks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Error = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SessionID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTasks
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTasks
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.SessionID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 9:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTasks
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Tags = append(m.Tags, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTasks
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTasks
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTasks
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Tags) == 0 {
+					m.Tags = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTasks
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Tags = append(m.Tags, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tags", wireType)
+			}
+		case 10:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Job", wireType)
+			}
+			m.Job = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Job |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTasks(dAtA[iNdEx:])
@@ -1283,6 +2036,44 @@ func (m *FindRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Filter = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Offset", wireType)
+			}
+			m.Offset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Offset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			m.Limit = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Limit |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTasks(dAtA[iNdEx:])
@@ -1336,6 +2127,101 @@ func (m *FindResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FindResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTasks
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Ids = append(m.Ids, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTasks
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTasks
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTasks
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Ids) == 0 {
+					m.Ids = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTasks
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Ids = append(m.Ids, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewOffset", wireType)
+			}
+			m.NewOffset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NewOffset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTasks(dAtA[iNdEx:])
@@ -1389,6 +2275,25 @@ func (m *ClaimRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: ClaimRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTasks
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTasks(dAtA[iNdEx:])

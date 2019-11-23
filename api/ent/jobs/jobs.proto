@@ -49,7 +49,7 @@ service Jobs {
      */
     rpc Find(FindRequest) returns (FindResponse) {
         option (google.api.http) = {
-            get: "/api/v1/jobs/find"
+            get: "/api/v1/jobs"
         };
     }
 
@@ -78,16 +78,36 @@ service Jobs {
 message FetchRequest {
     int64 id = 1;
 }
-message FetchResponse {}
+message FetchResponse {
+    string name = 1;
+    string content = 2;
+    repeated int64 tags = 3;
+    repeated int64 tasks = 4;
+}
 
 message FindRequest {
     string filter = 1;
+    int64 offset = 2;
+    int64 limit = 3;
 }
-message FindResponse {}
+message FindResponse {
+    repeated int64 ids = 1;
+    int64 newOffset = 2;
+}
 
 
-message CreateRequest {}
-message CreateResponse {}
+message CreateRequest {
+    string name = 1;
+    string content = 2;
+    repeated string tags = 3;
+}
+message CreateResponse {
+    int64 id = 1;
+}
 
-message QueueRequest {}
-message QueueResponse {}
+message QueueRequest {
+    int64 id = 1;
+}
+message QueueResponse {
+    repeated int64 ids = 1;
+}

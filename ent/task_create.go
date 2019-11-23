@@ -24,7 +24,8 @@ type TaskCreate struct {
 	Output        *[]string
 	Error         *string
 	SessionID     *string
-	target        map[int]struct{}
+	tags          map[int]struct{}
+	job           map[int]struct{}
 }
 
 // SetQueueTime sets the QueueTime field.
@@ -123,18 +124,38 @@ func (tc *TaskCreate) SetNillableSessionID(s *string) *TaskCreate {
 	return tc
 }
 
-// SetTargetID sets the target edge to Target by id.
-func (tc *TaskCreate) SetTargetID(id int) *TaskCreate {
-	if tc.target == nil {
-		tc.target = make(map[int]struct{})
+// AddTagIDs adds the tags edge to Tag by ids.
+func (tc *TaskCreate) AddTagIDs(ids ...int) *TaskCreate {
+	if tc.tags == nil {
+		tc.tags = make(map[int]struct{})
 	}
-	tc.target[id] = struct{}{}
+	for i := range ids {
+		tc.tags[ids[i]] = struct{}{}
+	}
 	return tc
 }
 
-// SetTarget sets the target edge to Target.
-func (tc *TaskCreate) SetTarget(t *Target) *TaskCreate {
-	return tc.SetTargetID(t.ID)
+// AddTags adds the tags edges to Tag.
+func (tc *TaskCreate) AddTags(t ...*Tag) *TaskCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tc.AddTagIDs(ids...)
+}
+
+// SetJobID sets the job edge to Job by id.
+func (tc *TaskCreate) SetJobID(id int) *TaskCreate {
+	if tc.job == nil {
+		tc.job = make(map[int]struct{})
+	}
+	tc.job[id] = struct{}{}
+	return tc
+}
+
+// SetJob sets the job edge to Job.
+func (tc *TaskCreate) SetJob(j *Job) *TaskCreate {
+	return tc.SetJobID(j.ID)
 }
 
 // Save creates the Task in the database.
@@ -154,11 +175,11 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 			return nil, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
 		}
 	}
-	if len(tc.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
+	if len(tc.job) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}
-	if tc.target == nil {
-		return nil, errors.New("ent: missing required edge \"target\"")
+	if tc.job == nil {
+		return nil, errors.New("ent: missing required edge \"job\"")
 	}
 	return tc.sqlSave(ctx)
 }
@@ -229,10 +250,22 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		return nil, rollback(tx, err)
 	}
 	t.ID = int(id)
-	if len(tc.target) > 0 {
-		for eid := range tc.target {
-			query, args := sql.Update(task.TargetTable).
-				Set(task.TargetColumn, eid).
+	if len(tc.tags) > 0 {
+		for eid := range tc.tags {
+
+			query, args := sql.Insert(task.TagsTable).
+				Columns(task.TagsPrimaryKey[0], task.TagsPrimaryKey[1]).
+				Values(id, eid).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
+		}
+	}
+	if len(tc.job) > 0 {
+		for eid := range tc.job {
+			query, args := sql.Update(task.JobTable).
+				Set(task.JobColumn, eid).
 				Where(sql.EQ(task.FieldID, id)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {

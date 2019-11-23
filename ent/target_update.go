@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
@@ -16,22 +17,25 @@ import (
 // TargetUpdate is the builder for updating Target entities.
 type TargetUpdate struct {
 	config
-	Name            *string
-	clearName       bool
-	MachineUUID     *string
-	PrimaryIP       *string
-	clearPrimaryIP  bool
-	PublicIP        *string
-	clearPublicIP   bool
-	PrimaryMAC      *string
-	clearPrimaryMAC bool
-	Hostname        *string
-	clearHostname   bool
-	LastSeen        *time.Time
-	clearLastSeen   bool
-	tasks           map[int]struct{}
-	removedTasks    map[int]struct{}
-	predicates      []predicate.Target
+	Name               *string
+	PrimaryIP          *string
+	MachineUUID        *string
+	clearMachineUUID   bool
+	PublicIP           *string
+	clearPublicIP      bool
+	PrimaryMAC         *string
+	clearPrimaryMAC    bool
+	Hostname           *string
+	clearHostname      bool
+	LastSeen           *time.Time
+	clearLastSeen      bool
+	tasks              map[int]struct{}
+	tags               map[int]struct{}
+	credentials        map[int]struct{}
+	removedTasks       map[int]struct{}
+	removedTags        map[int]struct{}
+	removedCredentials map[int]struct{}
+	predicates         []predicate.Target
 }
 
 // Where adds a new predicate for the builder.
@@ -46,18 +50,9 @@ func (tu *TargetUpdate) SetName(s string) *TargetUpdate {
 	return tu
 }
 
-// SetNillableName sets the Name field if the given value is not nil.
-func (tu *TargetUpdate) SetNillableName(s *string) *TargetUpdate {
-	if s != nil {
-		tu.SetName(*s)
-	}
-	return tu
-}
-
-// ClearName clears the value of Name.
-func (tu *TargetUpdate) ClearName() *TargetUpdate {
-	tu.Name = nil
-	tu.clearName = true
+// SetPrimaryIP sets the PrimaryIP field.
+func (tu *TargetUpdate) SetPrimaryIP(s string) *TargetUpdate {
+	tu.PrimaryIP = &s
 	return tu
 }
 
@@ -67,24 +62,18 @@ func (tu *TargetUpdate) SetMachineUUID(s string) *TargetUpdate {
 	return tu
 }
 
-// SetPrimaryIP sets the PrimaryIP field.
-func (tu *TargetUpdate) SetPrimaryIP(s string) *TargetUpdate {
-	tu.PrimaryIP = &s
-	return tu
-}
-
-// SetNillablePrimaryIP sets the PrimaryIP field if the given value is not nil.
-func (tu *TargetUpdate) SetNillablePrimaryIP(s *string) *TargetUpdate {
+// SetNillableMachineUUID sets the MachineUUID field if the given value is not nil.
+func (tu *TargetUpdate) SetNillableMachineUUID(s *string) *TargetUpdate {
 	if s != nil {
-		tu.SetPrimaryIP(*s)
+		tu.SetMachineUUID(*s)
 	}
 	return tu
 }
 
-// ClearPrimaryIP clears the value of PrimaryIP.
-func (tu *TargetUpdate) ClearPrimaryIP() *TargetUpdate {
-	tu.PrimaryIP = nil
-	tu.clearPrimaryIP = true
+// ClearMachineUUID clears the value of MachineUUID.
+func (tu *TargetUpdate) ClearMachineUUID() *TargetUpdate {
+	tu.MachineUUID = nil
+	tu.clearMachineUUID = true
 	return tu
 }
 
@@ -192,6 +181,46 @@ func (tu *TargetUpdate) AddTasks(t ...*Task) *TargetUpdate {
 	return tu.AddTaskIDs(ids...)
 }
 
+// AddTagIDs adds the tags edge to Tag by ids.
+func (tu *TargetUpdate) AddTagIDs(ids ...int) *TargetUpdate {
+	if tu.tags == nil {
+		tu.tags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tu.tags[ids[i]] = struct{}{}
+	}
+	return tu
+}
+
+// AddTags adds the tags edges to Tag.
+func (tu *TargetUpdate) AddTags(t ...*Tag) *TargetUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.AddTagIDs(ids...)
+}
+
+// AddCredentialIDs adds the credentials edge to Credential by ids.
+func (tu *TargetUpdate) AddCredentialIDs(ids ...int) *TargetUpdate {
+	if tu.credentials == nil {
+		tu.credentials = make(map[int]struct{})
+	}
+	for i := range ids {
+		tu.credentials[ids[i]] = struct{}{}
+	}
+	return tu
+}
+
+// AddCredentials adds the credentials edges to Credential.
+func (tu *TargetUpdate) AddCredentials(c ...*Credential) *TargetUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tu.AddCredentialIDs(ids...)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (tu *TargetUpdate) RemoveTaskIDs(ids ...int) *TargetUpdate {
 	if tu.removedTasks == nil {
@@ -210,6 +239,46 @@ func (tu *TargetUpdate) RemoveTasks(t ...*Task) *TargetUpdate {
 		ids[i] = t[i].ID
 	}
 	return tu.RemoveTaskIDs(ids...)
+}
+
+// RemoveTagIDs removes the tags edge to Tag by ids.
+func (tu *TargetUpdate) RemoveTagIDs(ids ...int) *TargetUpdate {
+	if tu.removedTags == nil {
+		tu.removedTags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tu.removedTags[ids[i]] = struct{}{}
+	}
+	return tu
+}
+
+// RemoveTags removes tags edges to Tag.
+func (tu *TargetUpdate) RemoveTags(t ...*Tag) *TargetUpdate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tu.RemoveTagIDs(ids...)
+}
+
+// RemoveCredentialIDs removes the credentials edge to Credential by ids.
+func (tu *TargetUpdate) RemoveCredentialIDs(ids ...int) *TargetUpdate {
+	if tu.removedCredentials == nil {
+		tu.removedCredentials = make(map[int]struct{})
+	}
+	for i := range ids {
+		tu.removedCredentials[ids[i]] = struct{}{}
+	}
+	return tu
+}
+
+// RemoveCredentials removes credentials edges to Credential.
+func (tu *TargetUpdate) RemoveCredentials(c ...*Credential) *TargetUpdate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tu.RemoveCredentialIDs(ids...)
 }
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
@@ -273,17 +342,14 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := tu.Name; value != nil {
 		builder.Set(target.FieldName, *value)
 	}
-	if tu.clearName {
-		builder.SetNull(target.FieldName)
+	if value := tu.PrimaryIP; value != nil {
+		builder.Set(target.FieldPrimaryIP, *value)
 	}
 	if value := tu.MachineUUID; value != nil {
 		builder.Set(target.FieldMachineUUID, *value)
 	}
-	if value := tu.PrimaryIP; value != nil {
-		builder.Set(target.FieldPrimaryIP, *value)
-	}
-	if tu.clearPrimaryIP {
-		builder.SetNull(target.FieldPrimaryIP)
+	if tu.clearMachineUUID {
+		builder.SetNull(target.FieldMachineUUID)
 	}
 	if value := tu.PublicIP; value != nil {
 		builder.Set(target.FieldPublicIP, *value)
@@ -351,6 +417,72 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if len(tu.removedTags) > 0 {
+		eids := make([]int, len(tu.removedTags))
+		for eid := range tu.removedTags {
+			eids = append(eids, eid)
+		}
+		query, args := sql.Delete(target.TagsTable).
+			Where(sql.InInts(target.TagsPrimaryKey[0], ids...)).
+			Where(sql.InInts(target.TagsPrimaryKey[1], eids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(tu.tags) > 0 {
+		values := make([][]int, 0, len(ids))
+		for _, id := range ids {
+			for eid := range tu.tags {
+				values = append(values, []int{id, eid})
+			}
+		}
+		builder := sql.Insert(target.TagsTable).
+			Columns(target.TagsPrimaryKey[0], target.TagsPrimaryKey[1])
+		for _, v := range values {
+			builder.Values(v[0], v[1])
+		}
+		query, args := builder.Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(tu.removedCredentials) > 0 {
+		eids := make([]int, len(tu.removedCredentials))
+		for eid := range tu.removedCredentials {
+			eids = append(eids, eid)
+		}
+		query, args := sql.Update(target.CredentialsTable).
+			SetNull(target.CredentialsColumn).
+			Where(sql.InInts(target.CredentialsColumn, ids...)).
+			Where(sql.InInts(credential.FieldID, eids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(tu.credentials) > 0 {
+		for _, id := range ids {
+			p := sql.P()
+			for eid := range tu.credentials {
+				p.Or().EQ(credential.FieldID, eid)
+			}
+			query, args := sql.Update(target.CredentialsTable).
+				Set(target.CredentialsColumn, id).
+				Where(sql.And(p, sql.IsNull(target.CredentialsColumn))).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return 0, rollback(tx, err)
+			}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return 0, rollback(tx, err)
+			}
+			if int(affected) < len(tu.credentials) {
+				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"credentials\" %v already connected to a different \"Target\"", keys(tu.credentials))})
+			}
+		}
+	}
 	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
@@ -360,48 +492,30 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // TargetUpdateOne is the builder for updating a single Target entity.
 type TargetUpdateOne struct {
 	config
-	id              int
-	Name            *string
-	clearName       bool
-	MachineUUID     *string
-	PrimaryIP       *string
-	clearPrimaryIP  bool
-	PublicIP        *string
-	clearPublicIP   bool
-	PrimaryMAC      *string
-	clearPrimaryMAC bool
-	Hostname        *string
-	clearHostname   bool
-	LastSeen        *time.Time
-	clearLastSeen   bool
-	tasks           map[int]struct{}
-	removedTasks    map[int]struct{}
+	id                 int
+	Name               *string
+	PrimaryIP          *string
+	MachineUUID        *string
+	clearMachineUUID   bool
+	PublicIP           *string
+	clearPublicIP      bool
+	PrimaryMAC         *string
+	clearPrimaryMAC    bool
+	Hostname           *string
+	clearHostname      bool
+	LastSeen           *time.Time
+	clearLastSeen      bool
+	tasks              map[int]struct{}
+	tags               map[int]struct{}
+	credentials        map[int]struct{}
+	removedTasks       map[int]struct{}
+	removedTags        map[int]struct{}
+	removedCredentials map[int]struct{}
 }
 
 // SetName sets the Name field.
 func (tuo *TargetUpdateOne) SetName(s string) *TargetUpdateOne {
 	tuo.Name = &s
-	return tuo
-}
-
-// SetNillableName sets the Name field if the given value is not nil.
-func (tuo *TargetUpdateOne) SetNillableName(s *string) *TargetUpdateOne {
-	if s != nil {
-		tuo.SetName(*s)
-	}
-	return tuo
-}
-
-// ClearName clears the value of Name.
-func (tuo *TargetUpdateOne) ClearName() *TargetUpdateOne {
-	tuo.Name = nil
-	tuo.clearName = true
-	return tuo
-}
-
-// SetMachineUUID sets the MachineUUID field.
-func (tuo *TargetUpdateOne) SetMachineUUID(s string) *TargetUpdateOne {
-	tuo.MachineUUID = &s
 	return tuo
 }
 
@@ -411,18 +525,24 @@ func (tuo *TargetUpdateOne) SetPrimaryIP(s string) *TargetUpdateOne {
 	return tuo
 }
 
-// SetNillablePrimaryIP sets the PrimaryIP field if the given value is not nil.
-func (tuo *TargetUpdateOne) SetNillablePrimaryIP(s *string) *TargetUpdateOne {
+// SetMachineUUID sets the MachineUUID field.
+func (tuo *TargetUpdateOne) SetMachineUUID(s string) *TargetUpdateOne {
+	tuo.MachineUUID = &s
+	return tuo
+}
+
+// SetNillableMachineUUID sets the MachineUUID field if the given value is not nil.
+func (tuo *TargetUpdateOne) SetNillableMachineUUID(s *string) *TargetUpdateOne {
 	if s != nil {
-		tuo.SetPrimaryIP(*s)
+		tuo.SetMachineUUID(*s)
 	}
 	return tuo
 }
 
-// ClearPrimaryIP clears the value of PrimaryIP.
-func (tuo *TargetUpdateOne) ClearPrimaryIP() *TargetUpdateOne {
-	tuo.PrimaryIP = nil
-	tuo.clearPrimaryIP = true
+// ClearMachineUUID clears the value of MachineUUID.
+func (tuo *TargetUpdateOne) ClearMachineUUID() *TargetUpdateOne {
+	tuo.MachineUUID = nil
+	tuo.clearMachineUUID = true
 	return tuo
 }
 
@@ -530,6 +650,46 @@ func (tuo *TargetUpdateOne) AddTasks(t ...*Task) *TargetUpdateOne {
 	return tuo.AddTaskIDs(ids...)
 }
 
+// AddTagIDs adds the tags edge to Tag by ids.
+func (tuo *TargetUpdateOne) AddTagIDs(ids ...int) *TargetUpdateOne {
+	if tuo.tags == nil {
+		tuo.tags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tuo.tags[ids[i]] = struct{}{}
+	}
+	return tuo
+}
+
+// AddTags adds the tags edges to Tag.
+func (tuo *TargetUpdateOne) AddTags(t ...*Tag) *TargetUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.AddTagIDs(ids...)
+}
+
+// AddCredentialIDs adds the credentials edge to Credential by ids.
+func (tuo *TargetUpdateOne) AddCredentialIDs(ids ...int) *TargetUpdateOne {
+	if tuo.credentials == nil {
+		tuo.credentials = make(map[int]struct{})
+	}
+	for i := range ids {
+		tuo.credentials[ids[i]] = struct{}{}
+	}
+	return tuo
+}
+
+// AddCredentials adds the credentials edges to Credential.
+func (tuo *TargetUpdateOne) AddCredentials(c ...*Credential) *TargetUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tuo.AddCredentialIDs(ids...)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (tuo *TargetUpdateOne) RemoveTaskIDs(ids ...int) *TargetUpdateOne {
 	if tuo.removedTasks == nil {
@@ -548,6 +708,46 @@ func (tuo *TargetUpdateOne) RemoveTasks(t ...*Task) *TargetUpdateOne {
 		ids[i] = t[i].ID
 	}
 	return tuo.RemoveTaskIDs(ids...)
+}
+
+// RemoveTagIDs removes the tags edge to Tag by ids.
+func (tuo *TargetUpdateOne) RemoveTagIDs(ids ...int) *TargetUpdateOne {
+	if tuo.removedTags == nil {
+		tuo.removedTags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tuo.removedTags[ids[i]] = struct{}{}
+	}
+	return tuo
+}
+
+// RemoveTags removes tags edges to Tag.
+func (tuo *TargetUpdateOne) RemoveTags(t ...*Tag) *TargetUpdateOne {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tuo.RemoveTagIDs(ids...)
+}
+
+// RemoveCredentialIDs removes the credentials edge to Credential by ids.
+func (tuo *TargetUpdateOne) RemoveCredentialIDs(ids ...int) *TargetUpdateOne {
+	if tuo.removedCredentials == nil {
+		tuo.removedCredentials = make(map[int]struct{})
+	}
+	for i := range ids {
+		tuo.removedCredentials[ids[i]] = struct{}{}
+	}
+	return tuo
+}
+
+// RemoveCredentials removes credentials edges to Credential.
+func (tuo *TargetUpdateOne) RemoveCredentials(c ...*Credential) *TargetUpdateOne {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tuo.RemoveCredentialIDs(ids...)
 }
 
 // Save executes the query and returns the updated entity.
@@ -615,23 +815,18 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 		builder.Set(target.FieldName, *value)
 		t.Name = *value
 	}
-	if tuo.clearName {
-		var value string
-		t.Name = value
-		builder.SetNull(target.FieldName)
+	if value := tuo.PrimaryIP; value != nil {
+		builder.Set(target.FieldPrimaryIP, *value)
+		t.PrimaryIP = *value
 	}
 	if value := tuo.MachineUUID; value != nil {
 		builder.Set(target.FieldMachineUUID, *value)
 		t.MachineUUID = *value
 	}
-	if value := tuo.PrimaryIP; value != nil {
-		builder.Set(target.FieldPrimaryIP, *value)
-		t.PrimaryIP = *value
-	}
-	if tuo.clearPrimaryIP {
+	if tuo.clearMachineUUID {
 		var value string
-		t.PrimaryIP = value
-		builder.SetNull(target.FieldPrimaryIP)
+		t.MachineUUID = value
+		builder.SetNull(target.FieldMachineUUID)
 	}
 	if value := tuo.PublicIP; value != nil {
 		builder.Set(target.FieldPublicIP, *value)
@@ -708,6 +903,72 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 			}
 			if int(affected) < len(tuo.tasks) {
 				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Target\"", keys(tuo.tasks))})
+			}
+		}
+	}
+	if len(tuo.removedTags) > 0 {
+		eids := make([]int, len(tuo.removedTags))
+		for eid := range tuo.removedTags {
+			eids = append(eids, eid)
+		}
+		query, args := sql.Delete(target.TagsTable).
+			Where(sql.InInts(target.TagsPrimaryKey[0], ids...)).
+			Where(sql.InInts(target.TagsPrimaryKey[1], eids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(tuo.tags) > 0 {
+		values := make([][]int, 0, len(ids))
+		for _, id := range ids {
+			for eid := range tuo.tags {
+				values = append(values, []int{id, eid})
+			}
+		}
+		builder := sql.Insert(target.TagsTable).
+			Columns(target.TagsPrimaryKey[0], target.TagsPrimaryKey[1])
+		for _, v := range values {
+			builder.Values(v[0], v[1])
+		}
+		query, args := builder.Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(tuo.removedCredentials) > 0 {
+		eids := make([]int, len(tuo.removedCredentials))
+		for eid := range tuo.removedCredentials {
+			eids = append(eids, eid)
+		}
+		query, args := sql.Update(target.CredentialsTable).
+			SetNull(target.CredentialsColumn).
+			Where(sql.InInts(target.CredentialsColumn, ids...)).
+			Where(sql.InInts(credential.FieldID, eids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(tuo.credentials) > 0 {
+		for _, id := range ids {
+			p := sql.P()
+			for eid := range tuo.credentials {
+				p.Or().EQ(credential.FieldID, eid)
+			}
+			query, args := sql.Update(target.CredentialsTable).
+				Set(target.CredentialsColumn, id).
+				Where(sql.And(p, sql.IsNull(target.CredentialsColumn))).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return nil, rollback(tx, err)
+			}
+			if int(affected) < len(tuo.credentials) {
+				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"credentials\" %v already connected to a different \"Target\"", keys(tuo.credentials))})
 			}
 		}
 	}

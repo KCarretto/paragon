@@ -49,7 +49,7 @@ service Tasks {
      */
     rpc Find(FindRequest) returns (FindResponse) {
         option (google.api.http) = {
-            get: "/api/v1/tasks/find"
+            get: "/api/v1/tasks"
         };
     }
 
@@ -58,7 +58,7 @@ service Tasks {
      */
     rpc Claim(ClaimRequest) returns (ClaimResponse) {
         option (google.api.http) = {
-            post: "/api/v1/tasks/queue"
+            post: "/api/v1/tasks/claim"
             body: "*"
         };
     }
@@ -68,12 +68,30 @@ service Tasks {
 message FetchRequest {
     int64 id = 1;
 }
-message FetchResponse {}
+message FetchResponse {
+    int64 queueTime = 1;
+    int64 claimTime = 2;
+    int64 execStartTime = 3;
+    int64 execStopTime = 4;
+    string content = 5;
+    repeated string output = 6;
+    string error = 7;
+    string sessionID = 8;
+    repeated int64 tags = 9;
+    int64 job = 10;
+}
 
 message FindRequest {
     string filter = 1;
+    int64 offset = 2;
+    int64 limit = 3;
 }
-message FindResponse {}
+message FindResponse {
+    repeated int64 ids = 1;
+    int64 newOffset = 2;
+}
 
-message ClaimRequest {}
+message ClaimRequest {
+    int64 id = 1;
+}
 message ClaimResponse {}

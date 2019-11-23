@@ -49,7 +49,7 @@ service Targets {
      */
     rpc Find(FindRequest) returns (FindResponse) {
         option (google.api.http) = {
-            get: "/api/v1/targets/find"
+            get: "/api/v1/targets"
         };
     }
 
@@ -66,9 +66,9 @@ service Targets {
     /*
      * TODO: @cictrone
      */
-    rpc AddCredentials(AddCredentialsRequest) returns (AddCredentialsResponse) {
+    rpc AddCredential(AddCredentialRequest) returns (AddCredentialResponse) {
         option (google.api.http) = {
-            post: "/api/v1/targets/create"
+            post: "/api/v1/targets/addCredential"
             body: "*"
         };
     }
@@ -78,16 +78,42 @@ service Targets {
 message FetchRequest {
     int64 id = 1;
 }
-message FetchResponse {}
+message FetchResponse {
+    string name = 1;
+    string machineUUID  = 2;
+    string primaryIP = 3;
+    string publicIP = 4;
+    string primaryMAC = 5;
+    string hostname = 6;
+    int64 lastSeen = 7;
+    repeated int64 tags = 8;
+    repeated int64 tasks = 9;
+    repeated int64 credentials = 10;
+}
 
 message FindRequest {
     string filter = 1;
+    int64 offset = 2;
+    int64 limit = 3;
 }
-message FindResponse {}
+message FindResponse {
+    repeated int64 ids = 1;
+    int64 newOffset = 2;
+}
 
 
-message CreateRequest {}
-message CreateResponse {}
+message CreateRequest {
+    string name = 1;
+    string primaryIP = 2;
+    repeated string tags = 3;
+}
+message CreateResponse {
+    int64 id = 1;
+}
 
-message AddCredentialsRequest {}
-message AddCredentialsResponse {}
+message AddCredentialRequest {
+    int64 targetID = 1;
+    string principal = 2;
+    string secret = 3;
+}
+message AddCredentialResponse {}

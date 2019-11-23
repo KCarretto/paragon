@@ -32,13 +32,18 @@ const (
 
 	// Table holds the table name of the task in the database.
 	Table = "tasks"
-	// TargetTable is the table the holds the target relation/edge.
-	TargetTable = "tasks"
-	// TargetInverseTable is the table name for the Target entity.
-	// It exists in this package in order to avoid circular dependency with the "target" package.
-	TargetInverseTable = "targets"
-	// TargetColumn is the table column denoting the target relation/edge.
-	TargetColumn = "target_id"
+	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
+	TagsTable = "task_tags"
+	// TagsInverseTable is the table name for the Tag entity.
+	// It exists in this package in order to avoid circular dependency with the "tag" package.
+	TagsInverseTable = "tags"
+	// JobTable is the table the holds the job relation/edge.
+	JobTable = "tasks"
+	// JobInverseTable is the table name for the Job entity.
+	// It exists in this package in order to avoid circular dependency with the "job" package.
+	JobInverseTable = "jobs"
+	// JobColumn is the table column denoting the job relation/edge.
+	JobColumn = "job_id"
 )
 
 // Columns holds all SQL columns are task fields.
@@ -53,6 +58,12 @@ var Columns = []string{
 	FieldError,
 	FieldSessionID,
 }
+
+var (
+	// TagsPrimaryKey and TagsColumn2 are the table columns denoting the
+	// primary key for the tags relation (M2M).
+	TagsPrimaryKey = []string{"task_id", "tag_id"}
+)
 
 var (
 	fields = schema.Task{}.Fields()

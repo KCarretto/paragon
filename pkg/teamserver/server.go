@@ -1,41 +1,25 @@
 package teamserver
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
-	"gocloud.dev/pubsub"
 
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/kcarretto/paragon/api/ent/jobs"
+	"github.com/kcarretto/paragon/api/ent/tags"
+	"github.com/kcarretto/paragon/api/ent/targets"
+	"github.com/kcarretto/paragon/api/ent/tasks"
 	"github.com/kcarretto/paragon/ent"
 )
 
 // Server handles c2 messages and replies with new tasks for the c2 to send out.
 type Server struct {
-	Log         *zap.Logger
-	EntClient   *ent.Client
-	QueuedTopic *pubsub.Topic
-}
-
-type rawTask struct {
-	Content   string `json:"content"`
-	SessionID string `json:"sessionID"`
-	TargetID  int    `json:"targetID"`
-}
-
-type iDStruct struct {
-	ID int `json:"id"`
-}
-
-type messageData struct {
-	Data      []byte `json:"data"`
-	MessageID string `json:"messageId"`
-}
-
-type pubSubMessage struct {
-	Message      messageData `json:"message"`
-	Subscription string      `json:"subscription"`
+	Log       *zap.Logger
+	EntClient *ent.Client
 }
 
 func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -56,18 +40,42 @@ func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run() {
-	http.HandleFunc("/status", srv.handleStatus)
+	ctx := context.Background()
+	svcRouter := runtime.NewServeMux()
 
-	http.HandleFunc("/events/agent/checkin", srv.handleAgentCheckin)
-	http.HandleFunc("/events/tasks/claimed", srv.handleTaskClaimed)
-	http.HandleFunc("/events/tasks/executed", srv.handleTaskExecuted)
+	targetSVC := &targets.Service{
+		EntClient: srv.EntClient,
+	}
+	if err := targets.RegisterTargetsHandlerServer(ctx, svcRouter, targetSVC); err != nil {
+		panic(err)
+	}
 
-	http.HandleFunc("/makeTask", srv.handleMakeTask)
-	http.HandleFunc("/getTask", srv.handleGetTask)
-	http.HandleFunc("/getTarget", srv.handleGetTarget)
-	http.HandleFunc("/listTargets", srv.handleListTargets)
-	http.HandleFunc("/listTasksForTarget", srv.handleListTasksForTarget)
-	if err := http.ListenAndServe("0.0.0.0:80", nil); err != nil {
+	taskSVC := &tasks.Service{
+		EntClient: srv.EntClient,
+	}
+	if err := tasks.RegisterTasksHandlerServer(ctx, svcRouter, taskSVC); err != nil {
+		panic(err)
+	}
+
+	tagSVC := &tags.Service{
+		EntClient: srv.EntClient,
+	}
+	if err := tags.RegisterTagsHandlerServer(ctx, svcRouter, tagSVC); err != nil {
+		panic(err)
+	}
+
+	jobSVC := &jobs.Service{
+		EntClient: srv.EntClient,
+	}
+	if err := jobs.RegisterJobsHandlerServer(ctx, svcRouter, jobSVC); err != nil {
+		panic(err)
+	}
+
+	router := http.NewServeMux()
+	router.Handle("/api/v1/", svcRouter)
+	router.HandleFunc("/status", srv.handleStatus)
+
+	if err := http.ListenAndServe("0.0.0.0:80", router); err != nil {
 		panic(err)
 	}
 }

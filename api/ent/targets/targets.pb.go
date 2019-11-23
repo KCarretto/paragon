@@ -80,6 +80,16 @@ func (*FetchRequest) XXX_MessageName() string {
 }
 
 type FetchResponse struct {
+	Name        string  `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	MachineUUID string  `protobuf:"bytes,2,opt,name=machineUUID,proto3" json:"machineUUID,omitempty"`
+	PrimaryIP   string  `protobuf:"bytes,3,opt,name=primaryIP,proto3" json:"primaryIP,omitempty"`
+	PublicIP    string  `protobuf:"bytes,4,opt,name=publicIP,proto3" json:"publicIP,omitempty"`
+	PrimaryMAC  string  `protobuf:"bytes,5,opt,name=primaryMAC,proto3" json:"primaryMAC,omitempty"`
+	Hostname    string  `protobuf:"bytes,6,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	LastSeen    int64   `protobuf:"varint,7,opt,name=lastSeen,proto3" json:"lastSeen,omitempty"`
+	Tags        []int64 `protobuf:"varint,8,rep,packed,name=tags,proto3" json:"tags,omitempty"`
+	Tasks       []int64 `protobuf:"varint,9,rep,packed,name=tasks,proto3" json:"tasks,omitempty"`
+	Credentials []int64 `protobuf:"varint,10,rep,packed,name=credentials,proto3" json:"credentials,omitempty"`
 }
 
 func (m *FetchResponse) Reset()      { *m = FetchResponse{} }
@@ -114,12 +124,84 @@ func (m *FetchResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FetchResponse proto.InternalMessageInfo
 
+func (m *FetchResponse) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetMachineUUID() string {
+	if m != nil {
+		return m.MachineUUID
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetPrimaryIP() string {
+	if m != nil {
+		return m.PrimaryIP
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetPublicIP() string {
+	if m != nil {
+		return m.PublicIP
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetPrimaryMAC() string {
+	if m != nil {
+		return m.PrimaryMAC
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetHostname() string {
+	if m != nil {
+		return m.Hostname
+	}
+	return ""
+}
+
+func (m *FetchResponse) GetLastSeen() int64 {
+	if m != nil {
+		return m.LastSeen
+	}
+	return 0
+}
+
+func (m *FetchResponse) GetTags() []int64 {
+	if m != nil {
+		return m.Tags
+	}
+	return nil
+}
+
+func (m *FetchResponse) GetTasks() []int64 {
+	if m != nil {
+		return m.Tasks
+	}
+	return nil
+}
+
+func (m *FetchResponse) GetCredentials() []int64 {
+	if m != nil {
+		return m.Credentials
+	}
+	return nil
+}
+
 func (*FetchResponse) XXX_MessageName() string {
 	return "targets.FetchResponse"
 }
 
 type FindRequest struct {
 	Filter string `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	Offset int64  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit  int64  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
 func (m *FindRequest) Reset()      { *m = FindRequest{} }
@@ -161,11 +243,27 @@ func (m *FindRequest) GetFilter() string {
 	return ""
 }
 
+func (m *FindRequest) GetOffset() int64 {
+	if m != nil {
+		return m.Offset
+	}
+	return 0
+}
+
+func (m *FindRequest) GetLimit() int64 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
+
 func (*FindRequest) XXX_MessageName() string {
 	return "targets.FindRequest"
 }
 
 type FindResponse struct {
+	Ids       []int64 `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	NewOffset int64   `protobuf:"varint,2,opt,name=newOffset,proto3" json:"newOffset,omitempty"`
 }
 
 func (m *FindResponse) Reset()      { *m = FindResponse{} }
@@ -200,11 +298,28 @@ func (m *FindResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FindResponse proto.InternalMessageInfo
 
+func (m *FindResponse) GetIds() []int64 {
+	if m != nil {
+		return m.Ids
+	}
+	return nil
+}
+
+func (m *FindResponse) GetNewOffset() int64 {
+	if m != nil {
+		return m.NewOffset
+	}
+	return 0
+}
+
 func (*FindResponse) XXX_MessageName() string {
 	return "targets.FindResponse"
 }
 
 type CreateRequest struct {
+	Name      string   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	PrimaryIP string   `protobuf:"bytes,2,opt,name=primaryIP,proto3" json:"primaryIP,omitempty"`
+	Tags      []string `protobuf:"bytes,3,rep,name=tags,proto3" json:"tags,omitempty"`
 }
 
 func (m *CreateRequest) Reset()      { *m = CreateRequest{} }
@@ -239,11 +354,33 @@ func (m *CreateRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CreateRequest proto.InternalMessageInfo
 
+func (m *CreateRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *CreateRequest) GetPrimaryIP() string {
+	if m != nil {
+		return m.PrimaryIP
+	}
+	return ""
+}
+
+func (m *CreateRequest) GetTags() []string {
+	if m != nil {
+		return m.Tags
+	}
+	return nil
+}
+
 func (*CreateRequest) XXX_MessageName() string {
 	return "targets.CreateRequest"
 }
 
 type CreateResponse struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (m *CreateResponse) Reset()      { *m = CreateResponse{} }
@@ -278,24 +415,34 @@ func (m *CreateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CreateResponse proto.InternalMessageInfo
 
+func (m *CreateResponse) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
 func (*CreateResponse) XXX_MessageName() string {
 	return "targets.CreateResponse"
 }
 
-type AddCredentialsRequest struct {
+type AddCredentialRequest struct {
+	TargetID  int64  `protobuf:"varint,1,opt,name=targetID,proto3" json:"targetID,omitempty"`
+	Principal string `protobuf:"bytes,2,opt,name=principal,proto3" json:"principal,omitempty"`
+	Secret    string `protobuf:"bytes,3,opt,name=secret,proto3" json:"secret,omitempty"`
 }
 
-func (m *AddCredentialsRequest) Reset()      { *m = AddCredentialsRequest{} }
-func (*AddCredentialsRequest) ProtoMessage() {}
-func (*AddCredentialsRequest) Descriptor() ([]byte, []int) {
+func (m *AddCredentialRequest) Reset()      { *m = AddCredentialRequest{} }
+func (*AddCredentialRequest) ProtoMessage() {}
+func (*AddCredentialRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4009e2e15debba2c, []int{6}
 }
-func (m *AddCredentialsRequest) XXX_Unmarshal(b []byte) error {
+func (m *AddCredentialRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *AddCredentialsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *AddCredentialRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AddCredentialsRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_AddCredentialRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -305,36 +452,57 @@ func (m *AddCredentialsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *AddCredentialsRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddCredentialsRequest.Merge(m, src)
+func (m *AddCredentialRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddCredentialRequest.Merge(m, src)
 }
-func (m *AddCredentialsRequest) XXX_Size() int {
+func (m *AddCredentialRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *AddCredentialsRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddCredentialsRequest.DiscardUnknown(m)
+func (m *AddCredentialRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddCredentialRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AddCredentialsRequest proto.InternalMessageInfo
+var xxx_messageInfo_AddCredentialRequest proto.InternalMessageInfo
 
-func (*AddCredentialsRequest) XXX_MessageName() string {
-	return "targets.AddCredentialsRequest"
+func (m *AddCredentialRequest) GetTargetID() int64 {
+	if m != nil {
+		return m.TargetID
+	}
+	return 0
 }
 
-type AddCredentialsResponse struct {
+func (m *AddCredentialRequest) GetPrincipal() string {
+	if m != nil {
+		return m.Principal
+	}
+	return ""
 }
 
-func (m *AddCredentialsResponse) Reset()      { *m = AddCredentialsResponse{} }
-func (*AddCredentialsResponse) ProtoMessage() {}
-func (*AddCredentialsResponse) Descriptor() ([]byte, []int) {
+func (m *AddCredentialRequest) GetSecret() string {
+	if m != nil {
+		return m.Secret
+	}
+	return ""
+}
+
+func (*AddCredentialRequest) XXX_MessageName() string {
+	return "targets.AddCredentialRequest"
+}
+
+type AddCredentialResponse struct {
+}
+
+func (m *AddCredentialResponse) Reset()      { *m = AddCredentialResponse{} }
+func (*AddCredentialResponse) ProtoMessage() {}
+func (*AddCredentialResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_4009e2e15debba2c, []int{7}
 }
-func (m *AddCredentialsResponse) XXX_Unmarshal(b []byte) error {
+func (m *AddCredentialResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *AddCredentialsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *AddCredentialResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_AddCredentialsResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_AddCredentialResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -344,20 +512,20 @@ func (m *AddCredentialsResponse) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *AddCredentialsResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddCredentialsResponse.Merge(m, src)
+func (m *AddCredentialResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddCredentialResponse.Merge(m, src)
 }
-func (m *AddCredentialsResponse) XXX_Size() int {
+func (m *AddCredentialResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *AddCredentialsResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_AddCredentialsResponse.DiscardUnknown(m)
+func (m *AddCredentialResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_AddCredentialResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_AddCredentialsResponse proto.InternalMessageInfo
+var xxx_messageInfo_AddCredentialResponse proto.InternalMessageInfo
 
-func (*AddCredentialsResponse) XXX_MessageName() string {
-	return "targets.AddCredentialsResponse"
+func (*AddCredentialResponse) XXX_MessageName() string {
+	return "targets.AddCredentialResponse"
 }
 func init() {
 	proto.RegisterType((*FetchRequest)(nil), "targets.FetchRequest")
@@ -372,42 +540,58 @@ func init() {
 	golang_proto.RegisterType((*CreateRequest)(nil), "targets.CreateRequest")
 	proto.RegisterType((*CreateResponse)(nil), "targets.CreateResponse")
 	golang_proto.RegisterType((*CreateResponse)(nil), "targets.CreateResponse")
-	proto.RegisterType((*AddCredentialsRequest)(nil), "targets.AddCredentialsRequest")
-	golang_proto.RegisterType((*AddCredentialsRequest)(nil), "targets.AddCredentialsRequest")
-	proto.RegisterType((*AddCredentialsResponse)(nil), "targets.AddCredentialsResponse")
-	golang_proto.RegisterType((*AddCredentialsResponse)(nil), "targets.AddCredentialsResponse")
+	proto.RegisterType((*AddCredentialRequest)(nil), "targets.AddCredentialRequest")
+	golang_proto.RegisterType((*AddCredentialRequest)(nil), "targets.AddCredentialRequest")
+	proto.RegisterType((*AddCredentialResponse)(nil), "targets.AddCredentialResponse")
+	golang_proto.RegisterType((*AddCredentialResponse)(nil), "targets.AddCredentialResponse")
 }
 
 func init() { proto.RegisterFile("targets.proto", fileDescriptor_4009e2e15debba2c) }
 func init() { golang_proto.RegisterFile("targets.proto", fileDescriptor_4009e2e15debba2c) }
 
 var fileDescriptor_4009e2e15debba2c = []byte{
-	// 398 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x52, 0x3f, 0x6f, 0xd3, 0x40,
-	0x1c, 0xf5, 0x25, 0x90, 0x88, 0x1f, 0x89, 0x83, 0x4e, 0x89, 0x13, 0x99, 0xe8, 0x07, 0x58, 0x42,
-	0x42, 0x0c, 0xb1, 0x80, 0x8d, 0x0d, 0x82, 0xb2, 0x13, 0x65, 0x64, 0x31, 0xf1, 0xc5, 0x9c, 0x14,
-	0xf9, 0x82, 0x7d, 0xb0, 0x20, 0x24, 0xc4, 0xc0, 0x8c, 0xc4, 0x97, 0xe0, 0x23, 0x74, 0xec, 0x98,
-	0x31, 0x52, 0x97, 0x8c, 0xf5, 0xb9, 0x43, 0xc7, 0x8c, 0x1d, 0xab, 0xd8, 0xe7, 0xa6, 0x71, 0x5b,
-	0xb5, 0x9b, 0xef, 0xfd, 0xbb, 0x7b, 0x4f, 0x86, 0xa6, 0xf4, 0xa2, 0x80, 0xc9, 0x78, 0xb0, 0x88,
-	0x84, 0x14, 0xb4, 0xae, 0x8f, 0x76, 0x3b, 0x10, 0x81, 0xc8, 0x30, 0x77, 0xfb, 0x95, 0xd3, 0x76,
-	0x3f, 0x10, 0x22, 0x98, 0x33, 0xd7, 0x5b, 0x70, 0xd7, 0x0b, 0x43, 0x21, 0x3d, 0xc9, 0x45, 0xa8,
-	0xcd, 0x0e, 0x42, 0x63, 0xc4, 0xe4, 0xf4, 0xcb, 0x98, 0x7d, 0xfd, 0xc6, 0x62, 0x49, 0x4d, 0xa8,
-	0x70, 0xbf, 0x47, 0x9e, 0x92, 0x17, 0xd5, 0x71, 0x85, 0xfb, 0x4e, 0x0b, 0x9a, 0x9a, 0x8f, 0x17,
-	0x22, 0x8c, 0x99, 0xf3, 0x1c, 0x1e, 0x8e, 0x78, 0xe8, 0x17, 0x7a, 0x0b, 0x6a, 0x33, 0x3e, 0x97,
-	0x2c, 0xca, 0x3c, 0x0f, 0xc6, 0xfa, 0xe4, 0x98, 0xd0, 0xc8, 0x65, 0xda, 0xd6, 0x82, 0xe6, 0x30,
-	0x62, 0x9e, 0x64, 0xda, 0xe8, 0x3c, 0x02, 0xb3, 0x00, 0xb4, 0xa4, 0x0b, 0x9d, 0x77, 0xbe, 0x3f,
-	0x8c, 0x98, 0xcf, 0x42, 0xc9, 0xbd, 0x79, 0x5c, 0x48, 0x7b, 0x60, 0x95, 0x89, 0xdc, 0xf2, 0xfa,
-	0x4f, 0x15, 0xea, 0x93, 0xbc, 0x3d, 0x9d, 0xc0, 0xfd, 0xec, 0xa5, 0xb4, 0x33, 0x28, 0xf6, 0xb9,
-	0xdc, 0xcc, 0xb6, 0xca, 0xb0, 0xbe, 0xb6, 0xff, 0xfb, 0xe8, 0xe4, 0x5f, 0xc5, 0xa2, 0xed, 0x6c,
-	0xa1, 0xef, 0xaf, 0x5c, 0x2d, 0x73, 0x7f, 0x70, 0xff, 0x27, 0xfd, 0x08, 0xf7, 0xb6, 0x3d, 0x68,
-	0x7b, 0xe7, 0xde, 0xb5, 0xb7, 0x3b, 0x25, 0xf4, 0xb6, 0xc8, 0xd9, 0x36, 0xea, 0x13, 0xd4, 0xf2,
-	0xe6, 0x74, 0xf7, 0xa4, 0xbd, 0x6d, 0xec, 0xee, 0x15, 0x5c, 0x07, 0x3f, 0xcb, 0x82, 0x1f, 0x3b,
-	0x56, 0x39, 0x78, 0x9a, 0xe9, 0xde, 0x92, 0x97, 0x54, 0x82, 0xb9, 0x3f, 0x16, 0xc5, 0x8b, 0xb4,
-	0x6b, 0xe7, 0xb5, 0x9f, 0xdc, 0xc8, 0xdf, 0xf9, 0xd6, 0xf7, 0x1f, 0x56, 0x09, 0x1a, 0xeb, 0x04,
-	0x8d, 0x4d, 0x82, 0xe4, 0x2c, 0x41, 0xf2, 0x4b, 0x21, 0xf9, 0xaf, 0x90, 0x1c, 0x28, 0x24, 0x4b,
-	0x85, 0x64, 0xa5, 0x90, 0x1c, 0x2b, 0x24, 0xa7, 0x0a, 0x8d, 0x8d, 0x42, 0xf2, 0x37, 0x45, 0xe3,
-	0x30, 0x45, 0xb2, 0x4c, 0x91, 0xac, 0x52, 0x34, 0xd6, 0x29, 0x1a, 0x9f, 0x6b, 0xd9, 0x3f, 0xf9,
-	0xe6, 0x3c, 0x00, 0x00, 0xff, 0xff, 0x60, 0xef, 0xe7, 0xae, 0xe1, 0x02, 0x00, 0x00,
+	// 650 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x54, 0x3f, 0x6f, 0xd4, 0x4e,
+	0x10, 0xbd, 0x3d, 0x27, 0x97, 0x64, 0x92, 0xcb, 0xef, 0xc7, 0xea, 0x72, 0xb1, 0x4c, 0xb2, 0x3a,
+	0x5c, 0x45, 0x29, 0x72, 0x02, 0xba, 0x14, 0x48, 0x21, 0x51, 0xa4, 0x93, 0x40, 0x44, 0x97, 0xa4,
+	0xa3, 0xd9, 0xd8, 0x1b, 0xdf, 0x0a, 0x9f, 0x6d, 0xbc, 0x1b, 0xfe, 0x08, 0x21, 0x21, 0x24, 0x7a,
+	0x24, 0x3e, 0x02, 0x0d, 0x1f, 0x81, 0x92, 0x32, 0x65, 0x24, 0x9a, 0x94, 0x9c, 0x8f, 0x82, 0x32,
+	0x25, 0x25, 0xda, 0xf5, 0xfa, 0xce, 0x31, 0xa1, 0xdb, 0xf7, 0x66, 0xf6, 0xcd, 0xf8, 0xcd, 0xac,
+	0xa1, 0x29, 0x69, 0x1a, 0x30, 0x29, 0xb6, 0x92, 0x34, 0x96, 0x31, 0x9e, 0x33, 0xd0, 0x69, 0x05,
+	0x71, 0x10, 0x6b, 0xae, 0xab, 0x4e, 0x79, 0xd8, 0x59, 0x0b, 0xe2, 0x38, 0x08, 0x59, 0x97, 0x26,
+	0xbc, 0x4b, 0xa3, 0x28, 0x96, 0x54, 0xf2, 0x38, 0x32, 0x97, 0x5d, 0x02, 0x4b, 0xfb, 0x4c, 0x7a,
+	0x83, 0x3e, 0x7b, 0x7e, 0xc6, 0x84, 0xc4, 0xcb, 0x50, 0xe7, 0xbe, 0x8d, 0x3a, 0x68, 0xc3, 0xea,
+	0xd7, 0xb9, 0xef, 0x7e, 0xae, 0x43, 0xd3, 0x24, 0x88, 0x24, 0x8e, 0x04, 0xc3, 0x18, 0x66, 0x22,
+	0x3a, 0x64, 0x3a, 0x67, 0xa1, 0xaf, 0xcf, 0xb8, 0x03, 0x8b, 0x43, 0xea, 0x0d, 0x78, 0xc4, 0x8e,
+	0x8f, 0x7b, 0x7b, 0x76, 0x5d, 0x87, 0xca, 0x14, 0x5e, 0x83, 0x85, 0x24, 0xe5, 0x43, 0x9a, 0xbe,
+	0xee, 0x1d, 0xd8, 0x96, 0x8e, 0x4f, 0x09, 0xec, 0xc0, 0x7c, 0x72, 0x76, 0x12, 0x72, 0xaf, 0x77,
+	0x60, 0xcf, 0xe8, 0xe0, 0x04, 0x63, 0x02, 0x60, 0x12, 0x1f, 0xef, 0xec, 0xda, 0xb3, 0x3a, 0x5a,
+	0x62, 0xd4, 0xdd, 0x41, 0x2c, 0xa4, 0xee, 0xa9, 0x91, 0xdf, 0x2d, 0xb0, 0x8a, 0x85, 0x54, 0xc8,
+	0x43, 0xc6, 0x22, 0x7b, 0x4e, 0x7f, 0xd3, 0x04, 0xab, 0xef, 0x90, 0x34, 0x10, 0xf6, 0x7c, 0xc7,
+	0xda, 0xb0, 0xfa, 0xfa, 0x8c, 0x5b, 0x30, 0x2b, 0xa9, 0x78, 0x26, 0xec, 0x05, 0x4d, 0xe6, 0x40,
+	0x7d, 0x9d, 0x97, 0x32, 0x9f, 0x45, 0x92, 0xd3, 0x50, 0xd8, 0xa0, 0x63, 0x65, 0xca, 0x3d, 0x84,
+	0xc5, 0x7d, 0x1e, 0xf9, 0x85, 0x89, 0x6d, 0x68, 0x9c, 0xf2, 0x50, 0xb2, 0xd4, 0x98, 0x64, 0x90,
+	0xe2, 0xe3, 0xd3, 0x53, 0xc1, 0xa4, 0x76, 0xc8, 0xea, 0x1b, 0xa4, 0xca, 0x86, 0x7c, 0xc8, 0xa5,
+	0x36, 0xc6, 0xea, 0xe7, 0xc0, 0x7d, 0x00, 0x4b, 0xb9, 0xa8, 0x31, 0xfe, 0x7f, 0xb0, 0xb8, 0x2f,
+	0x6c, 0xa4, 0xcb, 0xab, 0xa3, 0x32, 0x35, 0x62, 0x2f, 0x9f, 0x94, 0x25, 0xa7, 0x84, 0x7b, 0x0c,
+	0xcd, 0xdd, 0x94, 0x51, 0xc9, 0x8a, 0xb6, 0x6e, 0x9a, 0xdc, 0xb5, 0xb9, 0xd4, 0xab, 0x73, 0x29,
+	0x3c, 0xb2, 0x3a, 0x96, 0xba, 0xa1, 0xce, 0x6e, 0x07, 0x96, 0x0b, 0x59, 0xd3, 0x58, 0x75, 0x67,
+	0x06, 0xd0, 0xda, 0xf1, 0xfd, 0xdd, 0x89, 0x3f, 0x45, 0x7d, 0x07, 0xe6, 0xf3, 0x55, 0xed, 0xed,
+	0x99, 0xec, 0x09, 0x36, 0x7d, 0x44, 0x1e, 0x4f, 0x68, 0x58, 0xea, 0x23, 0x27, 0x94, 0x71, 0x82,
+	0x79, 0x29, 0x93, 0x66, 0x75, 0x0c, 0x72, 0x57, 0x61, 0xa5, 0x52, 0x29, 0x6f, 0xe9, 0xde, 0x07,
+	0x0b, 0xe6, 0x8e, 0xf2, 0x67, 0x81, 0x8f, 0x60, 0x56, 0x6f, 0x30, 0x5e, 0xd9, 0x2a, 0x1e, 0x4e,
+	0x79, 0xe5, 0x9d, 0x76, 0x95, 0xce, 0x35, 0xdc, 0xb5, 0xf7, 0xdf, 0x7f, 0x7e, 0xaa, 0xb7, 0x71,
+	0x4b, 0x3f, 0x9d, 0x17, 0x77, 0xbb, 0x26, 0xad, 0xfb, 0x86, 0xfb, 0x6f, 0xf1, 0x23, 0x98, 0x51,
+	0xd3, 0xc1, 0xad, 0xe9, 0xed, 0xe9, 0x06, 0x38, 0x2b, 0x15, 0xd6, 0x48, 0xae, 0x6a, 0xc9, 0x5b,
+	0xf8, 0xbf, 0x8a, 0x24, 0x7e, 0x0a, 0x8d, 0xdc, 0x54, 0x3c, 0xed, 0xe6, 0xda, 0xf0, 0x9c, 0xd5,
+	0xbf, 0x78, 0xa3, 0x79, 0x47, 0x6b, 0xde, 0x76, 0xdb, 0xd5, 0x36, 0x3d, 0x9d, 0xb7, 0x8d, 0x36,
+	0xf1, 0x2b, 0x68, 0x5e, 0xb3, 0x09, 0xaf, 0x4f, 0xc4, 0x6e, 0x1a, 0x94, 0x43, 0xfe, 0x15, 0x36,
+	0x25, 0x37, 0x74, 0x49, 0xd7, 0x5d, 0xaf, 0x96, 0xa4, 0xe5, 0xf4, 0x6d, 0xb4, 0xf9, 0x70, 0xef,
+	0x62, 0x44, 0x6a, 0x97, 0x23, 0x52, 0xbb, 0x1a, 0x11, 0xf4, 0x7b, 0x44, 0xd0, 0xbb, 0x8c, 0xa0,
+	0x2f, 0x19, 0x41, 0x5f, 0x33, 0x82, 0xce, 0x33, 0x82, 0x2e, 0x32, 0x82, 0x7e, 0x64, 0x04, 0xfd,
+	0xca, 0x48, 0xed, 0x2a, 0x23, 0xe8, 0xe3, 0x98, 0xd4, 0xbe, 0x8d, 0x09, 0x3a, 0x1f, 0x13, 0x74,
+	0x31, 0x26, 0xb5, 0xcb, 0x31, 0xa9, 0x9d, 0x34, 0xf4, 0xbf, 0xea, 0xfe, 0x9f, 0x00, 0x00, 0x00,
+	0xff, 0xff, 0x69, 0xe1, 0xc0, 0xae, 0xf9, 0x04, 0x00, 0x00,
 }
 
 func (this *FetchRequest) Equal(that interface{}) bool {
@@ -453,6 +637,51 @@ func (this *FetchResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.MachineUUID != that1.MachineUUID {
+		return false
+	}
+	if this.PrimaryIP != that1.PrimaryIP {
+		return false
+	}
+	if this.PublicIP != that1.PublicIP {
+		return false
+	}
+	if this.PrimaryMAC != that1.PrimaryMAC {
+		return false
+	}
+	if this.Hostname != that1.Hostname {
+		return false
+	}
+	if this.LastSeen != that1.LastSeen {
+		return false
+	}
+	if len(this.Tags) != len(that1.Tags) {
+		return false
+	}
+	for i := range this.Tags {
+		if this.Tags[i] != that1.Tags[i] {
+			return false
+		}
+	}
+	if len(this.Tasks) != len(that1.Tasks) {
+		return false
+	}
+	for i := range this.Tasks {
+		if this.Tasks[i] != that1.Tasks[i] {
+			return false
+		}
+	}
+	if len(this.Credentials) != len(that1.Credentials) {
+		return false
+	}
+	for i := range this.Credentials {
+		if this.Credentials[i] != that1.Credentials[i] {
+			return false
+		}
+	}
 	return true
 }
 func (this *FindRequest) Equal(that interface{}) bool {
@@ -477,6 +706,12 @@ func (this *FindRequest) Equal(that interface{}) bool {
 	if this.Filter != that1.Filter {
 		return false
 	}
+	if this.Offset != that1.Offset {
+		return false
+	}
+	if this.Limit != that1.Limit {
+		return false
+	}
 	return true
 }
 func (this *FindResponse) Equal(that interface{}) bool {
@@ -496,6 +731,17 @@ func (this *FindResponse) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
+		return false
+	}
+	if len(this.Ids) != len(that1.Ids) {
+		return false
+	}
+	for i := range this.Ids {
+		if this.Ids[i] != that1.Ids[i] {
+			return false
+		}
+	}
+	if this.NewOffset != that1.NewOffset {
 		return false
 	}
 	return true
@@ -519,6 +765,20 @@ func (this *CreateRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.PrimaryIP != that1.PrimaryIP {
+		return false
+	}
+	if len(this.Tags) != len(that1.Tags) {
+		return false
+	}
+	for i := range this.Tags {
+		if this.Tags[i] != that1.Tags[i] {
+			return false
+		}
+	}
 	return true
 }
 func (this *CreateResponse) Equal(that interface{}) bool {
@@ -540,16 +800,19 @@ func (this *CreateResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Id != that1.Id {
+		return false
+	}
 	return true
 }
-func (this *AddCredentialsRequest) Equal(that interface{}) bool {
+func (this *AddCredentialRequest) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*AddCredentialsRequest)
+	that1, ok := that.(*AddCredentialRequest)
 	if !ok {
-		that2, ok := that.(AddCredentialsRequest)
+		that2, ok := that.(AddCredentialRequest)
 		if ok {
 			that1 = &that2
 		} else {
@@ -561,16 +824,25 @@ func (this *AddCredentialsRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.TargetID != that1.TargetID {
+		return false
+	}
+	if this.Principal != that1.Principal {
+		return false
+	}
+	if this.Secret != that1.Secret {
+		return false
+	}
 	return true
 }
-func (this *AddCredentialsResponse) Equal(that interface{}) bool {
+func (this *AddCredentialResponse) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
 	}
 
-	that1, ok := that.(*AddCredentialsResponse)
+	that1, ok := that.(*AddCredentialResponse)
 	if !ok {
-		that2, ok := that.(AddCredentialsResponse)
+		that2, ok := that.(AddCredentialResponse)
 		if ok {
 			that1 = &that2
 		} else {
@@ -598,8 +870,18 @@ func (this *FetchResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 14)
 	s = append(s, "&targets.FetchResponse{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "MachineUUID: "+fmt.Sprintf("%#v", this.MachineUUID)+",\n")
+	s = append(s, "PrimaryIP: "+fmt.Sprintf("%#v", this.PrimaryIP)+",\n")
+	s = append(s, "PublicIP: "+fmt.Sprintf("%#v", this.PublicIP)+",\n")
+	s = append(s, "PrimaryMAC: "+fmt.Sprintf("%#v", this.PrimaryMAC)+",\n")
+	s = append(s, "Hostname: "+fmt.Sprintf("%#v", this.Hostname)+",\n")
+	s = append(s, "LastSeen: "+fmt.Sprintf("%#v", this.LastSeen)+",\n")
+	s = append(s, "Tags: "+fmt.Sprintf("%#v", this.Tags)+",\n")
+	s = append(s, "Tasks: "+fmt.Sprintf("%#v", this.Tasks)+",\n")
+	s = append(s, "Credentials: "+fmt.Sprintf("%#v", this.Credentials)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -607,9 +889,11 @@ func (this *FindRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 7)
 	s = append(s, "&targets.FindRequest{")
 	s = append(s, "Filter: "+fmt.Sprintf("%#v", this.Filter)+",\n")
+	s = append(s, "Offset: "+fmt.Sprintf("%#v", this.Offset)+",\n")
+	s = append(s, "Limit: "+fmt.Sprintf("%#v", this.Limit)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -617,8 +901,10 @@ func (this *FindResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 6)
 	s = append(s, "&targets.FindResponse{")
+	s = append(s, "Ids: "+fmt.Sprintf("%#v", this.Ids)+",\n")
+	s = append(s, "NewOffset: "+fmt.Sprintf("%#v", this.NewOffset)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -626,8 +912,11 @@ func (this *CreateRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 7)
 	s = append(s, "&targets.CreateRequest{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "PrimaryIP: "+fmt.Sprintf("%#v", this.PrimaryIP)+",\n")
+	s = append(s, "Tags: "+fmt.Sprintf("%#v", this.Tags)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -635,26 +924,30 @@ func (this *CreateResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&targets.CreateResponse{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
-func (this *AddCredentialsRequest) GoString() string {
+func (this *AddCredentialRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 7)
+	s = append(s, "&targets.AddCredentialRequest{")
+	s = append(s, "TargetID: "+fmt.Sprintf("%#v", this.TargetID)+",\n")
+	s = append(s, "Principal: "+fmt.Sprintf("%#v", this.Principal)+",\n")
+	s = append(s, "Secret: "+fmt.Sprintf("%#v", this.Secret)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *AddCredentialResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
 	s := make([]string, 0, 4)
-	s = append(s, "&targets.AddCredentialsRequest{")
-	s = append(s, "}")
-	return strings.Join(s, "")
-}
-func (this *AddCredentialsResponse) GoString() string {
-	if this == nil {
-		return "nil"
-	}
-	s := make([]string, 0, 4)
-	s = append(s, "&targets.AddCredentialsResponse{")
+	s = append(s, "&targets.AddCredentialResponse{")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -690,7 +983,7 @@ type TargetsClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	//
 	// TODO: @cictrone
-	AddCredentials(ctx context.Context, in *AddCredentialsRequest, opts ...grpc.CallOption) (*AddCredentialsResponse, error)
+	AddCredential(ctx context.Context, in *AddCredentialRequest, opts ...grpc.CallOption) (*AddCredentialResponse, error)
 }
 
 type targetsClient struct {
@@ -728,9 +1021,9 @@ func (c *targetsClient) Create(ctx context.Context, in *CreateRequest, opts ...g
 	return out, nil
 }
 
-func (c *targetsClient) AddCredentials(ctx context.Context, in *AddCredentialsRequest, opts ...grpc.CallOption) (*AddCredentialsResponse, error) {
-	out := new(AddCredentialsResponse)
-	err := c.cc.Invoke(ctx, "/targets.Targets/AddCredentials", in, out, opts...)
+func (c *targetsClient) AddCredential(ctx context.Context, in *AddCredentialRequest, opts ...grpc.CallOption) (*AddCredentialResponse, error) {
+	out := new(AddCredentialResponse)
+	err := c.cc.Invoke(ctx, "/targets.Targets/AddCredential", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -750,7 +1043,7 @@ type TargetsServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	//
 	// TODO: @cictrone
-	AddCredentials(context.Context, *AddCredentialsRequest) (*AddCredentialsResponse, error)
+	AddCredential(context.Context, *AddCredentialRequest) (*AddCredentialResponse, error)
 }
 
 // UnimplementedTargetsServer can be embedded to have forward compatible implementations.
@@ -766,8 +1059,8 @@ func (*UnimplementedTargetsServer) Find(ctx context.Context, req *FindRequest) (
 func (*UnimplementedTargetsServer) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (*UnimplementedTargetsServer) AddCredentials(ctx context.Context, req *AddCredentialsRequest) (*AddCredentialsResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddCredentials not implemented")
+func (*UnimplementedTargetsServer) AddCredential(ctx context.Context, req *AddCredentialRequest) (*AddCredentialResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AddCredential not implemented")
 }
 
 func RegisterTargetsServer(s *grpc.Server, srv TargetsServer) {
@@ -828,20 +1121,20 @@ func _Targets_Create_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Targets_AddCredentials_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddCredentialsRequest)
+func _Targets_AddCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AddCredentialRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TargetsServer).AddCredentials(ctx, in)
+		return srv.(TargetsServer).AddCredential(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/targets.Targets/AddCredentials",
+		FullMethod: "/targets.Targets/AddCredential",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TargetsServer).AddCredentials(ctx, req.(*AddCredentialsRequest))
+		return srv.(TargetsServer).AddCredential(ctx, req.(*AddCredentialRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -863,8 +1156,8 @@ var _Targets_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Targets_Create_Handler,
 		},
 		{
-			MethodName: "AddCredentials",
-			Handler:    _Targets_AddCredentials_Handler,
+			MethodName: "AddCredential",
+			Handler:    _Targets_AddCredential_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -919,6 +1212,110 @@ func (m *FetchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Credentials) > 0 {
+		dAtA2 := make([]byte, len(m.Credentials)*10)
+		var j1 int
+		for _, num1 := range m.Credentials {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA2[j1] = uint8(num)
+			j1++
+		}
+		i -= j1
+		copy(dAtA[i:], dAtA2[:j1])
+		i = encodeVarintTargets(dAtA, i, uint64(j1))
+		i--
+		dAtA[i] = 0x52
+	}
+	if len(m.Tasks) > 0 {
+		dAtA4 := make([]byte, len(m.Tasks)*10)
+		var j3 int
+		for _, num1 := range m.Tasks {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA4[j3] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j3++
+			}
+			dAtA4[j3] = uint8(num)
+			j3++
+		}
+		i -= j3
+		copy(dAtA[i:], dAtA4[:j3])
+		i = encodeVarintTargets(dAtA, i, uint64(j3))
+		i--
+		dAtA[i] = 0x4a
+	}
+	if len(m.Tags) > 0 {
+		dAtA6 := make([]byte, len(m.Tags)*10)
+		var j5 int
+		for _, num1 := range m.Tags {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA6[j5] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j5++
+			}
+			dAtA6[j5] = uint8(num)
+			j5++
+		}
+		i -= j5
+		copy(dAtA[i:], dAtA6[:j5])
+		i = encodeVarintTargets(dAtA, i, uint64(j5))
+		i--
+		dAtA[i] = 0x42
+	}
+	if m.LastSeen != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.LastSeen))
+		i--
+		dAtA[i] = 0x38
+	}
+	if len(m.Hostname) > 0 {
+		i -= len(m.Hostname)
+		copy(dAtA[i:], m.Hostname)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Hostname)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.PrimaryMAC) > 0 {
+		i -= len(m.PrimaryMAC)
+		copy(dAtA[i:], m.PrimaryMAC)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PrimaryMAC)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.PublicIP) > 0 {
+		i -= len(m.PublicIP)
+		copy(dAtA[i:], m.PublicIP)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PublicIP)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.PrimaryIP) > 0 {
+		i -= len(m.PrimaryIP)
+		copy(dAtA[i:], m.PrimaryIP)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PrimaryIP)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.MachineUUID) > 0 {
+		i -= len(m.MachineUUID)
+		copy(dAtA[i:], m.MachineUUID)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.MachineUUID)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -942,6 +1339,16 @@ func (m *FindRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Limit != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.Limit))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Offset != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.Offset))
+		i--
+		dAtA[i] = 0x10
+	}
 	if len(m.Filter) > 0 {
 		i -= len(m.Filter)
 		copy(dAtA[i:], m.Filter)
@@ -972,6 +1379,30 @@ func (m *FindResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.NewOffset != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.NewOffset))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Ids) > 0 {
+		dAtA8 := make([]byte, len(m.Ids)*10)
+		var j7 int
+		for _, num1 := range m.Ids {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA8[j7] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j7++
+			}
+			dAtA8[j7] = uint8(num)
+			j7++
+		}
+		i -= j7
+		copy(dAtA[i:], dAtA8[:j7])
+		i = encodeVarintTargets(dAtA, i, uint64(j7))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -995,6 +1426,29 @@ func (m *CreateRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Tags) > 0 {
+		for iNdEx := len(m.Tags) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Tags[iNdEx])
+			copy(dAtA[i:], m.Tags[iNdEx])
+			i = encodeVarintTargets(dAtA, i, uint64(len(m.Tags[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.PrimaryIP) > 0 {
+		i -= len(m.PrimaryIP)
+		copy(dAtA[i:], m.PrimaryIP)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PrimaryIP)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1018,10 +1472,15 @@ func (m *CreateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Id != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
-func (m *AddCredentialsRequest) Marshal() (dAtA []byte, err error) {
+func (m *AddCredentialRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1031,20 +1490,39 @@ func (m *AddCredentialsRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AddCredentialsRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *AddCredentialRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AddCredentialsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *AddCredentialRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.Secret) > 0 {
+		i -= len(m.Secret)
+		copy(dAtA[i:], m.Secret)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Secret)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Principal) > 0 {
+		i -= len(m.Principal)
+		copy(dAtA[i:], m.Principal)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Principal)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.TargetID != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.TargetID))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
-func (m *AddCredentialsResponse) Marshal() (dAtA []byte, err error) {
+func (m *AddCredentialResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1054,12 +1532,12 @@ func (m *AddCredentialsResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *AddCredentialsResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *AddCredentialResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *AddCredentialsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *AddCredentialResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -1091,6 +1569,40 @@ func NewPopulatedFetchRequest(r randyTargets, easy bool) *FetchRequest {
 
 func NewPopulatedFetchResponse(r randyTargets, easy bool) *FetchResponse {
 	this := &FetchResponse{}
+	this.Name = string(randStringTargets(r))
+	this.MachineUUID = string(randStringTargets(r))
+	this.PrimaryIP = string(randStringTargets(r))
+	this.PublicIP = string(randStringTargets(r))
+	this.PrimaryMAC = string(randStringTargets(r))
+	this.Hostname = string(randStringTargets(r))
+	this.LastSeen = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.LastSeen *= -1
+	}
+	v1 := r.Intn(10)
+	this.Tags = make([]int64, v1)
+	for i := 0; i < v1; i++ {
+		this.Tags[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Tags[i] *= -1
+		}
+	}
+	v2 := r.Intn(10)
+	this.Tasks = make([]int64, v2)
+	for i := 0; i < v2; i++ {
+		this.Tasks[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Tasks[i] *= -1
+		}
+	}
+	v3 := r.Intn(10)
+	this.Credentials = make([]int64, v3)
+	for i := 0; i < v3; i++ {
+		this.Credentials[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Credentials[i] *= -1
+		}
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1099,6 +1611,14 @@ func NewPopulatedFetchResponse(r randyTargets, easy bool) *FetchResponse {
 func NewPopulatedFindRequest(r randyTargets, easy bool) *FindRequest {
 	this := &FindRequest{}
 	this.Filter = string(randStringTargets(r))
+	this.Offset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Offset *= -1
+	}
+	this.Limit = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Limit *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1106,6 +1626,18 @@ func NewPopulatedFindRequest(r randyTargets, easy bool) *FindRequest {
 
 func NewPopulatedFindResponse(r randyTargets, easy bool) *FindResponse {
 	this := &FindResponse{}
+	v4 := r.Intn(10)
+	this.Ids = make([]int64, v4)
+	for i := 0; i < v4; i++ {
+		this.Ids[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Ids[i] *= -1
+		}
+	}
+	this.NewOffset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.NewOffset *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1113,6 +1645,13 @@ func NewPopulatedFindResponse(r randyTargets, easy bool) *FindResponse {
 
 func NewPopulatedCreateRequest(r randyTargets, easy bool) *CreateRequest {
 	this := &CreateRequest{}
+	this.Name = string(randStringTargets(r))
+	this.PrimaryIP = string(randStringTargets(r))
+	v5 := r.Intn(10)
+	this.Tags = make([]string, v5)
+	for i := 0; i < v5; i++ {
+		this.Tags[i] = string(randStringTargets(r))
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1120,20 +1659,30 @@ func NewPopulatedCreateRequest(r randyTargets, easy bool) *CreateRequest {
 
 func NewPopulatedCreateResponse(r randyTargets, easy bool) *CreateResponse {
 	this := &CreateResponse{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
 }
 
-func NewPopulatedAddCredentialsRequest(r randyTargets, easy bool) *AddCredentialsRequest {
-	this := &AddCredentialsRequest{}
+func NewPopulatedAddCredentialRequest(r randyTargets, easy bool) *AddCredentialRequest {
+	this := &AddCredentialRequest{}
+	this.TargetID = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.TargetID *= -1
+	}
+	this.Principal = string(randStringTargets(r))
+	this.Secret = string(randStringTargets(r))
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
 }
 
-func NewPopulatedAddCredentialsResponse(r randyTargets, easy bool) *AddCredentialsResponse {
-	this := &AddCredentialsResponse{}
+func NewPopulatedAddCredentialResponse(r randyTargets, easy bool) *AddCredentialResponse {
+	this := &AddCredentialResponse{}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1158,9 +1707,9 @@ func randUTF8RuneTargets(r randyTargets) rune {
 	return rune(ru + 61)
 }
 func randStringTargets(r randyTargets) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v6 := r.Intn(100)
+	tmps := make([]rune, v6)
+	for i := 0; i < v6; i++ {
 		tmps[i] = randUTF8RuneTargets(r)
 	}
 	return string(tmps)
@@ -1182,11 +1731,11 @@ func randFieldTargets(dAtA []byte, r randyTargets, fieldNumber int, wire int) []
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateTargets(dAtA, uint64(key))
-		v2 := r.Int63()
+		v7 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v7 *= -1
 		}
-		dAtA = encodeVarintPopulateTargets(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateTargets(dAtA, uint64(v7))
 	case 1:
 		dAtA = encodeVarintPopulateTargets(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -1229,6 +1778,54 @@ func (m *FetchResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.MachineUUID)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PrimaryIP)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PublicIP)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PrimaryMAC)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.Hostname)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	if m.LastSeen != 0 {
+		n += 1 + sovTargets(uint64(m.LastSeen))
+	}
+	if len(m.Tags) > 0 {
+		l = 0
+		for _, e := range m.Tags {
+			l += sovTargets(uint64(e))
+		}
+		n += 1 + sovTargets(uint64(l)) + l
+	}
+	if len(m.Tasks) > 0 {
+		l = 0
+		for _, e := range m.Tasks {
+			l += sovTargets(uint64(e))
+		}
+		n += 1 + sovTargets(uint64(l)) + l
+	}
+	if len(m.Credentials) > 0 {
+		l = 0
+		for _, e := range m.Credentials {
+			l += sovTargets(uint64(e))
+		}
+		n += 1 + sovTargets(uint64(l)) + l
+	}
 	return n
 }
 
@@ -1242,6 +1839,12 @@ func (m *FindRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTargets(uint64(l))
 	}
+	if m.Offset != 0 {
+		n += 1 + sovTargets(uint64(m.Offset))
+	}
+	if m.Limit != 0 {
+		n += 1 + sovTargets(uint64(m.Limit))
+	}
 	return n
 }
 
@@ -1251,6 +1854,16 @@ func (m *FindResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if len(m.Ids) > 0 {
+		l = 0
+		for _, e := range m.Ids {
+			l += sovTargets(uint64(e))
+		}
+		n += 1 + sovTargets(uint64(l)) + l
+	}
+	if m.NewOffset != 0 {
+		n += 1 + sovTargets(uint64(m.NewOffset))
+	}
 	return n
 }
 
@@ -1260,6 +1873,20 @@ func (m *CreateRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PrimaryIP)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	if len(m.Tags) > 0 {
+		for _, s := range m.Tags {
+			l = len(s)
+			n += 1 + l + sovTargets(uint64(l))
+		}
+	}
 	return n
 }
 
@@ -1269,19 +1896,33 @@ func (m *CreateResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Id != 0 {
+		n += 1 + sovTargets(uint64(m.Id))
+	}
 	return n
 }
 
-func (m *AddCredentialsRequest) Size() (n int) {
+func (m *AddCredentialRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	if m.TargetID != 0 {
+		n += 1 + sovTargets(uint64(m.TargetID))
+	}
+	l = len(m.Principal)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.Secret)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
 	return n
 }
 
-func (m *AddCredentialsResponse) Size() (n int) {
+func (m *AddCredentialResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1311,6 +1952,16 @@ func (this *FetchResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FetchResponse{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`MachineUUID:` + fmt.Sprintf("%v", this.MachineUUID) + `,`,
+		`PrimaryIP:` + fmt.Sprintf("%v", this.PrimaryIP) + `,`,
+		`PublicIP:` + fmt.Sprintf("%v", this.PublicIP) + `,`,
+		`PrimaryMAC:` + fmt.Sprintf("%v", this.PrimaryMAC) + `,`,
+		`Hostname:` + fmt.Sprintf("%v", this.Hostname) + `,`,
+		`LastSeen:` + fmt.Sprintf("%v", this.LastSeen) + `,`,
+		`Tags:` + fmt.Sprintf("%v", this.Tags) + `,`,
+		`Tasks:` + fmt.Sprintf("%v", this.Tasks) + `,`,
+		`Credentials:` + fmt.Sprintf("%v", this.Credentials) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1321,6 +1972,8 @@ func (this *FindRequest) String() string {
 	}
 	s := strings.Join([]string{`&FindRequest{`,
 		`Filter:` + fmt.Sprintf("%v", this.Filter) + `,`,
+		`Offset:` + fmt.Sprintf("%v", this.Offset) + `,`,
+		`Limit:` + fmt.Sprintf("%v", this.Limit) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1330,6 +1983,8 @@ func (this *FindResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FindResponse{`,
+		`Ids:` + fmt.Sprintf("%v", this.Ids) + `,`,
+		`NewOffset:` + fmt.Sprintf("%v", this.NewOffset) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1339,6 +1994,9 @@ func (this *CreateRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CreateRequest{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`PrimaryIP:` + fmt.Sprintf("%v", this.PrimaryIP) + `,`,
+		`Tags:` + fmt.Sprintf("%v", this.Tags) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1348,24 +2006,28 @@ func (this *CreateResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CreateResponse{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
 		`}`,
 	}, "")
 	return s
 }
-func (this *AddCredentialsRequest) String() string {
+func (this *AddCredentialRequest) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&AddCredentialsRequest{`,
+	s := strings.Join([]string{`&AddCredentialRequest{`,
+		`TargetID:` + fmt.Sprintf("%v", this.TargetID) + `,`,
+		`Principal:` + fmt.Sprintf("%v", this.Principal) + `,`,
+		`Secret:` + fmt.Sprintf("%v", this.Secret) + `,`,
 		`}`,
 	}, "")
 	return s
 }
-func (this *AddCredentialsResponse) String() string {
+func (this *AddCredentialResponse) String() string {
 	if this == nil {
 		return "nil"
 	}
-	s := strings.Join([]string{`&AddCredentialsResponse{`,
+	s := strings.Join([]string{`&AddCredentialResponse{`,
 		`}`,
 	}, "")
 	return s
@@ -1479,6 +2141,445 @@ func (m *FetchResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FetchResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MachineUUID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MachineUUID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PrimaryIP", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PrimaryIP = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicIP", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicIP = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PrimaryMAC", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PrimaryMAC = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hostname = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LastSeen", wireType)
+			}
+			m.LastSeen = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LastSeen |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 8:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Tags = append(m.Tags, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTargets
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTargets
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Tags) == 0 {
+					m.Tags = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTargets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Tags = append(m.Tags, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tags", wireType)
+			}
+		case 9:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Tasks = append(m.Tasks, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTargets
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTargets
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Tasks) == 0 {
+					m.Tasks = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTargets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Tasks = append(m.Tasks, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tasks", wireType)
+			}
+		case 10:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Credentials = append(m.Credentials, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTargets
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTargets
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Credentials) == 0 {
+					m.Credentials = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTargets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Credentials = append(m.Credentials, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Credentials", wireType)
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
@@ -1564,6 +2665,44 @@ func (m *FindRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Filter = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Offset", wireType)
+			}
+			m.Offset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Offset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			m.Limit = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Limit |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
@@ -1617,6 +2756,101 @@ func (m *FindResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FindResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Ids = append(m.Ids, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTargets
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTargets
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTargets
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Ids) == 0 {
+					m.Ids = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTargets
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Ids = append(m.Ids, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewOffset", wireType)
+			}
+			m.NewOffset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NewOffset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
@@ -1670,6 +2904,102 @@ func (m *CreateRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: CreateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PrimaryIP", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PrimaryIP = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Tags", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Tags = append(m.Tags, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
@@ -1723,6 +3053,25 @@ func (m *CreateResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: CreateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
@@ -1747,7 +3096,7 @@ func (m *CreateResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *AddCredentialsRequest) Unmarshal(dAtA []byte) error {
+func (m *AddCredentialRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1770,12 +3119,95 @@ func (m *AddCredentialsRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AddCredentialsRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: AddCredentialRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddCredentialsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: AddCredentialRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TargetID", wireType)
+			}
+			m.TargetID = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TargetID |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Principal", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Principal = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Secret", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Secret = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
@@ -1800,7 +3232,7 @@ func (m *AddCredentialsRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *AddCredentialsResponse) Unmarshal(dAtA []byte) error {
+func (m *AddCredentialResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -1823,10 +3255,10 @@ func (m *AddCredentialsResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: AddCredentialsResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: AddCredentialResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: AddCredentialsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: AddCredentialResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

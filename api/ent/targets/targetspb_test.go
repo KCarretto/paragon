@@ -360,15 +360,15 @@ func TestCreateResponseMarshalTo(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsRequestProto(t *testing.T) {
+func TestAddCredentialRequestProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsRequest(popr, false)
+	p := NewPopulatedAddCredentialRequest(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &AddCredentialsRequest{}
+	msg := &AddCredentialRequest{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -391,10 +391,10 @@ func TestAddCredentialsRequestProto(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsRequestMarshalTo(t *testing.T) {
+func TestAddCredentialRequestMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsRequest(popr, false)
+	p := NewPopulatedAddCredentialRequest(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -404,7 +404,7 @@ func TestAddCredentialsRequestMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &AddCredentialsRequest{}
+	msg := &AddCredentialRequest{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -416,15 +416,15 @@ func TestAddCredentialsRequestMarshalTo(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsResponseProto(t *testing.T) {
+func TestAddCredentialResponseProto(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsResponse(popr, false)
+	p := NewPopulatedAddCredentialResponse(popr, false)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &AddCredentialsResponse{}
+	msg := &AddCredentialResponse{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -447,10 +447,10 @@ func TestAddCredentialsResponseProto(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsResponseMarshalTo(t *testing.T) {
+func TestAddCredentialResponseMarshalTo(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsResponse(popr, false)
+	p := NewPopulatedAddCredentialResponse(popr, false)
 	size := p.Size()
 	dAtA := make([]byte, size)
 	for i := range dAtA {
@@ -460,7 +460,7 @@ func TestAddCredentialsResponseMarshalTo(t *testing.T) {
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &AddCredentialsResponse{}
+	msg := &AddCredentialResponse{}
 	if err := github_com_gogo_protobuf_proto.Unmarshal(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -580,16 +580,16 @@ func TestCreateResponseJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestAddCredentialsRequestJSON(t *testing.T) {
+func TestAddCredentialRequestJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsRequest(popr, true)
+	p := NewPopulatedAddCredentialRequest(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &AddCredentialsRequest{}
+	msg := &AddCredentialRequest{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -598,16 +598,16 @@ func TestAddCredentialsRequestJSON(t *testing.T) {
 		t.Fatalf("seed = %d, %#v !Json Equal %#v", seed, msg, p)
 	}
 }
-func TestAddCredentialsResponseJSON(t *testing.T) {
+func TestAddCredentialResponseJSON(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsResponse(popr, true)
+	p := NewPopulatedAddCredentialResponse(popr, true)
 	marshaler := github_com_gogo_protobuf_jsonpb.Marshaler{}
 	jsondata, err := marshaler.MarshalToString(p)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
-	msg := &AddCredentialsResponse{}
+	msg := &AddCredentialResponse{}
 	err = github_com_gogo_protobuf_jsonpb.UnmarshalString(jsondata, msg)
 	if err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
@@ -784,12 +784,12 @@ func TestCreateResponseProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsRequestProtoText(t *testing.T) {
+func TestAddCredentialRequestProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsRequest(popr, true)
+	p := NewPopulatedAddCredentialRequest(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &AddCredentialsRequest{}
+	msg := &AddCredentialRequest{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -798,12 +798,12 @@ func TestAddCredentialsRequestProtoText(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsRequestProtoCompactText(t *testing.T) {
+func TestAddCredentialRequestProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsRequest(popr, true)
+	p := NewPopulatedAddCredentialRequest(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &AddCredentialsRequest{}
+	msg := &AddCredentialRequest{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -812,12 +812,12 @@ func TestAddCredentialsRequestProtoCompactText(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsResponseProtoText(t *testing.T) {
+func TestAddCredentialResponseProtoText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsResponse(popr, true)
+	p := NewPopulatedAddCredentialResponse(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.MarshalTextString(p)
-	msg := &AddCredentialsResponse{}
+	msg := &AddCredentialResponse{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -826,12 +826,12 @@ func TestAddCredentialsResponseProtoText(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsResponseProtoCompactText(t *testing.T) {
+func TestAddCredentialResponseProtoCompactText(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsResponse(popr, true)
+	p := NewPopulatedAddCredentialResponse(popr, true)
 	dAtA := github_com_gogo_protobuf_proto.CompactTextString(p)
-	msg := &AddCredentialsResponse{}
+	msg := &AddCredentialResponse{}
 	if err := github_com_gogo_protobuf_proto.UnmarshalText(dAtA, msg); err != nil {
 		t.Fatalf("seed = %d, err = %v", seed, err)
 	}
@@ -918,9 +918,9 @@ func TestCreateResponseGoString(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-func TestAddCredentialsRequestGoString(t *testing.T) {
+func TestAddCredentialRequestGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedAddCredentialsRequest(popr, false)
+	p := NewPopulatedAddCredentialRequest(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -931,9 +931,9 @@ func TestAddCredentialsRequestGoString(t *testing.T) {
 		t.Fatal(err)
 	}
 }
-func TestAddCredentialsResponseGoString(t *testing.T) {
+func TestAddCredentialResponseGoString(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedAddCredentialsResponse(popr, false)
+	p := NewPopulatedAddCredentialResponse(popr, false)
 	s1 := p.GoString()
 	s2 := fmt.Sprintf("%#v", p)
 	if s1 != s2 {
@@ -1076,10 +1076,10 @@ func TestCreateResponseSize(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsRequestSize(t *testing.T) {
+func TestAddCredentialRequestSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsRequest(popr, true)
+	p := NewPopulatedAddCredentialRequest(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -1098,10 +1098,10 @@ func TestAddCredentialsRequestSize(t *testing.T) {
 	}
 }
 
-func TestAddCredentialsResponseSize(t *testing.T) {
+func TestAddCredentialResponseSize(t *testing.T) {
 	seed := time.Now().UnixNano()
 	popr := math_rand.New(math_rand.NewSource(seed))
-	p := NewPopulatedAddCredentialsResponse(popr, true)
+	p := NewPopulatedAddCredentialResponse(popr, true)
 	size2 := github_com_gogo_protobuf_proto.Size(p)
 	dAtA, err := github_com_gogo_protobuf_proto.Marshal(p)
 	if err != nil {
@@ -1174,18 +1174,18 @@ func TestCreateResponseStringer(t *testing.T) {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestAddCredentialsRequestStringer(t *testing.T) {
+func TestAddCredentialRequestStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedAddCredentialsRequest(popr, false)
+	p := NewPopulatedAddCredentialRequest(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {
 		t.Fatalf("String want %v got %v", s1, s2)
 	}
 }
-func TestAddCredentialsResponseStringer(t *testing.T) {
+func TestAddCredentialResponseStringer(t *testing.T) {
 	popr := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
-	p := NewPopulatedAddCredentialsResponse(popr, false)
+	p := NewPopulatedAddCredentialResponse(popr, false)
 	s1 := p.String()
 	s2 := fmt.Sprintf("%v", p)
 	if s1 != s2 {
