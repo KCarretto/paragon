@@ -1,0 +1,113 @@
+syntax = "proto3";
+
+package jobs;
+
+/*
+ * Golang Options
+ */
+
+// Install: go get -u github.com/gogo/protobuf@v1.3.1
+import "gogoproto/gogo.proto";
+
+// Tests
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Performance
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+// Enable registration with golang/protobuf for the grpc-gateway.
+option (gogoproto.goproto_registration) = true;
+// Enable generation of XXX_MessageName methods for grpc-go/status.
+option (gogoproto.messagename_all) = true;
+
+/*
+ * gRPC Gateway Options
+ */
+
+// Install: go get -u github.com/gogo/googleapis@v1.3.0
+import "google/api/annotations.proto";
+
+/*
+ * TODO: @cictrone
+ */
+service Jobs {
+    /*
+     * TODO: @cictrone
+     */
+    rpc Fetch(FetchRequest) returns (FetchResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/jobs/{id}"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Find(FindRequest) returns (FindResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/jobs"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Create(CreateRequest) returns (CreateResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/jobs/create"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Queue(QueueRequest) returns (QueueResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/jobs/queue"
+            body: "*"
+        };
+    }
+
+}
+
+message FetchRequest {
+    int64 id = 1;
+}
+message FetchResponse {
+    string name = 1;
+    string content = 2;
+    repeated int64 tags = 3;
+    repeated int64 tasks = 4;
+}
+
+message FindRequest {
+    string filter = 1;
+    int64 offset = 2;
+    int64 limit = 3;
+}
+message FindResponse {
+    repeated int64 ids = 1;
+    int64 newOffset = 2;
+}
+
+
+message CreateRequest {
+    string name = 1;
+    string content = 2;
+    repeated string tags = 3;
+}
+message CreateResponse {
+    int64 id = 1;
+}
+
+message QueueRequest {
+    int64 id = 1;
+}
+message QueueResponse {
+    repeated int64 ids = 1;
+}

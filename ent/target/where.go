@@ -119,20 +119,20 @@ func Name(v string) predicate.Target {
 	)
 }
 
-// MachineUUID applies equality check predicate on the "MachineUUID" field. It's identical to MachineUUIDEQ.
-func MachineUUID(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
 // PrimaryIP applies equality check predicate on the "PrimaryIP" field. It's identical to PrimaryIPEQ.
 func PrimaryIP(v string) predicate.Target {
 	return predicate.Target(
 		func(s *sql.Selector) {
 			s.Where(sql.EQ(s.C(FieldPrimaryIP), v))
+		},
+	)
+}
+
+// MachineUUID applies equality check predicate on the "MachineUUID" field. It's identical to MachineUUIDEQ.
+func MachineUUID(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldMachineUUID), v))
 		},
 	)
 }
@@ -292,24 +292,6 @@ func NameHasSuffix(v string) predicate.Target {
 	)
 }
 
-// NameIsNil applies the IsNil predicate on the "Name" field.
-func NameIsNil() predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.IsNull(s.C(FieldName)))
-		},
-	)
-}
-
-// NameNotNil applies the NotNil predicate on the "Name" field.
-func NameNotNil() predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.NotNull(s.C(FieldName)))
-		},
-	)
-}
-
 // NameEqualFold applies the EqualFold predicate on the "Name" field.
 func NameEqualFold(v string) predicate.Target {
 	return predicate.Target(
@@ -324,143 +306,6 @@ func NameContainsFold(v string) predicate.Target {
 	return predicate.Target(
 		func(s *sql.Selector) {
 			s.Where(sql.ContainsFold(s.C(FieldName), v))
-		},
-	)
-}
-
-// MachineUUIDEQ applies the EQ predicate on the "MachineUUID" field.
-func MachineUUIDEQ(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDNEQ applies the NEQ predicate on the "MachineUUID" field.
-func MachineUUIDNEQ(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.NEQ(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDIn applies the In predicate on the "MachineUUID" field.
-func MachineUUIDIn(vs ...string) predicate.Target {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Target(
-		func(s *sql.Selector) {
-			// if not arguments were provided, append the FALSE constants,
-			// since we can't apply "IN ()". This will make this predicate falsy.
-			if len(vs) == 0 {
-				s.Where(sql.False())
-				return
-			}
-			s.Where(sql.In(s.C(FieldMachineUUID), v...))
-		},
-	)
-}
-
-// MachineUUIDNotIn applies the NotIn predicate on the "MachineUUID" field.
-func MachineUUIDNotIn(vs ...string) predicate.Target {
-	v := make([]interface{}, len(vs))
-	for i := range v {
-		v[i] = vs[i]
-	}
-	return predicate.Target(
-		func(s *sql.Selector) {
-			// if not arguments were provided, append the FALSE constants,
-			// since we can't apply "IN ()". This will make this predicate falsy.
-			if len(vs) == 0 {
-				s.Where(sql.False())
-				return
-			}
-			s.Where(sql.NotIn(s.C(FieldMachineUUID), v...))
-		},
-	)
-}
-
-// MachineUUIDGT applies the GT predicate on the "MachineUUID" field.
-func MachineUUIDGT(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.GT(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDGTE applies the GTE predicate on the "MachineUUID" field.
-func MachineUUIDGTE(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.GTE(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDLT applies the LT predicate on the "MachineUUID" field.
-func MachineUUIDLT(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.LT(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDLTE applies the LTE predicate on the "MachineUUID" field.
-func MachineUUIDLTE(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.LTE(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDContains applies the Contains predicate on the "MachineUUID" field.
-func MachineUUIDContains(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.Contains(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDHasPrefix applies the HasPrefix predicate on the "MachineUUID" field.
-func MachineUUIDHasPrefix(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.HasPrefix(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDHasSuffix applies the HasSuffix predicate on the "MachineUUID" field.
-func MachineUUIDHasSuffix(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.HasSuffix(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDEqualFold applies the EqualFold predicate on the "MachineUUID" field.
-func MachineUUIDEqualFold(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.EqualFold(s.C(FieldMachineUUID), v))
-		},
-	)
-}
-
-// MachineUUIDContainsFold applies the ContainsFold predicate on the "MachineUUID" field.
-func MachineUUIDContainsFold(v string) predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.ContainsFold(s.C(FieldMachineUUID), v))
 		},
 	)
 }
@@ -584,24 +429,6 @@ func PrimaryIPHasSuffix(v string) predicate.Target {
 	)
 }
 
-// PrimaryIPIsNil applies the IsNil predicate on the "PrimaryIP" field.
-func PrimaryIPIsNil() predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.IsNull(s.C(FieldPrimaryIP)))
-		},
-	)
-}
-
-// PrimaryIPNotNil applies the NotNil predicate on the "PrimaryIP" field.
-func PrimaryIPNotNil() predicate.Target {
-	return predicate.Target(
-		func(s *sql.Selector) {
-			s.Where(sql.NotNull(s.C(FieldPrimaryIP)))
-		},
-	)
-}
-
 // PrimaryIPEqualFold applies the EqualFold predicate on the "PrimaryIP" field.
 func PrimaryIPEqualFold(v string) predicate.Target {
 	return predicate.Target(
@@ -616,6 +443,161 @@ func PrimaryIPContainsFold(v string) predicate.Target {
 	return predicate.Target(
 		func(s *sql.Selector) {
 			s.Where(sql.ContainsFold(s.C(FieldPrimaryIP), v))
+		},
+	)
+}
+
+// MachineUUIDEQ applies the EQ predicate on the "MachineUUID" field.
+func MachineUUIDEQ(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDNEQ applies the NEQ predicate on the "MachineUUID" field.
+func MachineUUIDNEQ(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.NEQ(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDIn applies the In predicate on the "MachineUUID" field.
+func MachineUUIDIn(vs ...string) predicate.Target {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Target(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.In(s.C(FieldMachineUUID), v...))
+		},
+	)
+}
+
+// MachineUUIDNotIn applies the NotIn predicate on the "MachineUUID" field.
+func MachineUUIDNotIn(vs ...string) predicate.Target {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Target(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.NotIn(s.C(FieldMachineUUID), v...))
+		},
+	)
+}
+
+// MachineUUIDGT applies the GT predicate on the "MachineUUID" field.
+func MachineUUIDGT(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.GT(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDGTE applies the GTE predicate on the "MachineUUID" field.
+func MachineUUIDGTE(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.GTE(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDLT applies the LT predicate on the "MachineUUID" field.
+func MachineUUIDLT(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.LT(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDLTE applies the LTE predicate on the "MachineUUID" field.
+func MachineUUIDLTE(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.LTE(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDContains applies the Contains predicate on the "MachineUUID" field.
+func MachineUUIDContains(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.Contains(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDHasPrefix applies the HasPrefix predicate on the "MachineUUID" field.
+func MachineUUIDHasPrefix(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.HasPrefix(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDHasSuffix applies the HasSuffix predicate on the "MachineUUID" field.
+func MachineUUIDHasSuffix(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.HasSuffix(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDIsNil applies the IsNil predicate on the "MachineUUID" field.
+func MachineUUIDIsNil() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.IsNull(s.C(FieldMachineUUID)))
+		},
+	)
+}
+
+// MachineUUIDNotNil applies the NotNil predicate on the "MachineUUID" field.
+func MachineUUIDNotNil() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.NotNull(s.C(FieldMachineUUID)))
+		},
+	)
+}
+
+// MachineUUIDEqualFold applies the EqualFold predicate on the "MachineUUID" field.
+func MachineUUIDEqualFold(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.EqualFold(s.C(FieldMachineUUID), v))
+		},
+	)
+}
+
+// MachineUUIDContainsFold applies the ContainsFold predicate on the "MachineUUID" field.
+func MachineUUIDContainsFold(v string) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			s.Where(sql.ContainsFold(s.C(FieldMachineUUID), v))
 		},
 	)
 }
@@ -1218,6 +1200,73 @@ func HasTasksWith(preds ...predicate.Task) predicate.Target {
 		func(s *sql.Selector) {
 			t1 := s.Table()
 			t2 := sql.Select(TasksColumn).From(sql.Table(TasksTable))
+			for _, p := range preds {
+				p(t2)
+			}
+			s.Where(sql.In(t1.C(FieldID), t2))
+		},
+	)
+}
+
+// HasTags applies the HasEdge predicate on the "tags" edge.
+func HasTags() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(
+				sql.In(
+					t1.C(FieldID),
+					sql.Select(TagsPrimaryKey[0]).From(sql.Table(TagsTable)),
+				),
+			)
+		},
+	)
+}
+
+// HasTagsWith applies the HasEdge predicate on the "tags" edge with a given conditions (other predicates).
+func HasTagsWith(preds ...predicate.Tag) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Table(TagsInverseTable)
+			t3 := sql.Table(TagsTable)
+			t4 := sql.Select(t3.C(TagsPrimaryKey[0])).
+				From(t3).
+				Join(t2).
+				On(t3.C(TagsPrimaryKey[1]), t2.C(FieldID))
+			t5 := sql.Select().From(t2)
+			for _, p := range preds {
+				p(t5)
+			}
+			t4.FromSelect(t5)
+			s.Where(sql.In(t1.C(FieldID), t4))
+		},
+	)
+}
+
+// HasCredentials applies the HasEdge predicate on the "credentials" edge.
+func HasCredentials() predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(
+				sql.In(
+					t1.C(FieldID),
+					sql.Select(CredentialsColumn).
+						From(sql.Table(CredentialsTable)).
+						Where(sql.NotNull(CredentialsColumn)),
+				),
+			)
+		},
+	)
+}
+
+// HasCredentialsWith applies the HasEdge predicate on the "credentials" edge with a given conditions (other predicates).
+func HasCredentialsWith(preds ...predicate.Credential) predicate.Target {
+	return predicate.Target(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Select(CredentialsColumn).From(sql.Table(CredentialsTable))
 			for _, p := range preds {
 				p(t2)
 			}

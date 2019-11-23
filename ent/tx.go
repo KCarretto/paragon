@@ -12,6 +12,12 @@ import (
 // Tx is a transactional client that is created by calling Client.Tx().
 type Tx struct {
 	config
+	// Credential is the client for interacting with the Credential builders.
+	Credential *CredentialClient
+	// Job is the client for interacting with the Job builders.
+	Job *JobClient
+	// Tag is the client for interacting with the Tag builders.
+	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
@@ -31,10 +37,13 @@ func (tx *Tx) Rollback() error {
 // Client returns a Client that binds to current transaction.
 func (tx *Tx) Client() *Client {
 	return &Client{
-		config: tx.config,
-		Schema: migrate.NewSchema(tx.driver),
-		Target: NewTargetClient(tx.config),
-		Task:   NewTaskClient(tx.config),
+		config:     tx.config,
+		Schema:     migrate.NewSchema(tx.driver),
+		Credential: NewCredentialClient(tx.config),
+		Job:        NewJobClient(tx.config),
+		Tag:        NewTagClient(tx.config),
+		Target:     NewTargetClient(tx.config),
+		Task:       NewTaskClient(tx.config),
 	}
 }
 
@@ -45,7 +54,7 @@ func (tx *Tx) Client() *Client {
 // of them in order to commit or rollback the transaction.
 //
 // If a closed transaction is embedded in one of the generated entities, and the entity
-// applies a query, for example: Target.QueryXXX(), the query will be executed
+// applies a query, for example: Credential.QueryXXX(), the query will be executed
 // through the driver which created this transaction.
 //
 // Note that txDriver is not goroutine safe.

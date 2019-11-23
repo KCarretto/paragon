@@ -1060,26 +1060,62 @@ func SessionIDContainsFold(v string) predicate.Task {
 	)
 }
 
-// HasTarget applies the HasEdge predicate on the "target" edge.
-func HasTarget() predicate.Task {
+// HasTags applies the HasEdge predicate on the "tags" edge.
+func HasTags() predicate.Task {
 	return predicate.Task(
 		func(s *sql.Selector) {
 			t1 := s.Table()
-			s.Where(sql.NotNull(t1.C(TargetColumn)))
+			s.Where(
+				sql.In(
+					t1.C(FieldID),
+					sql.Select(TagsPrimaryKey[0]).From(sql.Table(TagsTable)),
+				),
+			)
 		},
 	)
 }
 
-// HasTargetWith applies the HasEdge predicate on the "target" edge with a given conditions (other predicates).
-func HasTargetWith(preds ...predicate.Target) predicate.Task {
+// HasTagsWith applies the HasEdge predicate on the "tags" edge with a given conditions (other predicates).
+func HasTagsWith(preds ...predicate.Tag) predicate.Task {
 	return predicate.Task(
 		func(s *sql.Selector) {
 			t1 := s.Table()
-			t2 := sql.Select(FieldID).From(sql.Table(TargetInverseTable))
+			t2 := sql.Table(TagsInverseTable)
+			t3 := sql.Table(TagsTable)
+			t4 := sql.Select(t3.C(TagsPrimaryKey[0])).
+				From(t3).
+				Join(t2).
+				On(t3.C(TagsPrimaryKey[1]), t2.C(FieldID))
+			t5 := sql.Select().From(t2)
+			for _, p := range preds {
+				p(t5)
+			}
+			t4.FromSelect(t5)
+			s.Where(sql.In(t1.C(FieldID), t4))
+		},
+	)
+}
+
+// HasJob applies the HasEdge predicate on the "job" edge.
+func HasJob() predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(sql.NotNull(t1.C(JobColumn)))
+		},
+	)
+}
+
+// HasJobWith applies the HasEdge predicate on the "job" edge with a given conditions (other predicates).
+func HasJobWith(preds ...predicate.Job) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Select(FieldID).From(sql.Table(JobInverseTable))
 			for _, p := range preds {
 				p(t2)
 			}
-			s.Where(sql.In(t1.C(TargetColumn), t2))
+			s.Where(sql.In(t1.C(JobColumn), t2))
 		},
 	)
 }

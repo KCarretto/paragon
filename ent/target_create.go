@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
@@ -17,32 +18,20 @@ import (
 type TargetCreate struct {
 	config
 	Name        *string
-	MachineUUID *string
 	PrimaryIP   *string
+	MachineUUID *string
 	PublicIP    *string
 	PrimaryMAC  *string
 	Hostname    *string
 	LastSeen    *time.Time
 	tasks       map[int]struct{}
+	tags        map[int]struct{}
+	credentials map[int]struct{}
 }
 
 // SetName sets the Name field.
 func (tc *TargetCreate) SetName(s string) *TargetCreate {
 	tc.Name = &s
-	return tc
-}
-
-// SetNillableName sets the Name field if the given value is not nil.
-func (tc *TargetCreate) SetNillableName(s *string) *TargetCreate {
-	if s != nil {
-		tc.SetName(*s)
-	}
-	return tc
-}
-
-// SetMachineUUID sets the MachineUUID field.
-func (tc *TargetCreate) SetMachineUUID(s string) *TargetCreate {
-	tc.MachineUUID = &s
 	return tc
 }
 
@@ -52,10 +41,16 @@ func (tc *TargetCreate) SetPrimaryIP(s string) *TargetCreate {
 	return tc
 }
 
-// SetNillablePrimaryIP sets the PrimaryIP field if the given value is not nil.
-func (tc *TargetCreate) SetNillablePrimaryIP(s *string) *TargetCreate {
+// SetMachineUUID sets the MachineUUID field.
+func (tc *TargetCreate) SetMachineUUID(s string) *TargetCreate {
+	tc.MachineUUID = &s
+	return tc
+}
+
+// SetNillableMachineUUID sets the MachineUUID field if the given value is not nil.
+func (tc *TargetCreate) SetNillableMachineUUID(s *string) *TargetCreate {
 	if s != nil {
-		tc.SetPrimaryIP(*s)
+		tc.SetMachineUUID(*s)
 	}
 	return tc
 }
@@ -136,10 +131,53 @@ func (tc *TargetCreate) AddTasks(t ...*Task) *TargetCreate {
 	return tc.AddTaskIDs(ids...)
 }
 
+// AddTagIDs adds the tags edge to Tag by ids.
+func (tc *TargetCreate) AddTagIDs(ids ...int) *TargetCreate {
+	if tc.tags == nil {
+		tc.tags = make(map[int]struct{})
+	}
+	for i := range ids {
+		tc.tags[ids[i]] = struct{}{}
+	}
+	return tc
+}
+
+// AddTags adds the tags edges to Tag.
+func (tc *TargetCreate) AddTags(t ...*Tag) *TargetCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return tc.AddTagIDs(ids...)
+}
+
+// AddCredentialIDs adds the credentials edge to Credential by ids.
+func (tc *TargetCreate) AddCredentialIDs(ids ...int) *TargetCreate {
+	if tc.credentials == nil {
+		tc.credentials = make(map[int]struct{})
+	}
+	for i := range ids {
+		tc.credentials[ids[i]] = struct{}{}
+	}
+	return tc
+}
+
+// AddCredentials adds the credentials edges to Credential.
+func (tc *TargetCreate) AddCredentials(c ...*Credential) *TargetCreate {
+	ids := make([]int, len(c))
+	for i := range c {
+		ids[i] = c[i].ID
+	}
+	return tc.AddCredentialIDs(ids...)
+}
+
 // Save creates the Target in the database.
 func (tc *TargetCreate) Save(ctx context.Context) (*Target, error) {
-	if tc.MachineUUID == nil {
-		return nil, errors.New("ent: missing required field \"MachineUUID\"")
+	if tc.Name == nil {
+		return nil, errors.New("ent: missing required field \"Name\"")
+	}
+	if tc.PrimaryIP == nil {
+		return nil, errors.New("ent: missing required field \"PrimaryIP\"")
 	}
 	return tc.sqlSave(ctx)
 }
@@ -169,13 +207,13 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		builder.Set(target.FieldName, *value)
 		t.Name = *value
 	}
-	if value := tc.MachineUUID; value != nil {
-		builder.Set(target.FieldMachineUUID, *value)
-		t.MachineUUID = *value
-	}
 	if value := tc.PrimaryIP; value != nil {
 		builder.Set(target.FieldPrimaryIP, *value)
 		t.PrimaryIP = *value
+	}
+	if value := tc.MachineUUID; value != nil {
+		builder.Set(target.FieldMachineUUID, *value)
+		t.MachineUUID = *value
 	}
 	if value := tc.PublicIP; value != nil {
 		builder.Set(target.FieldPublicIP, *value)
@@ -220,6 +258,38 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		}
 		if int(affected) < len(tc.tasks) {
 			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Target\"", keys(tc.tasks))})
+		}
+	}
+	if len(tc.tags) > 0 {
+		for eid := range tc.tags {
+
+			query, args := sql.Insert(target.TagsTable).
+				Columns(target.TagsPrimaryKey[0], target.TagsPrimaryKey[1]).
+				Values(id, eid).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
+		}
+	}
+	if len(tc.credentials) > 0 {
+		p := sql.P()
+		for eid := range tc.credentials {
+			p.Or().EQ(credential.FieldID, eid)
+		}
+		query, args := sql.Update(target.CredentialsTable).
+			Set(target.CredentialsColumn, id).
+			Where(sql.And(p, sql.IsNull(target.CredentialsColumn))).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return nil, rollback(tx, err)
+		}
+		if int(affected) < len(tc.credentials) {
+			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"credentials\" %v already connected to a different \"Target\"", keys(tc.credentials))})
 		}
 	}
 	if err := tx.Commit(); err != nil {

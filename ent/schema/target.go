@@ -15,14 +15,13 @@ type Target struct {
 func (Target) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
-			Optional().
 			Comment("The name of the Target"),
+		field.String("PrimaryIP").
+			Comment("The IP Address for the primary interface of the Target"),
 		field.String("MachineUUID").
 			Unique().
-			Comment("The machine UUID of the Target"),
-		field.String("PrimaryIP").
 			Optional().
-			Comment("The IP Address for the primary interface of the Target"),
+			Comment("The machine UUID of the Target"),
 		field.String("PublicIP").
 			Optional().
 			Comment("The Public IP Address for the Target"),
@@ -43,5 +42,9 @@ func (Target) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("tasks", Task.Type).
 			Comment("A Target can have many tasks connected to it"),
+		edge.To("tags", Tag.Type).
+			Comment("A Target can have many Tags"),
+		edge.To("credentials", Credential.Type).
+			Comment("A Target can have many credentials connected to it"),
 	}
 }

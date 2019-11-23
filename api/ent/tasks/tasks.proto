@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+package tasks;
+
+/*
+ * Golang Options
+ */
+
+// Install: go get -u github.com/gogo/protobuf@v1.3.1
+import "gogoproto/gogo.proto";
+
+// Tests
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Performance
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+// Enable registration with golang/protobuf for the grpc-gateway.
+option (gogoproto.goproto_registration) = true;
+// Enable generation of XXX_MessageName methods for grpc-go/status.
+option (gogoproto.messagename_all) = true;
+
+/*
+ * gRPC Gateway Options
+ */
+
+// Install: go get -u github.com/gogo/googleapis@v1.3.0
+import "google/api/annotations.proto";
+
+/*
+ * TODO: @cictrone
+ */
+service Tasks {
+    /*
+     * TODO: @cictrone
+     */
+    rpc Fetch(FetchRequest) returns (FetchResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/tasks/{id}"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Find(FindRequest) returns (FindResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/tasks"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Claim(ClaimRequest) returns (ClaimResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/tasks/claim"
+            body: "*"
+        };
+    }
+
+}
+
+message FetchRequest {
+    int64 id = 1;
+}
+message FetchResponse {
+    int64 queueTime = 1;
+    int64 claimTime = 2;
+    int64 execStartTime = 3;
+    int64 execStopTime = 4;
+    string content = 5;
+    repeated string output = 6;
+    string error = 7;
+    string sessionID = 8;
+    repeated int64 tags = 9;
+    int64 job = 10;
+}
+
+message FindRequest {
+    string filter = 1;
+    int64 offset = 2;
+    int64 limit = 3;
+}
+message FindResponse {
+    repeated int64 ids = 1;
+    int64 newOffset = 2;
+}
+
+message ClaimRequest {
+    int64 id = 1;
+}
+message ClaimResponse {}

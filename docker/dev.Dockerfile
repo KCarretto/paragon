@@ -1,6 +1,6 @@
 FROM golang:1.13.1-alpine as dev
 WORKDIR /app
-RUN apk add alpine-sdk git protobuf-dev libgcc libstdc++ \
+RUN apk add alpine-sdk git protobuf-dev libgcc libstdc++ npm \
     && mkdir /go/tools \
     && ln -s /go/bin /go/tools/bin \
     && mkdir /tmp/goinstall \

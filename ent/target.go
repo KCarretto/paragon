@@ -17,10 +17,10 @@ type Target struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
 	Name string `json:"Name,omitempty"`
-	// MachineUUID holds the value of the "MachineUUID" field.
-	MachineUUID string `json:"MachineUUID,omitempty"`
 	// PrimaryIP holds the value of the "PrimaryIP" field.
 	PrimaryIP string `json:"PrimaryIP,omitempty"`
+	// MachineUUID holds the value of the "MachineUUID" field.
+	MachineUUID string `json:"MachineUUID,omitempty"`
 	// PublicIP holds the value of the "PublicIP" field.
 	PublicIP string `json:"PublicIP,omitempty"`
 	// PrimaryMAC holds the value of the "PrimaryMAC" field.
@@ -36,8 +36,8 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 	var vt struct {
 		ID          int
 		Name        sql.NullString
-		MachineUUID sql.NullString
 		PrimaryIP   sql.NullString
+		MachineUUID sql.NullString
 		PublicIP    sql.NullString
 		PrimaryMAC  sql.NullString
 		Hostname    sql.NullString
@@ -47,8 +47,8 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 	if err := rows.Scan(
 		&vt.ID,
 		&vt.Name,
-		&vt.MachineUUID,
 		&vt.PrimaryIP,
+		&vt.MachineUUID,
 		&vt.PublicIP,
 		&vt.PrimaryMAC,
 		&vt.Hostname,
@@ -58,8 +58,8 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 	}
 	t.ID = vt.ID
 	t.Name = vt.Name.String
-	t.MachineUUID = vt.MachineUUID.String
 	t.PrimaryIP = vt.PrimaryIP.String
+	t.MachineUUID = vt.MachineUUID.String
 	t.PublicIP = vt.PublicIP.String
 	t.PrimaryMAC = vt.PrimaryMAC.String
 	t.Hostname = vt.Hostname.String
@@ -70,6 +70,16 @@ func (t *Target) FromRows(rows *sql.Rows) error {
 // QueryTasks queries the tasks edge of the Target.
 func (t *Target) QueryTasks() *TaskQuery {
 	return (&TargetClient{t.config}).QueryTasks(t)
+}
+
+// QueryTags queries the tags edge of the Target.
+func (t *Target) QueryTags() *TagQuery {
+	return (&TargetClient{t.config}).QueryTags(t)
+}
+
+// QueryCredentials queries the credentials edge of the Target.
+func (t *Target) QueryCredentials() *CredentialQuery {
+	return (&TargetClient{t.config}).QueryCredentials(t)
 }
 
 // Update returns a builder for updating this Target.
@@ -97,10 +107,10 @@ func (t *Target) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", t.ID))
 	builder.WriteString(", Name=")
 	builder.WriteString(t.Name)
-	builder.WriteString(", MachineUUID=")
-	builder.WriteString(t.MachineUUID)
 	builder.WriteString(", PrimaryIP=")
 	builder.WriteString(t.PrimaryIP)
+	builder.WriteString(", MachineUUID=")
+	builder.WriteString(t.MachineUUID)
 	builder.WriteString(", PublicIP=")
 	builder.WriteString(t.PublicIP)
 	builder.WriteString(", PrimaryMAC=")

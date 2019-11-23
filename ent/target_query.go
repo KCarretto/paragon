@@ -9,7 +9,9 @@ import (
 	"math"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
@@ -60,6 +62,37 @@ func (tq *TargetQuery) QueryTasks() *TaskQuery {
 		From(t1).
 		Join(t2).
 		On(t1.C(target.TasksColumn), t2.C(target.FieldID))
+	return query
+}
+
+// QueryTags chains the current query on the tags edge.
+func (tq *TargetQuery) QueryTags() *TagQuery {
+	query := &TagQuery{config: tq.config}
+	t1 := sql.Table(tag.Table)
+	t2 := tq.sqlQuery()
+	t2.Select(t2.C(target.FieldID))
+	t3 := sql.Table(target.TagsTable)
+	t4 := sql.Select(t3.C(target.TagsPrimaryKey[1])).
+		From(t3).
+		Join(t2).
+		On(t3.C(target.TagsPrimaryKey[0]), t2.C(target.FieldID))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t4).
+		On(t1.C(tag.FieldID), t4.C(target.TagsPrimaryKey[1]))
+	return query
+}
+
+// QueryCredentials chains the current query on the credentials edge.
+func (tq *TargetQuery) QueryCredentials() *CredentialQuery {
+	query := &CredentialQuery{config: tq.config}
+	t1 := sql.Table(credential.Table)
+	t2 := tq.sqlQuery()
+	t2.Select(t2.C(target.FieldID))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t2).
+		On(t1.C(target.CredentialsColumn), t2.C(target.FieldID))
 	return query
 }
 
