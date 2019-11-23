@@ -32,16 +32,48 @@ option (gogoproto.messagename_all) = true;
 import "google/api/annotations.proto";
 
 /*
- * Service
+ * TODO: @cictrone
  */
 service Tasks {
-    rpc QueueTask(QueueTaskRequest) returns (QueueTaskResponse) {
+    /*
+     * TODO: @cictrone
+     */
+    rpc Fetch(FetchRequest) returns (FetchResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/tasks/{id}"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Find(FindRequest) returns (FindResponse) {
+        option (google.api.http) = {
+            get: "/api/v1/tasks/find"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Claim(ClaimRequest) returns (ClaimResponse) {
         option (google.api.http) = {
             post: "/api/v1/tasks/queue"
             body: "*"
         };
     }
+
 }
 
-message QueueTaskRequest {}
-message QueueTaskResponse {}
+message FetchRequest {
+    int64 id = 1;
+}
+message FetchResponse {}
+
+message FindRequest {
+    string filter = 1;
+}
+message FindResponse {}
+
+message ClaimRequest {}
+message ClaimResponse {}
