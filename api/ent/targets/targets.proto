@@ -66,6 +66,26 @@ service Targets {
     /*
      * TODO: @cictrone
      */
+     rpc SetTargetFields(SetTargetFieldsRequest) returns (SetTargetFieldsResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/targets/setTargetFields"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+     rpc Delete(DeleteRequest) returns (DeleteResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/targets/delete"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
     rpc AddCredential(AddCredentialRequest) returns (AddCredentialResponse) {
         option (google.api.http) = {
             post: "/api/v1/targets/addCredential"
@@ -110,6 +130,24 @@ message CreateRequest {
 message CreateResponse {
     int64 id = 1;
 }
+
+message SetTargetFieldsRequest {
+    int64 id = 1;
+    string name = 2;
+    string machineUUID  = 3;
+    string primaryIP = 4;
+    string publicIP = 5;
+    string primaryMAC = 6;
+    string hostname = 7;
+}
+
+message SetTargetFieldsResponse {}
+
+message DeleteRequest {
+    int64 id = 1;
+}
+
+message DeleteResponse {}
 
 message AddCredentialRequest {
     int64 targetID = 1;

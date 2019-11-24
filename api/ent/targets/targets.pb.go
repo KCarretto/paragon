@@ -426,6 +426,226 @@ func (*CreateResponse) XXX_MessageName() string {
 	return "targets.CreateResponse"
 }
 
+type SetTargetFieldsRequest struct {
+	Id          int64  `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+	Name        string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	MachineUUID string `protobuf:"bytes,3,opt,name=machineUUID,proto3" json:"machineUUID,omitempty"`
+	PrimaryIP   string `protobuf:"bytes,4,opt,name=primaryIP,proto3" json:"primaryIP,omitempty"`
+	PublicIP    string `protobuf:"bytes,5,opt,name=publicIP,proto3" json:"publicIP,omitempty"`
+	PrimaryMAC  string `protobuf:"bytes,6,opt,name=primaryMAC,proto3" json:"primaryMAC,omitempty"`
+	Hostname    string `protobuf:"bytes,7,opt,name=hostname,proto3" json:"hostname,omitempty"`
+}
+
+func (m *SetTargetFieldsRequest) Reset()      { *m = SetTargetFieldsRequest{} }
+func (*SetTargetFieldsRequest) ProtoMessage() {}
+func (*SetTargetFieldsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4009e2e15debba2c, []int{6}
+}
+func (m *SetTargetFieldsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SetTargetFieldsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SetTargetFieldsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SetTargetFieldsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetTargetFieldsRequest.Merge(m, src)
+}
+func (m *SetTargetFieldsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *SetTargetFieldsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetTargetFieldsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetTargetFieldsRequest proto.InternalMessageInfo
+
+func (m *SetTargetFieldsRequest) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (m *SetTargetFieldsRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
+func (m *SetTargetFieldsRequest) GetMachineUUID() string {
+	if m != nil {
+		return m.MachineUUID
+	}
+	return ""
+}
+
+func (m *SetTargetFieldsRequest) GetPrimaryIP() string {
+	if m != nil {
+		return m.PrimaryIP
+	}
+	return ""
+}
+
+func (m *SetTargetFieldsRequest) GetPublicIP() string {
+	if m != nil {
+		return m.PublicIP
+	}
+	return ""
+}
+
+func (m *SetTargetFieldsRequest) GetPrimaryMAC() string {
+	if m != nil {
+		return m.PrimaryMAC
+	}
+	return ""
+}
+
+func (m *SetTargetFieldsRequest) GetHostname() string {
+	if m != nil {
+		return m.Hostname
+	}
+	return ""
+}
+
+func (*SetTargetFieldsRequest) XXX_MessageName() string {
+	return "targets.SetTargetFieldsRequest"
+}
+
+type SetTargetFieldsResponse struct {
+}
+
+func (m *SetTargetFieldsResponse) Reset()      { *m = SetTargetFieldsResponse{} }
+func (*SetTargetFieldsResponse) ProtoMessage() {}
+func (*SetTargetFieldsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4009e2e15debba2c, []int{7}
+}
+func (m *SetTargetFieldsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *SetTargetFieldsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_SetTargetFieldsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *SetTargetFieldsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SetTargetFieldsResponse.Merge(m, src)
+}
+func (m *SetTargetFieldsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *SetTargetFieldsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_SetTargetFieldsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_SetTargetFieldsResponse proto.InternalMessageInfo
+
+func (*SetTargetFieldsResponse) XXX_MessageName() string {
+	return "targets.SetTargetFieldsResponse"
+}
+
+type DeleteRequest struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *DeleteRequest) Reset()      { *m = DeleteRequest{} }
+func (*DeleteRequest) ProtoMessage() {}
+func (*DeleteRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4009e2e15debba2c, []int{8}
+}
+func (m *DeleteRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DeleteRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DeleteRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DeleteRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteRequest.Merge(m, src)
+}
+func (m *DeleteRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *DeleteRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteRequest proto.InternalMessageInfo
+
+func (m *DeleteRequest) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (*DeleteRequest) XXX_MessageName() string {
+	return "targets.DeleteRequest"
+}
+
+type DeleteResponse struct {
+}
+
+func (m *DeleteResponse) Reset()      { *m = DeleteResponse{} }
+func (*DeleteResponse) ProtoMessage() {}
+func (*DeleteResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4009e2e15debba2c, []int{9}
+}
+func (m *DeleteResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *DeleteResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_DeleteResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *DeleteResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DeleteResponse.Merge(m, src)
+}
+func (m *DeleteResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *DeleteResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_DeleteResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_DeleteResponse proto.InternalMessageInfo
+
+func (*DeleteResponse) XXX_MessageName() string {
+	return "targets.DeleteResponse"
+}
+
 type AddCredentialRequest struct {
 	TargetID  int64  `protobuf:"varint,1,opt,name=targetID,proto3" json:"targetID,omitempty"`
 	Principal string `protobuf:"bytes,2,opt,name=principal,proto3" json:"principal,omitempty"`
@@ -435,7 +655,7 @@ type AddCredentialRequest struct {
 func (m *AddCredentialRequest) Reset()      { *m = AddCredentialRequest{} }
 func (*AddCredentialRequest) ProtoMessage() {}
 func (*AddCredentialRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4009e2e15debba2c, []int{6}
+	return fileDescriptor_4009e2e15debba2c, []int{10}
 }
 func (m *AddCredentialRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -495,7 +715,7 @@ type AddCredentialResponse struct {
 func (m *AddCredentialResponse) Reset()      { *m = AddCredentialResponse{} }
 func (*AddCredentialResponse) ProtoMessage() {}
 func (*AddCredentialResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_4009e2e15debba2c, []int{7}
+	return fileDescriptor_4009e2e15debba2c, []int{11}
 }
 func (m *AddCredentialResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -540,6 +760,14 @@ func init() {
 	golang_proto.RegisterType((*CreateRequest)(nil), "targets.CreateRequest")
 	proto.RegisterType((*CreateResponse)(nil), "targets.CreateResponse")
 	golang_proto.RegisterType((*CreateResponse)(nil), "targets.CreateResponse")
+	proto.RegisterType((*SetTargetFieldsRequest)(nil), "targets.SetTargetFieldsRequest")
+	golang_proto.RegisterType((*SetTargetFieldsRequest)(nil), "targets.SetTargetFieldsRequest")
+	proto.RegisterType((*SetTargetFieldsResponse)(nil), "targets.SetTargetFieldsResponse")
+	golang_proto.RegisterType((*SetTargetFieldsResponse)(nil), "targets.SetTargetFieldsResponse")
+	proto.RegisterType((*DeleteRequest)(nil), "targets.DeleteRequest")
+	golang_proto.RegisterType((*DeleteRequest)(nil), "targets.DeleteRequest")
+	proto.RegisterType((*DeleteResponse)(nil), "targets.DeleteResponse")
+	golang_proto.RegisterType((*DeleteResponse)(nil), "targets.DeleteResponse")
 	proto.RegisterType((*AddCredentialRequest)(nil), "targets.AddCredentialRequest")
 	golang_proto.RegisterType((*AddCredentialRequest)(nil), "targets.AddCredentialRequest")
 	proto.RegisterType((*AddCredentialResponse)(nil), "targets.AddCredentialResponse")
@@ -550,48 +778,55 @@ func init() { proto.RegisterFile("targets.proto", fileDescriptor_4009e2e15debba2
 func init() { golang_proto.RegisterFile("targets.proto", fileDescriptor_4009e2e15debba2c) }
 
 var fileDescriptor_4009e2e15debba2c = []byte{
-	// 650 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x54, 0x3f, 0x6f, 0xd4, 0x4e,
-	0x10, 0xbd, 0x3d, 0x27, 0x97, 0x64, 0x92, 0xcb, 0xef, 0xc7, 0xea, 0x72, 0xb1, 0x4c, 0xb2, 0x3a,
-	0x5c, 0x45, 0x29, 0x72, 0x02, 0xba, 0x14, 0x48, 0x21, 0x51, 0xa4, 0x93, 0x40, 0x44, 0x97, 0xa4,
-	0xa3, 0xd9, 0xd8, 0x1b, 0xdf, 0x0a, 0x9f, 0x6d, 0xbc, 0x1b, 0xfe, 0x08, 0x21, 0x21, 0x24, 0x7a,
-	0x24, 0x3e, 0x02, 0x0d, 0x1f, 0x81, 0x92, 0x32, 0x65, 0x24, 0x9a, 0x94, 0x9c, 0x8f, 0x82, 0x32,
-	0x25, 0x25, 0xda, 0xf5, 0xfa, 0xce, 0x31, 0xa1, 0xdb, 0xf7, 0x66, 0xf6, 0xcd, 0xf8, 0xcd, 0xac,
-	0xa1, 0x29, 0x69, 0x1a, 0x30, 0x29, 0xb6, 0x92, 0x34, 0x96, 0x31, 0x9e, 0x33, 0xd0, 0x69, 0x05,
-	0x71, 0x10, 0x6b, 0xae, 0xab, 0x4e, 0x79, 0xd8, 0x59, 0x0b, 0xe2, 0x38, 0x08, 0x59, 0x97, 0x26,
-	0xbc, 0x4b, 0xa3, 0x28, 0x96, 0x54, 0xf2, 0x38, 0x32, 0x97, 0x5d, 0x02, 0x4b, 0xfb, 0x4c, 0x7a,
-	0x83, 0x3e, 0x7b, 0x7e, 0xc6, 0x84, 0xc4, 0xcb, 0x50, 0xe7, 0xbe, 0x8d, 0x3a, 0x68, 0xc3, 0xea,
-	0xd7, 0xb9, 0xef, 0x7e, 0xae, 0x43, 0xd3, 0x24, 0x88, 0x24, 0x8e, 0x04, 0xc3, 0x18, 0x66, 0x22,
-	0x3a, 0x64, 0x3a, 0x67, 0xa1, 0xaf, 0xcf, 0xb8, 0x03, 0x8b, 0x43, 0xea, 0x0d, 0x78, 0xc4, 0x8e,
-	0x8f, 0x7b, 0x7b, 0x76, 0x5d, 0x87, 0xca, 0x14, 0x5e, 0x83, 0x85, 0x24, 0xe5, 0x43, 0x9a, 0xbe,
-	0xee, 0x1d, 0xd8, 0x96, 0x8e, 0x4f, 0x09, 0xec, 0xc0, 0x7c, 0x72, 0x76, 0x12, 0x72, 0xaf, 0x77,
-	0x60, 0xcf, 0xe8, 0xe0, 0x04, 0x63, 0x02, 0x60, 0x12, 0x1f, 0xef, 0xec, 0xda, 0xb3, 0x3a, 0x5a,
-	0x62, 0xd4, 0xdd, 0x41, 0x2c, 0xa4, 0xee, 0xa9, 0x91, 0xdf, 0x2d, 0xb0, 0x8a, 0x85, 0x54, 0xc8,
-	0x43, 0xc6, 0x22, 0x7b, 0x4e, 0x7f, 0xd3, 0x04, 0xab, 0xef, 0x90, 0x34, 0x10, 0xf6, 0x7c, 0xc7,
-	0xda, 0xb0, 0xfa, 0xfa, 0x8c, 0x5b, 0x30, 0x2b, 0xa9, 0x78, 0x26, 0xec, 0x05, 0x4d, 0xe6, 0x40,
-	0x7d, 0x9d, 0x97, 0x32, 0x9f, 0x45, 0x92, 0xd3, 0x50, 0xd8, 0xa0, 0x63, 0x65, 0xca, 0x3d, 0x84,
-	0xc5, 0x7d, 0x1e, 0xf9, 0x85, 0x89, 0x6d, 0x68, 0x9c, 0xf2, 0x50, 0xb2, 0xd4, 0x98, 0x64, 0x90,
-	0xe2, 0xe3, 0xd3, 0x53, 0xc1, 0xa4, 0x76, 0xc8, 0xea, 0x1b, 0xa4, 0xca, 0x86, 0x7c, 0xc8, 0xa5,
-	0x36, 0xc6, 0xea, 0xe7, 0xc0, 0x7d, 0x00, 0x4b, 0xb9, 0xa8, 0x31, 0xfe, 0x7f, 0xb0, 0xb8, 0x2f,
-	0x6c, 0xa4, 0xcb, 0xab, 0xa3, 0x32, 0x35, 0x62, 0x2f, 0x9f, 0x94, 0x25, 0xa7, 0x84, 0x7b, 0x0c,
-	0xcd, 0xdd, 0x94, 0x51, 0xc9, 0x8a, 0xb6, 0x6e, 0x9a, 0xdc, 0xb5, 0xb9, 0xd4, 0xab, 0x73, 0x29,
-	0x3c, 0xb2, 0x3a, 0x96, 0xba, 0xa1, 0xce, 0x6e, 0x07, 0x96, 0x0b, 0x59, 0xd3, 0x58, 0x75, 0x67,
-	0x06, 0xd0, 0xda, 0xf1, 0xfd, 0xdd, 0x89, 0x3f, 0x45, 0x7d, 0x07, 0xe6, 0xf3, 0x55, 0xed, 0xed,
-	0x99, 0xec, 0x09, 0x36, 0x7d, 0x44, 0x1e, 0x4f, 0x68, 0x58, 0xea, 0x23, 0x27, 0x94, 0x71, 0x82,
-	0x79, 0x29, 0x93, 0x66, 0x75, 0x0c, 0x72, 0x57, 0x61, 0xa5, 0x52, 0x29, 0x6f, 0xe9, 0xde, 0x07,
-	0x0b, 0xe6, 0x8e, 0xf2, 0x67, 0x81, 0x8f, 0x60, 0x56, 0x6f, 0x30, 0x5e, 0xd9, 0x2a, 0x1e, 0x4e,
-	0x79, 0xe5, 0x9d, 0x76, 0x95, 0xce, 0x35, 0xdc, 0xb5, 0xf7, 0xdf, 0x7f, 0x7e, 0xaa, 0xb7, 0x71,
-	0x4b, 0x3f, 0x9d, 0x17, 0x77, 0xbb, 0x26, 0xad, 0xfb, 0x86, 0xfb, 0x6f, 0xf1, 0x23, 0x98, 0x51,
-	0xd3, 0xc1, 0xad, 0xe9, 0xed, 0xe9, 0x06, 0x38, 0x2b, 0x15, 0xd6, 0x48, 0xae, 0x6a, 0xc9, 0x5b,
-	0xf8, 0xbf, 0x8a, 0x24, 0x7e, 0x0a, 0x8d, 0xdc, 0x54, 0x3c, 0xed, 0xe6, 0xda, 0xf0, 0x9c, 0xd5,
-	0xbf, 0x78, 0xa3, 0x79, 0x47, 0x6b, 0xde, 0x76, 0xdb, 0xd5, 0x36, 0x3d, 0x9d, 0xb7, 0x8d, 0x36,
-	0xf1, 0x2b, 0x68, 0x5e, 0xb3, 0x09, 0xaf, 0x4f, 0xc4, 0x6e, 0x1a, 0x94, 0x43, 0xfe, 0x15, 0x36,
-	0x25, 0x37, 0x74, 0x49, 0xd7, 0x5d, 0xaf, 0x96, 0xa4, 0xe5, 0xf4, 0x6d, 0xb4, 0xf9, 0x70, 0xef,
-	0x62, 0x44, 0x6a, 0x97, 0x23, 0x52, 0xbb, 0x1a, 0x11, 0xf4, 0x7b, 0x44, 0xd0, 0xbb, 0x8c, 0xa0,
-	0x2f, 0x19, 0x41, 0x5f, 0x33, 0x82, 0xce, 0x33, 0x82, 0x2e, 0x32, 0x82, 0x7e, 0x64, 0x04, 0xfd,
-	0xca, 0x48, 0xed, 0x2a, 0x23, 0xe8, 0xe3, 0x98, 0xd4, 0xbe, 0x8d, 0x09, 0x3a, 0x1f, 0x13, 0x74,
-	0x31, 0x26, 0xb5, 0xcb, 0x31, 0xa9, 0x9d, 0x34, 0xf4, 0xbf, 0xea, 0xfe, 0x9f, 0x00, 0x00, 0x00,
-	0xff, 0xff, 0x69, 0xe1, 0xc0, 0xae, 0xf9, 0x04, 0x00, 0x00,
+	// 765 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x55, 0x3d, 0x4f, 0xdb, 0x4e,
+	0x18, 0xcf, 0xc5, 0x79, 0x81, 0x07, 0x02, 0xfc, 0x4f, 0x21, 0xf1, 0xdf, 0x85, 0x23, 0xb5, 0x3a,
+	0x20, 0x06, 0xa2, 0xb6, 0x1b, 0x43, 0x25, 0x4a, 0x84, 0x14, 0xa9, 0x55, 0x51, 0x80, 0x8d, 0xc5,
+	0xc4, 0x47, 0x72, 0xaa, 0x63, 0xa7, 0xbe, 0xa3, 0x2f, 0xaa, 0x2a, 0xa1, 0x7e, 0x82, 0x4a, 0xfd,
+	0x08, 0x5d, 0xfa, 0x11, 0x3a, 0x76, 0x64, 0x44, 0x6a, 0x07, 0xc6, 0xc6, 0xa9, 0xaa, 0x8e, 0x8c,
+	0x1d, 0x2b, 0x9f, 0xcf, 0x89, 0x63, 0x08, 0xdd, 0xee, 0xf9, 0x3d, 0xef, 0xbf, 0xfb, 0xf9, 0x0c,
+	0x25, 0x61, 0xf9, 0x1d, 0x2a, 0xf8, 0x66, 0xdf, 0xf7, 0x84, 0x87, 0x8b, 0xca, 0x34, 0xca, 0x1d,
+	0xaf, 0xe3, 0x49, 0xac, 0x1e, 0x9e, 0x22, 0xb7, 0xb1, 0xd2, 0xf1, 0xbc, 0x8e, 0x43, 0xeb, 0x56,
+	0x9f, 0xd5, 0x2d, 0xd7, 0xf5, 0x84, 0x25, 0x98, 0xe7, 0xaa, 0x64, 0x93, 0xc0, 0xfc, 0x2e, 0x15,
+	0xed, 0x6e, 0x8b, 0xbe, 0x38, 0xa5, 0x5c, 0xe0, 0x05, 0xc8, 0x32, 0x5b, 0x47, 0x35, 0xb4, 0xae,
+	0xb5, 0xb2, 0xcc, 0x36, 0x3f, 0x65, 0xa1, 0xa4, 0x02, 0x78, 0xdf, 0x73, 0x39, 0xc5, 0x18, 0x72,
+	0xae, 0xd5, 0xa3, 0x32, 0x66, 0xb6, 0x25, 0xcf, 0xb8, 0x06, 0x73, 0x3d, 0xab, 0xdd, 0x65, 0x2e,
+	0x3d, 0x3c, 0x6c, 0x36, 0xf4, 0xac, 0x74, 0x25, 0x21, 0xbc, 0x02, 0xb3, 0x7d, 0x9f, 0xf5, 0x2c,
+	0xff, 0x4d, 0x73, 0x4f, 0xd7, 0xa4, 0x7f, 0x0c, 0x60, 0x03, 0x66, 0xfa, 0xa7, 0xc7, 0x0e, 0x6b,
+	0x37, 0xf7, 0xf4, 0x9c, 0x74, 0x8e, 0x6c, 0x4c, 0x00, 0x54, 0xe0, 0xd3, 0xed, 0x1d, 0x3d, 0x2f,
+	0xbd, 0x09, 0x24, 0xcc, 0xed, 0x7a, 0x5c, 0xc8, 0x99, 0x0a, 0x51, 0x6e, 0x6c, 0x87, 0x3e, 0xc7,
+	0xe2, 0x62, 0x9f, 0x52, 0x57, 0x2f, 0xca, 0x9d, 0x46, 0x76, 0xb8, 0x87, 0xb0, 0x3a, 0x5c, 0x9f,
+	0xa9, 0x69, 0xeb, 0x5a, 0x4b, 0x9e, 0x71, 0x19, 0xf2, 0xc2, 0xe2, 0xcf, 0xb9, 0x3e, 0x2b, 0xc1,
+	0xc8, 0x08, 0xb7, 0x6b, 0xfb, 0xd4, 0xa6, 0xae, 0x60, 0x96, 0xc3, 0x75, 0x90, 0xbe, 0x24, 0x64,
+	0xee, 0xc3, 0xdc, 0x2e, 0x73, 0xed, 0x98, 0xc4, 0x0a, 0x14, 0x4e, 0x98, 0x23, 0xa8, 0xaf, 0x48,
+	0x52, 0x56, 0x88, 0x7b, 0x27, 0x27, 0x9c, 0x0a, 0xc9, 0x90, 0xd6, 0x52, 0x56, 0xd8, 0xd6, 0x61,
+	0x3d, 0x26, 0x24, 0x31, 0x5a, 0x2b, 0x32, 0xcc, 0x47, 0x30, 0x1f, 0x15, 0x55, 0xc4, 0x2f, 0x81,
+	0xc6, 0x6c, 0xae, 0x23, 0xd9, 0x3e, 0x3c, 0x86, 0xa4, 0xba, 0xf4, 0xd5, 0xb3, 0x64, 0xc9, 0x31,
+	0x60, 0x1e, 0x42, 0x69, 0xc7, 0xa7, 0x96, 0xa0, 0xf1, 0x58, 0x37, 0xdd, 0xdc, 0xc4, 0xbd, 0x64,
+	0xd3, 0xf7, 0x12, 0x73, 0xa4, 0xd5, 0xb4, 0x30, 0x23, 0x3c, 0x9b, 0x35, 0x58, 0x88, 0xcb, 0xaa,
+	0xc1, 0xd2, 0x9a, 0xf9, 0x8e, 0xa0, 0xb2, 0x4f, 0xc5, 0x81, 0x94, 0xe5, 0x2e, 0xa3, 0x8e, 0xcd,
+	0xa7, 0xc8, 0x6b, 0x34, 0x52, 0x76, 0xba, 0x98, 0xb4, 0x7f, 0x88, 0x29, 0x77, 0x9b, 0x98, 0xf2,
+	0xb7, 0x8a, 0xa9, 0x70, 0xab, 0x98, 0x8a, 0x93, 0x62, 0x32, 0xff, 0x87, 0xea, 0xb5, 0xad, 0x22,
+	0x06, 0xcc, 0x35, 0x28, 0x35, 0xa8, 0x43, 0xc7, 0x54, 0xa7, 0x29, 0x59, 0x82, 0x85, 0x38, 0x40,
+	0xa5, 0x74, 0xa1, 0xbc, 0x6d, 0xdb, 0x3b, 0x23, 0x11, 0xc5, 0x99, 0x06, 0xcc, 0x44, 0xdf, 0x73,
+	0xb3, 0xa1, 0xf2, 0x47, 0xb6, 0xda, 0xdb, 0x6d, 0xb3, 0xbe, 0xe5, 0x24, 0x2e, 0x2b, 0x02, 0x42,
+	0x75, 0x71, 0xda, 0xf6, 0xa9, 0x50, 0x94, 0x29, 0xcb, 0xac, 0xc2, 0x72, 0xaa, 0x53, 0x34, 0xc2,
+	0x83, 0x5f, 0x39, 0x28, 0x46, 0xeb, 0x70, 0x7c, 0x00, 0x79, 0xf9, 0x99, 0xe3, 0xe5, 0xcd, 0xf8,
+	0x75, 0x49, 0xbe, 0x0b, 0x46, 0x25, 0x0d, 0xab, 0x35, 0x56, 0xde, 0x7f, 0xfb, 0xf9, 0x31, 0x5b,
+	0xc1, 0x65, 0xf9, 0xbe, 0xbc, 0xbc, 0x5f, 0x57, 0x61, 0xf5, 0xb7, 0xcc, 0x7e, 0x87, 0x9f, 0x40,
+	0x2e, 0x94, 0x30, 0x2e, 0x8f, 0xb3, 0xc7, 0x9f, 0x89, 0xb1, 0x9c, 0x42, 0x55, 0xc9, 0xaa, 0x2c,
+	0xf9, 0x1f, 0x5e, 0x4c, 0x95, 0xc4, 0x47, 0x50, 0x88, 0x94, 0x87, 0xc7, 0xd3, 0x4c, 0x28, 0xdc,
+	0xa8, 0x5e, 0xc3, 0x55, 0xcd, 0xbb, 0xb2, 0xe6, 0x1d, 0xb3, 0x92, 0x1e, 0xb3, 0x2d, 0xe3, 0xb6,
+	0xd0, 0x06, 0x3e, 0x43, 0xb0, 0x98, 0xba, 0x5f, 0xbc, 0x36, 0xaa, 0x77, 0xb3, 0x9e, 0x8d, 0xda,
+	0xf4, 0x00, 0xd5, 0x79, 0x43, 0x76, 0xbe, 0x67, 0xae, 0xa5, 0x3b, 0xf3, 0xc9, 0x84, 0x70, 0x84,
+	0x23, 0x28, 0x44, 0x2a, 0x49, 0x2c, 0x38, 0xa1, 0xab, 0xc4, 0x82, 0x29, 0x39, 0x4d, 0x5d, 0xd0,
+	0x96, 0x71, 0x61, 0xf5, 0xd7, 0x50, 0x9a, 0xd0, 0x01, 0x5e, 0x1d, 0x15, 0xbb, 0x49, 0x89, 0x06,
+	0x99, 0xe6, 0x56, 0x2d, 0xd7, 0x65, 0x4b, 0xd3, 0x5c, 0x4d, 0xb7, 0xb4, 0x92, 0xe1, 0x5b, 0x68,
+	0xe3, 0x71, 0xe3, 0x62, 0x40, 0x32, 0x97, 0x03, 0x92, 0xb9, 0x1a, 0x10, 0xf4, 0x67, 0x40, 0xd0,
+	0x59, 0x40, 0xd0, 0xe7, 0x80, 0xa0, 0x2f, 0x01, 0x41, 0xe7, 0x01, 0x41, 0x17, 0x01, 0x41, 0x3f,
+	0x02, 0x82, 0x7e, 0x07, 0x24, 0x73, 0x15, 0x10, 0xf4, 0x61, 0x48, 0x32, 0x5f, 0x87, 0x04, 0x9d,
+	0x0f, 0x09, 0xba, 0x18, 0x92, 0xcc, 0xe5, 0x90, 0x64, 0x8e, 0x0b, 0xf2, 0x8f, 0xf5, 0xf0, 0x6f,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0x30, 0x86, 0x3d, 0x86, 0xff, 0x06, 0x00, 0x00,
 }
 
 func (this *FetchRequest) Equal(that interface{}) bool {
@@ -805,6 +1040,114 @@ func (this *CreateResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *SetTargetFieldsRequest) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*SetTargetFieldsRequest)
+	if !ok {
+		that2, ok := that.(SetTargetFieldsRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	if this.Name != that1.Name {
+		return false
+	}
+	if this.MachineUUID != that1.MachineUUID {
+		return false
+	}
+	if this.PrimaryIP != that1.PrimaryIP {
+		return false
+	}
+	if this.PublicIP != that1.PublicIP {
+		return false
+	}
+	if this.PrimaryMAC != that1.PrimaryMAC {
+		return false
+	}
+	if this.Hostname != that1.Hostname {
+		return false
+	}
+	return true
+}
+func (this *SetTargetFieldsResponse) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*SetTargetFieldsResponse)
+	if !ok {
+		that2, ok := that.(SetTargetFieldsResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	return true
+}
+func (this *DeleteRequest) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*DeleteRequest)
+	if !ok {
+		that2, ok := that.(DeleteRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	return true
+}
+func (this *DeleteResponse) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*DeleteResponse)
+	if !ok {
+		that2, ok := that.(DeleteResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	return true
+}
 func (this *AddCredentialRequest) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -930,6 +1273,50 @@ func (this *CreateResponse) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *SetTargetFieldsRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 11)
+	s = append(s, "&targets.SetTargetFieldsRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
+	s = append(s, "MachineUUID: "+fmt.Sprintf("%#v", this.MachineUUID)+",\n")
+	s = append(s, "PrimaryIP: "+fmt.Sprintf("%#v", this.PrimaryIP)+",\n")
+	s = append(s, "PublicIP: "+fmt.Sprintf("%#v", this.PublicIP)+",\n")
+	s = append(s, "PrimaryMAC: "+fmt.Sprintf("%#v", this.PrimaryMAC)+",\n")
+	s = append(s, "Hostname: "+fmt.Sprintf("%#v", this.Hostname)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *SetTargetFieldsResponse) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 4)
+	s = append(s, "&targets.SetTargetFieldsResponse{")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *DeleteRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&targets.DeleteRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *DeleteResponse) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 4)
+	s = append(s, "&targets.DeleteResponse{")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func (this *AddCredentialRequest) GoString() string {
 	if this == nil {
 		return "nil"
@@ -983,6 +1370,12 @@ type TargetsClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	//
 	// TODO: @cictrone
+	SetTargetFields(ctx context.Context, in *SetTargetFieldsRequest, opts ...grpc.CallOption) (*SetTargetFieldsResponse, error)
+	//
+	// TODO: @cictrone
+	Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
+	//
+	// TODO: @cictrone
 	AddCredential(ctx context.Context, in *AddCredentialRequest, opts ...grpc.CallOption) (*AddCredentialResponse, error)
 }
 
@@ -1021,6 +1414,24 @@ func (c *targetsClient) Create(ctx context.Context, in *CreateRequest, opts ...g
 	return out, nil
 }
 
+func (c *targetsClient) SetTargetFields(ctx context.Context, in *SetTargetFieldsRequest, opts ...grpc.CallOption) (*SetTargetFieldsResponse, error) {
+	out := new(SetTargetFieldsResponse)
+	err := c.cc.Invoke(ctx, "/targets.Targets/SetTargetFields", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *targetsClient) Delete(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
+	out := new(DeleteResponse)
+	err := c.cc.Invoke(ctx, "/targets.Targets/Delete", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *targetsClient) AddCredential(ctx context.Context, in *AddCredentialRequest, opts ...grpc.CallOption) (*AddCredentialResponse, error) {
 	out := new(AddCredentialResponse)
 	err := c.cc.Invoke(ctx, "/targets.Targets/AddCredential", in, out, opts...)
@@ -1043,6 +1454,12 @@ type TargetsServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	//
 	// TODO: @cictrone
+	SetTargetFields(context.Context, *SetTargetFieldsRequest) (*SetTargetFieldsResponse, error)
+	//
+	// TODO: @cictrone
+	Delete(context.Context, *DeleteRequest) (*DeleteResponse, error)
+	//
+	// TODO: @cictrone
 	AddCredential(context.Context, *AddCredentialRequest) (*AddCredentialResponse, error)
 }
 
@@ -1058,6 +1475,12 @@ func (*UnimplementedTargetsServer) Find(ctx context.Context, req *FindRequest) (
 }
 func (*UnimplementedTargetsServer) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
+}
+func (*UnimplementedTargetsServer) SetTargetFields(ctx context.Context, req *SetTargetFieldsRequest) (*SetTargetFieldsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetTargetFields not implemented")
+}
+func (*UnimplementedTargetsServer) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Delete not implemented")
 }
 func (*UnimplementedTargetsServer) AddCredential(ctx context.Context, req *AddCredentialRequest) (*AddCredentialResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCredential not implemented")
@@ -1121,6 +1544,42 @@ func _Targets_Create_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Targets_SetTargetFields_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetTargetFieldsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TargetsServer).SetTargetFields(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/targets.Targets/SetTargetFields",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TargetsServer).SetTargetFields(ctx, req.(*SetTargetFieldsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Targets_Delete_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeleteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TargetsServer).Delete(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/targets.Targets/Delete",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TargetsServer).Delete(ctx, req.(*DeleteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _Targets_AddCredential_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(AddCredentialRequest)
 	if err := dec(in); err != nil {
@@ -1154,6 +1613,14 @@ var _Targets_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Create",
 			Handler:    _Targets_Create_Handler,
+		},
+		{
+			MethodName: "SetTargetFields",
+			Handler:    _Targets_SetTargetFields_Handler,
+		},
+		{
+			MethodName: "Delete",
+			Handler:    _Targets_Delete_Handler,
 		},
 		{
 			MethodName: "AddCredential",
@@ -1480,6 +1947,150 @@ func (m *CreateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *SetTargetFieldsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SetTargetFieldsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SetTargetFieldsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Hostname) > 0 {
+		i -= len(m.Hostname)
+		copy(dAtA[i:], m.Hostname)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Hostname)))
+		i--
+		dAtA[i] = 0x3a
+	}
+	if len(m.PrimaryMAC) > 0 {
+		i -= len(m.PrimaryMAC)
+		copy(dAtA[i:], m.PrimaryMAC)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PrimaryMAC)))
+		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.PublicIP) > 0 {
+		i -= len(m.PublicIP)
+		copy(dAtA[i:], m.PublicIP)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PublicIP)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.PrimaryIP) > 0 {
+		i -= len(m.PrimaryIP)
+		copy(dAtA[i:], m.PrimaryIP)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.PrimaryIP)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.MachineUUID) > 0 {
+		i -= len(m.MachineUUID)
+		copy(dAtA[i:], m.MachineUUID)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.MachineUUID)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTargets(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.Id != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *SetTargetFieldsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *SetTargetFieldsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *SetTargetFieldsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *DeleteRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DeleteRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeleteRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Id != 0 {
+		i = encodeVarintTargets(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *DeleteResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *DeleteResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *DeleteResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func (m *AddCredentialRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -1663,6 +2274,48 @@ func NewPopulatedCreateResponse(r randyTargets, easy bool) *CreateResponse {
 	if r.Intn(2) == 0 {
 		this.Id *= -1
 	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedSetTargetFieldsRequest(r randyTargets, easy bool) *SetTargetFieldsRequest {
+	this := &SetTargetFieldsRequest{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	this.Name = string(randStringTargets(r))
+	this.MachineUUID = string(randStringTargets(r))
+	this.PrimaryIP = string(randStringTargets(r))
+	this.PublicIP = string(randStringTargets(r))
+	this.PrimaryMAC = string(randStringTargets(r))
+	this.Hostname = string(randStringTargets(r))
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedSetTargetFieldsResponse(r randyTargets, easy bool) *SetTargetFieldsResponse {
+	this := &SetTargetFieldsResponse{}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedDeleteRequest(r randyTargets, easy bool) *DeleteRequest {
+	this := &DeleteRequest{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedDeleteResponse(r randyTargets, easy bool) *DeleteResponse {
+	this := &DeleteResponse{}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1902,6 +2555,72 @@ func (m *CreateResponse) Size() (n int) {
 	return n
 }
 
+func (m *SetTargetFieldsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Id != 0 {
+		n += 1 + sovTargets(uint64(m.Id))
+	}
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.MachineUUID)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PrimaryIP)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PublicIP)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.PrimaryMAC)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	l = len(m.Hostname)
+	if l > 0 {
+		n += 1 + l + sovTargets(uint64(l))
+	}
+	return n
+}
+
+func (m *SetTargetFieldsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *DeleteRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Id != 0 {
+		n += 1 + sovTargets(uint64(m.Id))
+	}
+	return n
+}
+
+func (m *DeleteResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
 func (m *AddCredentialRequest) Size() (n int) {
 	if m == nil {
 		return 0
@@ -2007,6 +2726,50 @@ func (this *CreateResponse) String() string {
 	}
 	s := strings.Join([]string{`&CreateResponse{`,
 		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *SetTargetFieldsRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&SetTargetFieldsRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
+		`MachineUUID:` + fmt.Sprintf("%v", this.MachineUUID) + `,`,
+		`PrimaryIP:` + fmt.Sprintf("%v", this.PrimaryIP) + `,`,
+		`PublicIP:` + fmt.Sprintf("%v", this.PublicIP) + `,`,
+		`PrimaryMAC:` + fmt.Sprintf("%v", this.PrimaryMAC) + `,`,
+		`Hostname:` + fmt.Sprintf("%v", this.Hostname) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *SetTargetFieldsResponse) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&SetTargetFieldsResponse{`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *DeleteRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&DeleteRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *DeleteResponse) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&DeleteResponse{`,
 		`}`,
 	}, "")
 	return s
@@ -3072,6 +3835,448 @@ func (m *CreateResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTargets(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SetTargetFieldsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTargets
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SetTargetFieldsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SetTargetFieldsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field MachineUUID", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.MachineUUID = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PrimaryIP", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PrimaryIP = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PublicIP", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PublicIP = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PrimaryMAC", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.PrimaryMAC = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 7:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Hostname", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTargets
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Hostname = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTargets(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *SetTargetFieldsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTargets
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: SetTargetFieldsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: SetTargetFieldsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTargets(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DeleteRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTargets
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DeleteRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DeleteRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTargets
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTargets(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthTargets
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *DeleteResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTargets
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: DeleteResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: DeleteResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTargets(dAtA[iNdEx:])
