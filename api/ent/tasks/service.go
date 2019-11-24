@@ -76,7 +76,8 @@ func (svc *Service) Find(ctx context.Context, req *FindRequest) (*FindResponse, 
 		Limit(int(limit)).
 		IDsX(ctx)
 
-	return &FindResponse{Ids: castIntArrayToInt64Array(ids)}, nil
+	newOffset := int(offset) + len(ids)
+	return &FindResponse{Ids: castIntArrayToInt64Array(ids), NewOffset: int64(newOffset)}, nil
 }
 
 // Claim is used for claiming a task
@@ -86,7 +87,14 @@ func (svc *Service) Claim(ctx context.Context, req *ClaimRequest) (*ClaimRespons
 	if id == 0 {
 		return nil, errors.New("expected id but none given")
 	}
-	svc.EntClient.Task.GetX(ctx, int(id)).Update().
+
+	task := svc.EntClient.Task.GetX(ctx, int(id))
+
+	if task.ClaimTime.Unix() > 0 {
+		return nil, errors.New("task is already claimed")
+	}
+
+	task.Update().
 		SetClaimTime(time.Now()).
 		SaveX(ctx)
 
