@@ -115,6 +115,63 @@ func (svc *Service) Create(ctx context.Context, req *CreateRequest) (*CreateResp
 	return &CreateResponse{Id: int64(target.ID)}, nil
 }
 
+// SetTargetFields is used for setting some of the fields on an Ent
+// TODO: @cictrone
+func (svc *Service) SetTargetFields(ctx context.Context, req *SetTargetFieldsRequest) (*SetTargetFieldsResponse, error) {
+	id := req.GetId()
+	if id == 0 {
+		return nil, errors.New("expected id but none was given")
+	}
+
+	targetUpdater := svc.EntClient.Target.GetX(ctx, int(id)).Update()
+	name := req.GetName()
+	if name != "" {
+		targetUpdater.SetName(name)
+	}
+	primaryIP := req.GetPrimaryIP()
+	if primaryIP != "" {
+		targetUpdater.SetPrimaryIP(primaryIP)
+	}
+
+	hostname := req.GetHostname()
+	if hostname != "" {
+		targetUpdater.SetHostname(hostname)
+	}
+
+	machineUUID := req.GetMachineUUID()
+	if machineUUID != "" {
+		targetUpdater.SetMachineUUID(machineUUID)
+	}
+
+	primaryMAC := req.GetPrimaryMAC()
+	if primaryMAC != "" {
+		targetUpdater.SetPrimaryMAC(primaryMAC)
+	}
+
+	publicIP := req.GetPublicIP()
+	if publicIP != "" {
+		targetUpdater.SetPublicIP(publicIP)
+	}
+
+	targetUpdater.SaveX(ctx)
+
+	return &SetTargetFieldsResponse{}, nil
+}
+
+// Delete is used for deleting a single Ent given an ID
+// TODO: @cictrone
+func (svc *Service) Delete(ctx context.Context, req *DeleteRequest) (*DeleteResponse, error) {
+	id := req.GetId()
+	if id == 0 {
+		return nil, errors.New("expected id but none was given")
+	}
+
+	svc.EntClient.Target.DeleteOneID(int(id)).
+		ExecX(ctx)
+
+	return &DeleteResponse{}, nil
+}
+
 // AddCredential is used for adding a credential to a target
 // TODO: @cictrone
 func (svc *Service) AddCredential(ctx context.Context, req *AddCredentialRequest) (*AddCredentialResponse, error) {
