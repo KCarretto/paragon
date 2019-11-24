@@ -82,7 +82,8 @@ func (svc *Service) Find(ctx context.Context, req *FindRequest) (*FindResponse, 
 		Limit(int(limit)).
 		IDsX(ctx)
 
-	return &FindResponse{Ids: castIntArrayToInt64Array(ids)}, nil
+	newOffset := int(offset) + len(ids)
+	return &FindResponse{Ids: castIntArrayToInt64Array(ids), NewOffset: int64(newOffset)}, nil
 }
 
 // Create is used for creating an Ent given proper parameters
