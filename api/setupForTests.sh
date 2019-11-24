@@ -14,6 +14,9 @@ curl localhost/api/v1/targets/create -d '{"name": "testTarget2", "primaryIP": "0
 curl localhost/api/v1/targets/create -d '{"name": "testTarget3", "primaryIP": "0.0.0.3", "tags": ["testTag3", "testTag4"]}'
 curl localhost/api/v1/targets/create -d '{"name": "testTarget4", "primaryIP": "0.0.0.4", "tags": ["testTag4", "testTag5"]}'
 
+# update a target
+curl localhost/api/v1/targets/setTargetFields -d '{"id": 12884901892, "name": "newTestTarget4"}'
+
 # add a credentials
 curl localhost/api/v1/targets/addCredential -d '{"targetID": 12884901889, "principal": "root", "secret": "password"}'
 
