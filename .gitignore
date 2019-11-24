@@ -17,3 +17,6 @@ dist/**
 
 # Profile output
 .stats/**
+
+.env
+node_modules
