@@ -57,3 +57,19 @@ func (svc *Service) Find(ctx context.Context, req *FindRequest) (*FindResponse, 
 	newOffset := int(offset) + len(ids)
 	return &FindResponse{Ids: castIntArrayToInt64Array(ids), NewOffset: int64(newOffset)}, nil
 }
+
+// Fail is used for updating the Ent when it fails for an auth challenge
+// TODO: @cictrone
+func (svc *Service) Fail(ctx context.Context, req *FailRequest) (*FailResponse, error) {
+	id := req.GetId()
+	if id == 0 {
+		return nil, errors.New("expected id but none given")
+	}
+	credential := svc.EntClient.Credential.GetX(ctx, int(id)).
+		Update().
+		AddFails(1).
+		SaveX(ctx)
+	return &FailResponse{
+		Fails: int64(credential.Fails),
+	}, nil
+}

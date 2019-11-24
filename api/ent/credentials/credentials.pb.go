@@ -259,6 +259,100 @@ func (m *FindResponse) GetNewOffset() int64 {
 func (*FindResponse) XXX_MessageName() string {
 	return "credentials.FindResponse"
 }
+
+type FailRequest struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
+}
+
+func (m *FailRequest) Reset()      { *m = FailRequest{} }
+func (*FailRequest) ProtoMessage() {}
+func (*FailRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f10b41ff9e8e07a, []int{4}
+}
+func (m *FailRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FailRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FailRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FailRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FailRequest.Merge(m, src)
+}
+func (m *FailRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *FailRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_FailRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FailRequest proto.InternalMessageInfo
+
+func (m *FailRequest) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
+func (*FailRequest) XXX_MessageName() string {
+	return "credentials.FailRequest"
+}
+
+type FailResponse struct {
+	Fails int64 `protobuf:"varint,1,opt,name=fails,proto3" json:"fails,omitempty"`
+}
+
+func (m *FailResponse) Reset()      { *m = FailResponse{} }
+func (*FailResponse) ProtoMessage() {}
+func (*FailResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_9f10b41ff9e8e07a, []int{5}
+}
+func (m *FailResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FailResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FailResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FailResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FailResponse.Merge(m, src)
+}
+func (m *FailResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *FailResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_FailResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FailResponse proto.InternalMessageInfo
+
+func (m *FailResponse) GetFails() int64 {
+	if m != nil {
+		return m.Fails
+	}
+	return 0
+}
+
+func (*FailResponse) XXX_MessageName() string {
+	return "credentials.FailResponse"
+}
 func init() {
 	proto.RegisterType((*FetchRequest)(nil), "credentials.FetchRequest")
 	golang_proto.RegisterType((*FetchRequest)(nil), "credentials.FetchRequest")
@@ -268,38 +362,46 @@ func init() {
 	golang_proto.RegisterType((*FindRequest)(nil), "credentials.FindRequest")
 	proto.RegisterType((*FindResponse)(nil), "credentials.FindResponse")
 	golang_proto.RegisterType((*FindResponse)(nil), "credentials.FindResponse")
+	proto.RegisterType((*FailRequest)(nil), "credentials.FailRequest")
+	golang_proto.RegisterType((*FailRequest)(nil), "credentials.FailRequest")
+	proto.RegisterType((*FailResponse)(nil), "credentials.FailResponse")
+	golang_proto.RegisterType((*FailResponse)(nil), "credentials.FailResponse")
 }
 
 func init() { proto.RegisterFile("credentials.proto", fileDescriptor_9f10b41ff9e8e07a) }
 func init() { golang_proto.RegisterFile("credentials.proto", fileDescriptor_9f10b41ff9e8e07a) }
 
 var fileDescriptor_9f10b41ff9e8e07a = []byte{
-	// 400 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x92, 0xb1, 0xae, 0xd3, 0x30,
-	0x18, 0x85, 0xe3, 0x84, 0x5b, 0xe9, 0xba, 0x17, 0x04, 0xe6, 0x52, 0xa5, 0xa1, 0xfa, 0x55, 0x65,
-	0xea, 0xd4, 0x08, 0xd8, 0x19, 0x00, 0x75, 0x45, 0x0a, 0x0b, 0x12, 0x0b, 0x21, 0x71, 0x82, 0xa5,
-	0x60, 0x87, 0xd8, 0xc0, 0x80, 0x90, 0x10, 0x4f, 0x80, 0xc4, 0x4b, 0xf0, 0x08, 0x8c, 0x8c, 0x65,
-	0xab, 0xc4, 0xd2, 0x91, 0x38, 0x0c, 0x8c, 0x1d, 0x19, 0x51, 0x1c, 0x57, 0x09, 0x52, 0x37, 0x9f,
-	0x73, 0x7e, 0x7d, 0xfe, 0x73, 0x62, 0x7c, 0x23, 0xad, 0x69, 0x46, 0xb9, 0x62, 0x49, 0x29, 0xd7,
-	0x55, 0x2d, 0x94, 0x20, 0xd3, 0x91, 0x15, 0x5c, 0x16, 0xa2, 0x10, 0xc6, 0x8f, 0xba, 0x53, 0x3f,
-	0x12, 0x2c, 0x0a, 0x21, 0x8a, 0x92, 0x46, 0x49, 0xc5, 0xa2, 0x84, 0x73, 0xa1, 0x12, 0xc5, 0x04,
-	0xb7, 0x80, 0x10, 0xf0, 0xc5, 0x86, 0xaa, 0xf4, 0x65, 0x4c, 0x5f, 0xbf, 0xa1, 0x52, 0x91, 0x6b,
-	0xd8, 0x65, 0x99, 0x8f, 0x96, 0x68, 0xe5, 0xc5, 0x2e, 0xcb, 0xc2, 0x67, 0xf8, 0xaa, 0xcd, 0x65,
-	0x25, 0xb8, 0xa4, 0x64, 0x81, 0xcf, 0xab, 0x9a, 0xf1, 0x94, 0x55, 0x49, 0x69, 0xe6, 0xce, 0xe3,
-	0xc1, 0x20, 0x33, 0x3c, 0x91, 0x34, 0xad, 0xa9, 0xf2, 0x5d, 0x13, 0x59, 0x45, 0x2e, 0xf1, 0x59,
-	0x9e, 0xb0, 0x52, 0xfa, 0x9e, 0x21, 0xf7, 0x22, 0x7c, 0x82, 0xa7, 0x1b, 0xc6, 0xb3, 0xe3, 0xdd,
-	0x33, 0x3c, 0xc9, 0x59, 0xa9, 0x68, 0x6d, 0xb9, 0x56, 0x75, 0xbe, 0xc8, 0x73, 0x69, 0xa1, 0x5e,
-	0x6c, 0x55, 0x07, 0x2d, 0xd9, 0x2b, 0xa6, 0x8e, 0x50, 0x23, 0xc2, 0xfb, 0xf8, 0xa2, 0x87, 0xda,
-	0x85, 0xaf, 0x63, 0x8f, 0x65, 0xd2, 0x47, 0x4b, 0x6f, 0xe5, 0xc5, 0xdd, 0xb1, 0xfb, 0x04, 0x4e,
-	0xdf, 0x3d, 0x1e, 0x23, 0x07, 0xe3, 0xee, 0x0f, 0x84, 0xa7, 0x0f, 0x87, 0x56, 0xc9, 0x73, 0x7c,
-	0x66, 0x1a, 0x20, 0xf3, 0xf5, 0xb8, 0xff, 0x71, 0x6b, 0x41, 0x70, 0x2a, 0xea, 0xef, 0x0f, 0x97,
-	0x9f, 0x7e, 0xfe, 0xfe, 0xe2, 0x06, 0xc4, 0x37, 0x7f, 0xe0, 0xed, 0x9d, 0x68, 0x34, 0x1a, 0xbd,
-	0x67, 0xd9, 0x07, 0xf2, 0x14, 0x5f, 0xe9, 0x36, 0x26, 0xfe, 0xff, 0x94, 0xa1, 0x99, 0x60, 0x7e,
-	0x22, 0xb1, 0xf8, 0xdb, 0x06, 0x7f, 0x8b, 0xdc, 0x3c, 0x81, 0x7f, 0xf0, 0x68, 0xd7, 0x80, 0xb3,
-	0x6f, 0xc0, 0x39, 0x34, 0x80, 0xfe, 0x36, 0x80, 0x3e, 0x6a, 0x40, 0x5f, 0x35, 0xa0, 0x6f, 0x1a,
-	0xd0, 0x56, 0x03, 0xda, 0x69, 0x40, 0xbf, 0x34, 0xa0, 0x3f, 0x1a, 0x9c, 0x83, 0x06, 0xf4, 0xb9,
-	0x05, 0xe7, 0x7b, 0x0b, 0x68, 0xdb, 0x02, 0xda, 0xb5, 0xe0, 0xec, 0x5b, 0x70, 0x5e, 0x4c, 0xcc,
-	0x53, 0xb9, 0xf7, 0x2f, 0x00, 0x00, 0xff, 0xff, 0xa0, 0xaa, 0x26, 0x9f, 0x80, 0x02, 0x00, 0x00,
+	// 453 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0xb1, 0x6e, 0xd4, 0x40,
+	0x10, 0x86, 0x3d, 0x76, 0x72, 0x52, 0xe6, 0x0e, 0x04, 0x4b, 0x88, 0x1c, 0x93, 0x8c, 0x4e, 0x86,
+	0x22, 0xa2, 0x88, 0x05, 0x74, 0x14, 0x14, 0x80, 0xae, 0x45, 0x32, 0x0d, 0x12, 0x4d, 0xcc, 0x79,
+	0xef, 0x58, 0xc9, 0x78, 0x8d, 0xbd, 0x40, 0x81, 0x90, 0x10, 0x4f, 0x80, 0xc4, 0x4b, 0x20, 0xf1,
+	0x02, 0x94, 0x94, 0x29, 0x4f, 0xa2, 0x49, 0xc9, 0xd9, 0x14, 0x94, 0x29, 0x29, 0xd1, 0xae, 0x37,
+	0xd8, 0x44, 0xa6, 0xdb, 0x99, 0x7f, 0xf4, 0xed, 0xfe, 0xff, 0x2c, 0x5e, 0x9e, 0x97, 0x3c, 0xe5,
+	0xb9, 0x12, 0x49, 0x56, 0x1d, 0x16, 0xa5, 0x54, 0x92, 0x8d, 0x7b, 0xad, 0x60, 0x7b, 0x29, 0x97,
+	0xd2, 0xf4, 0x23, 0x7d, 0x6a, 0x47, 0x82, 0xbd, 0xa5, 0x94, 0xcb, 0x8c, 0x47, 0x49, 0x21, 0xa2,
+	0x24, 0xcf, 0xa5, 0x4a, 0x94, 0x90, 0xb9, 0x05, 0x84, 0x84, 0x93, 0x19, 0x57, 0xf3, 0xe7, 0x31,
+	0x7f, 0xf9, 0x8a, 0x57, 0x8a, 0x5d, 0x44, 0x57, 0xa4, 0x3e, 0x4c, 0xe1, 0xc0, 0x8b, 0x5d, 0x91,
+	0x86, 0x4f, 0xf1, 0x82, 0xd5, 0xab, 0x42, 0xe6, 0x15, 0x67, 0x7b, 0xb8, 0x55, 0x94, 0x22, 0x9f,
+	0x8b, 0x22, 0xc9, 0xcc, 0xdc, 0x56, 0xdc, 0x35, 0xd8, 0x0e, 0x8e, 0x2a, 0x3e, 0x2f, 0xb9, 0xf2,
+	0x5d, 0x23, 0xd9, 0x8a, 0x6d, 0xe3, 0xe6, 0x22, 0x11, 0x59, 0xe5, 0x7b, 0x86, 0xdc, 0x16, 0xe1,
+	0x63, 0x1c, 0xcf, 0x44, 0x9e, 0x9e, 0xdd, 0xbd, 0x83, 0xa3, 0x85, 0xc8, 0x14, 0x2f, 0x2d, 0xd7,
+	0x56, 0xba, 0x2f, 0x17, 0x8b, 0xca, 0x42, 0xbd, 0xd8, 0x56, 0x1a, 0x9a, 0x89, 0x17, 0x42, 0x9d,
+	0x41, 0x4d, 0x11, 0xde, 0xc3, 0x49, 0x0b, 0xb5, 0x0f, 0xbe, 0x84, 0x9e, 0x48, 0x2b, 0x1f, 0xa6,
+	0xde, 0x81, 0x17, 0xeb, 0xa3, 0xb6, 0x90, 0xf3, 0x37, 0x8f, 0xfa, 0xc8, 0xae, 0x11, 0xee, 0xe3,
+	0x78, 0x96, 0x88, 0xec, 0x7f, 0x81, 0xdc, 0xc0, 0x49, 0x2b, 0x5b, 0xfc, 0x5f, 0x67, 0xd0, 0x73,
+	0x76, 0xfb, 0x8b, 0x8b, 0xe3, 0x07, 0xdd, 0x6a, 0xd8, 0x11, 0x6e, 0x9a, 0x18, 0xd9, 0xee, 0x61,
+	0x7f, 0x89, 0xfd, 0xe8, 0x83, 0x60, 0x48, 0x6a, 0x6f, 0x09, 0xa7, 0x1f, 0xbe, 0xff, 0xfc, 0xe4,
+	0x06, 0xcc, 0x37, 0x6b, 0x7c, 0x7d, 0x2b, 0xea, 0x8d, 0x46, 0x6f, 0x45, 0xfa, 0x8e, 0x3d, 0xc1,
+	0x0d, 0x6d, 0x9b, 0xf9, 0xff, 0x52, 0xba, 0x78, 0x83, 0xdd, 0x01, 0xc5, 0xe2, 0xaf, 0x19, 0xfc,
+	0x55, 0x76, 0x65, 0x00, 0xcf, 0x8e, 0x70, 0x43, 0x3b, 0x3e, 0x4f, 0xee, 0x32, 0x3a, 0x4f, 0xee,
+	0xc5, 0x13, 0x5e, 0x37, 0xe4, 0xfd, 0x70, 0xf0, 0xe1, 0x3a, 0xab, 0xbb, 0x70, 0xf3, 0xfe, 0xc3,
+	0xd5, 0x9a, 0x9c, 0x93, 0x35, 0x39, 0xa7, 0x6b, 0x82, 0xdf, 0x6b, 0x82, 0xf7, 0x35, 0xc1, 0xe7,
+	0x9a, 0xe0, 0x6b, 0x4d, 0x70, 0x5c, 0x13, 0xac, 0x6a, 0x82, 0x1f, 0x35, 0xc1, 0xaf, 0x9a, 0x9c,
+	0xd3, 0x9a, 0xe0, 0x63, 0x43, 0xce, 0xb7, 0x86, 0xe0, 0xb8, 0x21, 0x58, 0x35, 0xe4, 0x9c, 0x34,
+	0xe4, 0x3c, 0x1b, 0x99, 0x1f, 0x7d, 0xe7, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xc3, 0x6f, 0xcb,
+	0x94, 0x27, 0x03, 0x00, 0x00,
 }
 
 func (this *FetchRequest) Equal(that interface{}) bool {
@@ -418,6 +520,54 @@ func (this *FindResponse) Equal(that interface{}) bool {
 	}
 	return true
 }
+func (this *FailRequest) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*FailRequest)
+	if !ok {
+		that2, ok := that.(FailRequest)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Id != that1.Id {
+		return false
+	}
+	return true
+}
+func (this *FailResponse) Equal(that interface{}) bool {
+	if that == nil {
+		return this == nil
+	}
+
+	that1, ok := that.(*FailResponse)
+	if !ok {
+		that2, ok := that.(FailResponse)
+		if ok {
+			that1 = &that2
+		} else {
+			return false
+		}
+	}
+	if that1 == nil {
+		return this == nil
+	} else if this == nil {
+		return false
+	}
+	if this.Fails != that1.Fails {
+		return false
+	}
+	return true
+}
 func (this *FetchRequest) GoString() string {
 	if this == nil {
 		return "nil"
@@ -463,6 +613,26 @@ func (this *FindResponse) GoString() string {
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
+func (this *FailRequest) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&credentials.FailRequest{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
+func (this *FailResponse) GoString() string {
+	if this == nil {
+		return "nil"
+	}
+	s := make([]string, 0, 5)
+	s = append(s, "&credentials.FailResponse{")
+	s = append(s, "Fails: "+fmt.Sprintf("%#v", this.Fails)+",\n")
+	s = append(s, "}")
+	return strings.Join(s, "")
+}
 func valueToGoStringCredentials(v interface{}, typ string) string {
 	rv := reflect.ValueOf(v)
 	if rv.IsNil() {
@@ -490,6 +660,9 @@ type CredentialsClient interface {
 	//
 	// TODO: @cictrone
 	Find(ctx context.Context, in *FindRequest, opts ...grpc.CallOption) (*FindResponse, error)
+	//
+	// TODO: @cictrone
+	Fail(ctx context.Context, in *FailRequest, opts ...grpc.CallOption) (*FailResponse, error)
 }
 
 type credentialsClient struct {
@@ -518,6 +691,15 @@ func (c *credentialsClient) Find(ctx context.Context, in *FindRequest, opts ...g
 	return out, nil
 }
 
+func (c *credentialsClient) Fail(ctx context.Context, in *FailRequest, opts ...grpc.CallOption) (*FailResponse, error) {
+	out := new(FailResponse)
+	err := c.cc.Invoke(ctx, "/credentials.Credentials/Fail", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CredentialsServer is the server API for Credentials service.
 type CredentialsServer interface {
 	//
@@ -526,6 +708,9 @@ type CredentialsServer interface {
 	//
 	// TODO: @cictrone
 	Find(context.Context, *FindRequest) (*FindResponse, error)
+	//
+	// TODO: @cictrone
+	Fail(context.Context, *FailRequest) (*FailResponse, error)
 }
 
 // UnimplementedCredentialsServer can be embedded to have forward compatible implementations.
@@ -537,6 +722,9 @@ func (*UnimplementedCredentialsServer) Fetch(ctx context.Context, req *FetchRequ
 }
 func (*UnimplementedCredentialsServer) Find(ctx context.Context, req *FindRequest) (*FindResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Find not implemented")
+}
+func (*UnimplementedCredentialsServer) Fail(ctx context.Context, req *FailRequest) (*FailResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Fail not implemented")
 }
 
 func RegisterCredentialsServer(s *grpc.Server, srv CredentialsServer) {
@@ -579,6 +767,24 @@ func _Credentials_Find_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Credentials_Fail_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(FailRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CredentialsServer).Fail(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/credentials.Credentials/Fail",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CredentialsServer).Fail(ctx, req.(*FailRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Credentials_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "credentials.Credentials",
 	HandlerType: (*CredentialsServer)(nil),
@@ -590,6 +796,10 @@ var _Credentials_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Find",
 			Handler:    _Credentials_Find_Handler,
+		},
+		{
+			MethodName: "Fail",
+			Handler:    _Credentials_Fail_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -753,6 +963,62 @@ func (m *FindResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *FailRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FailRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FailRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Id != 0 {
+		i = encodeVarintCredentials(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *FailResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FailResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FailResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Fails != 0 {
+		i = encodeVarintCredentials(dAtA, i, uint64(m.Fails))
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintCredentials(dAtA []byte, offset int, v uint64) int {
 	offset -= sovCredentials(v)
 	base := offset
@@ -817,6 +1083,28 @@ func NewPopulatedFindResponse(r randyCredentials, easy bool) *FindResponse {
 	this.NewOffset = int64(r.Int63())
 	if r.Intn(2) == 0 {
 		this.NewOffset *= -1
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedFailRequest(r randyCredentials, easy bool) *FailRequest {
+	this := &FailRequest{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
+	if !easy && r.Intn(10) != 0 {
+	}
+	return this
+}
+
+func NewPopulatedFailResponse(r randyCredentials, easy bool) *FailResponse {
+	this := &FailResponse{}
+	this.Fails = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Fails *= -1
 	}
 	if !easy && r.Intn(10) != 0 {
 	}
@@ -965,6 +1253,30 @@ func (m *FindResponse) Size() (n int) {
 	return n
 }
 
+func (m *FailRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Id != 0 {
+		n += 1 + sovCredentials(uint64(m.Id))
+	}
+	return n
+}
+
+func (m *FailResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Fails != 0 {
+		n += 1 + sovCredentials(uint64(m.Fails))
+	}
+	return n
+}
+
 func sovCredentials(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
@@ -1012,6 +1324,26 @@ func (this *FindResponse) String() string {
 	s := strings.Join([]string{`&FindResponse{`,
 		`Ids:` + fmt.Sprintf("%v", this.Ids) + `,`,
 		`NewOffset:` + fmt.Sprintf("%v", this.NewOffset) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *FailRequest) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&FailRequest{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
+		`}`,
+	}, "")
+	return s
+}
+func (this *FailResponse) String() string {
+	if this == nil {
+		return "nil"
+	}
+	s := strings.Join([]string{`&FailResponse{`,
+		`Fails:` + fmt.Sprintf("%v", this.Fails) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1475,6 +1807,150 @@ func (m *FindResponse) Unmarshal(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.NewOffset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCredentials(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthCredentials
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthCredentials
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FailRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCredentials
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FailRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FailRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredentials
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipCredentials(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthCredentials
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthCredentials
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FailResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowCredentials
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FailResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FailResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Fails", wireType)
+			}
+			m.Fails = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowCredentials
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Fails |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

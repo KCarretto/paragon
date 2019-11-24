@@ -17,6 +17,9 @@ curl localhost/api/v1/targets/create -d '{"name": "testTarget4", "primaryIP": "0
 # add a credentials
 curl localhost/api/v1/targets/addCredential -d '{"targetID": 12884901889, "principal": "root", "secret": "password"}'
 
+# fail a credential
+curl localhost/api/v1/credentials/fail -d '{"id": 1 }'
+
 # make some jerbs
 curl localhost/api/v1/jobs/create -d '{"name": "testJob1", "content": "original1", "tags": []}'
 curl localhost/api/v1/jobs/create -d '{"name": "testJob2", "content": "original2", "tags": ["testTag2", "testTag3"]}'
