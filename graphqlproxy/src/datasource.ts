@@ -6,13 +6,19 @@ export class ParagonAPI extends RESTDataSource {
     this.baseURL = "https://enterurlhere";
   }
 
-  async getAllTargers() {
-    return this.get("targets");
+  async getAllTargers(filter: String, offset: Number, limit: Number) {
+    return this.get("/api/v1/targets", { filter, offset, limit });
   }
 
-  async getATarget(values) {
-    const result = await this.get("target", {
-      values
+  async getATarget(id: Number) {
+    const result = await this.get("/api/v1/targets", {
+      id
     });
+    return result
+  }
+
+  async createTarget(name: String; primaryIP: String; tags: [String]) {
+    const result = await this.get("/api/v1/targets/create", { name, primaryIP, tags })
+    return result
   }
 }
