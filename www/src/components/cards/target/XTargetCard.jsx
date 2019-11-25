@@ -2,42 +2,43 @@ import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Card, Feed, Header, Icon, Label, List, Segment } from 'semantic-ui-react';
+import { Card, Divider, Feed, Header, Icon, Label, List } from 'semantic-ui-react';
 import { XTaskStatus } from '../task';
 
 const XTargetCard = ({ id, name, primaryIP, lastSeen, tags, tasks }) => (
-    <Card>
+    <Card fluid >
         <Card.Content>
-            <Card.Header>{name} </Card.Header>
-            <Label corner='right' size='large' icon='check circle' color='green' />
+            <Card.Header href={'/targets/' + id}>{name} </Card.Header>
+            {
+                moment.unix(lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
+                    <Label corner='right' size='large' icon='times circle' color='red' />
+                    : <Label corner='right' size='large' icon='check circle' color='green' />
+            }
             <Card.Meta>{moment.unix(lastSeen).fromNow()}</Card.Meta>
-            <Segment >
-                <Feed>
-                    <Header sub>Recent Tasks</Header>
-                    {tasks ? tasks.map((task, index) => (
-                        <Feed.Event key={index}>
-                            <Feed.Label>
-                                <Icon fitted size='big' {...XTaskStatus.getStatus(task).icon} />
-                            </Feed.Label>
-                            <Feed.Content>
-                                <Feed.Summary>
-                                    <Link to={'/jobs/' + task.job.id}>
-                                        <List.Header>{task.job.name}
-                                            {/* <Progress color='red' size='small' percent={50} active>In Progress</Progress> */}
-                                        </List.Header>
-                                    </Link>
-                                </Feed.Summary>
-                                <Feed.Extra text>
-                                    {XTaskStatus.getStatus(task).text}
-                                </Feed.Extra>
-                                <Feed.Meta>
-                                    Last Updated: {moment.unix(XTaskStatus.getTimestamp(task)).fromNow()}
-                                </Feed.Meta>
-                            </Feed.Content>
-                        </Feed.Event>
-                    )) : <Header sub disabled>No recent tasks</Header>}
-                </Feed>
-            </Segment>
+            <Feed>
+                <Header sub>Recent Tasks</Header>
+                {tasks ? tasks.map((task, index) => (
+                    <Feed.Event key={index}>
+                        <Feed.Label>
+                            <Icon fitted size='big' {...XTaskStatus.getStatus(task).icon} />
+                        </Feed.Label>
+                        <Feed.Content>
+                            <Feed.Summary>
+                                <Link to={'/jobs/' + task.job.id}><List.Header>{task.job.name}
+                                </List.Header></Link>
+                            </Feed.Summary>
+                            <Feed.Extra text>
+                                {XTaskStatus.getStatus(task).text}
+                            </Feed.Extra>
+                            <Feed.Meta>
+                                Last Updated: {moment.unix(XTaskStatus.getTimestamp(task)).fromNow()}
+                            </Feed.Meta>
+                            <Divider />
+                        </Feed.Content>
+                    </Feed.Event>
+                )) : <Header sub disabled>No recent tasks</Header>}
+            </Feed>
+
         </Card.Content>
         <Card.Content extra>
             <Icon name='tags' /> {tags ? tags.map(tag => tag.name).join(', ') : 'None'}

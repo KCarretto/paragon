@@ -3,12 +3,12 @@ import moment from 'moment';
 const XTaskStatus = {
     // Task is waiting to be retrieved
     QUEUED: {
-        text: 'In Queue',
+        text: 'In the queue, waiting to be claimed for execution.',
         icon: { name: 'wait', color: 'violet' }
     },
     // Task has been sent to a target
     CLAIMED: {
-        text: 'Sent to target',
+        text: 'Sent to target, waiting for execution to begin.',
         icon: { name: 'send', color: 'blue' }
     },
     // Task has begun execution on a target

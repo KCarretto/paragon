@@ -3,9 +3,9 @@ import { Icon } from 'semantic-ui-react';
 
 const routes = [
     {
-        title: 'Dashboard',
-        link: '/dashboard',
-        icon: <Icon name='dashboard' />,
+        title: 'News Feed',
+        link: '/new_feed',
+        icon: <Icon name='newspaper' />,
     },
     {
         title: 'Targets',

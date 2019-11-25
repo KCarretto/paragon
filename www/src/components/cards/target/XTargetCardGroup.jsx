@@ -41,7 +41,7 @@ const XTargetCardGroup = () => {
             id: 1,
             name: 'Team 1 - Web',
             primaryIP: '10.1.1.10',
-            lastSeen: now - 120,
+            lastSeen: now - 20,
             tags: [
                 {
                     id: 10,
@@ -101,7 +101,7 @@ const XTargetCardGroup = () => {
             id: 2,
             name: 'Team 2 - AD',
             primaryIP: '10.2.1.60',
-            lastSeen: now - 624,
+            lastSeen: now - 120,
             tags: [
                 {
                     id: 11,
@@ -161,7 +161,7 @@ const XTargetCardGroup = () => {
     ]
     return (
         <Container fluid style={{ padding: '20px' }}>
-            <Card.Group centered>
+            <Card.Group centered itemsPerRow={4}>
                 <Query query={TARGETS_QUERY}>
                     {() => targets.map((target) => <XTargetCard key={target.id} {...target} />)}
                 </Query>
