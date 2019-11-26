@@ -1,18 +1,31 @@
+interface setTargetFieldsInput {
+  id: Number;
+  name: String;
+  machineUUID: String;
+  primaryIP: String;
+  publicIP: String;
+  primaryMAC: String;
+  hostname: String;
+}
+
 export default {
   Query: {
     testMessage: (): string => "Hello World!",
     targets: (
-      root,
+      root: any,
       { filter, offset, limit }: { filter: String; offset: Number; limit: Number },
-      { dataSources }
+      { dataSources }: any
     ) => dataSources.paragonAPI.getAllTargets(filter, offset, limit),
-    target: (root, { id }: { id: Number }, { dataSources }) => dataSources.paragonAPI.getTarget(id)
+    target: (root: any, { id }: { id: Number }, { dataSources }: any) =>
+      dataSources.paragonAPI.getTarget(id)
   },
   Mutation: {
     createTarget: (
-      root,
+      root: any,
       { name, primaryIP, tags }: { name: String; primaryIP: String; tags: [String] },
-      { dataSources }
-    ) => dataSources.paragonAPI.createTarget(name, primaryIP, tags)
+      { dataSources }: any
+    ) => dataSources.paragonAPI.createTarget(name, primaryIP, tags),
+    setTargetFields: (root: any, args: setTargetFieldsInput, { dataSources }: any) =>
+      dataSources.paragonAPI.setTargetFields(args)
   }
 };
