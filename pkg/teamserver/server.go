@@ -9,11 +9,13 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/kcarretto/paragon/api/ent/credentials"
 	"github.com/kcarretto/paragon/api/ent/jobs"
 	"github.com/kcarretto/paragon/api/ent/tags"
 	"github.com/kcarretto/paragon/api/ent/targets"
 	"github.com/kcarretto/paragon/api/ent/tasks"
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/pkg/middleware"
 )
 
 // Server handles c2 messages and replies with new tasks for the c2 to send out.
@@ -71,11 +73,19 @@ func (srv *Server) Run() {
 		panic(err)
 	}
 
+	credentialSVC := &credentials.Service{
+		EntClient: srv.EntClient,
+	}
+	if err := credentials.RegisterCredentialsHandlerServer(ctx, svcRouter, credentialSVC); err != nil {
+		panic(err)
+	}
+
 	router := http.NewServeMux()
+
 	router.Handle("/api/v1/", svcRouter)
 	router.HandleFunc("/status", srv.handleStatus)
 
-	if err := http.ListenAndServe("0.0.0.0:80", router); err != nil {
+	if err := http.ListenAndServe("0.0.0.0:80", middleware.Chain(router, middleware.WithPanicHandling)); err != nil {
 		panic(err)
 	}
 }
