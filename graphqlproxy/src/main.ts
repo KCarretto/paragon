@@ -10,7 +10,7 @@ const server = new ApolloServer({
   introspection: environment.apollo.introspection,
   playground: environment.apollo.playground,
   dataSources: () => ({
-    paragonApi: new ParagonAPI()
+    paragonAPI: new ParagonAPI()
   })
 });
 

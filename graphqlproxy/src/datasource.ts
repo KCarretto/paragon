@@ -3,10 +3,10 @@ import { RESTDataSource } from "apollo-datasource-rest";
 export class ParagonAPI extends RESTDataSource {
   constructor() {
     super();
-    this.baseURL = "https://enterurlhere";
+    this.baseURL = "http://127.0.0.1:80";
   }
 
-  async getAllTargers(filter: String, offset: Number, limit: Number) {
+  async getAllTargets(filter: String, offset: Number, limit: Number) {
     return this.get("/api/v1/targets", { filter, offset, limit });
   }
 
