@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "builddev": "NODE_ENV=development webpack --config webpack.$NODE_ENV.js",
+    "builddev": "NODE_ENV=development && webpack --config webpack.$NODE_ENV.js",
     "build": "webpack --config webpack.$NODE_ENV.js",
     "start": "node dist/server",
     "start:env": "node --require dotenv/config dist/server"
