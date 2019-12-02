@@ -49,7 +49,7 @@ service Tags {
      */
     rpc Find(FindRequest) returns (FindResponse) {
         option (google.api.http) = {
-            get: "/api/v1/tags/find"
+            get: "/api/v1/tags"
         };
     }
 
@@ -66,9 +66,9 @@ service Tags {
     /*
      * TODO: @cictrone
      */
-    rpc Apply(ApplyRequest) returns (ApplyResponse) {
+    rpc ApplyToTask(ApplyRequest) returns (ApplyResponse) {
         option (google.api.http) = {
-            post: "/api/v1/tags/apply"
+            post: "/api/v1/tags/applyToTask"
             body: "*"
         };
     }
@@ -76,9 +76,49 @@ service Tags {
     /*
      * TODO: @cictrone
      */
-     rpc Remove(RemoveRequest) returns (RemoveResponse) {
+     rpc ApplyToTarget(ApplyRequest) returns (ApplyResponse) {
         option (google.api.http) = {
-            post: "/api/v1/tags/remove"
+            post: "/api/v1/tags/applyToTarget"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+     rpc ApplyToJob(ApplyRequest) returns (ApplyResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/tags/applyToJob"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+     rpc RemoveFromTask(RemoveRequest) returns (RemoveResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/tags/removeFromTask"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+     rpc RemoveFromTarget(RemoveRequest) returns (RemoveResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/tags/removeFromTarget"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+     rpc RemoveFromJob(RemoveRequest) returns (RemoveResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/tags/removeFromJob"
             body: "*"
         };
     }
@@ -88,19 +128,35 @@ service Tags {
 message FetchRequest {
     int64 id = 1;
 }
-message FetchResponse {}
+message FetchResponse {
+    string name = 1;
+}
 
 message FindRequest {
     string filter = 1;
+    int64 offset = 2;
+    int64 limit = 3;
 }
-message FindResponse {}
+message FindResponse {
+    repeated int64 ids = 1;
+    int64 newOffset = 2;
+}
 
+message CreateRequest {
+    string name = 1;
+}
+message CreateResponse {
+    int64 id = 1;
+}
 
-message CreateRequest {}
-message CreateResponse {}
-
-message ApplyRequest {}
+message ApplyRequest {
+    int64 tagId = 1;
+    int64 entId = 2;
+}
 message ApplyResponse {}
 
-message RemoveRequest {}
+message RemoveRequest {
+    int64 tagId = 1;
+    int64 entId = 2;
+}
 message RemoveResponse {}

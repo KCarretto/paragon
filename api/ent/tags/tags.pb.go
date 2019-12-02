@@ -80,6 +80,7 @@ func (*FetchRequest) XXX_MessageName() string {
 }
 
 type FetchResponse struct {
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func (m *FetchResponse) Reset()      { *m = FetchResponse{} }
@@ -114,12 +115,21 @@ func (m *FetchResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FetchResponse proto.InternalMessageInfo
 
+func (m *FetchResponse) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func (*FetchResponse) XXX_MessageName() string {
 	return "tags.FetchResponse"
 }
 
 type FindRequest struct {
 	Filter string `protobuf:"bytes,1,opt,name=filter,proto3" json:"filter,omitempty"`
+	Offset int64  `protobuf:"varint,2,opt,name=offset,proto3" json:"offset,omitempty"`
+	Limit  int64  `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 }
 
 func (m *FindRequest) Reset()      { *m = FindRequest{} }
@@ -161,11 +171,27 @@ func (m *FindRequest) GetFilter() string {
 	return ""
 }
 
+func (m *FindRequest) GetOffset() int64 {
+	if m != nil {
+		return m.Offset
+	}
+	return 0
+}
+
+func (m *FindRequest) GetLimit() int64 {
+	if m != nil {
+		return m.Limit
+	}
+	return 0
+}
+
 func (*FindRequest) XXX_MessageName() string {
 	return "tags.FindRequest"
 }
 
 type FindResponse struct {
+	Ids       []int64 `protobuf:"varint,1,rep,packed,name=ids,proto3" json:"ids,omitempty"`
+	NewOffset int64   `protobuf:"varint,2,opt,name=newOffset,proto3" json:"newOffset,omitempty"`
 }
 
 func (m *FindResponse) Reset()      { *m = FindResponse{} }
@@ -200,11 +226,26 @@ func (m *FindResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_FindResponse proto.InternalMessageInfo
 
+func (m *FindResponse) GetIds() []int64 {
+	if m != nil {
+		return m.Ids
+	}
+	return nil
+}
+
+func (m *FindResponse) GetNewOffset() int64 {
+	if m != nil {
+		return m.NewOffset
+	}
+	return 0
+}
+
 func (*FindResponse) XXX_MessageName() string {
 	return "tags.FindResponse"
 }
 
 type CreateRequest struct {
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 }
 
 func (m *CreateRequest) Reset()      { *m = CreateRequest{} }
@@ -239,11 +280,19 @@ func (m *CreateRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CreateRequest proto.InternalMessageInfo
 
+func (m *CreateRequest) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 func (*CreateRequest) XXX_MessageName() string {
 	return "tags.CreateRequest"
 }
 
 type CreateResponse struct {
+	Id int64 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
 }
 
 func (m *CreateResponse) Reset()      { *m = CreateResponse{} }
@@ -278,11 +327,20 @@ func (m *CreateResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_CreateResponse proto.InternalMessageInfo
 
+func (m *CreateResponse) GetId() int64 {
+	if m != nil {
+		return m.Id
+	}
+	return 0
+}
+
 func (*CreateResponse) XXX_MessageName() string {
 	return "tags.CreateResponse"
 }
 
 type ApplyRequest struct {
+	TagId int64 `protobuf:"varint,1,opt,name=tagId,proto3" json:"tagId,omitempty"`
+	EntId int64 `protobuf:"varint,2,opt,name=entId,proto3" json:"entId,omitempty"`
 }
 
 func (m *ApplyRequest) Reset()      { *m = ApplyRequest{} }
@@ -316,6 +374,20 @@ func (m *ApplyRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_ApplyRequest proto.InternalMessageInfo
+
+func (m *ApplyRequest) GetTagId() int64 {
+	if m != nil {
+		return m.TagId
+	}
+	return 0
+}
+
+func (m *ApplyRequest) GetEntId() int64 {
+	if m != nil {
+		return m.EntId
+	}
+	return 0
+}
 
 func (*ApplyRequest) XXX_MessageName() string {
 	return "tags.ApplyRequest"
@@ -361,6 +433,8 @@ func (*ApplyResponse) XXX_MessageName() string {
 }
 
 type RemoveRequest struct {
+	TagId int64 `protobuf:"varint,1,opt,name=tagId,proto3" json:"tagId,omitempty"`
+	EntId int64 `protobuf:"varint,2,opt,name=entId,proto3" json:"entId,omitempty"`
 }
 
 func (m *RemoveRequest) Reset()      { *m = RemoveRequest{} }
@@ -394,6 +468,20 @@ func (m *RemoveRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_RemoveRequest proto.InternalMessageInfo
+
+func (m *RemoveRequest) GetTagId() int64 {
+	if m != nil {
+		return m.TagId
+	}
+	return 0
+}
+
+func (m *RemoveRequest) GetEntId() int64 {
+	if m != nil {
+		return m.EntId
+	}
+	return 0
+}
 
 func (*RemoveRequest) XXX_MessageName() string {
 	return "tags.RemoveRequest"
@@ -464,34 +552,46 @@ func init() { proto.RegisterFile("tags.proto", fileDescriptor_e7d9cbcae1e528f6) 
 func init() { golang_proto.RegisterFile("tags.proto", fileDescriptor_e7d9cbcae1e528f6) }
 
 var fileDescriptor_e7d9cbcae1e528f6 = []byte{
-	// 427 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x7c, 0x92, 0x3f, 0x8b, 0xd4, 0x40,
-	0x18, 0xc6, 0x33, 0x7b, 0x7b, 0x01, 0x5f, 0x77, 0xb3, 0xde, 0xec, 0xa1, 0x67, 0xd0, 0x17, 0x09,
-	0x08, 0x72, 0xc5, 0x05, 0xb5, 0xbb, 0xce, 0x3f, 0x1c, 0x82, 0x85, 0x90, 0xf5, 0x0b, 0xc4, 0xcd,
-	0x6c, 0x0c, 0xac, 0x99, 0x98, 0x8c, 0x0b, 0x22, 0x82, 0xf8, 0x09, 0x04, 0x1b, 0x3f, 0x82, 0x1f,
-	0xc1, 0xd2, 0x72, 0xcb, 0x05, 0x9b, 0x2d, 0xcd, 0xc4, 0xc2, 0x72, 0x4b, 0x4b, 0xc9, 0x64, 0x86,
-	0xcd, 0x14, 0xda, 0xcd, 0x3c, 0xf3, 0xbc, 0x3f, 0xde, 0xe7, 0x61, 0x00, 0x44, 0x9c, 0x56, 0x67,
-	0x45, 0xc9, 0x05, 0xa7, 0xc3, 0xf6, 0xec, 0x1f, 0xa7, 0x3c, 0xe5, 0x4a, 0x08, 0xdb, 0x53, 0xf7,
-	0xe6, 0xdf, 0x48, 0x39, 0x4f, 0x97, 0x2c, 0x8c, 0x8b, 0x2c, 0x8c, 0xf3, 0x9c, 0x8b, 0x58, 0x64,
-	0x3c, 0xd7, 0x93, 0x01, 0xc2, 0xe8, 0x82, 0x89, 0xf9, 0xcb, 0x88, 0xbd, 0x7e, 0xc3, 0x2a, 0x41,
-	0x3d, 0x18, 0x64, 0xc9, 0x09, 0xb9, 0x45, 0xee, 0x1c, 0x44, 0x83, 0x2c, 0x09, 0x26, 0x30, 0xd6,
-	0xef, 0x55, 0xc1, 0xf3, 0x8a, 0x05, 0xb7, 0xe1, 0xf2, 0x45, 0x96, 0x27, 0xc6, 0x7f, 0x15, 0xdc,
-	0x45, 0xb6, 0x14, 0xac, 0x54, 0x33, 0x97, 0x22, 0x7d, 0x0b, 0x3c, 0x18, 0x75, 0x36, 0x3d, 0x36,
-	0x81, 0xf1, 0xa3, 0x92, 0xc5, 0x82, 0xe9, 0xc1, 0xe0, 0x0a, 0x78, 0x46, 0xd0, 0x16, 0x0f, 0x46,
-	0x0f, 0x8a, 0x62, 0xf9, 0xd6, 0x38, 0x26, 0x30, 0xd6, 0xf7, 0x3d, 0x23, 0x62, 0xaf, 0xf8, 0xaa,
-	0xcf, 0x30, 0x42, 0x67, 0xb9, 0xf7, 0xe5, 0x00, 0x86, 0xcf, 0xe3, 0xb4, 0xa2, 0x4f, 0xe1, 0x50,
-	0xed, 0x4d, 0xe9, 0x99, 0xea, 0xa9, 0x1f, 0xd2, 0x9f, 0x5a, 0x9a, 0xa6, 0x5f, 0xff, 0xf8, 0xe3,
-	0xd7, 0xe7, 0xc1, 0x94, 0x1e, 0xa9, 0xa6, 0x56, 0x77, 0xc3, 0xd6, 0x13, 0xbe, 0xcb, 0x92, 0xf7,
-	0xf4, 0x09, 0x0c, 0xdb, 0x30, 0xf4, 0x48, 0xcf, 0xed, 0xf3, 0xfb, 0xb4, 0x2f, 0xfd, 0x97, 0xb4,
-	0x68, 0x09, 0x33, 0x70, 0xbb, 0xd4, 0x54, 0xef, 0x60, 0x95, 0xe2, 0x1f, 0xdb, 0xa2, 0xe6, 0xa1,
-	0xe2, 0x9d, 0x04, 0x53, 0x8b, 0x37, 0x57, 0xa6, 0x73, 0x72, 0x4a, 0x9f, 0xc1, 0xa1, 0x2a, 0xca,
-	0x64, 0xed, 0xb7, 0x68, 0xb2, 0xda, 0x4d, 0xde, 0x54, 0xc4, 0x6b, 0x01, 0xb5, 0x88, 0x71, 0xeb,
-	0x69, 0x81, 0x33, 0x70, 0xbb, 0x5e, 0xcd, 0x96, 0x56, 0xed, 0x66, 0x4b, 0xbb, 0xfa, 0x7f, 0x6c,
-	0x59, 0x2a, 0xd3, 0x39, 0x39, 0x7d, 0xf8, 0x78, 0x53, 0xa3, 0xb3, 0xad, 0xd1, 0xd9, 0xd5, 0x48,
-	0xfe, 0xd4, 0x48, 0x3e, 0x48, 0x24, 0x5f, 0x25, 0x92, 0x6f, 0x12, 0xc9, 0x5a, 0x22, 0xd9, 0x48,
-	0x24, 0x3f, 0x25, 0x92, 0xdf, 0x12, 0x9d, 0x9d, 0x44, 0xf2, 0xa9, 0x41, 0xe7, 0x7b, 0x83, 0x64,
-	0xdd, 0x20, 0xd9, 0x34, 0xe8, 0x6c, 0x1b, 0x74, 0x5e, 0xb8, 0xea, 0xdb, 0xde, 0xff, 0x1b, 0x00,
-	0x00, 0xff, 0xff, 0x1b, 0x1a, 0x41, 0x47, 0xfe, 0x02, 0x00, 0x00,
+	// 615 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x94, 0x41, 0x6b, 0x13, 0x41,
+	0x14, 0xc7, 0x77, 0x92, 0x34, 0xd0, 0xd7, 0x34, 0xb6, 0xd3, 0xa0, 0xeb, 0x9a, 0x8e, 0x61, 0x8a,
+	0x12, 0x7a, 0x68, 0x50, 0x6f, 0x11, 0x04, 0xad, 0x04, 0x5a, 0x0f, 0x42, 0x9a, 0x8b, 0x78, 0x90,
+	0x4d, 0x76, 0xb2, 0x2e, 0x26, 0x3b, 0x71, 0x77, 0xac, 0x88, 0x08, 0xe2, 0x27, 0x10, 0xfc, 0x12,
+	0x7e, 0x03, 0x3d, 0x7a, 0xec, 0x31, 0xe0, 0xa5, 0x47, 0xb3, 0xf1, 0xe0, 0xb1, 0x47, 0x8f, 0x32,
+	0xb3, 0x33, 0x64, 0x57, 0x22, 0xb4, 0xde, 0x66, 0xfe, 0xfb, 0xe6, 0xf7, 0x7f, 0xf3, 0x7f, 0x93,
+	0x00, 0x08, 0xd7, 0x8f, 0xf7, 0x26, 0x11, 0x17, 0x1c, 0x97, 0xe4, 0xda, 0xa9, 0xf9, 0xdc, 0xe7,
+	0x4a, 0x68, 0xc9, 0x55, 0xfa, 0xcd, 0xa9, 0xfb, 0x9c, 0xfb, 0x23, 0xd6, 0x72, 0x27, 0x41, 0xcb,
+	0x0d, 0x43, 0x2e, 0x5c, 0x11, 0xf0, 0x50, 0x9f, 0xa4, 0x04, 0x2a, 0x1d, 0x26, 0x06, 0xcf, 0xbb,
+	0xec, 0xe5, 0x2b, 0x16, 0x0b, 0x5c, 0x85, 0x42, 0xe0, 0xd9, 0xa8, 0x81, 0x9a, 0xc5, 0x6e, 0x21,
+	0xf0, 0xe8, 0x0e, 0xac, 0xeb, 0xef, 0xf1, 0x84, 0x87, 0x31, 0xc3, 0x18, 0x4a, 0xa1, 0x3b, 0x66,
+	0xaa, 0x64, 0xb5, 0xab, 0xd6, 0xf4, 0x08, 0xd6, 0x3a, 0x41, 0xe8, 0x19, 0xc6, 0x65, 0x28, 0x0f,
+	0x83, 0x91, 0x60, 0x91, 0x2e, 0xd2, 0x3b, 0xa9, 0xf3, 0xe1, 0x30, 0x66, 0xc2, 0x2e, 0x28, 0xbe,
+	0xde, 0xe1, 0x1a, 0xac, 0x8c, 0x82, 0x71, 0x20, 0xec, 0xa2, 0x92, 0xd3, 0x0d, 0xbd, 0x07, 0x95,
+	0x14, 0xaa, 0x8d, 0x37, 0xa0, 0x18, 0x78, 0xb1, 0x8d, 0x1a, 0xc5, 0x66, 0xb1, 0x2b, 0x97, 0xb8,
+	0x0e, 0xab, 0x21, 0x7b, 0xfd, 0x38, 0x8b, 0x5c, 0x08, 0xb2, 0xf3, 0xfd, 0x88, 0xb9, 0x82, 0x99,
+	0xb6, 0x96, 0x75, 0xde, 0x80, 0xaa, 0x29, 0xd2, 0x36, 0x7f, 0x07, 0xd0, 0x86, 0xca, 0xfd, 0xc9,
+	0x64, 0xf4, 0xc6, 0x50, 0x6a, 0xb0, 0x22, 0x5c, 0xff, 0xc0, 0x94, 0xa4, 0x1b, 0xa9, 0xb2, 0x50,
+	0x1c, 0x78, 0xba, 0x8d, 0x74, 0x43, 0x2f, 0xc1, 0xba, 0x3e, 0x9b, 0xc2, 0xe9, 0x5d, 0x58, 0xef,
+	0xb2, 0x31, 0x3f, 0x66, 0xff, 0x43, 0xdb, 0x80, 0xaa, 0x39, 0x9c, 0xe2, 0x6e, 0x7f, 0x29, 0x43,
+	0xa9, 0xe7, 0xfa, 0x31, 0x7e, 0x04, 0x2b, 0x6a, 0x4a, 0x18, 0xef, 0xa9, 0x57, 0x91, 0x1d, 0xa9,
+	0xb3, 0x95, 0xd3, 0x74, 0x27, 0x57, 0x3f, 0x7c, 0xff, 0xf9, 0xa9, 0xb0, 0x85, 0x37, 0xd5, 0xbb,
+	0x38, 0xbe, 0xd5, 0x92, 0x35, 0xad, 0xb7, 0x81, 0xf7, 0x0e, 0xef, 0x43, 0x49, 0x06, 0x8f, 0x37,
+	0xf5, 0xb9, 0xc5, 0x64, 0x1d, 0x9c, 0x95, 0x34, 0xa9, 0xa6, 0x48, 0x55, 0x5c, 0xc9, 0x92, 0xf0,
+	0x11, 0x94, 0xd3, 0x60, 0xb1, 0xb6, 0xcf, 0xcd, 0xc2, 0xa9, 0xe5, 0x45, 0x8d, 0x22, 0x0a, 0x65,
+	0xd3, 0xad, 0x5c, 0x53, 0x03, 0x55, 0xd4, 0x46, 0xbb, 0xf8, 0x29, 0xac, 0xa9, 0x3c, 0x7b, 0xbc,
+	0xe7, 0xc6, 0x2f, 0xcc, 0x65, 0xb3, 0xe3, 0x31, 0x97, 0xcd, 0xc7, 0xbe, 0xa3, 0xb8, 0xdb, 0xd4,
+	0xce, 0x71, 0xdd, 0x05, 0x4a, 0xc2, 0x9f, 0xe9, 0x61, 0x49, 0x25, 0xf2, 0x99, 0x38, 0x3f, 0xfe,
+	0x86, 0xc2, 0x5f, 0xa7, 0xce, 0x72, 0xbc, 0x84, 0x49, 0x83, 0x27, 0x00, 0xda, 0xe0, 0x90, 0xf7,
+	0xcf, 0x4f, 0xa7, 0x8a, 0x5e, 0xa7, 0x57, 0x96, 0xd1, 0x0f, 0x79, 0x5f, 0xa2, 0x07, 0xe6, 0x69,
+	0x74, 0x22, 0x3e, 0x56, 0xd9, 0x68, 0x54, 0xee, 0xb5, 0x99, 0xd4, 0xf3, 0xaf, 0x88, 0xde, 0x54,
+	0x06, 0x0d, 0x7a, 0x2d, 0x67, 0x10, 0xe5, 0x78, 0xd2, 0xc4, 0x87, 0x8d, 0xac, 0x89, 0xca, 0xe8,
+	0x02, 0x36, 0x4d, 0x65, 0x43, 0xe9, 0xf6, 0x3f, 0x6d, 0x4c, 0x50, 0xae, 0xf9, 0x95, 0x48, 0x59,
+	0x66, 0x75, 0x01, 0x97, 0xe5, 0xb3, 0x88, 0xb2, 0xb8, 0x36, 0xda, 0x7d, 0xf0, 0x70, 0x3a, 0x23,
+	0xd6, 0xe9, 0x8c, 0x58, 0x67, 0x33, 0x82, 0x7e, 0xcf, 0x08, 0x7a, 0x9f, 0x10, 0xf4, 0x39, 0x21,
+	0xe8, 0x6b, 0x42, 0xd0, 0x49, 0x42, 0xd0, 0x34, 0x21, 0xe8, 0x47, 0x42, 0xd0, 0xaf, 0x84, 0x58,
+	0x67, 0x09, 0x41, 0x1f, 0xe7, 0xc4, 0xfa, 0x36, 0x27, 0xe8, 0x64, 0x4e, 0xd0, 0x74, 0x4e, 0xac,
+	0xd3, 0x39, 0xb1, 0xfa, 0x65, 0xf5, 0x1f, 0x7a, 0xe7, 0x4f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x60,
+	0x3a, 0xf4, 0xa0, 0x8b, 0x05, 0x00, 0x00,
 }
 
 func (this *FetchRequest) Equal(that interface{}) bool {
@@ -537,6 +637,9 @@ func (this *FetchResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
 	return true
 }
 func (this *FindRequest) Equal(that interface{}) bool {
@@ -561,6 +664,12 @@ func (this *FindRequest) Equal(that interface{}) bool {
 	if this.Filter != that1.Filter {
 		return false
 	}
+	if this.Offset != that1.Offset {
+		return false
+	}
+	if this.Limit != that1.Limit {
+		return false
+	}
 	return true
 }
 func (this *FindResponse) Equal(that interface{}) bool {
@@ -580,6 +689,17 @@ func (this *FindResponse) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
+		return false
+	}
+	if len(this.Ids) != len(that1.Ids) {
+		return false
+	}
+	for i := range this.Ids {
+		if this.Ids[i] != that1.Ids[i] {
+			return false
+		}
+	}
+	if this.NewOffset != that1.NewOffset {
 		return false
 	}
 	return true
@@ -603,6 +723,9 @@ func (this *CreateRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
 	return true
 }
 func (this *CreateResponse) Equal(that interface{}) bool {
@@ -624,6 +747,9 @@ func (this *CreateResponse) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.Id != that1.Id {
+		return false
+	}
 	return true
 }
 func (this *ApplyRequest) Equal(that interface{}) bool {
@@ -643,6 +769,12 @@ func (this *ApplyRequest) Equal(that interface{}) bool {
 	if that1 == nil {
 		return this == nil
 	} else if this == nil {
+		return false
+	}
+	if this.TagId != that1.TagId {
+		return false
+	}
+	if this.EntId != that1.EntId {
 		return false
 	}
 	return true
@@ -687,6 +819,12 @@ func (this *RemoveRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
+	if this.TagId != that1.TagId {
+		return false
+	}
+	if this.EntId != that1.EntId {
+		return false
+	}
 	return true
 }
 func (this *RemoveResponse) Equal(that interface{}) bool {
@@ -724,8 +862,9 @@ func (this *FetchResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&tags.FetchResponse{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -733,9 +872,11 @@ func (this *FindRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 5)
+	s := make([]string, 0, 7)
 	s = append(s, "&tags.FindRequest{")
 	s = append(s, "Filter: "+fmt.Sprintf("%#v", this.Filter)+",\n")
+	s = append(s, "Offset: "+fmt.Sprintf("%#v", this.Offset)+",\n")
+	s = append(s, "Limit: "+fmt.Sprintf("%#v", this.Limit)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -743,8 +884,10 @@ func (this *FindResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 6)
 	s = append(s, "&tags.FindResponse{")
+	s = append(s, "Ids: "+fmt.Sprintf("%#v", this.Ids)+",\n")
+	s = append(s, "NewOffset: "+fmt.Sprintf("%#v", this.NewOffset)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -752,8 +895,9 @@ func (this *CreateRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&tags.CreateRequest{")
+	s = append(s, "Name: "+fmt.Sprintf("%#v", this.Name)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -761,8 +905,9 @@ func (this *CreateResponse) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 5)
 	s = append(s, "&tags.CreateResponse{")
+	s = append(s, "Id: "+fmt.Sprintf("%#v", this.Id)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -770,8 +915,10 @@ func (this *ApplyRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 6)
 	s = append(s, "&tags.ApplyRequest{")
+	s = append(s, "TagId: "+fmt.Sprintf("%#v", this.TagId)+",\n")
+	s = append(s, "EntId: "+fmt.Sprintf("%#v", this.EntId)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -788,8 +935,10 @@ func (this *RemoveRequest) GoString() string {
 	if this == nil {
 		return "nil"
 	}
-	s := make([]string, 0, 4)
+	s := make([]string, 0, 6)
 	s = append(s, "&tags.RemoveRequest{")
+	s = append(s, "TagId: "+fmt.Sprintf("%#v", this.TagId)+",\n")
+	s = append(s, "EntId: "+fmt.Sprintf("%#v", this.EntId)+",\n")
 	s = append(s, "}")
 	return strings.Join(s, "")
 }
@@ -834,10 +983,22 @@ type TagsClient interface {
 	Create(ctx context.Context, in *CreateRequest, opts ...grpc.CallOption) (*CreateResponse, error)
 	//
 	// TODO: @cictrone
-	Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error)
+	ApplyToTask(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error)
 	//
 	// TODO: @cictrone
-	Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error)
+	ApplyToTarget(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error)
+	//
+	// TODO: @cictrone
+	ApplyToJob(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error)
+	//
+	// TODO: @cictrone
+	RemoveFromTask(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error)
+	//
+	// TODO: @cictrone
+	RemoveFromTarget(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error)
+	//
+	// TODO: @cictrone
+	RemoveFromJob(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error)
 }
 
 type tagsClient struct {
@@ -875,18 +1036,54 @@ func (c *tagsClient) Create(ctx context.Context, in *CreateRequest, opts ...grpc
 	return out, nil
 }
 
-func (c *tagsClient) Apply(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error) {
+func (c *tagsClient) ApplyToTask(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error) {
 	out := new(ApplyResponse)
-	err := c.cc.Invoke(ctx, "/tags.Tags/Apply", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tags.Tags/ApplyToTask", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *tagsClient) Remove(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error) {
+func (c *tagsClient) ApplyToTarget(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error) {
+	out := new(ApplyResponse)
+	err := c.cc.Invoke(ctx, "/tags.Tags/ApplyToTarget", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tagsClient) ApplyToJob(ctx context.Context, in *ApplyRequest, opts ...grpc.CallOption) (*ApplyResponse, error) {
+	out := new(ApplyResponse)
+	err := c.cc.Invoke(ctx, "/tags.Tags/ApplyToJob", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tagsClient) RemoveFromTask(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error) {
 	out := new(RemoveResponse)
-	err := c.cc.Invoke(ctx, "/tags.Tags/Remove", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/tags.Tags/RemoveFromTask", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tagsClient) RemoveFromTarget(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error) {
+	out := new(RemoveResponse)
+	err := c.cc.Invoke(ctx, "/tags.Tags/RemoveFromTarget", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *tagsClient) RemoveFromJob(ctx context.Context, in *RemoveRequest, opts ...grpc.CallOption) (*RemoveResponse, error) {
+	out := new(RemoveResponse)
+	err := c.cc.Invoke(ctx, "/tags.Tags/RemoveFromJob", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -906,10 +1103,22 @@ type TagsServer interface {
 	Create(context.Context, *CreateRequest) (*CreateResponse, error)
 	//
 	// TODO: @cictrone
-	Apply(context.Context, *ApplyRequest) (*ApplyResponse, error)
+	ApplyToTask(context.Context, *ApplyRequest) (*ApplyResponse, error)
 	//
 	// TODO: @cictrone
-	Remove(context.Context, *RemoveRequest) (*RemoveResponse, error)
+	ApplyToTarget(context.Context, *ApplyRequest) (*ApplyResponse, error)
+	//
+	// TODO: @cictrone
+	ApplyToJob(context.Context, *ApplyRequest) (*ApplyResponse, error)
+	//
+	// TODO: @cictrone
+	RemoveFromTask(context.Context, *RemoveRequest) (*RemoveResponse, error)
+	//
+	// TODO: @cictrone
+	RemoveFromTarget(context.Context, *RemoveRequest) (*RemoveResponse, error)
+	//
+	// TODO: @cictrone
+	RemoveFromJob(context.Context, *RemoveRequest) (*RemoveResponse, error)
 }
 
 // UnimplementedTagsServer can be embedded to have forward compatible implementations.
@@ -925,11 +1134,23 @@ func (*UnimplementedTagsServer) Find(ctx context.Context, req *FindRequest) (*Fi
 func (*UnimplementedTagsServer) Create(ctx context.Context, req *CreateRequest) (*CreateResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Create not implemented")
 }
-func (*UnimplementedTagsServer) Apply(ctx context.Context, req *ApplyRequest) (*ApplyResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Apply not implemented")
+func (*UnimplementedTagsServer) ApplyToTask(ctx context.Context, req *ApplyRequest) (*ApplyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyToTask not implemented")
 }
-func (*UnimplementedTagsServer) Remove(ctx context.Context, req *RemoveRequest) (*RemoveResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Remove not implemented")
+func (*UnimplementedTagsServer) ApplyToTarget(ctx context.Context, req *ApplyRequest) (*ApplyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyToTarget not implemented")
+}
+func (*UnimplementedTagsServer) ApplyToJob(ctx context.Context, req *ApplyRequest) (*ApplyResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ApplyToJob not implemented")
+}
+func (*UnimplementedTagsServer) RemoveFromTask(ctx context.Context, req *RemoveRequest) (*RemoveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromTask not implemented")
+}
+func (*UnimplementedTagsServer) RemoveFromTarget(ctx context.Context, req *RemoveRequest) (*RemoveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromTarget not implemented")
+}
+func (*UnimplementedTagsServer) RemoveFromJob(ctx context.Context, req *RemoveRequest) (*RemoveResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RemoveFromJob not implemented")
 }
 
 func RegisterTagsServer(s *grpc.Server, srv TagsServer) {
@@ -990,38 +1211,110 @@ func _Tags_Create_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Tags_Apply_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Tags_ApplyToTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ApplyRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TagsServer).Apply(ctx, in)
+		return srv.(TagsServer).ApplyToTask(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tags.Tags/Apply",
+		FullMethod: "/tags.Tags/ApplyToTask",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TagsServer).Apply(ctx, req.(*ApplyRequest))
+		return srv.(TagsServer).ApplyToTask(ctx, req.(*ApplyRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Tags_Remove_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+func _Tags_ApplyToTarget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApplyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TagsServer).ApplyToTarget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/tags.Tags/ApplyToTarget",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TagsServer).ApplyToTarget(ctx, req.(*ApplyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Tags_ApplyToJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ApplyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TagsServer).ApplyToJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/tags.Tags/ApplyToJob",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TagsServer).ApplyToJob(ctx, req.(*ApplyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Tags_RemoveFromTask_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(RemoveRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(TagsServer).Remove(ctx, in)
+		return srv.(TagsServer).RemoveFromTask(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/tags.Tags/Remove",
+		FullMethod: "/tags.Tags/RemoveFromTask",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(TagsServer).Remove(ctx, req.(*RemoveRequest))
+		return srv.(TagsServer).RemoveFromTask(ctx, req.(*RemoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Tags_RemoveFromTarget_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TagsServer).RemoveFromTarget(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/tags.Tags/RemoveFromTarget",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TagsServer).RemoveFromTarget(ctx, req.(*RemoveRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Tags_RemoveFromJob_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RemoveRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TagsServer).RemoveFromJob(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/tags.Tags/RemoveFromJob",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TagsServer).RemoveFromJob(ctx, req.(*RemoveRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -1043,12 +1336,28 @@ var _Tags_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Tags_Create_Handler,
 		},
 		{
-			MethodName: "Apply",
-			Handler:    _Tags_Apply_Handler,
+			MethodName: "ApplyToTask",
+			Handler:    _Tags_ApplyToTask_Handler,
 		},
 		{
-			MethodName: "Remove",
-			Handler:    _Tags_Remove_Handler,
+			MethodName: "ApplyToTarget",
+			Handler:    _Tags_ApplyToTarget_Handler,
+		},
+		{
+			MethodName: "ApplyToJob",
+			Handler:    _Tags_ApplyToJob_Handler,
+		},
+		{
+			MethodName: "RemoveFromTask",
+			Handler:    _Tags_RemoveFromTask_Handler,
+		},
+		{
+			MethodName: "RemoveFromTarget",
+			Handler:    _Tags_RemoveFromTarget_Handler,
+		},
+		{
+			MethodName: "RemoveFromJob",
+			Handler:    _Tags_RemoveFromJob_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -1103,6 +1412,13 @@ func (m *FetchResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTags(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1126,6 +1442,16 @@ func (m *FindRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Limit != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.Limit))
+		i--
+		dAtA[i] = 0x18
+	}
+	if m.Offset != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.Offset))
+		i--
+		dAtA[i] = 0x10
+	}
 	if len(m.Filter) > 0 {
 		i -= len(m.Filter)
 		copy(dAtA[i:], m.Filter)
@@ -1156,6 +1482,30 @@ func (m *FindResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.NewOffset != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.NewOffset))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Ids) > 0 {
+		dAtA2 := make([]byte, len(m.Ids)*10)
+		var j1 int
+		for _, num1 := range m.Ids {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA2[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA2[j1] = uint8(num)
+			j1++
+		}
+		i -= j1
+		copy(dAtA[i:], dAtA2[:j1])
+		i = encodeVarintTags(dAtA, i, uint64(j1))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1179,6 +1529,13 @@ func (m *CreateRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintTags(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1202,6 +1559,11 @@ func (m *CreateResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.Id != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.Id))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1225,6 +1587,16 @@ func (m *ApplyRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.EntId != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.EntId))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.TagId != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.TagId))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1271,6 +1643,16 @@ func (m *RemoveRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
+	if m.EntId != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.EntId))
+		i--
+		dAtA[i] = 0x10
+	}
+	if m.TagId != 0 {
+		i = encodeVarintTags(dAtA, i, uint64(m.TagId))
+		i--
+		dAtA[i] = 0x8
+	}
 	return len(dAtA) - i, nil
 }
 
@@ -1321,6 +1703,7 @@ func NewPopulatedFetchRequest(r randyTags, easy bool) *FetchRequest {
 
 func NewPopulatedFetchResponse(r randyTags, easy bool) *FetchResponse {
 	this := &FetchResponse{}
+	this.Name = string(randStringTags(r))
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1329,6 +1712,14 @@ func NewPopulatedFetchResponse(r randyTags, easy bool) *FetchResponse {
 func NewPopulatedFindRequest(r randyTags, easy bool) *FindRequest {
 	this := &FindRequest{}
 	this.Filter = string(randStringTags(r))
+	this.Offset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Offset *= -1
+	}
+	this.Limit = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Limit *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1336,6 +1727,18 @@ func NewPopulatedFindRequest(r randyTags, easy bool) *FindRequest {
 
 func NewPopulatedFindResponse(r randyTags, easy bool) *FindResponse {
 	this := &FindResponse{}
+	v1 := r.Intn(10)
+	this.Ids = make([]int64, v1)
+	for i := 0; i < v1; i++ {
+		this.Ids[i] = int64(r.Int63())
+		if r.Intn(2) == 0 {
+			this.Ids[i] *= -1
+		}
+	}
+	this.NewOffset = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.NewOffset *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1343,6 +1746,7 @@ func NewPopulatedFindResponse(r randyTags, easy bool) *FindResponse {
 
 func NewPopulatedCreateRequest(r randyTags, easy bool) *CreateRequest {
 	this := &CreateRequest{}
+	this.Name = string(randStringTags(r))
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1350,6 +1754,10 @@ func NewPopulatedCreateRequest(r randyTags, easy bool) *CreateRequest {
 
 func NewPopulatedCreateResponse(r randyTags, easy bool) *CreateResponse {
 	this := &CreateResponse{}
+	this.Id = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.Id *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1357,6 +1765,14 @@ func NewPopulatedCreateResponse(r randyTags, easy bool) *CreateResponse {
 
 func NewPopulatedApplyRequest(r randyTags, easy bool) *ApplyRequest {
 	this := &ApplyRequest{}
+	this.TagId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.TagId *= -1
+	}
+	this.EntId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.EntId *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1371,6 +1787,14 @@ func NewPopulatedApplyResponse(r randyTags, easy bool) *ApplyResponse {
 
 func NewPopulatedRemoveRequest(r randyTags, easy bool) *RemoveRequest {
 	this := &RemoveRequest{}
+	this.TagId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.TagId *= -1
+	}
+	this.EntId = int64(r.Int63())
+	if r.Intn(2) == 0 {
+		this.EntId *= -1
+	}
 	if !easy && r.Intn(10) != 0 {
 	}
 	return this
@@ -1402,9 +1826,9 @@ func randUTF8RuneTags(r randyTags) rune {
 	return rune(ru + 61)
 }
 func randStringTags(r randyTags) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v2 := r.Intn(100)
+	tmps := make([]rune, v2)
+	for i := 0; i < v2; i++ {
 		tmps[i] = randUTF8RuneTags(r)
 	}
 	return string(tmps)
@@ -1426,11 +1850,11 @@ func randFieldTags(dAtA []byte, r randyTags, fieldNumber int, wire int) []byte {
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateTags(dAtA, uint64(key))
-		v2 := r.Int63()
+		v3 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v3 *= -1
 		}
-		dAtA = encodeVarintPopulateTags(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateTags(dAtA, uint64(v3))
 	case 1:
 		dAtA = encodeVarintPopulateTags(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -1473,6 +1897,10 @@ func (m *FetchResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTags(uint64(l))
+	}
 	return n
 }
 
@@ -1486,6 +1914,12 @@ func (m *FindRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTags(uint64(l))
 	}
+	if m.Offset != 0 {
+		n += 1 + sovTags(uint64(m.Offset))
+	}
+	if m.Limit != 0 {
+		n += 1 + sovTags(uint64(m.Limit))
+	}
 	return n
 }
 
@@ -1495,6 +1929,16 @@ func (m *FindResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if len(m.Ids) > 0 {
+		l = 0
+		for _, e := range m.Ids {
+			l += sovTags(uint64(e))
+		}
+		n += 1 + sovTags(uint64(l)) + l
+	}
+	if m.NewOffset != 0 {
+		n += 1 + sovTags(uint64(m.NewOffset))
+	}
 	return n
 }
 
@@ -1504,6 +1948,10 @@ func (m *CreateRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovTags(uint64(l))
+	}
 	return n
 }
 
@@ -1513,6 +1961,9 @@ func (m *CreateResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.Id != 0 {
+		n += 1 + sovTags(uint64(m.Id))
+	}
 	return n
 }
 
@@ -1522,6 +1973,12 @@ func (m *ApplyRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.TagId != 0 {
+		n += 1 + sovTags(uint64(m.TagId))
+	}
+	if m.EntId != 0 {
+		n += 1 + sovTags(uint64(m.EntId))
+	}
 	return n
 }
 
@@ -1540,6 +1997,12 @@ func (m *RemoveRequest) Size() (n int) {
 	}
 	var l int
 	_ = l
+	if m.TagId != 0 {
+		n += 1 + sovTags(uint64(m.TagId))
+	}
+	if m.EntId != 0 {
+		n += 1 + sovTags(uint64(m.EntId))
+	}
 	return n
 }
 
@@ -1573,6 +2036,7 @@ func (this *FetchResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FetchResponse{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1583,6 +2047,8 @@ func (this *FindRequest) String() string {
 	}
 	s := strings.Join([]string{`&FindRequest{`,
 		`Filter:` + fmt.Sprintf("%v", this.Filter) + `,`,
+		`Offset:` + fmt.Sprintf("%v", this.Offset) + `,`,
+		`Limit:` + fmt.Sprintf("%v", this.Limit) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1592,6 +2058,8 @@ func (this *FindResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&FindResponse{`,
+		`Ids:` + fmt.Sprintf("%v", this.Ids) + `,`,
+		`NewOffset:` + fmt.Sprintf("%v", this.NewOffset) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1601,6 +2069,7 @@ func (this *CreateRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CreateRequest{`,
+		`Name:` + fmt.Sprintf("%v", this.Name) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1610,6 +2079,7 @@ func (this *CreateResponse) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&CreateResponse{`,
+		`Id:` + fmt.Sprintf("%v", this.Id) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1619,6 +2089,8 @@ func (this *ApplyRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&ApplyRequest{`,
+		`TagId:` + fmt.Sprintf("%v", this.TagId) + `,`,
+		`EntId:` + fmt.Sprintf("%v", this.EntId) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1637,6 +2109,8 @@ func (this *RemoveRequest) String() string {
 		return "nil"
 	}
 	s := strings.Join([]string{`&RemoveRequest{`,
+		`TagId:` + fmt.Sprintf("%v", this.TagId) + `,`,
+		`EntId:` + fmt.Sprintf("%v", this.EntId) + `,`,
 		`}`,
 	}, "")
 	return s
@@ -1759,6 +2233,38 @@ func (m *FetchResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FetchResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTags
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTags
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])
@@ -1844,6 +2350,44 @@ func (m *FindRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Filter = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Offset", wireType)
+			}
+			m.Offset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Offset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Limit", wireType)
+			}
+			m.Limit = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Limit |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])
@@ -1897,6 +2441,101 @@ func (m *FindResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: FindResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType == 0 {
+				var v int64
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTags
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int64(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Ids = append(m.Ids, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return ErrIntOverflowTags
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return ErrInvalidLengthTags
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return ErrInvalidLengthTags
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
+				}
+				elementCount = count
+				if elementCount != 0 && len(m.Ids) == 0 {
+					m.Ids = make([]int64, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int64
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return ErrIntOverflowTags
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int64(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Ids = append(m.Ids, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Ids", wireType)
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewOffset", wireType)
+			}
+			m.NewOffset = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NewOffset |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])
@@ -1950,6 +2589,38 @@ func (m *CreateRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: CreateRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTags
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTags
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])
@@ -2003,6 +2674,25 @@ func (m *CreateResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: CreateResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
+			}
+			m.Id = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Id |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])
@@ -2056,6 +2746,44 @@ func (m *ApplyRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: ApplyRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TagId", wireType)
+			}
+			m.TagId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TagId |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EntId", wireType)
+			}
+			m.EntId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EntId |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])
@@ -2162,6 +2890,44 @@ func (m *RemoveRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: RemoveRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TagId", wireType)
+			}
+			m.TagId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.TagId |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EntId", wireType)
+			}
+			m.EntId = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTags
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.EntId |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTags(dAtA[iNdEx:])

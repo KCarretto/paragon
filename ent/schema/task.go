@@ -48,10 +48,12 @@ func (Task) Fields() []ent.Field {
 // Edges of the Task.
 func (Task) Edges() []ent.Edge {
 	return []ent.Edge{
-		edge.From("target", Target.Type).
+		edge.To("tags", Tag.Type).
+			Comment("A Task can have many Tags"),
+		edge.From("job", Job.Type).
 			Ref("tasks").
-			Required().
 			Unique().
-			Comment("A Task will be bound to a single Target"),
+			Required().
+			Comment("A Task must have job"),
 	}
 }

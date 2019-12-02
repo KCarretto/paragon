@@ -77,9 +77,14 @@ func (t *Task) FromRows(rows *sql.Rows) error {
 	return nil
 }
 
-// QueryTarget queries the target edge of the Task.
-func (t *Task) QueryTarget() *TargetQuery {
-	return (&TaskClient{t.config}).QueryTarget(t)
+// QueryTags queries the tags edge of the Task.
+func (t *Task) QueryTags() *TagQuery {
+	return (&TaskClient{t.config}).QueryTags(t)
+}
+
+// QueryJob queries the job edge of the Task.
+func (t *Task) QueryJob() *JobQuery {
+	return (&TaskClient{t.config}).QueryJob(t)
 }
 
 // Update returns a builder for updating this Task.

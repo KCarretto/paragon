@@ -9,8 +9,9 @@ import (
 	"math"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
-	"github.com/kcarretto/paragon/ent/target"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -50,16 +51,34 @@ func (tq *TaskQuery) Order(o ...Order) *TaskQuery {
 	return tq
 }
 
-// QueryTarget chains the current query on the target edge.
-func (tq *TaskQuery) QueryTarget() *TargetQuery {
-	query := &TargetQuery{config: tq.config}
-	t1 := sql.Table(target.Table)
+// QueryTags chains the current query on the tags edge.
+func (tq *TaskQuery) QueryTags() *TagQuery {
+	query := &TagQuery{config: tq.config}
+	t1 := sql.Table(tag.Table)
 	t2 := tq.sqlQuery()
-	t2.Select(t2.C(task.TargetColumn))
-	query.sql = sql.Select(t1.Columns(target.Columns...)...).
+	t2.Select(t2.C(task.FieldID))
+	t3 := sql.Table(task.TagsTable)
+	t4 := sql.Select(t3.C(task.TagsPrimaryKey[1])).
+		From(t3).
+		Join(t2).
+		On(t3.C(task.TagsPrimaryKey[0]), t2.C(task.FieldID))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t4).
+		On(t1.C(tag.FieldID), t4.C(task.TagsPrimaryKey[1]))
+	return query
+}
+
+// QueryJob chains the current query on the job edge.
+func (tq *TaskQuery) QueryJob() *JobQuery {
+	query := &JobQuery{config: tq.config}
+	t1 := sql.Table(job.Table)
+	t2 := tq.sqlQuery()
+	t2.Select(t2.C(task.JobColumn))
+	query.sql = sql.Select(t1.Columns(job.Columns...)...).
 		From(t1).
 		Join(t2).
-		On(t1.C(target.FieldID), t2.C(task.TargetColumn))
+		On(t1.C(job.FieldID), t2.C(task.JobColumn))
 	return query
 }
 

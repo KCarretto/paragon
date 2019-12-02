@@ -8,3 +8,7 @@
     width: calc(100% - 150px);
     margin-right: 100px;
 }
+
+.XCircleIcon {
+    box-shadow: none!important;
+}
