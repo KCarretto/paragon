@@ -7,7 +7,7 @@
     "builddev": "NODE_ENV=development && webpack --config webpack.$NODE_ENV.js",
     "build": "webpack --config webpack.$NODE_ENV.js",
     "start": "node dist/server",
-    "start:env": "node --require dotenv/config dist/server"
+    "startenv": "node --require dotenv/config dist/server"
   },
   "author": "",
   "license": "ISC",

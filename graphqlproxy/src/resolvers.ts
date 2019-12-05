@@ -13,9 +13,9 @@ export default {
     testMessage: (): string => "Hello World!",
     targets: (
       root: any,
-      { filter, offset, limit }: { filter: String; offset: Number; limit: Number },
+      args: { filter: String; offset: Number; limit: Number },
       { dataSources }: any
-    ) => dataSources.paragonAPI.getAllTargets(filter, offset, limit),
+    ) => dataSources.paragonAPI.getAllTargets(args),
     target: (root: any, { id }: { id: Number }, { dataSources }: any) =>
       dataSources.paragonAPI.getTarget(id)
   },
