@@ -22,7 +22,7 @@ export default gql`
     target(id: ID): Target
   }
   type Mutation {
-    createTarget(name: String, primaryIP: String, tags: [String]): String
+    createTarget(name: String, primaryIP: String, tags: [String]): ID
     setTargetFields(
       id: ID!
       name: String
@@ -31,6 +31,6 @@ export default gql`
       publicIP: String
       primaryMAC: String
       hostname: String
-    ): String
+    ): Boolean
   }
 `;

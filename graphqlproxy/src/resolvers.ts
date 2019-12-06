@@ -16,15 +16,15 @@ export default {
       args: { filter: String; offset: Number; limit: Number },
       { dataSources }: any
     ) => dataSources.paragonAPI.getAllTargets(args),
-    target: (root: any, { id }: { id: Number }, { dataSources }: any) =>
+    target: (root: any, { id }: { id: String }, { dataSources }: any) =>
       dataSources.paragonAPI.getTarget(id)
   },
   Mutation: {
     createTarget: (
       root: any,
-      { name, primaryIP, tags }: { name: String; primaryIP: String; tags: [String] },
+      args: { name: String; primaryIP: String; tags: [String] },
       { dataSources }: any
-    ) => dataSources.paragonAPI.createTarget(name, primaryIP, tags),
+    ) => dataSources.paragonAPI.createTarget(args),
     setTargetFields: (root: any, args: setTargetFieldsInput, { dataSources }: any) =>
       dataSources.paragonAPI.setTargetFields(args)
   }

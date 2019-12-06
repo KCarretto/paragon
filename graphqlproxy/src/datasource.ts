@@ -13,26 +13,23 @@ export class ParagonAPI extends RESTDataSource {
   }
 
   async getAllTargets(args: any) {
-    console.log("WAT");
     const result = await this.get("/api/v1/targets", args);
     console.log(result);
-    return [];
+    return result ? result : [];
   }
 
-  async getATarget(id: Number) {
-    const result = await this.get("/api/v1/targets", {
-      id
-    });
-    return result;
+  async getTarget(id: String) {
+    const result = await this.get(`/api/v1/targets/${id}`);
+    return result ? result : {};
   }
 
-  async createTarget(name: String, primaryIP: String, tags: [String]) {
-    const result = await this.post("/api/v1/targets/create", { name, primaryIP, tags });
-    return result;
+  async createTarget(args: any) {
+    const result = await this.post("/api/v1/targets/create", args);
+    return result ? result.id : null;
   }
 
   async setTargetFields(args: {
-    id: Number;
+    id: String;
     name: String;
     machineUUID: String;
     primaryIP: String;
@@ -41,6 +38,6 @@ export class ParagonAPI extends RESTDataSource {
     hostname: String;
   }) {
     const result = await this.post("/api/v1/targets/setTargetFields", args);
-    return result;
+    return true;
   }
 }
