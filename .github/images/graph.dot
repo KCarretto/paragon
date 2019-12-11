@@ -1,0 +1,19 @@
+digraph paragon {
+    rankdir="LR"
+
+    Target
+    Task
+    Job
+    Tag
+    Credential
+    Network
+
+    Tag -> {Job, Task, Target, Credential, Network} [dir=back]
+
+    Job -> Task
+
+    Task -> Target
+
+    Target -> Credential
+    Target -> Network
+}
