@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 import React from 'react';
 import { Query } from 'react-apollo';
 import { Card, Container } from 'semantic-ui-react';
-import XTargetCard from './XTargetCard';
+import XTargetCard from '../components/target/XTargetCard';
 
 const TARGETS_QUERY = gql`
 {
@@ -33,7 +33,7 @@ targets {
     }
 }`
 
-const XTargetCardGroup = () => {
+const XMultiTargetView = () => {
     const now = Math.floor(Date.now() / 1000);
 
     const targets = [
@@ -178,4 +178,4 @@ const XTargetCardGroup = () => {
 //     })).isRequired,
 // };
 
-export default XTargetCardGroup
+export default XMultiTargetView
