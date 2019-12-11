@@ -6,7 +6,7 @@ import './App.css';
 import { XLayout, XUnimplemented } from './components/layout/';
 import XClient from './config/apollo';
 import Routes from './config/routes';
-import { XMultiTargetView } from './views';
+import { XMultiJobView, XMultiTargetView } from './views';
 
 
 
@@ -16,6 +16,7 @@ function App() {
       <XLayout routeMap={Routes} className='App'>
         <Route exact path='/' component={XUnimplemented} />
         <Route path='/targets' component={XMultiTargetView} />
+        <Route path='/jobs' component={XMultiJobView} />
       </XLayout>
     </ApolloProvider>
   );
