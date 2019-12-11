@@ -13,9 +13,9 @@ const routes = [
         icon: <Icon name='desktop' />,
     },
     {
-        title: 'Tasks',
-        link: '/tasks',
-        icon: <Icon name='tasks' />
+        title: 'Jobs',
+        link: '/jobs',
+        icon: <Icon name='th' />
     },
     {
         title: 'Tags',
