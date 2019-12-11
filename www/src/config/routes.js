@@ -13,8 +13,8 @@ const routes = [
         icon: <Icon name='desktop' />,
     },
     {
-        title: 'Jobs',
-        link: '/jobs',
+        title: 'Tasks',
+        link: '/tasks',
         icon: <Icon name='tasks' />
     },
     {
