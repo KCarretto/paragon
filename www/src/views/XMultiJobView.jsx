@@ -1,8 +1,8 @@
 import gql from 'graphql-tag';
 import React from 'react';
 import { Query } from 'react-apollo';
-import { Button, Card, Container, Menu } from 'semantic-ui-react';
-import { XJobCard } from '../components/job';
+import { Card, Container, Menu } from 'semantic-ui-react';
+import { XJobCard, XJobCreateModal } from '../components/job';
 
 const JOBS_QUERY = gql`
 {
@@ -53,7 +53,7 @@ const XMultiJobView = () => {
     return (
         <div style={{ padding: '10px' }}>
             <Menu secondary>
-                <Menu.Item position='right'><Button positive circular icon='plus' /></Menu.Item>
+                <Menu.Item position='right'><XJobCreateModal /></Menu.Item>
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
                 <Card.Group centered itemsPerRow={4}>
