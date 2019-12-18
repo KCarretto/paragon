@@ -7,6 +7,13 @@ Paragon is a Red Team engagement platform. It aims to unify offensive tools bein
 
 _This repository is still under heavy development and is not ready for production use. When it is considered stable, a V1.0.0 tag will be released. Until then, the API may encounter breaking changes as we continually simplify our design. Please read the developer documentation below if you'd like to help us reach this milestone faster._
 
+## Table of Contents
+- [Feature Highlights](#feature-highlights)
+- [Getting Started](#getting-started)
+- [Component Overview](#component-overview)
+- [Terminology](#terminology)
+- [Developer Guide](#developer-guide)
+
 ## Feature Highlights
 * Easily integrate custom tools to unify operations behind a **single interface**
 * Query the Red Team knowledge graph using a provided GraphQL API
