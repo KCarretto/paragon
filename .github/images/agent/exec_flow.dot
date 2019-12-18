@@ -1,0 +1,35 @@
+digraph execFlow {
+    nodesep=1
+
+    node [width=1 height=.75]
+
+    Start [label=<Start> shape=parallelogram]
+
+    C2 [shape=cylinder height=1 width=.5]
+    Buffer [shape=component label=<Output Buffer>]
+
+
+    Init [label=<Initialize>]
+    {rank=same
+        Run [label=<Run>]
+        Stop [label=<Stop> shape=parallelogram]
+    }
+
+    {rank=same
+        Exec [label=<Exec>]
+        Send [label=<Send>]
+    }
+
+
+    Start -> Init -> Run
+    Run -> Stop [label=<<I>Interupted</I>> style=dashed]
+
+    Run -> Send
+    Buffer -> Send [label=<<I>Read</I>> style=dashed arrowhead=empty]
+
+    Send -> Exec
+    Send -> C2 [style=dotted arrowhead=empty]
+    Exec -> Buffer [label=<<I>    Write</I>> style=dashed arrowhead=empty]
+
+    Run -> Exec [dir=back constraint=false]
+}

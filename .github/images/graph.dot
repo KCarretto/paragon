@@ -1,19 +1,34 @@
 digraph paragon {
-    rankdir="LR"
+    rankdir=LR
+    nodesep=.5
+    ranksep=.75
 
-    Target
-    Task
-    Job
+    node [shape=rect width=1 height=.75]
+
+    {rank=same
+        JobTemplate
+        Job
+        Target
+    }
     Tag
+    Task
     Credential
     Network
 
-    Tag -> {Job, Task, Target, Credential, Network} [dir=back]
 
+    /*
+     * Edges
+     */
+
+    JobTemplate -> Job
     Job -> Task
+    Task -> Target [dir=back]
 
-    Task -> Target
+    Tag -> JobTemplate [dir=both]
+    Tag -> Job [dir=both]
+    Tag -> Target [dir=both]
+    Tag -> Task [dir=both]
 
     Target -> Credential
-    Target -> Network
+    Target -> Network [dir=both]
 }
