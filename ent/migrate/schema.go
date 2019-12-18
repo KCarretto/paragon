@@ -37,13 +37,35 @@ var (
 	JobsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
-		{Name: "content", Type: field.TypeString},
+		{Name: "parameters", Type: field.TypeString},
+		{Name: "template_id", Type: field.TypeInt, Nullable: true},
 	}
 	// JobsTable holds the schema information for the "jobs" table.
 	JobsTable = &schema.Table{
-		Name:        "jobs",
-		Columns:     JobsColumns,
-		PrimaryKey:  []*schema.Column{JobsColumns[0]},
+		Name:       "jobs",
+		Columns:    JobsColumns,
+		PrimaryKey: []*schema.Column{JobsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:  "jobs_job_templates_jobs",
+				Columns: []*schema.Column{JobsColumns[3]},
+
+				RefColumns: []*schema.Column{JobTemplatesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// JobTemplatesColumns holds the columns for the "job_templates" table.
+	JobTemplatesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString},
+		{Name: "content", Type: field.TypeString},
+	}
+	// JobTemplatesTable holds the schema information for the "job_templates" table.
+	JobTemplatesTable = &schema.Table{
+		Name:        "job_templates",
+		Columns:     JobTemplatesColumns,
+		PrimaryKey:  []*schema.Column{JobTemplatesColumns[0]},
 		ForeignKeys: []*schema.ForeignKey{},
 	}
 	// TagsColumns holds the columns for the "tags" table.
@@ -139,6 +161,33 @@ var (
 			},
 		},
 	}
+	// JobTemplateTagsColumns holds the columns for the "job_template_tags" table.
+	JobTemplateTagsColumns = []*schema.Column{
+		{Name: "job_template_id", Type: field.TypeInt},
+		{Name: "tag_id", Type: field.TypeInt},
+	}
+	// JobTemplateTagsTable holds the schema information for the "job_template_tags" table.
+	JobTemplateTagsTable = &schema.Table{
+		Name:       "job_template_tags",
+		Columns:    JobTemplateTagsColumns,
+		PrimaryKey: []*schema.Column{JobTemplateTagsColumns[0], JobTemplateTagsColumns[1]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:  "job_template_tags_job_template_id",
+				Columns: []*schema.Column{JobTemplateTagsColumns[0]},
+
+				RefColumns: []*schema.Column{JobTemplatesColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+			{
+				Symbol:  "job_template_tags_tag_id",
+				Columns: []*schema.Column{JobTemplateTagsColumns[1]},
+
+				RefColumns: []*schema.Column{TagsColumns[0]},
+				OnDelete:   schema.Cascade,
+			},
+		},
+	}
 	// TargetTagsColumns holds the columns for the "target_tags" table.
 	TargetTagsColumns = []*schema.Column{
 		{Name: "target_id", Type: field.TypeInt},
@@ -197,10 +246,12 @@ var (
 	Tables = []*schema.Table{
 		CredentialsTable,
 		JobsTable,
+		JobTemplatesTable,
 		TagsTable,
 		TargetsTable,
 		TasksTable,
 		JobTagsTable,
+		JobTemplateTagsTable,
 		TargetTagsTable,
 		TaskTagsTable,
 	}
@@ -208,10 +259,13 @@ var (
 
 func init() {
 	CredentialsTable.ForeignKeys[0].RefTable = TargetsTable
+	JobsTable.ForeignKeys[0].RefTable = JobTemplatesTable
 	TasksTable.ForeignKeys[0].RefTable = JobsTable
 	TasksTable.ForeignKeys[1].RefTable = TargetsTable
 	JobTagsTable.ForeignKeys[0].RefTable = JobsTable
 	JobTagsTable.ForeignKeys[1].RefTable = TagsTable
+	JobTemplateTagsTable.ForeignKeys[0].RefTable = JobTemplatesTable
+	JobTemplateTagsTable.ForeignKeys[1].RefTable = TagsTable
 	TargetTagsTable.ForeignKeys[0].RefTable = TargetsTable
 	TargetTagsTable.ForeignKeys[1].RefTable = TagsTable
 	TaskTagsTable.ForeignKeys[0].RefTable = TasksTable

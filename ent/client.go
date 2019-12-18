@@ -11,6 +11,7 @@ import (
 
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/jobtemplate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
@@ -28,6 +29,8 @@ type Client struct {
 	Credential *CredentialClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// JobTemplate is the client for interacting with the JobTemplate builders.
+	JobTemplate *JobTemplateClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
@@ -41,13 +44,14 @@ func NewClient(opts ...Option) *Client {
 	c := config{log: log.Println}
 	c.options(opts...)
 	return &Client{
-		config:     c,
-		Schema:     migrate.NewSchema(c.driver),
-		Credential: NewCredentialClient(c),
-		Job:        NewJobClient(c),
-		Tag:        NewTagClient(c),
-		Target:     NewTargetClient(c),
-		Task:       NewTaskClient(c),
+		config:      c,
+		Schema:      migrate.NewSchema(c.driver),
+		Credential:  NewCredentialClient(c),
+		Job:         NewJobClient(c),
+		JobTemplate: NewJobTemplateClient(c),
+		Tag:         NewTagClient(c),
+		Target:      NewTargetClient(c),
+		Task:        NewTaskClient(c),
 	}
 }
 
@@ -79,12 +83,13 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	}
 	cfg := config{driver: tx, log: c.log, debug: c.debug}
 	return &Tx{
-		config:     cfg,
-		Credential: NewCredentialClient(cfg),
-		Job:        NewJobClient(cfg),
-		Tag:        NewTagClient(cfg),
-		Target:     NewTargetClient(cfg),
-		Task:       NewTaskClient(cfg),
+		config:      cfg,
+		Credential:  NewCredentialClient(cfg),
+		Job:         NewJobClient(cfg),
+		JobTemplate: NewJobTemplateClient(cfg),
+		Tag:         NewTagClient(cfg),
+		Target:      NewTargetClient(cfg),
+		Task:        NewTaskClient(cfg),
 	}, nil
 }
 
@@ -101,13 +106,14 @@ func (c *Client) Debug() *Client {
 	}
 	cfg := config{driver: dialect.Debug(c.driver, c.log), log: c.log, debug: true}
 	return &Client{
-		config:     cfg,
-		Schema:     migrate.NewSchema(cfg.driver),
-		Credential: NewCredentialClient(cfg),
-		Job:        NewJobClient(cfg),
-		Tag:        NewTagClient(cfg),
-		Target:     NewTargetClient(cfg),
-		Task:       NewTaskClient(cfg),
+		config:      cfg,
+		Schema:      migrate.NewSchema(cfg.driver),
+		Credential:  NewCredentialClient(cfg),
+		Job:         NewJobClient(cfg),
+		JobTemplate: NewJobTemplateClient(cfg),
+		Tag:         NewTagClient(cfg),
+		Target:      NewTargetClient(cfg),
+		Task:        NewTaskClient(cfg),
 	}
 }
 
@@ -274,6 +280,113 @@ func (c *JobClient) QueryTags(j *Job) *TagQuery {
 	return query
 }
 
+// QueryTemplate queries the template edge of a Job.
+func (c *JobClient) QueryTemplate(j *Job) *JobTemplateQuery {
+	query := &JobTemplateQuery{config: c.config}
+	id := j.ID
+	t1 := sql.Table(jobtemplate.Table)
+	t2 := sql.Select(job.TemplateColumn).
+		From(sql.Table(job.TemplateTable)).
+		Where(sql.EQ(job.FieldID, id))
+	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(jobtemplate.FieldID), t2.C(job.TemplateColumn))
+
+	return query
+}
+
+// JobTemplateClient is a client for the JobTemplate schema.
+type JobTemplateClient struct {
+	config
+}
+
+// NewJobTemplateClient returns a client for the JobTemplate from the given config.
+func NewJobTemplateClient(c config) *JobTemplateClient {
+	return &JobTemplateClient{config: c}
+}
+
+// Create returns a create builder for JobTemplate.
+func (c *JobTemplateClient) Create() *JobTemplateCreate {
+	return &JobTemplateCreate{config: c.config}
+}
+
+// Update returns an update builder for JobTemplate.
+func (c *JobTemplateClient) Update() *JobTemplateUpdate {
+	return &JobTemplateUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *JobTemplateClient) UpdateOne(jt *JobTemplate) *JobTemplateUpdateOne {
+	return c.UpdateOneID(jt.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *JobTemplateClient) UpdateOneID(id int) *JobTemplateUpdateOne {
+	return &JobTemplateUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for JobTemplate.
+func (c *JobTemplateClient) Delete() *JobTemplateDelete {
+	return &JobTemplateDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *JobTemplateClient) DeleteOne(jt *JobTemplate) *JobTemplateDeleteOne {
+	return c.DeleteOneID(jt.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *JobTemplateClient) DeleteOneID(id int) *JobTemplateDeleteOne {
+	return &JobTemplateDeleteOne{c.Delete().Where(jobtemplate.ID(id))}
+}
+
+// Create returns a query builder for JobTemplate.
+func (c *JobTemplateClient) Query() *JobTemplateQuery {
+	return &JobTemplateQuery{config: c.config}
+}
+
+// Get returns a JobTemplate entity by its id.
+func (c *JobTemplateClient) Get(ctx context.Context, id int) (*JobTemplate, error) {
+	return c.Query().Where(jobtemplate.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *JobTemplateClient) GetX(ctx context.Context, id int) *JobTemplate {
+	jt, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return jt
+}
+
+// QueryJobs queries the jobs edge of a JobTemplate.
+func (c *JobTemplateClient) QueryJobs(jt *JobTemplate) *JobQuery {
+	query := &JobQuery{config: c.config}
+	id := jt.ID
+	query.sql = sql.Select().From(sql.Table(job.Table)).
+		Where(sql.EQ(jobtemplate.JobsColumn, id))
+
+	return query
+}
+
+// QueryTags queries the tags edge of a JobTemplate.
+func (c *JobTemplateClient) QueryTags(jt *JobTemplate) *TagQuery {
+	query := &TagQuery{config: c.config}
+	id := jt.ID
+	t1 := sql.Table(tag.Table)
+	t2 := sql.Table(jobtemplate.Table)
+	t3 := sql.Table(jobtemplate.TagsTable)
+	t4 := sql.Select(t3.C(jobtemplate.TagsPrimaryKey[1])).
+		From(t3).
+		Join(t2).
+		On(t3.C(jobtemplate.TagsPrimaryKey[0]), t2.C(jobtemplate.FieldID)).
+		Where(sql.EQ(t2.C(jobtemplate.FieldID), id))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t4).
+		On(t1.C(tag.FieldID), t4.C(jobtemplate.TagsPrimaryKey[1]))
+
+	return query
+}
+
 // TagClient is a client for the Tag schema.
 type TagClient struct {
 	config
@@ -394,6 +507,26 @@ func (c *TagClient) QueryJobs(t *Tag) *JobQuery {
 		From(t1).
 		Join(t4).
 		On(t1.C(job.FieldID), t4.C(tag.JobsPrimaryKey[0]))
+
+	return query
+}
+
+// QueryJobTemplates queries the job_templates edge of a Tag.
+func (c *TagClient) QueryJobTemplates(t *Tag) *JobTemplateQuery {
+	query := &JobTemplateQuery{config: c.config}
+	id := t.ID
+	t1 := sql.Table(jobtemplate.Table)
+	t2 := sql.Table(tag.Table)
+	t3 := sql.Table(tag.JobTemplatesTable)
+	t4 := sql.Select(t3.C(tag.JobTemplatesPrimaryKey[0])).
+		From(t3).
+		Join(t2).
+		On(t3.C(tag.JobTemplatesPrimaryKey[1]), t2.C(tag.FieldID)).
+		Where(sql.EQ(t2.C(tag.FieldID), id))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t4).
+		On(t1.C(jobtemplate.FieldID), t4.C(tag.JobTemplatesPrimaryKey[0]))
 
 	return query
 }

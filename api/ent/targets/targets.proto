@@ -154,4 +154,6 @@ message AddCredentialRequest {
     string principal = 2;
     string secret = 3;
 }
-message AddCredentialResponse {}
+message AddCredentialResponse {
+    int64 id = 1;
+}

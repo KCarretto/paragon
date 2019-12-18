@@ -76,7 +76,7 @@ func ExampleJob() {
 	j := client.Job.
 		Create().
 		SetName("string").
-		SetContent("string").
+		SetParameters("string").
 		AddTasks(t0).
 		AddTags(t1).
 		SaveX(ctx)
@@ -90,6 +90,55 @@ func ExampleJob() {
 	log.Println("tasks found:", t0)
 
 	t1, err = j.QueryTags().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying tags: %v", err)
+	}
+	log.Println("tags found:", t1)
+
+	// Output:
+}
+func ExampleJobTemplate() {
+	if dsn == "" {
+		return
+	}
+	ctx := context.Background()
+	drv, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("failed creating database client: %v", err)
+	}
+	defer drv.Close()
+	client := NewClient(Driver(drv))
+	// creating vertices for the jobtemplate's edges.
+	j0 := client.Job.
+		Create().
+		SetName("string").
+		SetParameters("string").
+		SaveX(ctx)
+	log.Println("job created:", j0)
+	t1 := client.Tag.
+		Create().
+		SetName("string").
+		SaveX(ctx)
+	log.Println("tag created:", t1)
+
+	// create jobtemplate vertex with its edges.
+	jt := client.JobTemplate.
+		Create().
+		SetName("string").
+		SetContent("string").
+		AddJobs(j0).
+		AddTags(t1).
+		SaveX(ctx)
+	log.Println("jobtemplate created:", jt)
+
+	// query edges.
+	j0, err = jt.QueryJobs().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying jobs: %v", err)
+	}
+	log.Println("jobs found:", j0)
+
+	t1, err = jt.QueryTags().First(ctx)
 	if err != nil {
 		log.Fatalf("failed querying tags: %v", err)
 	}

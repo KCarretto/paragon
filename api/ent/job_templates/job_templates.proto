@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package jobs;
+package job_templates;
 
 /*
  * Golang Options
@@ -34,13 +34,13 @@ import "google/api/annotations.proto";
 /*
  * TODO: @cictrone
  */
-service Jobs {
+service JobTemplates {
     /*
      * TODO: @cictrone
      */
     rpc Fetch(FetchRequest) returns (FetchResponse) {
         option (google.api.http) = {
-            get: "/api/v1/jobs/{id}"
+            get: "/api/v1/job_templates/{id}"
         };
     }
 
@@ -49,9 +49,30 @@ service Jobs {
      */
     rpc Find(FindRequest) returns (FindResponse) {
         option (google.api.http) = {
-            get: "/api/v1/jobs"
+            get: "/api/v1/job_templates"
         };
     }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Create(CreateRequest) returns (CreateResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/job_templates/create"
+            body: "*"
+        };
+    }
+
+    /*
+     * TODO: @cictrone
+     */
+    rpc Queue(QueueRequest) returns (QueueResponse) {
+        option (google.api.http) = {
+            post: "/api/v1/job_templates/queue"
+            body: "*"
+        };
+    }
+
 }
 
 message FetchRequest {
@@ -59,10 +80,9 @@ message FetchRequest {
 }
 message FetchResponse {
     string name = 1;
-    string parameters = 2;
+    string content = 2;
     repeated int64 tags = 3;
-    repeated int64 tasks = 4;
-    int64 template = 5;
+    repeated int64 jobs = 4;
 }
 
 message FindRequest {
@@ -73,4 +93,23 @@ message FindRequest {
 message FindResponse {
     repeated int64 ids = 1;
     int64 newOffset = 2;
+}
+
+
+message CreateRequest {
+    string name = 1;
+    string content = 2;
+    repeated string tags = 3;
+}
+message CreateResponse {
+    int64 id = 1;
+}
+
+message QueueRequest {
+    int64 id = 1;
+    string jobName = 2;
+    string parameters = 3;
+}
+message QueueResponse {
+    int64 id = 1;
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/kcarretto/paragon/api/ent/credentials"
+	"github.com/kcarretto/paragon/api/ent/job_templates"
 	"github.com/kcarretto/paragon/api/ent/jobs"
 	"github.com/kcarretto/paragon/api/ent/tags"
 	"github.com/kcarretto/paragon/api/ent/targets"
@@ -70,6 +71,13 @@ func (srv *Server) Run() {
 		EntClient: srv.EntClient,
 	}
 	if err := jobs.RegisterJobsHandlerServer(ctx, svcRouter, jobSVC); err != nil {
+		panic(err)
+	}
+
+	jobTemplateSVC := &job_templates.Service{
+		EntClient: srv.EntClient,
+	}
+	if err := job_templates.RegisterJobTemplatesHandlerServer(ctx, svcRouter, jobTemplateSVC); err != nil {
 		panic(err)
 	}
 

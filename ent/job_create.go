@@ -15,10 +15,11 @@ import (
 // JobCreate is the builder for creating a Job entity.
 type JobCreate struct {
 	config
-	Name    *string
-	Content *string
-	tasks   map[int]struct{}
-	tags    map[int]struct{}
+	Name       *string
+	Parameters *string
+	tasks      map[int]struct{}
+	tags       map[int]struct{}
+	template   map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -27,9 +28,9 @@ func (jc *JobCreate) SetName(s string) *JobCreate {
 	return jc
 }
 
-// SetContent sets the Content field.
-func (jc *JobCreate) SetContent(s string) *JobCreate {
-	jc.Content = &s
+// SetParameters sets the Parameters field.
+func (jc *JobCreate) SetParameters(s string) *JobCreate {
+	jc.Parameters = &s
 	return jc
 }
 
@@ -73,6 +74,20 @@ func (jc *JobCreate) AddTags(t ...*Tag) *JobCreate {
 	return jc.AddTagIDs(ids...)
 }
 
+// SetTemplateID sets the template edge to JobTemplate by id.
+func (jc *JobCreate) SetTemplateID(id int) *JobCreate {
+	if jc.template == nil {
+		jc.template = make(map[int]struct{})
+	}
+	jc.template[id] = struct{}{}
+	return jc
+}
+
+// SetTemplate sets the template edge to JobTemplate.
+func (jc *JobCreate) SetTemplate(j *JobTemplate) *JobCreate {
+	return jc.SetTemplateID(j.ID)
+}
+
 // Save creates the Job in the database.
 func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	if jc.Name == nil {
@@ -81,11 +96,14 @@ func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	if err := job.NameValidator(*jc.Name); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 	}
-	if jc.Content == nil {
-		return nil, errors.New("ent: missing required field \"Content\"")
+	if jc.Parameters == nil {
+		return nil, errors.New("ent: missing required field \"Parameters\"")
 	}
-	if err := job.ContentValidator(*jc.Content); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+	if len(jc.template) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"template\"")
+	}
+	if jc.template == nil {
+		return nil, errors.New("ent: missing required edge \"template\"")
 	}
 	return jc.sqlSave(ctx)
 }
@@ -115,9 +133,9 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		builder.Set(job.FieldName, *value)
 		j.Name = *value
 	}
-	if value := jc.Content; value != nil {
-		builder.Set(job.FieldContent, *value)
-		j.Content = *value
+	if value := jc.Parameters; value != nil {
+		builder.Set(job.FieldParameters, *value)
+		j.Parameters = *value
 	}
 	query, args := builder.Query()
 	if err := tx.Exec(ctx, query, args, &res); err != nil {
@@ -154,6 +172,17 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 			query, args := sql.Insert(job.TagsTable).
 				Columns(job.TagsPrimaryKey[0], job.TagsPrimaryKey[1]).
 				Values(id, eid).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
+		}
+	}
+	if len(jc.template) > 0 {
+		for eid := range jc.template {
+			query, args := sql.Update(job.TemplateTable).
+				Set(job.TemplateColumn, eid).
+				Where(sql.EQ(job.FieldID, id)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {
 				return nil, rollback(tx, err)

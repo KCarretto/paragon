@@ -31,6 +31,11 @@ const (
 	// JobsInverseTable is the table name for the Job entity.
 	// It exists in this package in order to avoid circular dependency with the "job" package.
 	JobsInverseTable = "jobs"
+	// JobTemplatesTable is the table the holds the job_templates relation/edge. The primary key declared below.
+	JobTemplatesTable = "job_template_tags"
+	// JobTemplatesInverseTable is the table name for the JobTemplate entity.
+	// It exists in this package in order to avoid circular dependency with the "jobtemplate" package.
+	JobTemplatesInverseTable = "job_templates"
 )
 
 // Columns holds all SQL columns are tag fields.
@@ -49,6 +54,9 @@ var (
 	// JobsPrimaryKey and JobsColumn2 are the table columns denoting the
 	// primary key for the jobs relation (M2M).
 	JobsPrimaryKey = []string{"job_id", "tag_id"}
+	// JobTemplatesPrimaryKey and JobTemplatesColumn2 are the table columns denoting the
+	// primary key for the job_templates relation (M2M).
+	JobTemplatesPrimaryKey = []string{"job_template_id", "tag_id"}
 )
 
 var (
