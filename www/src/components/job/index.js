@@ -1,3 +1,4 @@
-export { default as XJobCard } from './XJobCard';
 export { default as XJobCreateModal } from './XJobCreateModal';
+export { default as XJobQueueModal } from './XJobQueueModal';
+export { default as XJobTemplateCard } from './XJobTemplateCard';
 
