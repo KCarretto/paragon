@@ -4,10 +4,12 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/jobtemplate"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/task"
 )
@@ -15,13 +17,15 @@ import (
 // JobUpdate is the builder for updating Job entities.
 type JobUpdate struct {
 	config
-	Name         *string
-	Content      *string
-	tasks        map[int]struct{}
-	tags         map[int]struct{}
-	removedTasks map[int]struct{}
-	removedTags  map[int]struct{}
-	predicates   []predicate.Job
+	Name            *string
+	Parameters      *string
+	tasks           map[int]struct{}
+	tags            map[int]struct{}
+	template        map[int]struct{}
+	removedTasks    map[int]struct{}
+	removedTags     map[int]struct{}
+	clearedTemplate bool
+	predicates      []predicate.Job
 }
 
 // Where adds a new predicate for the builder.
@@ -36,9 +40,9 @@ func (ju *JobUpdate) SetName(s string) *JobUpdate {
 	return ju
 }
 
-// SetContent sets the Content field.
-func (ju *JobUpdate) SetContent(s string) *JobUpdate {
-	ju.Content = &s
+// SetParameters sets the Parameters field.
+func (ju *JobUpdate) SetParameters(s string) *JobUpdate {
+	ju.Parameters = &s
 	return ju
 }
 
@@ -82,6 +86,20 @@ func (ju *JobUpdate) AddTags(t ...*Tag) *JobUpdate {
 	return ju.AddTagIDs(ids...)
 }
 
+// SetTemplateID sets the template edge to JobTemplate by id.
+func (ju *JobUpdate) SetTemplateID(id int) *JobUpdate {
+	if ju.template == nil {
+		ju.template = make(map[int]struct{})
+	}
+	ju.template[id] = struct{}{}
+	return ju
+}
+
+// SetTemplate sets the template edge to JobTemplate.
+func (ju *JobUpdate) SetTemplate(j *JobTemplate) *JobUpdate {
+	return ju.SetTemplateID(j.ID)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (ju *JobUpdate) RemoveTaskIDs(ids ...int) *JobUpdate {
 	if ju.removedTasks == nil {
@@ -122,6 +140,12 @@ func (ju *JobUpdate) RemoveTags(t ...*Tag) *JobUpdate {
 	return ju.RemoveTagIDs(ids...)
 }
 
+// ClearTemplate clears the template edge to JobTemplate.
+func (ju *JobUpdate) ClearTemplate() *JobUpdate {
+	ju.clearedTemplate = true
+	return ju
+}
+
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 	if ju.Name != nil {
@@ -129,10 +153,11 @@ func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 		}
 	}
-	if ju.Content != nil {
-		if err := job.ContentValidator(*ju.Content); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
-		}
+	if len(ju.template) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"template\"")
+	}
+	if ju.clearedTemplate && ju.template == nil {
+		return 0, errors.New("ent: clearing a unique edge \"template\"")
 	}
 	return ju.sqlSave(ctx)
 }
@@ -193,8 +218,8 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := ju.Name; value != nil {
 		builder.Set(job.FieldName, *value)
 	}
-	if value := ju.Content; value != nil {
-		builder.Set(job.FieldContent, *value)
+	if value := ju.Parameters; value != nil {
+		builder.Set(job.FieldParameters, *value)
 	}
 	if !builder.Empty() {
 		query, args := builder.Query()
@@ -268,6 +293,26 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			return 0, rollback(tx, err)
 		}
 	}
+	if ju.clearedTemplate {
+		query, args := sql.Update(job.TemplateTable).
+			SetNull(job.TemplateColumn).
+			Where(sql.InInts(jobtemplate.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(ju.template) > 0 {
+		for eid := range ju.template {
+			query, args := sql.Update(job.TemplateTable).
+				Set(job.TemplateColumn, eid).
+				Where(sql.InInts(job.FieldID, ids...)).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return 0, rollback(tx, err)
+			}
+		}
+	}
 	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
@@ -277,13 +322,15 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // JobUpdateOne is the builder for updating a single Job entity.
 type JobUpdateOne struct {
 	config
-	id           int
-	Name         *string
-	Content      *string
-	tasks        map[int]struct{}
-	tags         map[int]struct{}
-	removedTasks map[int]struct{}
-	removedTags  map[int]struct{}
+	id              int
+	Name            *string
+	Parameters      *string
+	tasks           map[int]struct{}
+	tags            map[int]struct{}
+	template        map[int]struct{}
+	removedTasks    map[int]struct{}
+	removedTags     map[int]struct{}
+	clearedTemplate bool
 }
 
 // SetName sets the Name field.
@@ -292,9 +339,9 @@ func (juo *JobUpdateOne) SetName(s string) *JobUpdateOne {
 	return juo
 }
 
-// SetContent sets the Content field.
-func (juo *JobUpdateOne) SetContent(s string) *JobUpdateOne {
-	juo.Content = &s
+// SetParameters sets the Parameters field.
+func (juo *JobUpdateOne) SetParameters(s string) *JobUpdateOne {
+	juo.Parameters = &s
 	return juo
 }
 
@@ -338,6 +385,20 @@ func (juo *JobUpdateOne) AddTags(t ...*Tag) *JobUpdateOne {
 	return juo.AddTagIDs(ids...)
 }
 
+// SetTemplateID sets the template edge to JobTemplate by id.
+func (juo *JobUpdateOne) SetTemplateID(id int) *JobUpdateOne {
+	if juo.template == nil {
+		juo.template = make(map[int]struct{})
+	}
+	juo.template[id] = struct{}{}
+	return juo
+}
+
+// SetTemplate sets the template edge to JobTemplate.
+func (juo *JobUpdateOne) SetTemplate(j *JobTemplate) *JobUpdateOne {
+	return juo.SetTemplateID(j.ID)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (juo *JobUpdateOne) RemoveTaskIDs(ids ...int) *JobUpdateOne {
 	if juo.removedTasks == nil {
@@ -378,6 +439,12 @@ func (juo *JobUpdateOne) RemoveTags(t ...*Tag) *JobUpdateOne {
 	return juo.RemoveTagIDs(ids...)
 }
 
+// ClearTemplate clears the template edge to JobTemplate.
+func (juo *JobUpdateOne) ClearTemplate() *JobUpdateOne {
+	juo.clearedTemplate = true
+	return juo
+}
+
 // Save executes the query and returns the updated entity.
 func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 	if juo.Name != nil {
@@ -385,10 +452,11 @@ func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 		}
 	}
-	if juo.Content != nil {
-		if err := job.ContentValidator(*juo.Content); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
-		}
+	if len(juo.template) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"template\"")
+	}
+	if juo.clearedTemplate && juo.template == nil {
+		return nil, errors.New("ent: clearing a unique edge \"template\"")
 	}
 	return juo.sqlSave(ctx)
 }
@@ -453,9 +521,9 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		builder.Set(job.FieldName, *value)
 		j.Name = *value
 	}
-	if value := juo.Content; value != nil {
-		builder.Set(job.FieldContent, *value)
-		j.Content = *value
+	if value := juo.Parameters; value != nil {
+		builder.Set(job.FieldParameters, *value)
+		j.Parameters = *value
 	}
 	if !builder.Empty() {
 		query, args := builder.Query()
@@ -527,6 +595,26 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		query, args := builder.Query()
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return nil, rollback(tx, err)
+		}
+	}
+	if juo.clearedTemplate {
+		query, args := sql.Update(job.TemplateTable).
+			SetNull(job.TemplateColumn).
+			Where(sql.InInts(jobtemplate.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(juo.template) > 0 {
+		for eid := range juo.template {
+			query, args := sql.Update(job.TemplateTable).
+				Set(job.TemplateColumn, eid).
+				Where(sql.InInts(job.FieldID, ids...)).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
 		}
 	}
 	if err = tx.Commit(); err != nil {

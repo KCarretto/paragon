@@ -51,6 +51,11 @@ func (t *Tag) QueryJobs() *JobQuery {
 	return (&TagClient{t.config}).QueryJobs(t)
 }
 
+// QueryJobTemplates queries the job_templates edge of the Tag.
+func (t *Tag) QueryJobTemplates() *JobTemplateQuery {
+	return (&TagClient{t.config}).QueryJobTemplates(t)
+}
+
 // Update returns a builder for updating this Tag.
 // Note that, you need to call Tag.Unwrap() before calling this method, if this Tag
 // was returned from a transaction, and the transaction was committed or rolled back.

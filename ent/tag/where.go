@@ -362,6 +362,42 @@ func HasJobsWith(preds ...predicate.Job) predicate.Tag {
 	)
 }
 
+// HasJobTemplates applies the HasEdge predicate on the "job_templates" edge.
+func HasJobTemplates() predicate.Tag {
+	return predicate.Tag(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(
+				sql.In(
+					t1.C(FieldID),
+					sql.Select(JobTemplatesPrimaryKey[1]).From(sql.Table(JobTemplatesTable)),
+				),
+			)
+		},
+	)
+}
+
+// HasJobTemplatesWith applies the HasEdge predicate on the "job_templates" edge with a given conditions (other predicates).
+func HasJobTemplatesWith(preds ...predicate.JobTemplate) predicate.Tag {
+	return predicate.Tag(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Table(JobTemplatesInverseTable)
+			t3 := sql.Table(JobTemplatesTable)
+			t4 := sql.Select(t3.C(JobTemplatesPrimaryKey[1])).
+				From(t3).
+				Join(t2).
+				On(t3.C(JobTemplatesPrimaryKey[0]), t2.C(FieldID))
+			t5 := sql.Select().From(t2)
+			for _, p := range preds {
+				p(t5)
+			}
+			t4.FromSelect(t5)
+			s.Where(sql.In(t1.C(FieldID), t4))
+		},
+	)
+}
+
 // And groups list of predicates with the AND operator between them.
 func And(predicates ...predicate.Tag) predicate.Tag {
 	return predicate.Tag(

@@ -16,28 +16,28 @@ type Job struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
 	Name string `json:"Name,omitempty"`
-	// Content holds the value of the "Content" field.
-	Content string `json:"Content,omitempty"`
+	// Parameters holds the value of the "Parameters" field.
+	Parameters string `json:"Parameters,omitempty"`
 }
 
 // FromRows scans the sql response data into Job.
 func (j *Job) FromRows(rows *sql.Rows) error {
 	var vj struct {
-		ID      int
-		Name    sql.NullString
-		Content sql.NullString
+		ID         int
+		Name       sql.NullString
+		Parameters sql.NullString
 	}
 	// the order here should be the same as in the `job.Columns`.
 	if err := rows.Scan(
 		&vj.ID,
 		&vj.Name,
-		&vj.Content,
+		&vj.Parameters,
 	); err != nil {
 		return err
 	}
 	j.ID = vj.ID
 	j.Name = vj.Name.String
-	j.Content = vj.Content.String
+	j.Parameters = vj.Parameters.String
 	return nil
 }
 
@@ -49,6 +49,11 @@ func (j *Job) QueryTasks() *TaskQuery {
 // QueryTags queries the tags edge of the Job.
 func (j *Job) QueryTags() *TagQuery {
 	return (&JobClient{j.config}).QueryTags(j)
+}
+
+// QueryTemplate queries the template edge of the Job.
+func (j *Job) QueryTemplate() *JobTemplateQuery {
+	return (&JobClient{j.config}).QueryTemplate(j)
 }
 
 // Update returns a builder for updating this Job.
@@ -76,8 +81,8 @@ func (j *Job) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", j.ID))
 	builder.WriteString(", Name=")
 	builder.WriteString(j.Name)
-	builder.WriteString(", Content=")
-	builder.WriteString(j.Content)
+	builder.WriteString(", Parameters=")
+	builder.WriteString(j.Parameters)
 	builder.WriteByte(')')
 	return builder.String()
 }

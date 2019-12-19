@@ -189,5 +189,5 @@ func (svc *Service) AddCredential(ctx context.Context, req *AddCredentialRequest
 		AddCredentialIDs(credential.ID).
 		Where(target.ID(int(targetID))).
 		SaveX(ctx)
-	return &AddCredentialResponse{}, nil
+	return &AddCredentialResponse{Id: int64(credential.ID)}, nil
 }

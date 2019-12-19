@@ -16,6 +16,8 @@ type Tx struct {
 	Credential *CredentialClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// JobTemplate is the client for interacting with the JobTemplate builders.
+	JobTemplate *JobTemplateClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
@@ -37,13 +39,14 @@ func (tx *Tx) Rollback() error {
 // Client returns a Client that binds to current transaction.
 func (tx *Tx) Client() *Client {
 	return &Client{
-		config:     tx.config,
-		Schema:     migrate.NewSchema(tx.driver),
-		Credential: NewCredentialClient(tx.config),
-		Job:        NewJobClient(tx.config),
-		Tag:        NewTagClient(tx.config),
-		Target:     NewTargetClient(tx.config),
-		Task:       NewTaskClient(tx.config),
+		config:      tx.config,
+		Schema:      migrate.NewSchema(tx.driver),
+		Credential:  NewCredentialClient(tx.config),
+		Job:         NewJobClient(tx.config),
+		JobTemplate: NewJobTemplateClient(tx.config),
+		Tag:         NewTagClient(tx.config),
+		Target:      NewTargetClient(tx.config),
+		Task:        NewTaskClient(tx.config),
 	}
 }
 

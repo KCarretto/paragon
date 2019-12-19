@@ -16,10 +16,9 @@ func (Job) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
 			NotEmpty().
-			Comment("The name of the job (usually a Renegade Script)"),
-		field.String("Content").
-			NotEmpty().
-			Comment("The content of the jon (usually a Renegade Script)"),
+			Comment("The name of the job"),
+		field.String("Parameters").
+			Comment("The JSON string for the Parameters Mapping"),
 	}
 }
 
@@ -30,5 +29,10 @@ func (Job) Edges() []ent.Edge {
 			Comment("A Job can have many Tasks"),
 		edge.To("tags", Tag.Type).
 			Comment("A Job can have many Tags"),
+		edge.From("template", JobTemplate.Type).
+			Ref("jobs").
+			Unique().
+			Required().
+			Comment("A Job must have one template"),
 	}
 }

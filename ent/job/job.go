@@ -13,8 +13,8 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name vertex property in the database.
 	FieldName = "name"
-	// FieldContent holds the string denoting the content vertex property in the database.
-	FieldContent = "content"
+	// FieldParameters holds the string denoting the parameters vertex property in the database.
+	FieldParameters = "parameters"
 
 	// Table holds the table name of the job in the database.
 	Table = "jobs"
@@ -30,13 +30,20 @@ const (
 	// TagsInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagsInverseTable = "tags"
+	// TemplateTable is the table the holds the template relation/edge.
+	TemplateTable = "jobs"
+	// TemplateInverseTable is the table name for the JobTemplate entity.
+	// It exists in this package in order to avoid circular dependency with the "jobtemplate" package.
+	TemplateInverseTable = "job_templates"
+	// TemplateColumn is the table column denoting the template relation/edge.
+	TemplateColumn = "template_id"
 )
 
 // Columns holds all SQL columns are job fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
-	FieldContent,
+	FieldParameters,
 }
 
 var (
@@ -52,9 +59,4 @@ var (
 	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
 	NameValidator = descName.Validators[0].(func(string) error)
-
-	// descContent is the schema descriptor for Content field.
-	descContent = fields[1].Descriptor()
-	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
-	ContentValidator = descContent.Validators[0].(func(string) error)
 )
