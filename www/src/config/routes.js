@@ -15,7 +15,7 @@ const routes = [
     {
         title: 'Jobs',
         link: '/jobs',
-        icon: <Icon name='th' />
+        icon: <Icon name='cubes' />
     },
     {
         title: 'Tags',
