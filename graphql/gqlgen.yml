@@ -1,0 +1,23 @@
+schema: schema.graphql
+
+exec:
+  filename: generated/generated.go
+  package: generated
+
+model:
+  filename: models/generated.go
+  package: models
+
+resolver:
+  filename: resolve/generated.go
+  type: Resolver
+
+struct_tag: json
+
+autobind:
+ - github.com/kcarretto/paragon/ent
+
+models:
+  ID:
+    model:
+      - github.com/99designs/gqlgen/graphql.IntID
