@@ -3,6 +3,7 @@ module github.com/kcarretto/paragon
 go 1.13
 
 require (
+	github.com/99designs/gqlgen v0.10.2
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/facebookincubator/ent v0.0.0-20191020153013-8e3a17550af6
@@ -21,6 +22,7 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/stretchr/testify v1.4.0
+	github.com/vektah/gqlparser v1.2.0
 	go.starlark.net v0.0.0-20191018214235-58de16fb0ee7
 	go.uber.org/atomic v1.4.0 // indirect
 	go.uber.org/multierr v1.2.0 // indirect
