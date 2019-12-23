@@ -58,7 +58,7 @@ const XMultiJobView = () => {
             <Container fluid style={{ padding: '20px' }}>
                 <Card.Group centered itemsPerRow={4}>
                     <Query query={JOBS_QUERY}>
-                        {() => jobs.map((job) => <XJobTemplateCard key={job.id} {...job} />)}
+                        {() => jobs.map((job) => <XJobCard key={job.id} {...job} />)}
                     </Query>
                 </Card.Group>
             </Container>
