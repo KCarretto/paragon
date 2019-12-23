@@ -1,20 +1,26 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Button, Card, Icon, Menu } from 'semantic-ui-react';
+import { Card, Icon, Menu } from 'semantic-ui-react';
+import { XTaskSummary } from '../task';
+import XJobQueueModal from './XJobQueueModal';
 
-const XJobTemplateCard = ({ id, name, tags }) => (
+const XJobCard = ({ id, name, tasks, tags }) => (
     <Card fluid >
         <Card.Content>
             <Menu text floated='right'>
+                <XJobQueueModal />
+            </Menu>
+            {/* <Menu text floated='right'>
                 <Button compact basic circular>
                     <Icon.Group size='big'>
                         <Icon fitted name='cube' color='blue' />
                         <Icon corner='bottom left' name='chevron right' color='teal' />
                     </Icon.Group>
                 </Button>
-            </Menu>
+            </Menu> */}
             <Card.Header href={'/jobs/' + id}>{name}</Card.Header>
 
+            <XTaskSummary tasks={tasks} />
 
         </Card.Content>
         <Card.Content extra>
@@ -23,7 +29,7 @@ const XJobTemplateCard = ({ id, name, tags }) => (
     </Card>
 )
 
-XJobTemplateCard.propTypes = {
+XJobCard.propTypes = {
     id: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
     tags: PropTypes.arrayOf(PropTypes.shape({
@@ -32,4 +38,4 @@ XJobTemplateCard.propTypes = {
     })),
 }
 
-export default XJobTemplateCard
+export default XJobCard
