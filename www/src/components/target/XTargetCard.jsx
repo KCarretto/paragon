@@ -1,9 +1,8 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Link } from 'react-router-dom';
-import { Card, Divider, Feed, Header, Icon, Label, List } from 'semantic-ui-react';
-import { XTaskStatus } from '../task';
+import { Card, Icon, Label } from 'semantic-ui-react';
+import { XTaskSummary } from '../task';
 
 const XTargetCard = ({ id, name, primaryIP, lastSeen, tags, tasks }) => (
     <Card fluid >
@@ -15,30 +14,7 @@ const XTargetCard = ({ id, name, primaryIP, lastSeen, tags, tasks }) => (
                     : <Label corner='right' size='large' icon='check circle' color='green' />
             }
             <Card.Meta>{moment.unix(lastSeen).fromNow()}</Card.Meta>
-            <Feed>
-                <Header sub>Recent Tasks</Header>
-                {tasks ? tasks.map((task, index) => (
-                    <Feed.Event key={index}>
-                        <Feed.Label>
-                            <Icon fitted size='big' {...XTaskStatus.getStatus(task).icon} />
-                        </Feed.Label>
-                        <Feed.Content>
-                            <Feed.Summary>
-                                <Link to={'/jobs/' + task.job.id}><List.Header>{task.job.name}
-                                </List.Header></Link>
-                            </Feed.Summary>
-                            <Feed.Extra text>
-                                {XTaskStatus.getStatus(task).text}
-                            </Feed.Extra>
-                            <Feed.Meta>
-                                Last Updated: {moment.unix(XTaskStatus.getTimestamp(task)).fromNow()}
-                            </Feed.Meta>
-                            <Divider />
-                        </Feed.Content>
-                    </Feed.Event>
-                )) : <Header sub disabled>No recent tasks</Header>}
-            </Feed>
-
+            <XTaskSummary tasks={tasks} />
         </Card.Content>
         <Card.Content extra>
             <Icon name='tags' /> {tags ? tags.map(tag => tag.name).join(', ') : 'None'}
