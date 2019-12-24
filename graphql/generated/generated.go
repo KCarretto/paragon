@@ -138,19 +138,19 @@ type JobResolver interface {
 	Prev(ctx context.Context, obj *ent.Job) (*ent.Job, error)
 }
 type MutationResolver interface {
-	FailCredential(ctx context.Context, input *models.FailCredentialRequest) (bool, error)
-	CreateJob(ctx context.Context, input *models.CreateJobRequest) (int, error)
-	CreateTag(ctx context.Context, input *models.CreateTagRequest) (int, error)
-	ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (bool, error)
-	ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (bool, error)
-	ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (bool, error)
-	RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (bool, error)
-	RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (bool, error)
-	RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (bool, error)
-	CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (int, error)
-	SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (bool, error)
+	FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error)
+	CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error)
+	CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error)
+	ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (*ent.Task, error)
+	ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (*ent.Target, error)
+	ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (*ent.Job, error)
+	RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (*ent.Task, error)
+	RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (*ent.Target, error)
+	RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (*ent.Job, error)
+	CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (*ent.Target, error)
+	SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error)
 	DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error)
-	AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (bool, error)
+	AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error)
 }
 type QueryResolver interface {
 	Credential(ctx context.Context, id int) (*ent.Credential, error)
@@ -897,25 +897,25 @@ input AddCredentialForTargetRequest {
 
 type Mutation {
   # Credential Mutations
-  failCredential(input: FailCredentialRequest): Boolean!
+  failCredential(input: FailCredentialRequest): Credential!
 
   # Job Mutations
-  createJob(input: CreateJobRequest): ID!
+  createJob(input: CreateJobRequest): Job!
 
   # Tag Mutations
-  createTag(input: CreateTagRequest): ID!
-  applyTagToTask(input: ApplyTagRequest): Boolean!
-  applyTagToTarget(input: ApplyTagRequest): Boolean!
-  applyTagToJob(input: ApplyTagRequest): Boolean!
-  removeTagFromTask(input: RemoveTagRequest): Boolean!
-  removeTagFromTarget(input: RemoveTagRequest): Boolean!
-  removeTagFromJob(input: RemoveTagRequest): Boolean!
+  createTag(input: CreateTagRequest): Tag!
+  applyTagToTask(input: ApplyTagRequest): Task!
+  applyTagToTarget(input: ApplyTagRequest): Target!
+  applyTagToJob(input: ApplyTagRequest): Job!
+  removeTagFromTask(input: RemoveTagRequest): Task!
+  removeTagFromTarget(input: RemoveTagRequest): Target!
+  removeTagFromJob(input: RemoveTagRequest): Job!
 
   # Target Mutations
-  createTarget(input: CreateTargetRequest): ID!
-  setTargetFields(input: SetTargetFieldsRequest): Boolean!
+  createTarget(input: CreateTargetRequest): Target!
+  setTargetFields(input: SetTargetFieldsRequest): Target!
   deleteTarget(input: DeleteTargetRequest): Boolean!
-  addCredentialForTarget(input: AddCredentialForTargetRequest): Boolean!
+  addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
 }
 
 type Query {
@@ -1688,10 +1688,10 @@ func (ec *executionContext) _Mutation_failCredential(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Credential)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1732,10 +1732,10 @@ func (ec *executionContext) _Mutation_createJob(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*ent.Job)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createTag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1776,10 +1776,10 @@ func (ec *executionContext) _Mutation_createTag(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*ent.Tag)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_applyTagToTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1820,10 +1820,10 @@ func (ec *executionContext) _Mutation_applyTagToTask(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Task)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_applyTagToTarget(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1864,10 +1864,10 @@ func (ec *executionContext) _Mutation_applyTagToTarget(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Target)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_applyTagToJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1908,10 +1908,10 @@ func (ec *executionContext) _Mutation_applyTagToJob(ctx context.Context, field g
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Job)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeTagFromTask(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1952,10 +1952,10 @@ func (ec *executionContext) _Mutation_removeTagFromTask(ctx context.Context, fie
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Task)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeTagFromTarget(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -1996,10 +1996,10 @@ func (ec *executionContext) _Mutation_removeTagFromTarget(ctx context.Context, f
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Target)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_removeTagFromJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2040,10 +2040,10 @@ func (ec *executionContext) _Mutation_removeTagFromJob(ctx context.Context, fiel
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Job)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createTarget(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2084,10 +2084,10 @@ func (ec *executionContext) _Mutation_createTarget(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(int)
+	res := resTmp.(*ent.Target)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNID2int(ctx, field.Selections, res)
+	return ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_setTargetFields(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2128,10 +2128,10 @@ func (ec *executionContext) _Mutation_setTargetFields(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Target)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_deleteTarget(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2216,10 +2216,10 @@ func (ec *executionContext) _Mutation_addCredentialForTarget(ctx context.Context
 		}
 		return graphql.Null
 	}
-	res := resTmp.(bool)
+	res := resTmp.(*ent.Target)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+	return ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_credential(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5742,6 +5742,20 @@ func (ec *executionContext) marshalNBoolean2bool(ctx context.Context, sel ast.Se
 	return res
 }
 
+func (ec *executionContext) marshalNCredential2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx context.Context, sel ast.SelectionSet, v ent.Credential) graphql.Marshaler {
+	return ec._Credential(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx context.Context, sel ast.SelectionSet, v *ent.Credential) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Credential(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNID2int(ctx context.Context, v interface{}) (int, error) {
 	return graphql.UnmarshalIntID(v)
 }
@@ -5756,6 +5770,20 @@ func (ec *executionContext) marshalNID2int(ctx context.Context, sel ast.Selectio
 	return res
 }
 
+func (ec *executionContext) marshalNJob2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx context.Context, sel ast.SelectionSet, v ent.Job) graphql.Marshaler {
+	return ec._Job(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx context.Context, sel ast.SelectionSet, v *ent.Job) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Job(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalString(v)
 }
@@ -5768,6 +5796,48 @@ func (ec *executionContext) marshalNString2string(ctx context.Context, sel ast.S
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNTag2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx context.Context, sel ast.SelectionSet, v ent.Tag) graphql.Marshaler {
+	return ec._Tag(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx context.Context, sel ast.SelectionSet, v *ent.Tag) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Tag(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTarget2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx context.Context, sel ast.SelectionSet, v ent.Target) graphql.Marshaler {
+	return ec._Target(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx context.Context, sel ast.SelectionSet, v *ent.Target) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Target(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNTask2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx context.Context, sel ast.SelectionSet, v ent.Task) graphql.Marshaler {
+	return ec._Task(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx context.Context, sel ast.SelectionSet, v *ent.Task) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Task(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalN__Directive2githubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐDirective(ctx context.Context, sel ast.SelectionSet, v introspection.Directive) graphql.Marshaler {

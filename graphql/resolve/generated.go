@@ -66,14 +66,14 @@ func (r *jobResolver) Prev(ctx context.Context, obj *ent.Job) (*ent.Job, error) 
 
 type mutationResolver struct{ *Resolver }
 
-func (r *mutationResolver) FailCredential(ctx context.Context, input *models.FailCredentialRequest) (bool, error) {
-	_, err := r.EntClient.Credential.GetX(ctx, input.ID).
+func (r *mutationResolver) FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error) {
+	cred, err := r.EntClient.Credential.GetX(ctx, input.ID).
 		Update().
 		AddFails(1).
 		Save(ctx)
-	return err != nil, err
+	return cred, err
 }
-func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (int, error) {
+func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
 	jobCreator := r.EntClient.Job.Create().
 		SetName(input.Name).
 		SetContent(input.Content).
@@ -89,7 +89,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		Where(target.And(tagPredicates...)).
 		All(ctx)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 	// just so all tasks and job are the same time.
 	currentTime := time.Now()
@@ -98,7 +98,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		SetCreationTime(currentTime).
 		Save(ctx)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 
 	for _, target := range targets {
@@ -113,65 +113,65 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 			SaveX(ctx)
 	}
 
-	return job.ID, nil
+	return job, nil
 }
-func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTagRequest) (int, error) {
+func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error) {
 	tag, err := r.EntClient.Tag.Create().
 		SetName(input.Name).
 		Save(ctx)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
-	return tag.ID, nil
+	return tag, nil
 }
-func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (bool, error) {
-	_, err := r.EntClient.Task.UpdateOneID(input.EntID).
+func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (*ent.Task, error) {
+	task, err := r.EntClient.Task.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	return err != nil, err
+	return task, err
 }
-func (r *mutationResolver) ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (bool, error) {
-	_, err := r.EntClient.Target.UpdateOneID(input.EntID).
+func (r *mutationResolver) ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (*ent.Target, error) {
+	target, err := r.EntClient.Target.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	return err != nil, err
+	return target, err
 }
-func (r *mutationResolver) ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (bool, error) {
-	_, err := r.EntClient.Job.UpdateOneID(input.EntID).
+func (r *mutationResolver) ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (*ent.Job, error) {
+	job, err := r.EntClient.Job.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	return err != nil, err
+	return job, err
 }
-func (r *mutationResolver) RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (bool, error) {
-	_, err := r.EntClient.Task.UpdateOneID(input.EntID).
+func (r *mutationResolver) RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (*ent.Task, error) {
+	task, err := r.EntClient.Task.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	return err != nil, err
+	return task, err
 }
-func (r *mutationResolver) RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (bool, error) {
-	_, err := r.EntClient.Target.UpdateOneID(input.EntID).
+func (r *mutationResolver) RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (*ent.Target, error) {
+	target, err := r.EntClient.Target.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	return err != nil, err
+	return target, err
 }
-func (r *mutationResolver) RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (bool, error) {
-	_, err := r.EntClient.Job.UpdateOneID(input.EntID).
+func (r *mutationResolver) RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (*ent.Job, error) {
+	job, err := r.EntClient.Job.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	return err != nil, err
+	return job, err
 }
-func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (int, error) {
+func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (*ent.Target, error) {
 	target, err := r.EntClient.Target.Create().
 		SetName(input.Name).
 		SetPrimaryIP(input.PrimaryIP).
 		AddTagIDs(input.Tags...).
 		Save(ctx)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
-	return target.ID, nil
+	return target, nil
 }
-func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (bool, error) {
+func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error) {
 	targetUpdater := r.EntClient.Target.UpdateOneID(input.ID)
 	if input.Name != nil {
 		targetUpdater.SetName(*input.Name)
@@ -179,30 +179,30 @@ func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.Se
 	if input.PrimaryIP != nil {
 		targetUpdater.SetPrimaryIP(*input.PrimaryIP)
 	}
-	_, err := targetUpdater.
+	target, err := targetUpdater.
 		SetNillableHostname(input.Hostname).
 		SetNillableMachineUUID(input.MachineUUID).
 		SetNillablePrimaryMAC(input.PrimaryMac).
 		SetNillablePublicIP(input.PublicIP).
 		Save(ctx)
-	return err != nil, err
+	return target, err
 }
 func (r *mutationResolver) DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error) {
 	err := r.EntClient.Target.DeleteOneID(input.ID).Exec(ctx)
 	return err != nil, err
 }
-func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (bool, error) {
+func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error) {
 	credential, err := r.EntClient.Credential.Create().
 		SetPrincipal(input.Principal).
 		SetSecret(input.Secret).
 		Save(ctx)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	_, err = r.EntClient.Target.UpdateOneID(input.ID).
+	target, err := r.EntClient.Target.UpdateOneID(input.ID).
 		AddCredentialIDs(credential.ID).
 		Save(ctx)
-	return err != nil, err
+	return target, err
 }
 
 type queryResolver struct{ *Resolver }

@@ -123,25 +123,25 @@ input AddCredentialForTargetRequest {
 
 type Mutation {
   # Credential Mutations
-  failCredential(input: FailCredentialRequest): Boolean!
+  failCredential(input: FailCredentialRequest): Credential!
 
   # Job Mutations
-  createJob(input: CreateJobRequest): ID!
+  createJob(input: CreateJobRequest): Job!
 
   # Tag Mutations
-  createTag(input: CreateTagRequest): ID!
-  applyTagToTask(input: ApplyTagRequest): Boolean!
-  applyTagToTarget(input: ApplyTagRequest): Boolean!
-  applyTagToJob(input: ApplyTagRequest): Boolean!
-  removeTagFromTask(input: RemoveTagRequest): Boolean!
-  removeTagFromTarget(input: RemoveTagRequest): Boolean!
-  removeTagFromJob(input: RemoveTagRequest): Boolean!
+  createTag(input: CreateTagRequest): Tag!
+  applyTagToTask(input: ApplyTagRequest): Task!
+  applyTagToTarget(input: ApplyTagRequest): Target!
+  applyTagToJob(input: ApplyTagRequest): Job!
+  removeTagFromTask(input: RemoveTagRequest): Task!
+  removeTagFromTarget(input: RemoveTagRequest): Target!
+  removeTagFromJob(input: RemoveTagRequest): Job!
 
   # Target Mutations
-  createTarget(input: CreateTargetRequest): ID!
-  setTargetFields(input: SetTargetFieldsRequest): Boolean!
+  createTarget(input: CreateTargetRequest): Target!
+  setTargetFields(input: SetTargetFieldsRequest): Target!
   deleteTarget(input: DeleteTargetRequest): Boolean!
-  addCredentialForTarget(input: AddCredentialForTargetRequest): Boolean!
+  addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
 }
 
 type Query {
