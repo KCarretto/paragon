@@ -14,7 +14,7 @@ const XTaskSummary = ({ tasks }) => (
                 </Feed.Label>
                 <Feed.Content>
                     <Feed.Summary>
-                        <Link to={'/jobs/' + task.job.id}><List.Header>{task.job.name}
+                        <Link to={'/tasks/' + task.id}><List.Header>{task.job.name}
                         </List.Header></Link>
                     </Feed.Summary>
                     <Feed.Extra text>

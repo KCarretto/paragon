@@ -1,12 +1,12 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 
-const XTargetView = () => {
+const XTaskView = () => {
     let { id } = useParams();
 
     return (
-        <h1>TARGET: {id}</h1>
+        <h1>TASK: {id}</h1>
     );
 }
 
-export default XTargetView;
+export default XTaskView;
