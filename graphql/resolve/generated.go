@@ -210,32 +210,32 @@ type queryResolver struct{ *Resolver }
 func (r *queryResolver) Credential(ctx context.Context, id int) (*ent.Credential, error) {
 	return r.EntClient.Credential.Get(ctx, id)
 }
-func (r *queryResolver) Credentials(ctx context.Context) ([]int, error) {
-	return r.EntClient.Credential.Query().IDs(ctx)
+func (r *queryResolver) Credentials(ctx context.Context) ([]*ent.Credential, error) {
+	return r.EntClient.Credential.Query().All(ctx)
 }
 func (r *queryResolver) Job(ctx context.Context, id int) (*ent.Job, error) {
 	return r.EntClient.Job.Get(ctx, id)
 }
-func (r *queryResolver) Jobs(ctx context.Context) ([]int, error) {
-	return r.EntClient.Job.Query().IDs(ctx)
+func (r *queryResolver) Jobs(ctx context.Context) ([]*ent.Job, error) {
+	return r.EntClient.Job.Query().All(ctx)
 }
 func (r *queryResolver) Tag(ctx context.Context, id int) (*ent.Tag, error) {
 	return r.EntClient.Tag.Get(ctx, id)
 }
-func (r *queryResolver) Tags(ctx context.Context) ([]int, error) {
-	return r.EntClient.Tag.Query().IDs(ctx)
+func (r *queryResolver) Tags(ctx context.Context) ([]*ent.Tag, error) {
+	return r.EntClient.Tag.Query().All(ctx)
 }
 func (r *queryResolver) Target(ctx context.Context, id int) (*ent.Target, error) {
 	return r.EntClient.Target.Get(ctx, id)
 }
-func (r *queryResolver) Targets(ctx context.Context) ([]int, error) {
-	return r.EntClient.Target.Query().IDs(ctx)
+func (r *queryResolver) Targets(ctx context.Context) ([]*ent.Target, error) {
+	return r.EntClient.Target.Query().All(ctx)
 }
 func (r *queryResolver) Task(ctx context.Context, id int) (*ent.Task, error) {
 	return r.EntClient.Task.Get(ctx, id)
 }
-func (r *queryResolver) Tasks(ctx context.Context) ([]int, error) {
-	return r.EntClient.Task.Query().IDs(ctx)
+func (r *queryResolver) Tasks(ctx context.Context) ([]*ent.Task, error) {
+	return r.EntClient.Task.Query().All(ctx)
 }
 
 type tagResolver struct{ *Resolver }

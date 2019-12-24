@@ -11,6 +11,7 @@ directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITI
 scalar Time
 
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
+  id: ID
   name: String
   primaryIP: String
   machineUUID: String
@@ -25,6 +26,7 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
 }
 
 type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
+  id: ID
   name: String
 
   tasks: [Task]
@@ -33,6 +35,7 @@ type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
 }
 
 type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
+  id: ID
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -47,6 +50,7 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
 }
 
 type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
+  id: ID
   name: String
   creationTime: Time
   content: String
@@ -58,6 +62,7 @@ type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
 }
 
 type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
+  id: ID
   principal: String
   secret: String
   fails: Int
@@ -141,17 +146,17 @@ type Mutation {
 
 type Query {
   credential(id: ID!): Credential
-  credentials: [ID!]
+  credentials: [Credential]
 
   job(id: ID!): Job
-  jobs: [ID!]
+  jobs: [Job]
 
   tag(id: ID!): Tag
-  tags: [ID!]
+  tags: [Tag]
 
   target(id: ID!): Target
-  targets: [ID!]
+  targets: [Target]
 
   task(id: ID!): Task
-  tasks: [ID!]
+  tasks: [Task]
 }
