@@ -10,7 +10,6 @@ import (
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
-	"github.com/kcarretto/paragon/ent/jobtemplate"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
@@ -104,24 +103,6 @@ func (tq *TagQuery) QueryJobs() *JobQuery {
 		From(t1).
 		Join(t4).
 		On(t1.C(job.FieldID), t4.C(tag.JobsPrimaryKey[0]))
-	return query
-}
-
-// QueryJobTemplates chains the current query on the job_templates edge.
-func (tq *TagQuery) QueryJobTemplates() *JobTemplateQuery {
-	query := &JobTemplateQuery{config: tq.config}
-	t1 := sql.Table(jobtemplate.Table)
-	t2 := tq.sqlQuery()
-	t2.Select(t2.C(tag.FieldID))
-	t3 := sql.Table(tag.JobTemplatesTable)
-	t4 := sql.Select(t3.C(tag.JobTemplatesPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.JobTemplatesPrimaryKey[1]), t2.C(tag.FieldID))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(jobtemplate.FieldID), t4.C(tag.JobTemplatesPrimaryKey[0]))
 	return query
 }
 

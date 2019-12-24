@@ -2,6 +2,53 @@
 
 package models
 
-type ClaimTaskRequest struct {
-	ID *int `json:"id"`
+type AddCredentialForTargetRequest struct {
+	ID        int    `json:"id"`
+	Principal string `json:"principal"`
+	Secret    string `json:"secret"`
+}
+
+type ApplyTagRequest struct {
+	TagID int `json:"tagID"`
+	EntID int `json:"entID"`
+}
+
+type CreateJobRequest struct {
+	Name    string `json:"name"`
+	Content string `json:"content"`
+	Tags    []int  `json:"tags"`
+	Prev    *int   `json:"prev"`
+}
+
+type CreateTagRequest struct {
+	Name string `json:"name"`
+}
+
+type CreateTargetRequest struct {
+	Name      string `json:"name"`
+	PrimaryIP string `json:"primaryIP"`
+	Tags      []int  `json:"tags"`
+}
+
+type DeleteTargetRequest struct {
+	ID int `json:"id"`
+}
+
+type FailCredentialRequest struct {
+	ID int `json:"id"`
+}
+
+type RemoveTagRequest struct {
+	TagID int `json:"tagID"`
+	EntID int `json:"entID"`
+}
+
+type SetTargetFieldsRequest struct {
+	ID          int     `json:"id"`
+	Name        *string `json:"name"`
+	MachineUUID *string `json:"machineUUID"`
+	PrimaryIP   *string `json:"primaryIP"`
+	PublicIP    *string `json:"publicIP"`
+	PrimaryMac  *string `json:"primaryMAC"`
+	Hostname    *string `json:"hostname"`
 }

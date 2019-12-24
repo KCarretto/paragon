@@ -14,11 +14,10 @@ import (
 // TagCreate is the builder for creating a Tag entity.
 type TagCreate struct {
 	config
-	Name          *string
-	targets       map[int]struct{}
-	tasks         map[int]struct{}
-	jobs          map[int]struct{}
-	job_templates map[int]struct{}
+	Name    *string
+	targets map[int]struct{}
+	tasks   map[int]struct{}
+	jobs    map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -85,26 +84,6 @@ func (tc *TagCreate) AddJobs(j ...*Job) *TagCreate {
 		ids[i] = j[i].ID
 	}
 	return tc.AddJobIDs(ids...)
-}
-
-// AddJobTemplateIDs adds the job_templates edge to JobTemplate by ids.
-func (tc *TagCreate) AddJobTemplateIDs(ids ...int) *TagCreate {
-	if tc.job_templates == nil {
-		tc.job_templates = make(map[int]struct{})
-	}
-	for i := range ids {
-		tc.job_templates[ids[i]] = struct{}{}
-	}
-	return tc
-}
-
-// AddJobTemplates adds the job_templates edges to JobTemplate.
-func (tc *TagCreate) AddJobTemplates(j ...*JobTemplate) *TagCreate {
-	ids := make([]int, len(j))
-	for i := range j {
-		ids[i] = j[i].ID
-	}
-	return tc.AddJobTemplateIDs(ids...)
 }
 
 // Save creates the Tag in the database.
@@ -181,18 +160,6 @@ func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 
 			query, args := sql.Insert(tag.JobsTable).
 				Columns(tag.JobsPrimaryKey[1], tag.JobsPrimaryKey[0]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
-		}
-	}
-	if len(tc.job_templates) > 0 {
-		for eid := range tc.job_templates {
-
-			query, args := sql.Insert(tag.JobTemplatesTable).
-				Columns(tag.JobTemplatesPrimaryKey[1], tag.JobTemplatesPrimaryKey[0]).
 				Values(id, eid).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {

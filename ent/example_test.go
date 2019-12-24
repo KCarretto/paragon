@@ -71,14 +71,23 @@ func ExampleJob() {
 		SetName("string").
 		SaveX(ctx)
 	log.Println("tag created:", t1)
+	j3 := client.Job.
+		Create().
+		SetName("string").
+		SetCreationTime(time.Now()).
+		SetContent("string").
+		SaveX(ctx)
+	log.Println("job created:", j3)
 
 	// create job vertex with its edges.
 	j := client.Job.
 		Create().
 		SetName("string").
-		SetParameters("string").
+		SetCreationTime(time.Now()).
+		SetContent("string").
 		AddTasks(t0).
 		AddTags(t1).
+		SetNext(j3).
 		SaveX(ctx)
 	log.Println("job created:", j)
 
@@ -95,54 +104,11 @@ func ExampleJob() {
 	}
 	log.Println("tags found:", t1)
 
-	// Output:
-}
-func ExampleJobTemplate() {
-	if dsn == "" {
-		return
-	}
-	ctx := context.Background()
-	drv, err := sql.Open("mysql", dsn)
+	j3, err = j.QueryNext().First(ctx)
 	if err != nil {
-		log.Fatalf("failed creating database client: %v", err)
+		log.Fatalf("failed querying next: %v", err)
 	}
-	defer drv.Close()
-	client := NewClient(Driver(drv))
-	// creating vertices for the jobtemplate's edges.
-	j0 := client.Job.
-		Create().
-		SetName("string").
-		SetParameters("string").
-		SaveX(ctx)
-	log.Println("job created:", j0)
-	t1 := client.Tag.
-		Create().
-		SetName("string").
-		SaveX(ctx)
-	log.Println("tag created:", t1)
-
-	// create jobtemplate vertex with its edges.
-	jt := client.JobTemplate.
-		Create().
-		SetName("string").
-		SetContent("string").
-		AddJobs(j0).
-		AddTags(t1).
-		SaveX(ctx)
-	log.Println("jobtemplate created:", jt)
-
-	// query edges.
-	j0, err = jt.QueryJobs().First(ctx)
-	if err != nil {
-		log.Fatalf("failed querying jobs: %v", err)
-	}
-	log.Println("jobs found:", j0)
-
-	t1, err = jt.QueryTags().First(ctx)
-	if err != nil {
-		log.Fatalf("failed querying tags: %v", err)
-	}
-	log.Println("tags found:", t1)
+	log.Println("next found:", j3)
 
 	// Output:
 }

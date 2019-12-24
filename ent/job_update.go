@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
-	"github.com/kcarretto/paragon/ent/jobtemplate"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/task"
 )
@@ -17,15 +17,18 @@ import (
 // JobUpdate is the builder for updating Job entities.
 type JobUpdate struct {
 	config
-	Name            *string
-	Parameters      *string
-	tasks           map[int]struct{}
-	tags            map[int]struct{}
-	template        map[int]struct{}
-	removedTasks    map[int]struct{}
-	removedTags     map[int]struct{}
-	clearedTemplate bool
-	predicates      []predicate.Job
+	Name         *string
+	CreationTime *time.Time
+	Content      *string
+	tasks        map[int]struct{}
+	tags         map[int]struct{}
+	prev         map[int]struct{}
+	next         map[int]struct{}
+	removedTasks map[int]struct{}
+	removedTags  map[int]struct{}
+	clearedPrev  bool
+	clearedNext  bool
+	predicates   []predicate.Job
 }
 
 // Where adds a new predicate for the builder.
@@ -40,9 +43,23 @@ func (ju *JobUpdate) SetName(s string) *JobUpdate {
 	return ju
 }
 
-// SetParameters sets the Parameters field.
-func (ju *JobUpdate) SetParameters(s string) *JobUpdate {
-	ju.Parameters = &s
+// SetCreationTime sets the CreationTime field.
+func (ju *JobUpdate) SetCreationTime(t time.Time) *JobUpdate {
+	ju.CreationTime = &t
+	return ju
+}
+
+// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+func (ju *JobUpdate) SetNillableCreationTime(t *time.Time) *JobUpdate {
+	if t != nil {
+		ju.SetCreationTime(*t)
+	}
+	return ju
+}
+
+// SetContent sets the Content field.
+func (ju *JobUpdate) SetContent(s string) *JobUpdate {
+	ju.Content = &s
 	return ju
 }
 
@@ -86,18 +103,48 @@ func (ju *JobUpdate) AddTags(t ...*Tag) *JobUpdate {
 	return ju.AddTagIDs(ids...)
 }
 
-// SetTemplateID sets the template edge to JobTemplate by id.
-func (ju *JobUpdate) SetTemplateID(id int) *JobUpdate {
-	if ju.template == nil {
-		ju.template = make(map[int]struct{})
+// SetPrevID sets the prev edge to Job by id.
+func (ju *JobUpdate) SetPrevID(id int) *JobUpdate {
+	if ju.prev == nil {
+		ju.prev = make(map[int]struct{})
 	}
-	ju.template[id] = struct{}{}
+	ju.prev[id] = struct{}{}
 	return ju
 }
 
-// SetTemplate sets the template edge to JobTemplate.
-func (ju *JobUpdate) SetTemplate(j *JobTemplate) *JobUpdate {
-	return ju.SetTemplateID(j.ID)
+// SetNillablePrevID sets the prev edge to Job by id if the given value is not nil.
+func (ju *JobUpdate) SetNillablePrevID(id *int) *JobUpdate {
+	if id != nil {
+		ju = ju.SetPrevID(*id)
+	}
+	return ju
+}
+
+// SetPrev sets the prev edge to Job.
+func (ju *JobUpdate) SetPrev(j *Job) *JobUpdate {
+	return ju.SetPrevID(j.ID)
+}
+
+// SetNextID sets the next edge to Job by id.
+func (ju *JobUpdate) SetNextID(id int) *JobUpdate {
+	if ju.next == nil {
+		ju.next = make(map[int]struct{})
+	}
+	ju.next[id] = struct{}{}
+	return ju
+}
+
+// SetNillableNextID sets the next edge to Job by id if the given value is not nil.
+func (ju *JobUpdate) SetNillableNextID(id *int) *JobUpdate {
+	if id != nil {
+		ju = ju.SetNextID(*id)
+	}
+	return ju
+}
+
+// SetNext sets the next edge to Job.
+func (ju *JobUpdate) SetNext(j *Job) *JobUpdate {
+	return ju.SetNextID(j.ID)
 }
 
 // RemoveTaskIDs removes the tasks edge to Task by ids.
@@ -140,9 +187,15 @@ func (ju *JobUpdate) RemoveTags(t ...*Tag) *JobUpdate {
 	return ju.RemoveTagIDs(ids...)
 }
 
-// ClearTemplate clears the template edge to JobTemplate.
-func (ju *JobUpdate) ClearTemplate() *JobUpdate {
-	ju.clearedTemplate = true
+// ClearPrev clears the prev edge to Job.
+func (ju *JobUpdate) ClearPrev() *JobUpdate {
+	ju.clearedPrev = true
+	return ju
+}
+
+// ClearNext clears the next edge to Job.
+func (ju *JobUpdate) ClearNext() *JobUpdate {
+	ju.clearedNext = true
 	return ju
 }
 
@@ -153,11 +206,16 @@ func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 		}
 	}
-	if len(ju.template) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"template\"")
+	if ju.Content != nil {
+		if err := job.ContentValidator(*ju.Content); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+		}
 	}
-	if ju.clearedTemplate && ju.template == nil {
-		return 0, errors.New("ent: clearing a unique edge \"template\"")
+	if len(ju.prev) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"prev\"")
+	}
+	if len(ju.next) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"next\"")
 	}
 	return ju.sqlSave(ctx)
 }
@@ -218,8 +276,11 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := ju.Name; value != nil {
 		builder.Set(job.FieldName, *value)
 	}
-	if value := ju.Parameters; value != nil {
-		builder.Set(job.FieldParameters, *value)
+	if value := ju.CreationTime; value != nil {
+		builder.Set(job.FieldCreationTime, *value)
+	}
+	if value := ju.Content; value != nil {
+		builder.Set(job.FieldContent, *value)
 	}
 	if !builder.Empty() {
 		query, args := builder.Query()
@@ -293,23 +354,59 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			return 0, rollback(tx, err)
 		}
 	}
-	if ju.clearedTemplate {
-		query, args := sql.Update(job.TemplateTable).
-			SetNull(job.TemplateColumn).
-			Where(sql.InInts(jobtemplate.FieldID, ids...)).
+	if ju.clearedPrev {
+		query, args := sql.Update(job.PrevTable).
+			SetNull(job.PrevColumn).
+			Where(sql.InInts(job.FieldID, ids...)).
 			Query()
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return 0, rollback(tx, err)
 		}
 	}
-	if len(ju.template) > 0 {
-		for eid := range ju.template {
-			query, args := sql.Update(job.TemplateTable).
-				Set(job.TemplateColumn, eid).
-				Where(sql.InInts(job.FieldID, ids...)).
+	if len(ju.prev) > 0 {
+		for _, id := range ids {
+			eid := keys(ju.prev)[0]
+			query, args := sql.Update(job.PrevTable).
+				Set(job.PrevColumn, eid).
+				Where(sql.EQ(job.FieldID, id).And().IsNull(job.PrevColumn)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {
 				return 0, rollback(tx, err)
+			}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return 0, rollback(tx, err)
+			}
+			if int(affected) < len(ju.prev) {
+				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"prev\" %v already connected to a different \"Job\"", keys(ju.prev))})
+			}
+		}
+	}
+	if ju.clearedNext {
+		query, args := sql.Update(job.NextTable).
+			SetNull(job.NextColumn).
+			Where(sql.InInts(job.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(ju.next) > 0 {
+		for _, id := range ids {
+			eid := keys(ju.next)[0]
+			query, args := sql.Update(job.NextTable).
+				Set(job.NextColumn, id).
+				Where(sql.EQ(job.FieldID, eid).And().IsNull(job.NextColumn)).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return 0, rollback(tx, err)
+			}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return 0, rollback(tx, err)
+			}
+			if int(affected) < len(ju.next) {
+				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"next\" %v already connected to a different \"Job\"", keys(ju.next))})
 			}
 		}
 	}
@@ -322,15 +419,18 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // JobUpdateOne is the builder for updating a single Job entity.
 type JobUpdateOne struct {
 	config
-	id              int
-	Name            *string
-	Parameters      *string
-	tasks           map[int]struct{}
-	tags            map[int]struct{}
-	template        map[int]struct{}
-	removedTasks    map[int]struct{}
-	removedTags     map[int]struct{}
-	clearedTemplate bool
+	id           int
+	Name         *string
+	CreationTime *time.Time
+	Content      *string
+	tasks        map[int]struct{}
+	tags         map[int]struct{}
+	prev         map[int]struct{}
+	next         map[int]struct{}
+	removedTasks map[int]struct{}
+	removedTags  map[int]struct{}
+	clearedPrev  bool
+	clearedNext  bool
 }
 
 // SetName sets the Name field.
@@ -339,9 +439,23 @@ func (juo *JobUpdateOne) SetName(s string) *JobUpdateOne {
 	return juo
 }
 
-// SetParameters sets the Parameters field.
-func (juo *JobUpdateOne) SetParameters(s string) *JobUpdateOne {
-	juo.Parameters = &s
+// SetCreationTime sets the CreationTime field.
+func (juo *JobUpdateOne) SetCreationTime(t time.Time) *JobUpdateOne {
+	juo.CreationTime = &t
+	return juo
+}
+
+// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+func (juo *JobUpdateOne) SetNillableCreationTime(t *time.Time) *JobUpdateOne {
+	if t != nil {
+		juo.SetCreationTime(*t)
+	}
+	return juo
+}
+
+// SetContent sets the Content field.
+func (juo *JobUpdateOne) SetContent(s string) *JobUpdateOne {
+	juo.Content = &s
 	return juo
 }
 
@@ -385,18 +499,48 @@ func (juo *JobUpdateOne) AddTags(t ...*Tag) *JobUpdateOne {
 	return juo.AddTagIDs(ids...)
 }
 
-// SetTemplateID sets the template edge to JobTemplate by id.
-func (juo *JobUpdateOne) SetTemplateID(id int) *JobUpdateOne {
-	if juo.template == nil {
-		juo.template = make(map[int]struct{})
+// SetPrevID sets the prev edge to Job by id.
+func (juo *JobUpdateOne) SetPrevID(id int) *JobUpdateOne {
+	if juo.prev == nil {
+		juo.prev = make(map[int]struct{})
 	}
-	juo.template[id] = struct{}{}
+	juo.prev[id] = struct{}{}
 	return juo
 }
 
-// SetTemplate sets the template edge to JobTemplate.
-func (juo *JobUpdateOne) SetTemplate(j *JobTemplate) *JobUpdateOne {
-	return juo.SetTemplateID(j.ID)
+// SetNillablePrevID sets the prev edge to Job by id if the given value is not nil.
+func (juo *JobUpdateOne) SetNillablePrevID(id *int) *JobUpdateOne {
+	if id != nil {
+		juo = juo.SetPrevID(*id)
+	}
+	return juo
+}
+
+// SetPrev sets the prev edge to Job.
+func (juo *JobUpdateOne) SetPrev(j *Job) *JobUpdateOne {
+	return juo.SetPrevID(j.ID)
+}
+
+// SetNextID sets the next edge to Job by id.
+func (juo *JobUpdateOne) SetNextID(id int) *JobUpdateOne {
+	if juo.next == nil {
+		juo.next = make(map[int]struct{})
+	}
+	juo.next[id] = struct{}{}
+	return juo
+}
+
+// SetNillableNextID sets the next edge to Job by id if the given value is not nil.
+func (juo *JobUpdateOne) SetNillableNextID(id *int) *JobUpdateOne {
+	if id != nil {
+		juo = juo.SetNextID(*id)
+	}
+	return juo
+}
+
+// SetNext sets the next edge to Job.
+func (juo *JobUpdateOne) SetNext(j *Job) *JobUpdateOne {
+	return juo.SetNextID(j.ID)
 }
 
 // RemoveTaskIDs removes the tasks edge to Task by ids.
@@ -439,9 +583,15 @@ func (juo *JobUpdateOne) RemoveTags(t ...*Tag) *JobUpdateOne {
 	return juo.RemoveTagIDs(ids...)
 }
 
-// ClearTemplate clears the template edge to JobTemplate.
-func (juo *JobUpdateOne) ClearTemplate() *JobUpdateOne {
-	juo.clearedTemplate = true
+// ClearPrev clears the prev edge to Job.
+func (juo *JobUpdateOne) ClearPrev() *JobUpdateOne {
+	juo.clearedPrev = true
+	return juo
+}
+
+// ClearNext clears the next edge to Job.
+func (juo *JobUpdateOne) ClearNext() *JobUpdateOne {
+	juo.clearedNext = true
 	return juo
 }
 
@@ -452,11 +602,16 @@ func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 		}
 	}
-	if len(juo.template) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"template\"")
+	if juo.Content != nil {
+		if err := job.ContentValidator(*juo.Content); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+		}
 	}
-	if juo.clearedTemplate && juo.template == nil {
-		return nil, errors.New("ent: clearing a unique edge \"template\"")
+	if len(juo.prev) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
+	}
+	if len(juo.next) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
 	}
 	return juo.sqlSave(ctx)
 }
@@ -521,9 +676,13 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		builder.Set(job.FieldName, *value)
 		j.Name = *value
 	}
-	if value := juo.Parameters; value != nil {
-		builder.Set(job.FieldParameters, *value)
-		j.Parameters = *value
+	if value := juo.CreationTime; value != nil {
+		builder.Set(job.FieldCreationTime, *value)
+		j.CreationTime = *value
+	}
+	if value := juo.Content; value != nil {
+		builder.Set(job.FieldContent, *value)
+		j.Content = *value
 	}
 	if !builder.Empty() {
 		query, args := builder.Query()
@@ -597,23 +756,59 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 			return nil, rollback(tx, err)
 		}
 	}
-	if juo.clearedTemplate {
-		query, args := sql.Update(job.TemplateTable).
-			SetNull(job.TemplateColumn).
-			Where(sql.InInts(jobtemplate.FieldID, ids...)).
+	if juo.clearedPrev {
+		query, args := sql.Update(job.PrevTable).
+			SetNull(job.PrevColumn).
+			Where(sql.InInts(job.FieldID, ids...)).
 			Query()
 		if err := tx.Exec(ctx, query, args, &res); err != nil {
 			return nil, rollback(tx, err)
 		}
 	}
-	if len(juo.template) > 0 {
-		for eid := range juo.template {
-			query, args := sql.Update(job.TemplateTable).
-				Set(job.TemplateColumn, eid).
-				Where(sql.InInts(job.FieldID, ids...)).
+	if len(juo.prev) > 0 {
+		for _, id := range ids {
+			eid := keys(juo.prev)[0]
+			query, args := sql.Update(job.PrevTable).
+				Set(job.PrevColumn, eid).
+				Where(sql.EQ(job.FieldID, id).And().IsNull(job.PrevColumn)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {
 				return nil, rollback(tx, err)
+			}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return nil, rollback(tx, err)
+			}
+			if int(affected) < len(juo.prev) {
+				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"prev\" %v already connected to a different \"Job\"", keys(juo.prev))})
+			}
+		}
+	}
+	if juo.clearedNext {
+		query, args := sql.Update(job.NextTable).
+			SetNull(job.NextColumn).
+			Where(sql.InInts(job.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(juo.next) > 0 {
+		for _, id := range ids {
+			eid := keys(juo.next)[0]
+			query, args := sql.Update(job.NextTable).
+				Set(job.NextColumn, id).
+				Where(sql.EQ(job.FieldID, eid).And().IsNull(job.NextColumn)).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
+			affected, err := res.RowsAffected()
+			if err != nil {
+				return nil, rollback(tx, err)
+			}
+			if int(affected) < len(juo.next) {
+				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"next\" %v already connected to a different \"Job\"", keys(juo.next))})
 			}
 		}
 	}

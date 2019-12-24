@@ -3,6 +3,8 @@
 package job
 
 import (
+	"time"
+
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -117,11 +119,20 @@ func Name(v string) predicate.Job {
 	)
 }
 
-// Parameters applies equality check predicate on the "Parameters" field. It's identical to ParametersEQ.
-func Parameters(v string) predicate.Job {
+// CreationTime applies equality check predicate on the "CreationTime" field. It's identical to CreationTimeEQ.
+func CreationTime(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.EQ(s.C(FieldParameters), v))
+			s.Where(sql.EQ(s.C(FieldCreationTime), v))
+		},
+	)
+}
+
+// Content applies equality check predicate on the "Content" field. It's identical to ContentEQ.
+func Content(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldContent), v))
 		},
 	)
 }
@@ -263,26 +274,26 @@ func NameContainsFold(v string) predicate.Job {
 	)
 }
 
-// ParametersEQ applies the EQ predicate on the "Parameters" field.
-func ParametersEQ(v string) predicate.Job {
+// CreationTimeEQ applies the EQ predicate on the "CreationTime" field.
+func CreationTimeEQ(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.EQ(s.C(FieldParameters), v))
+			s.Where(sql.EQ(s.C(FieldCreationTime), v))
 		},
 	)
 }
 
-// ParametersNEQ applies the NEQ predicate on the "Parameters" field.
-func ParametersNEQ(v string) predicate.Job {
+// CreationTimeNEQ applies the NEQ predicate on the "CreationTime" field.
+func CreationTimeNEQ(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.NEQ(s.C(FieldParameters), v))
+			s.Where(sql.NEQ(s.C(FieldCreationTime), v))
 		},
 	)
 }
 
-// ParametersIn applies the In predicate on the "Parameters" field.
-func ParametersIn(vs ...string) predicate.Job {
+// CreationTimeIn applies the In predicate on the "CreationTime" field.
+func CreationTimeIn(vs ...time.Time) predicate.Job {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -295,13 +306,13 @@ func ParametersIn(vs ...string) predicate.Job {
 				s.Where(sql.False())
 				return
 			}
-			s.Where(sql.In(s.C(FieldParameters), v...))
+			s.Where(sql.In(s.C(FieldCreationTime), v...))
 		},
 	)
 }
 
-// ParametersNotIn applies the NotIn predicate on the "Parameters" field.
-func ParametersNotIn(vs ...string) predicate.Job {
+// CreationTimeNotIn applies the NotIn predicate on the "CreationTime" field.
+func CreationTimeNotIn(vs ...time.Time) predicate.Job {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -314,88 +325,180 @@ func ParametersNotIn(vs ...string) predicate.Job {
 				s.Where(sql.False())
 				return
 			}
-			s.Where(sql.NotIn(s.C(FieldParameters), v...))
+			s.Where(sql.NotIn(s.C(FieldCreationTime), v...))
 		},
 	)
 }
 
-// ParametersGT applies the GT predicate on the "Parameters" field.
-func ParametersGT(v string) predicate.Job {
+// CreationTimeGT applies the GT predicate on the "CreationTime" field.
+func CreationTimeGT(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.GT(s.C(FieldParameters), v))
+			s.Where(sql.GT(s.C(FieldCreationTime), v))
 		},
 	)
 }
 
-// ParametersGTE applies the GTE predicate on the "Parameters" field.
-func ParametersGTE(v string) predicate.Job {
+// CreationTimeGTE applies the GTE predicate on the "CreationTime" field.
+func CreationTimeGTE(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.GTE(s.C(FieldParameters), v))
+			s.Where(sql.GTE(s.C(FieldCreationTime), v))
 		},
 	)
 }
 
-// ParametersLT applies the LT predicate on the "Parameters" field.
-func ParametersLT(v string) predicate.Job {
+// CreationTimeLT applies the LT predicate on the "CreationTime" field.
+func CreationTimeLT(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.LT(s.C(FieldParameters), v))
+			s.Where(sql.LT(s.C(FieldCreationTime), v))
 		},
 	)
 }
 
-// ParametersLTE applies the LTE predicate on the "Parameters" field.
-func ParametersLTE(v string) predicate.Job {
+// CreationTimeLTE applies the LTE predicate on the "CreationTime" field.
+func CreationTimeLTE(v time.Time) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.LTE(s.C(FieldParameters), v))
+			s.Where(sql.LTE(s.C(FieldCreationTime), v))
 		},
 	)
 }
 
-// ParametersContains applies the Contains predicate on the "Parameters" field.
-func ParametersContains(v string) predicate.Job {
+// ContentEQ applies the EQ predicate on the "Content" field.
+func ContentEQ(v string) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.Contains(s.C(FieldParameters), v))
+			s.Where(sql.EQ(s.C(FieldContent), v))
 		},
 	)
 }
 
-// ParametersHasPrefix applies the HasPrefix predicate on the "Parameters" field.
-func ParametersHasPrefix(v string) predicate.Job {
+// ContentNEQ applies the NEQ predicate on the "Content" field.
+func ContentNEQ(v string) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.HasPrefix(s.C(FieldParameters), v))
+			s.Where(sql.NEQ(s.C(FieldContent), v))
 		},
 	)
 }
 
-// ParametersHasSuffix applies the HasSuffix predicate on the "Parameters" field.
-func ParametersHasSuffix(v string) predicate.Job {
+// ContentIn applies the In predicate on the "Content" field.
+func ContentIn(vs ...string) predicate.Job {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.HasSuffix(s.C(FieldParameters), v))
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.In(s.C(FieldContent), v...))
 		},
 	)
 }
 
-// ParametersEqualFold applies the EqualFold predicate on the "Parameters" field.
-func ParametersEqualFold(v string) predicate.Job {
+// ContentNotIn applies the NotIn predicate on the "Content" field.
+func ContentNotIn(vs ...string) predicate.Job {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.EqualFold(s.C(FieldParameters), v))
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.NotIn(s.C(FieldContent), v...))
 		},
 	)
 }
 
-// ParametersContainsFold applies the ContainsFold predicate on the "Parameters" field.
-func ParametersContainsFold(v string) predicate.Job {
+// ContentGT applies the GT predicate on the "Content" field.
+func ContentGT(v string) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
-			s.Where(sql.ContainsFold(s.C(FieldParameters), v))
+			s.Where(sql.GT(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentGTE applies the GTE predicate on the "Content" field.
+func ContentGTE(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.GTE(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentLT applies the LT predicate on the "Content" field.
+func ContentLT(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.LT(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentLTE applies the LTE predicate on the "Content" field.
+func ContentLTE(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.LTE(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentContains applies the Contains predicate on the "Content" field.
+func ContentContains(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.Contains(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentHasPrefix applies the HasPrefix predicate on the "Content" field.
+func ContentHasPrefix(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.HasPrefix(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentHasSuffix applies the HasSuffix predicate on the "Content" field.
+func ContentHasSuffix(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.HasSuffix(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentEqualFold applies the EqualFold predicate on the "Content" field.
+func ContentEqualFold(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.EqualFold(s.C(FieldContent), v))
+		},
+	)
+}
+
+// ContentContainsFold applies the ContainsFold predicate on the "Content" field.
+func ContentContainsFold(v string) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.ContainsFold(s.C(FieldContent), v))
 		},
 	)
 }
@@ -467,26 +570,57 @@ func HasTagsWith(preds ...predicate.Tag) predicate.Job {
 	)
 }
 
-// HasTemplate applies the HasEdge predicate on the "template" edge.
-func HasTemplate() predicate.Job {
+// HasPrev applies the HasEdge predicate on the "prev" edge.
+func HasPrev() predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
 			t1 := s.Table()
-			s.Where(sql.NotNull(t1.C(TemplateColumn)))
+			s.Where(sql.NotNull(t1.C(PrevColumn)))
 		},
 	)
 }
 
-// HasTemplateWith applies the HasEdge predicate on the "template" edge with a given conditions (other predicates).
-func HasTemplateWith(preds ...predicate.JobTemplate) predicate.Job {
+// HasPrevWith applies the HasEdge predicate on the "prev" edge with a given conditions (other predicates).
+func HasPrevWith(preds ...predicate.Job) predicate.Job {
 	return predicate.Job(
 		func(s *sql.Selector) {
 			t1 := s.Table()
-			t2 := sql.Select(FieldID).From(sql.Table(TemplateInverseTable))
+			t2 := sql.Select(FieldID).From(sql.Table(PrevTable))
 			for _, p := range preds {
 				p(t2)
 			}
-			s.Where(sql.In(t1.C(TemplateColumn), t2))
+			s.Where(sql.In(t1.C(PrevColumn), t2))
+		},
+	)
+}
+
+// HasNext applies the HasEdge predicate on the "next" edge.
+func HasNext() predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(
+				sql.In(
+					t1.C(FieldID),
+					sql.Select(NextColumn).
+						From(sql.Table(NextTable)).
+						Where(sql.NotNull(NextColumn)),
+				),
+			)
+		},
+	)
+}
+
+// HasNextWith applies the HasEdge predicate on the "next" edge with a given conditions (other predicates).
+func HasNextWith(preds ...predicate.Job) predicate.Job {
+	return predicate.Job(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Select(NextColumn).From(sql.Table(NextTable))
+			for _, p := range preds {
+				p(t2)
+			}
+			s.Where(sql.In(t1.C(FieldID), t2))
 		},
 	)
 }

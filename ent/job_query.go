@@ -10,7 +10,6 @@ import (
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
-	"github.com/kcarretto/paragon/ent/jobtemplate"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
@@ -83,16 +82,29 @@ func (jq *JobQuery) QueryTags() *TagQuery {
 	return query
 }
 
-// QueryTemplate chains the current query on the template edge.
-func (jq *JobQuery) QueryTemplate() *JobTemplateQuery {
-	query := &JobTemplateQuery{config: jq.config}
-	t1 := sql.Table(jobtemplate.Table)
+// QueryPrev chains the current query on the prev edge.
+func (jq *JobQuery) QueryPrev() *JobQuery {
+	query := &JobQuery{config: jq.config}
+	t1 := sql.Table(job.Table)
 	t2 := jq.sqlQuery()
-	t2.Select(t2.C(job.TemplateColumn))
-	query.sql = sql.Select(t1.Columns(jobtemplate.Columns...)...).
+	t2.Select(t2.C(job.PrevColumn))
+	query.sql = sql.Select(t1.Columns(job.Columns...)...).
 		From(t1).
 		Join(t2).
-		On(t1.C(jobtemplate.FieldID), t2.C(job.TemplateColumn))
+		On(t1.C(job.FieldID), t2.C(job.PrevColumn))
+	return query
+}
+
+// QueryNext chains the current query on the next edge.
+func (jq *JobQuery) QueryNext() *JobQuery {
+	query := &JobQuery{config: jq.config}
+	t1 := sql.Table(job.Table)
+	t2 := jq.sqlQuery()
+	t2.Select(t2.C(job.FieldID))
+	query.sql = sql.Select().
+		From(t1).
+		Join(t2).
+		On(t1.C(job.NextColumn), t2.C(job.FieldID))
 	return query
 }
 

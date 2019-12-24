@@ -30,7 +30,5 @@ func (Tag) Edges() []ent.Edge {
 			Ref("tags"),
 		edge.From("jobs", Job.Type).
 			Ref("tags"),
-		edge.From("job_templates", JobTemplate.Type).
-			Ref("tags"),
 	}
 }
