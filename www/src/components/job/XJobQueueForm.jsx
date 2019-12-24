@@ -17,7 +17,7 @@ export default class XJobQueueForm extends React.Component {
                 <Form.Input
                     icon='tags'
                     iconPosition='left'
-                    label={{ tag: true, content: 'Add Tag' }}
+                    label={{ content: 'Add Tag' }}
                     labelPosition='right'
                     placeholder='Add tags'
                 />
