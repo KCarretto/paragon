@@ -1,20 +1,17 @@
 package teamserver
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"go.uber.org/zap"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/kcarretto/paragon/api/ent/credentials"
-	"github.com/kcarretto/paragon/api/ent/job_templates"
-	"github.com/kcarretto/paragon/api/ent/jobs"
-	"github.com/kcarretto/paragon/api/ent/tags"
-	"github.com/kcarretto/paragon/api/ent/targets"
-	"github.com/kcarretto/paragon/api/ent/tasks"
+	"github.com/99designs/gqlgen/handler"
+	"github.com/kcarretto/paragon/graphql/generated"
+	"github.com/kcarretto/paragon/graphql/resolve"
+
+
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/pkg/middleware"
 )
@@ -43,54 +40,12 @@ func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run() {
-	ctx := context.Background()
-	svcRouter := runtime.NewServeMux()
-
-	targetSVC := &targets.Service{
-		EntClient: srv.EntClient,
-	}
-	if err := targets.RegisterTargetsHandlerServer(ctx, svcRouter, targetSVC); err != nil {
-		panic(err)
-	}
-
-	taskSVC := &tasks.Service{
-		EntClient: srv.EntClient,
-	}
-	if err := tasks.RegisterTasksHandlerServer(ctx, svcRouter, taskSVC); err != nil {
-		panic(err)
-	}
-
-	tagSVC := &tags.Service{
-		EntClient: srv.EntClient,
-	}
-	if err := tags.RegisterTagsHandlerServer(ctx, svcRouter, tagSVC); err != nil {
-		panic(err)
-	}
-
-	jobSVC := &jobs.Service{
-		EntClient: srv.EntClient,
-	}
-	if err := jobs.RegisterJobsHandlerServer(ctx, svcRouter, jobSVC); err != nil {
-		panic(err)
-	}
-
-	jobTemplateSVC := &job_templates.Service{
-		EntClient: srv.EntClient,
-	}
-	if err := job_templates.RegisterJobTemplatesHandlerServer(ctx, svcRouter, jobTemplateSVC); err != nil {
-		panic(err)
-	}
-
-	credentialSVC := &credentials.Service{
-		EntClient: srv.EntClient,
-	}
-	if err := credentials.RegisterCredentialsHandlerServer(ctx, svcRouter, credentialSVC); err != nil {
-		panic(err)
-	}
-
 	router := http.NewServeMux()
 
-	router.Handle("/api/v1/", svcRouter)
+	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient}}))
+
+	router.Handle("/api/v1/", h)
+	router.Handle("/api/playground/", handler.Playground("GraphQL", "/api/v1/"))
 	router.HandleFunc("/status", srv.handleStatus)
 
 	if err := http.ListenAndServe("0.0.0.0:80", middleware.Chain(router, middleware.WithPanicHandling)); err != nil {

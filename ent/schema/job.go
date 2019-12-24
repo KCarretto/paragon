@@ -1,6 +1,8 @@
 package schema
 
 import (
+	"time"
+
 	"github.com/facebookincubator/ent"
 	"github.com/facebookincubator/ent/schema/edge"
 	"github.com/facebookincubator/ent/schema/field"
@@ -17,8 +19,14 @@ func (Job) Fields() []ent.Field {
 		field.String("Name").
 			NotEmpty().
 			Comment("The name of the job"),
-		field.String("Parameters").
-			Comment("The JSON string for the Parameters Mapping"),
+		field.Time("CreationTime").
+			Default(func() time.Time {
+				return time.Now()
+			}).
+			Comment("The timestamp for when the Job was created"),
+		field.String("Content").
+			NotEmpty().
+			Comment("The content of the job (usually a Renegade Script)"),
 	}
 }
 
@@ -29,10 +37,9 @@ func (Job) Edges() []ent.Edge {
 			Comment("A Job can have many Tasks"),
 		edge.To("tags", Tag.Type).
 			Comment("A Job can have many Tags"),
-		edge.From("template", JobTemplate.Type).
-			Ref("jobs").
+		edge.To("next", Job.Type).
 			Unique().
-			Required().
-			Comment("A Job must have one template"),
+			From("prev").
+			Unique(),
 	}
 }

@@ -14,16 +14,14 @@ import (
 // TagUpdate is the builder for updating Tag entities.
 type TagUpdate struct {
 	config
-	Name                *string
-	targets             map[int]struct{}
-	tasks               map[int]struct{}
-	jobs                map[int]struct{}
-	job_templates       map[int]struct{}
-	removedTargets      map[int]struct{}
-	removedTasks        map[int]struct{}
-	removedJobs         map[int]struct{}
-	removedJobTemplates map[int]struct{}
-	predicates          []predicate.Tag
+	Name           *string
+	targets        map[int]struct{}
+	tasks          map[int]struct{}
+	jobs           map[int]struct{}
+	removedTargets map[int]struct{}
+	removedTasks   map[int]struct{}
+	removedJobs    map[int]struct{}
+	predicates     []predicate.Tag
 }
 
 // Where adds a new predicate for the builder.
@@ -98,26 +96,6 @@ func (tu *TagUpdate) AddJobs(j ...*Job) *TagUpdate {
 	return tu.AddJobIDs(ids...)
 }
 
-// AddJobTemplateIDs adds the job_templates edge to JobTemplate by ids.
-func (tu *TagUpdate) AddJobTemplateIDs(ids ...int) *TagUpdate {
-	if tu.job_templates == nil {
-		tu.job_templates = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.job_templates[ids[i]] = struct{}{}
-	}
-	return tu
-}
-
-// AddJobTemplates adds the job_templates edges to JobTemplate.
-func (tu *TagUpdate) AddJobTemplates(j ...*JobTemplate) *TagUpdate {
-	ids := make([]int, len(j))
-	for i := range j {
-		ids[i] = j[i].ID
-	}
-	return tu.AddJobTemplateIDs(ids...)
-}
-
 // RemoveTargetIDs removes the targets edge to Target by ids.
 func (tu *TagUpdate) RemoveTargetIDs(ids ...int) *TagUpdate {
 	if tu.removedTargets == nil {
@@ -176,26 +154,6 @@ func (tu *TagUpdate) RemoveJobs(j ...*Job) *TagUpdate {
 		ids[i] = j[i].ID
 	}
 	return tu.RemoveJobIDs(ids...)
-}
-
-// RemoveJobTemplateIDs removes the job_templates edge to JobTemplate by ids.
-func (tu *TagUpdate) RemoveJobTemplateIDs(ids ...int) *TagUpdate {
-	if tu.removedJobTemplates == nil {
-		tu.removedJobTemplates = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.removedJobTemplates[ids[i]] = struct{}{}
-	}
-	return tu
-}
-
-// RemoveJobTemplates removes job_templates edges to JobTemplate.
-func (tu *TagUpdate) RemoveJobTemplates(j ...*JobTemplate) *TagUpdate {
-	ids := make([]int, len(j))
-	for i := range j {
-		ids[i] = j[i].ID
-	}
-	return tu.RemoveJobTemplateIDs(ids...)
 }
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
@@ -360,36 +318,6 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			return 0, rollback(tx, err)
 		}
 	}
-	if len(tu.removedJobTemplates) > 0 {
-		eids := make([]int, len(tu.removedJobTemplates))
-		for eid := range tu.removedJobTemplates {
-			eids = append(eids, eid)
-		}
-		query, args := sql.Delete(tag.JobTemplatesTable).
-			Where(sql.InInts(tag.JobTemplatesPrimaryKey[1], ids...)).
-			Where(sql.InInts(tag.JobTemplatesPrimaryKey[0], eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
-		}
-	}
-	if len(tu.job_templates) > 0 {
-		values := make([][]int, 0, len(ids))
-		for _, id := range ids {
-			for eid := range tu.job_templates {
-				values = append(values, []int{id, eid})
-			}
-		}
-		builder := sql.Insert(tag.JobTemplatesTable).
-			Columns(tag.JobTemplatesPrimaryKey[1], tag.JobTemplatesPrimaryKey[0])
-		for _, v := range values {
-			builder.Values(v[0], v[1])
-		}
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
-		}
-	}
 	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
@@ -399,16 +327,14 @@ func (tu *TagUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // TagUpdateOne is the builder for updating a single Tag entity.
 type TagUpdateOne struct {
 	config
-	id                  int
-	Name                *string
-	targets             map[int]struct{}
-	tasks               map[int]struct{}
-	jobs                map[int]struct{}
-	job_templates       map[int]struct{}
-	removedTargets      map[int]struct{}
-	removedTasks        map[int]struct{}
-	removedJobs         map[int]struct{}
-	removedJobTemplates map[int]struct{}
+	id             int
+	Name           *string
+	targets        map[int]struct{}
+	tasks          map[int]struct{}
+	jobs           map[int]struct{}
+	removedTargets map[int]struct{}
+	removedTasks   map[int]struct{}
+	removedJobs    map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -477,26 +403,6 @@ func (tuo *TagUpdateOne) AddJobs(j ...*Job) *TagUpdateOne {
 	return tuo.AddJobIDs(ids...)
 }
 
-// AddJobTemplateIDs adds the job_templates edge to JobTemplate by ids.
-func (tuo *TagUpdateOne) AddJobTemplateIDs(ids ...int) *TagUpdateOne {
-	if tuo.job_templates == nil {
-		tuo.job_templates = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.job_templates[ids[i]] = struct{}{}
-	}
-	return tuo
-}
-
-// AddJobTemplates adds the job_templates edges to JobTemplate.
-func (tuo *TagUpdateOne) AddJobTemplates(j ...*JobTemplate) *TagUpdateOne {
-	ids := make([]int, len(j))
-	for i := range j {
-		ids[i] = j[i].ID
-	}
-	return tuo.AddJobTemplateIDs(ids...)
-}
-
 // RemoveTargetIDs removes the targets edge to Target by ids.
 func (tuo *TagUpdateOne) RemoveTargetIDs(ids ...int) *TagUpdateOne {
 	if tuo.removedTargets == nil {
@@ -555,26 +461,6 @@ func (tuo *TagUpdateOne) RemoveJobs(j ...*Job) *TagUpdateOne {
 		ids[i] = j[i].ID
 	}
 	return tuo.RemoveJobIDs(ids...)
-}
-
-// RemoveJobTemplateIDs removes the job_templates edge to JobTemplate by ids.
-func (tuo *TagUpdateOne) RemoveJobTemplateIDs(ids ...int) *TagUpdateOne {
-	if tuo.removedJobTemplates == nil {
-		tuo.removedJobTemplates = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.removedJobTemplates[ids[i]] = struct{}{}
-	}
-	return tuo
-}
-
-// RemoveJobTemplates removes job_templates edges to JobTemplate.
-func (tuo *TagUpdateOne) RemoveJobTemplates(j ...*JobTemplate) *TagUpdateOne {
-	ids := make([]int, len(j))
-	for i := range j {
-		ids[i] = j[i].ID
-	}
-	return tuo.RemoveJobTemplateIDs(ids...)
 }
 
 // Save executes the query and returns the updated entity.
@@ -735,36 +621,6 @@ func (tuo *TagUpdateOne) sqlSave(ctx context.Context) (t *Tag, err error) {
 		}
 		builder := sql.Insert(tag.JobsTable).
 			Columns(tag.JobsPrimaryKey[1], tag.JobsPrimaryKey[0])
-		for _, v := range values {
-			builder.Values(v[0], v[1])
-		}
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
-		}
-	}
-	if len(tuo.removedJobTemplates) > 0 {
-		eids := make([]int, len(tuo.removedJobTemplates))
-		for eid := range tuo.removedJobTemplates {
-			eids = append(eids, eid)
-		}
-		query, args := sql.Delete(tag.JobTemplatesTable).
-			Where(sql.InInts(tag.JobTemplatesPrimaryKey[1], ids...)).
-			Where(sql.InInts(tag.JobTemplatesPrimaryKey[0], eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
-		}
-	}
-	if len(tuo.job_templates) > 0 {
-		values := make([][]int, 0, len(ids))
-		for _, id := range ids {
-			for eid := range tuo.job_templates {
-				values = append(values, []int{id, eid})
-			}
-		}
-		builder := sql.Insert(tag.JobTemplatesTable).
-			Columns(tag.JobTemplatesPrimaryKey[1], tag.JobTemplatesPrimaryKey[0])
 		for _, v := range values {
 			builder.Values(v[0], v[1])
 		}

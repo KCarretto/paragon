@@ -10,7 +10,32 @@ directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITI
 
 scalar Time
 
+type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
+  id: ID
+  name: String
+  primaryIP: String
+  machineUUID: String
+  publicIP: String
+  primaryMAC: String
+  hostname: String
+  lastSeen: Time
+
+  tasks: [Task]
+  tags: [Tag]
+  credentials: [Credential]
+}
+
+type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
+  id: ID
+  name: String
+
+  tasks: [Task]
+  targets: [Target]
+  jobs: [Job]
+}
+
 type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
+  id: ID
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -20,17 +45,118 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   output: [String]
   error: String
   sessionID: String
+
+  job: Job
 }
 
-input ClaimTaskRequest {
+type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
   id: ID
+  name: String
+  creationTime: Time
+  content: String
+
+  tasks: [Task]
+  tags: [Tag]
+  next: Job
+  prev: Job
+}
+
+type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
+  id: ID
+  principal: String
+  secret: String
+  fails: Int
+}
+
+input FailCredentialRequest {
+  id: ID!
+}
+
+input CreateJobRequest {
+  name: String!
+  content: String!
+
+  tags: [ID!]
+  prev: ID
+}
+
+input CreateTagRequest {
+  name: String!
+}
+
+input ApplyTagRequest {
+  tagID: ID!
+  entID: ID!
+}
+
+input RemoveTagRequest {
+  tagID: ID!
+  entID: ID!
+}
+
+input CreateTargetRequest {
+  name: String!
+  primaryIP: String!
+
+  tags: [ID!]
+}
+
+input SetTargetFieldsRequest {
+    id: ID!
+    name: String
+    machineUUID: String
+    primaryIP: String
+    publicIP: String
+    primaryMAC: String
+    hostname: String
+}
+
+input DeleteTargetRequest {
+  id: ID!
+}
+
+input AddCredentialForTargetRequest {
+  id: ID!
+  principal: String!
+  secret: String!
 }
 
 type Mutation {
-  claimTask(input: ClaimTaskRequest): Boolean
+  # Credential Mutations
+  failCredential(input: FailCredentialRequest): Credential!
+
+  # Job Mutations
+  createJob(input: CreateJobRequest): Job!
+
+  # Tag Mutations
+  createTag(input: CreateTagRequest): Tag!
+  applyTagToTask(input: ApplyTagRequest): Task!
+  applyTagToTarget(input: ApplyTagRequest): Target!
+  applyTagToJob(input: ApplyTagRequest): Job!
+  removeTagFromTask(input: RemoveTagRequest): Task!
+  removeTagFromTarget(input: RemoveTagRequest): Target!
+  removeTagFromJob(input: RemoveTagRequest): Job!
+
+  # Target Mutations
+  createTarget(input: CreateTargetRequest): Target!
+  setTargetFields(input: SetTargetFieldsRequest): Target!
+  deleteTarget(input: DeleteTargetRequest): Boolean!
+  addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
 }
 
 type Query {
-  task(id: ID): Task
-  tasks: [ID]
+  credential(id: ID!): Credential
+  credentials: [Credential]
+
+  job(id: ID!): Job
+  jobs: [Job]
+
+  tag(id: ID!): Tag
+  tags: [Tag]
+
+  target(id: ID!): Target
+  targets: [Target]
+
+  task(id: ID!): Task
+  tasks: [Task]
 }

@@ -3,6 +3,8 @@
 package job
 
 import (
+	"time"
+
 	"github.com/kcarretto/paragon/ent/schema"
 )
 
@@ -13,8 +15,10 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name vertex property in the database.
 	FieldName = "name"
-	// FieldParameters holds the string denoting the parameters vertex property in the database.
-	FieldParameters = "parameters"
+	// FieldCreationTime holds the string denoting the creationtime vertex property in the database.
+	FieldCreationTime = "creation_time"
+	// FieldContent holds the string denoting the content vertex property in the database.
+	FieldContent = "content"
 
 	// Table holds the table name of the job in the database.
 	Table = "jobs"
@@ -30,20 +34,22 @@ const (
 	// TagsInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagsInverseTable = "tags"
-	// TemplateTable is the table the holds the template relation/edge.
-	TemplateTable = "jobs"
-	// TemplateInverseTable is the table name for the JobTemplate entity.
-	// It exists in this package in order to avoid circular dependency with the "jobtemplate" package.
-	TemplateInverseTable = "job_templates"
-	// TemplateColumn is the table column denoting the template relation/edge.
-	TemplateColumn = "template_id"
+	// PrevTable is the table the holds the prev relation/edge.
+	PrevTable = "jobs"
+	// PrevColumn is the table column denoting the prev relation/edge.
+	PrevColumn = "prev_id"
+	// NextTable is the table the holds the next relation/edge.
+	NextTable = "jobs"
+	// NextColumn is the table column denoting the next relation/edge.
+	NextColumn = "prev_id"
 )
 
 // Columns holds all SQL columns are job fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
-	FieldParameters,
+	FieldCreationTime,
+	FieldContent,
 }
 
 var (
@@ -59,4 +65,14 @@ var (
 	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
 	NameValidator = descName.Validators[0].(func(string) error)
+
+	// descCreationTime is the schema descriptor for CreationTime field.
+	descCreationTime = fields[1].Descriptor()
+	// DefaultCreationTime holds the default value on creation for the CreationTime field.
+	DefaultCreationTime = descCreationTime.Default.(func() time.Time)
+
+	// descContent is the schema descriptor for Content field.
+	descContent = fields[2].Descriptor()
+	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
+	ContentValidator = descContent.Validators[0].(func(string) error)
 )

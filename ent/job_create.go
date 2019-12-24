@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
@@ -15,11 +16,13 @@ import (
 // JobCreate is the builder for creating a Job entity.
 type JobCreate struct {
 	config
-	Name       *string
-	Parameters *string
-	tasks      map[int]struct{}
-	tags       map[int]struct{}
-	template   map[int]struct{}
+	Name         *string
+	CreationTime *time.Time
+	Content      *string
+	tasks        map[int]struct{}
+	tags         map[int]struct{}
+	prev         map[int]struct{}
+	next         map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -28,9 +31,23 @@ func (jc *JobCreate) SetName(s string) *JobCreate {
 	return jc
 }
 
-// SetParameters sets the Parameters field.
-func (jc *JobCreate) SetParameters(s string) *JobCreate {
-	jc.Parameters = &s
+// SetCreationTime sets the CreationTime field.
+func (jc *JobCreate) SetCreationTime(t time.Time) *JobCreate {
+	jc.CreationTime = &t
+	return jc
+}
+
+// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+func (jc *JobCreate) SetNillableCreationTime(t *time.Time) *JobCreate {
+	if t != nil {
+		jc.SetCreationTime(*t)
+	}
+	return jc
+}
+
+// SetContent sets the Content field.
+func (jc *JobCreate) SetContent(s string) *JobCreate {
+	jc.Content = &s
 	return jc
 }
 
@@ -74,18 +91,48 @@ func (jc *JobCreate) AddTags(t ...*Tag) *JobCreate {
 	return jc.AddTagIDs(ids...)
 }
 
-// SetTemplateID sets the template edge to JobTemplate by id.
-func (jc *JobCreate) SetTemplateID(id int) *JobCreate {
-	if jc.template == nil {
-		jc.template = make(map[int]struct{})
+// SetPrevID sets the prev edge to Job by id.
+func (jc *JobCreate) SetPrevID(id int) *JobCreate {
+	if jc.prev == nil {
+		jc.prev = make(map[int]struct{})
 	}
-	jc.template[id] = struct{}{}
+	jc.prev[id] = struct{}{}
 	return jc
 }
 
-// SetTemplate sets the template edge to JobTemplate.
-func (jc *JobCreate) SetTemplate(j *JobTemplate) *JobCreate {
-	return jc.SetTemplateID(j.ID)
+// SetNillablePrevID sets the prev edge to Job by id if the given value is not nil.
+func (jc *JobCreate) SetNillablePrevID(id *int) *JobCreate {
+	if id != nil {
+		jc = jc.SetPrevID(*id)
+	}
+	return jc
+}
+
+// SetPrev sets the prev edge to Job.
+func (jc *JobCreate) SetPrev(j *Job) *JobCreate {
+	return jc.SetPrevID(j.ID)
+}
+
+// SetNextID sets the next edge to Job by id.
+func (jc *JobCreate) SetNextID(id int) *JobCreate {
+	if jc.next == nil {
+		jc.next = make(map[int]struct{})
+	}
+	jc.next[id] = struct{}{}
+	return jc
+}
+
+// SetNillableNextID sets the next edge to Job by id if the given value is not nil.
+func (jc *JobCreate) SetNillableNextID(id *int) *JobCreate {
+	if id != nil {
+		jc = jc.SetNextID(*id)
+	}
+	return jc
+}
+
+// SetNext sets the next edge to Job.
+func (jc *JobCreate) SetNext(j *Job) *JobCreate {
+	return jc.SetNextID(j.ID)
 }
 
 // Save creates the Job in the database.
@@ -96,14 +143,21 @@ func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	if err := job.NameValidator(*jc.Name); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 	}
-	if jc.Parameters == nil {
-		return nil, errors.New("ent: missing required field \"Parameters\"")
+	if jc.CreationTime == nil {
+		v := job.DefaultCreationTime()
+		jc.CreationTime = &v
 	}
-	if len(jc.template) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"template\"")
+	if jc.Content == nil {
+		return nil, errors.New("ent: missing required field \"Content\"")
 	}
-	if jc.template == nil {
-		return nil, errors.New("ent: missing required edge \"template\"")
+	if err := job.ContentValidator(*jc.Content); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+	}
+	if len(jc.prev) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
+	}
+	if len(jc.next) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
 	}
 	return jc.sqlSave(ctx)
 }
@@ -133,9 +187,13 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		builder.Set(job.FieldName, *value)
 		j.Name = *value
 	}
-	if value := jc.Parameters; value != nil {
-		builder.Set(job.FieldParameters, *value)
-		j.Parameters = *value
+	if value := jc.CreationTime; value != nil {
+		builder.Set(job.FieldCreationTime, *value)
+		j.CreationTime = *value
+	}
+	if value := jc.Content; value != nil {
+		builder.Set(job.FieldContent, *value)
+		j.Content = *value
 	}
 	query, args := builder.Query()
 	if err := tx.Exec(ctx, query, args, &res); err != nil {
@@ -178,15 +236,38 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 			}
 		}
 	}
-	if len(jc.template) > 0 {
-		for eid := range jc.template {
-			query, args := sql.Update(job.TemplateTable).
-				Set(job.TemplateColumn, eid).
-				Where(sql.EQ(job.FieldID, id)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if len(jc.prev) > 0 {
+		eid := keys(jc.prev)[0]
+		query, args := sql.Update(job.PrevTable).
+			Set(job.PrevColumn, eid).
+			Where(sql.EQ(job.FieldID, id).And().IsNull(job.PrevColumn)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return nil, rollback(tx, err)
+		}
+		if int(affected) < len(jc.prev) {
+			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"prev\" %v already connected to a different \"Job\"", keys(jc.prev))})
+		}
+	}
+	if len(jc.next) > 0 {
+		eid := keys(jc.next)[0]
+		query, args := sql.Update(job.NextTable).
+			Set(job.NextColumn, id).
+			Where(sql.EQ(job.FieldID, eid).And().IsNull(job.NextColumn)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+		affected, err := res.RowsAffected()
+		if err != nil {
+			return nil, rollback(tx, err)
+		}
+		if int(affected) < len(jc.next) {
+			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"next\" %v already connected to a different \"Job\"", keys(jc.next))})
 		}
 	}
 	if err := tx.Commit(); err != nil {
