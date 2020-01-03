@@ -16,8 +16,8 @@
     "semantic-ui-react": "^0.88.1"
   },
   "scripts": {
-    "start": "PORT=80 HOST=0.0.0.0 react-scripts start",
-    "build": "react-scripts build",
+    "start": "PORT=8080 HOST=0.0.0.0 react-scripts start",
+    "build": "PUBLIC_URL=/app react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

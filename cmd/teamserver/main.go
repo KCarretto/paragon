@@ -2,8 +2,8 @@ package main
 
 import (
 	"context"
-
 	"github.com/kcarretto/paragon/pkg/teamserver"
+	"log"
 )
 
 func main() {
@@ -16,5 +16,6 @@ func main() {
 		Log:       newLogger(),
 		EntClient: client,
 	}
+	log.Println("Starting teamserver")
 	server.Run()
 }
