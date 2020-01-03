@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -11,9 +12,9 @@ import (
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/resolve"
 
-
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/pkg/middleware"
+	"github.com/kcarretto/paragon/www"
 )
 
 // Server handles c2 messages and replies with new tasks for the c2 to send out.
@@ -38,16 +39,34 @@ func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 }
 
+func (srv *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
+	f, err := www.App.Open("index.html")
+	if err != nil {
+		http.Error(w, "Failed to load index.html", 404)
+		return
+	}
+
+	var modtime time.Time
+	if info, err := f.Stat(); err == nil && info != nil {
+		modtime = info.ModTime()
+	}
+
+	http.ServeContent(w, r, "index.html", modtime, f)
+}
+
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run() {
 	router := http.NewServeMux()
 
 	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient}}))
 
-	router.Handle("/api/v1/", h)
-	router.Handle("/api/playground/", handler.Playground("GraphQL", "/api/v1/"))
+	router.Handle("/graphql", h)
+	router.Handle("/graphiql", handler.Playground("GraphQL", "/graphql"))
 	router.HandleFunc("/status", srv.handleStatus)
+	router.Handle("/app/", http.StripPrefix("/app", http.FileServer(www.App)))
+	router.HandleFunc("/", srv.handleIndex)
 
+	srv.Log.Info("Listening on 0.0.0.0:80")
 	if err := http.ListenAndServe("0.0.0.0:80", middleware.Chain(router, middleware.WithPanicHandling)); err != nil {
 		panic(err)
 	}
