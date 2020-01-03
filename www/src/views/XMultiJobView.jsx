@@ -2,7 +2,7 @@ import gql from 'graphql-tag';
 import React from 'react';
 import { Query } from 'react-apollo';
 import { Card, Container, Menu } from 'semantic-ui-react';
-import { XJobQueueModal } from '../components/job';
+import { XJobCard, XJobQueueModal } from '../components/job';
 
 const JOBS_QUERY = gql`
 {
