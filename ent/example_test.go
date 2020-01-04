@@ -61,7 +61,7 @@ func ExampleJob() {
 		SetExecStartTime(time.Now()).
 		SetExecStopTime(time.Now()).
 		SetContent("string").
-		SetOutput(nil).
+		SetOutput("string").
 		SetError("string").
 		SetSessionID("string").
 		SaveX(ctx)
@@ -155,7 +155,7 @@ func ExampleTarget() {
 		SetExecStartTime(time.Now()).
 		SetExecStopTime(time.Now()).
 		SetContent("string").
-		SetOutput(nil).
+		SetOutput("string").
 		SetError("string").
 		SetSessionID("string").
 		SaveX(ctx)
@@ -236,7 +236,7 @@ func ExampleTask() {
 		SetExecStartTime(time.Now()).
 		SetExecStopTime(time.Now()).
 		SetContent("string").
-		SetOutput(nil).
+		SetOutput("string").
 		SetError("string").
 		SetSessionID("string").
 		AddTags(t0).

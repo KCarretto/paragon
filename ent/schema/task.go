@@ -33,9 +33,9 @@ func (Task) Fields() []ent.Field {
 		field.String("Content").
 			NotEmpty().
 			Comment("The content of the task (usually a Renegade Script)"),
-		field.Strings("Output").
+		field.String("Output").
 			Optional().
-			Comment("The different outputs from executing the task"),
+			Comment("The output from executing the task"),
 		field.String("Error").
 			Optional().
 			NotEmpty().

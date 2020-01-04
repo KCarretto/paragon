@@ -155,6 +155,15 @@ func Content(v string) predicate.Task {
 	)
 }
 
+// Output applies equality check predicate on the "Output" field. It's identical to OutputEQ.
+func Output(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldOutput), v))
+		},
+	)
+}
+
 // Error applies equality check predicate on the "Error" field. It's identical to ErrorEQ.
 func Error(v string) predicate.Task {
 	return predicate.Task(
@@ -732,6 +741,125 @@ func ContentContainsFold(v string) predicate.Task {
 	)
 }
 
+// OutputEQ applies the EQ predicate on the "Output" field.
+func OutputEQ(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputNEQ applies the NEQ predicate on the "Output" field.
+func OutputNEQ(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.NEQ(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputIn applies the In predicate on the "Output" field.
+func OutputIn(vs ...string) predicate.Task {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Task(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.In(s.C(FieldOutput), v...))
+		},
+	)
+}
+
+// OutputNotIn applies the NotIn predicate on the "Output" field.
+func OutputNotIn(vs ...string) predicate.Task {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Task(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.NotIn(s.C(FieldOutput), v...))
+		},
+	)
+}
+
+// OutputGT applies the GT predicate on the "Output" field.
+func OutputGT(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.GT(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputGTE applies the GTE predicate on the "Output" field.
+func OutputGTE(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.GTE(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputLT applies the LT predicate on the "Output" field.
+func OutputLT(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.LT(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputLTE applies the LTE predicate on the "Output" field.
+func OutputLTE(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.LTE(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputContains applies the Contains predicate on the "Output" field.
+func OutputContains(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.Contains(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputHasPrefix applies the HasPrefix predicate on the "Output" field.
+func OutputHasPrefix(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.HasPrefix(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputHasSuffix applies the HasSuffix predicate on the "Output" field.
+func OutputHasSuffix(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.HasSuffix(s.C(FieldOutput), v))
+		},
+	)
+}
+
 // OutputIsNil applies the IsNil predicate on the "Output" field.
 func OutputIsNil() predicate.Task {
 	return predicate.Task(
@@ -746,6 +874,24 @@ func OutputNotNil() predicate.Task {
 	return predicate.Task(
 		func(s *sql.Selector) {
 			s.Where(sql.NotNull(s.C(FieldOutput)))
+		},
+	)
+}
+
+// OutputEqualFold applies the EqualFold predicate on the "Output" field.
+func OutputEqualFold(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.EqualFold(s.C(FieldOutput), v))
+		},
+	)
+}
+
+// OutputContainsFold applies the ContainsFold predicate on the "Output" field.
+func OutputContainsFold(v string) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.ContainsFold(s.C(FieldOutput), v))
 		},
 	)
 }

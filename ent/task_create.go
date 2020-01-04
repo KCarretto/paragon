@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -21,7 +20,7 @@ type TaskCreate struct {
 	ExecStartTime *time.Time
 	ExecStopTime  *time.Time
 	Content       *string
-	Output        *[]string
+	Output        *string
 	Error         *string
 	SessionID     *string
 	tags          map[int]struct{}
@@ -91,8 +90,16 @@ func (tc *TaskCreate) SetContent(s string) *TaskCreate {
 }
 
 // SetOutput sets the Output field.
-func (tc *TaskCreate) SetOutput(s []string) *TaskCreate {
+func (tc *TaskCreate) SetOutput(s string) *TaskCreate {
 	tc.Output = &s
+	return tc
+}
+
+// SetNillableOutput sets the Output field if the given value is not nil.
+func (tc *TaskCreate) SetNillableOutput(s *string) *TaskCreate {
+	if s != nil {
+		tc.SetOutput(*s)
+	}
 	return tc
 }
 
@@ -226,11 +233,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.Content = *value
 	}
 	if value := tc.Output; value != nil {
-		buf, err := json.Marshal(*value)
-		if err != nil {
-			return nil, err
-		}
-		builder.Set(task.FieldOutput, buf)
+		builder.Set(task.FieldOutput, *value)
 		t.Output = *value
 	}
 	if value := tc.Error; value != nil {
