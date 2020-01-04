@@ -3,7 +3,6 @@
 package ent
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -27,7 +26,7 @@ type Task struct {
 	// Content holds the value of the "Content" field.
 	Content string `json:"Content,omitempty"`
 	// Output holds the value of the "Output" field.
-	Output []string `json:"Output,omitempty"`
+	Output string `json:"Output,omitempty"`
 	// Error holds the value of the "Error" field.
 	Error string `json:"Error,omitempty"`
 	// SessionID holds the value of the "SessionID" field.
@@ -43,7 +42,7 @@ func (t *Task) FromRows(rows *sql.Rows) error {
 		ExecStartTime sql.NullTime
 		ExecStopTime  sql.NullTime
 		Content       sql.NullString
-		Output        []byte
+		Output        sql.NullString
 		Error         sql.NullString
 		SessionID     sql.NullString
 	}
@@ -67,11 +66,7 @@ func (t *Task) FromRows(rows *sql.Rows) error {
 	t.ExecStartTime = vt.ExecStartTime.Time
 	t.ExecStopTime = vt.ExecStopTime.Time
 	t.Content = vt.Content.String
-	if value := vt.Output; len(value) > 0 {
-		if err := json.Unmarshal(value, &t.Output); err != nil {
-			return fmt.Errorf("unmarshal field Output: %v", err)
-		}
-	}
+	t.Output = vt.Output.String
 	t.Error = vt.Error.String
 	t.SessionID = vt.SessionID.String
 	return nil
@@ -121,7 +116,7 @@ func (t *Task) String() string {
 	builder.WriteString(", Content=")
 	builder.WriteString(t.Content)
 	builder.WriteString(", Output=")
-	builder.WriteString(fmt.Sprintf("%v", t.Output))
+	builder.WriteString(t.Output)
 	builder.WriteString(", Error=")
 	builder.WriteString(t.Error)
 	builder.WriteString(", SessionID=")

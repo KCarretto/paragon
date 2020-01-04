@@ -42,7 +42,7 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   execStopTime: Time
 
   content: String
-  output: [String]
+  output: String
   error: String
   sessionID: String
 

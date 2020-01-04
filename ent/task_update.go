@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -26,7 +25,7 @@ type TaskUpdate struct {
 	ExecStopTime       *time.Time
 	clearExecStopTime  bool
 	Content            *string
-	Output             *[]string
+	Output             *string
 	clearOutput        bool
 	Error              *string
 	clearError         bool
@@ -129,8 +128,16 @@ func (tu *TaskUpdate) SetContent(s string) *TaskUpdate {
 }
 
 // SetOutput sets the Output field.
-func (tu *TaskUpdate) SetOutput(s []string) *TaskUpdate {
+func (tu *TaskUpdate) SetOutput(s string) *TaskUpdate {
 	tu.Output = &s
+	return tu
+}
+
+// SetNillableOutput sets the Output field if the given value is not nil.
+func (tu *TaskUpdate) SetNillableOutput(s *string) *TaskUpdate {
+	if s != nil {
+		tu.SetOutput(*s)
+	}
 	return tu
 }
 
@@ -342,11 +349,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		builder.Set(task.FieldContent, *value)
 	}
 	if value := tu.Output; value != nil {
-		buf, err := json.Marshal(*value)
-		if err != nil {
-			return 0, err
-		}
-		builder.Set(task.FieldOutput, buf)
+		builder.Set(task.FieldOutput, *value)
 	}
 	if tu.clearOutput {
 		builder.SetNull(task.FieldOutput)
@@ -437,7 +440,7 @@ type TaskUpdateOne struct {
 	ExecStopTime       *time.Time
 	clearExecStopTime  bool
 	Content            *string
-	Output             *[]string
+	Output             *string
 	clearOutput        bool
 	Error              *string
 	clearError         bool
@@ -533,8 +536,16 @@ func (tuo *TaskUpdateOne) SetContent(s string) *TaskUpdateOne {
 }
 
 // SetOutput sets the Output field.
-func (tuo *TaskUpdateOne) SetOutput(s []string) *TaskUpdateOne {
+func (tuo *TaskUpdateOne) SetOutput(s string) *TaskUpdateOne {
 	tuo.Output = &s
+	return tuo
+}
+
+// SetNillableOutput sets the Output field if the given value is not nil.
+func (tuo *TaskUpdateOne) SetNillableOutput(s *string) *TaskUpdateOne {
+	if s != nil {
+		tuo.SetOutput(*s)
+	}
 	return tuo
 }
 
@@ -760,15 +771,11 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		t.Content = *value
 	}
 	if value := tuo.Output; value != nil {
-		buf, err := json.Marshal(*value)
-		if err != nil {
-			return nil, err
-		}
-		builder.Set(task.FieldOutput, buf)
+		builder.Set(task.FieldOutput, *value)
 		t.Output = *value
 	}
 	if tuo.clearOutput {
-		var value []string
+		var value string
 		t.Output = value
 		builder.SetNull(task.FieldOutput)
 	}
