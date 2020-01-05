@@ -65,14 +65,14 @@ const XTaskView = () => {
                             <div className="header">
                                 Content
                             </div>
-                            <p>{data.task.content}</p>
+                            <pre>{data.task.content}</pre>
                         </div>
                         {data.task.output ?
                             <div className="ui positive message">
                                 <div className="header">
                                     Output
                                 </div>
-                                <p>{data.task.output}</p>
+                                <pre>{data.task.output}</pre>
                             </div> :
                             <div></div>
                         }
@@ -81,7 +81,7 @@ const XTaskView = () => {
                                 <div className="header">
                                     Error
                                 </div>
-                                <p>{data.task.error}</p>
+                                <pre>{data.task.error}</pre>
                             </div>
                             :
                             <div></div>
