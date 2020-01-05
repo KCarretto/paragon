@@ -4,7 +4,7 @@ import { Query } from 'react-apollo';
 import { Card, Container, Menu } from 'semantic-ui-react';
 import { XJobCard, XJobQueueModal } from '../components/job';
 
-const JOBS_QUERY = gql`
+export const MULTI_JOB_QUERY = gql`
 {
 targets {
         id
@@ -57,7 +57,7 @@ const XMultiJobView = () => {
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
                 <Card.Group centered itemsPerRow={4}>
-                    <Query query={JOBS_QUERY}>
+                    <Query query={MULTI_JOB_QUERY}>
                         {() => jobs.map((job) => <XJobCard key={job.id} {...job} />)}
                     </Query>
                 </Card.Group>
