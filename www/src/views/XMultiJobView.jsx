@@ -1,16 +1,15 @@
+import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React from 'react';
-import { Query } from 'react-apollo';
-import { Card, Container, Menu } from 'semantic-ui-react';
+import { Card, Container, Loader, Menu } from 'semantic-ui-react';
 import { XJobCard, XJobQueueModal } from '../components/job';
+import { XErrorMessage } from '../components/messages';
 
-const JOBS_QUERY = gql`
+export const MULTI_JOB_QUERY = gql`
 {
-targets {
+jobs {
         id
         name
-        primaryIP
-        lastSeen
 
         tags {
             id
@@ -34,33 +33,30 @@ targets {
 }`
 
 const XMultiJobView = () => {
-    const jobs = [
-        {
-            id: 1,
-            name: 'Deployment (initial)',
-            tags: [
-                {
-                    id: 10,
-                    name: 'linux'
-                },
-                {
-                    id: 21,
-                    name: 'team-1'
-                }
-            ],
+    const { loading, error, data } = useQuery(MULTI_JOB_QUERY);
+
+    const showCards = () => {
+        if (!data || !data.jobs || data.jobs.length < 1) {
+            return (
+                <h1>No jobs found!</h1>
+            );
         }
-    ]
+        return (<Card.Group centered itemsPerRow={4}>
+            {data.jobs.map(job => (<XJobCard key={job.id} {...job} />))}
+        </Card.Group>);
+    };
+
     return (
         <div style={{ padding: '10px' }}>
             <Menu secondary>
                 <Menu.Item position='right'><XJobQueueModal /></Menu.Item>
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
-                <Card.Group centered itemsPerRow={4}>
-                    <Query query={JOBS_QUERY}>
-                        {() => jobs.map((job) => <XJobCard key={job.id} {...job} />)}
-                    </Query>
-                </Card.Group>
+                {error ?
+                    <XErrorMessage title='Error loading jobs' msg={`${error}`} />
+                    : <Loader active={loading} />}
+
+                {showCards()}
             </Container>
         </div>
     );
