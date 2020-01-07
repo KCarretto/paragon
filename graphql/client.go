@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/graphql/models"
 	"net/http"
 )
 
@@ -60,4 +62,11 @@ func (client Client) Do(r Request) (*Response, error) {
 	}
 
 	return response, nil
+}
+
+func ClaimTasks(params models.ClaimTaskRequest) ([]*ent.Task, error) {
+	// TODO: Create an new Request object with query string and variables from params
+	// TODO: Execute request and parse response into an array of tasks, or else return an error
+
+	return nil, nil
 }
