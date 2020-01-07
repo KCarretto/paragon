@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+<<<<<<< HEAD
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql/models"
+=======
+>>>>>>> caeda95d65e1bc53799056fc80dbfdb17aa1fc3e
 	"net/http"
 )
 
