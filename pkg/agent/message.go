@@ -3,7 +3,7 @@ package agent
 import (
 	"io"
 
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/proto/codec"
 )
 
 // MessageWriter is responsible for writing output to be collected as a message from the agent.

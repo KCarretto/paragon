@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/kcarretto/paragon/api/codec"
-	"github.com/kcarretto/paragon/api/events"
+	"github.com/kcarretto/paragon/proto/codec"
+	"github.com/kcarretto/paragon/proto/events"
 
 	"github.com/golang/protobuf/proto"
 )

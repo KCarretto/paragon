@@ -8,7 +8,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/proto/codec"
 	"github.com/kcarretto/paragon/pkg/c2"
 
 	"github.com/stretchr/testify/require"

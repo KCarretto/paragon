@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/kcarretto/paragon/pkg/agent"
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/proto/codec"
 	"github.com/stretchr/testify/require"
 )
 

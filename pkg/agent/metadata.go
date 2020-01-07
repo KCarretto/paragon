@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/proto/codec"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/google/uuid"

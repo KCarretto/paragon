@@ -7,7 +7,7 @@ import (
 	fmt "fmt"
 	_ "github.com/gogo/protobuf/gogoproto"
 	proto "github.com/gogo/protobuf/proto"
-	codec "github.com/kcarretto/paragon/api/codec"
+	codec "github.com/kcarretto/paragon/proto/codec"
 	io "io"
 	math "math"
 	math_bits "math/bits"

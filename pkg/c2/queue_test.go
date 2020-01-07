@@ -3,8 +3,8 @@ package c2_test
 import (
 	"testing"
 
-	"github.com/kcarretto/paragon/api/codec"
-	"github.com/kcarretto/paragon/api/events"
+	"github.com/kcarretto/paragon/proto/codec"
+	"github.com/kcarretto/paragon/proto/events"
 	"github.com/kcarretto/paragon/pkg/c2"
 	"github.com/stretchr/testify/require"
 )

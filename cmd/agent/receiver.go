@@ -5,7 +5,7 @@ import (
 	"context"
 
 	"github.com/kcarretto/paragon/pkg/agent" 
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/proto/codec"
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/kcarretto/paragon/pkg/script/stdlib"
 	"go.uber.org/zap"

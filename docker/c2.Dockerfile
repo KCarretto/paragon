@@ -10,7 +10,7 @@ RUN apk add alpine-sdk git \
 # Build
 FROM base as build
 COPY ./cmd/c2 /app/cmd/c2
-COPY ./api /app/api
+COPY ./proto /app/proto
 COPY ./c2 /app/c2
 RUN go build -tags=gcp -o ./build/c2 ./cmd/c2
 
