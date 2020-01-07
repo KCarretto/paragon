@@ -121,6 +121,13 @@ input AddCredentialForTargetRequest {
   secret: String!
 }
 
+input ClaimTaskRequest {
+  machineUUID: String
+  hostname: String
+  primaryIP: String
+  primaryMAC: String
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
@@ -142,6 +149,10 @@ type Mutation {
   setTargetFields(input: SetTargetFieldsRequest): Target!
   deleteTarget(input: DeleteTargetRequest): Boolean!
   addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
+
+  # Task Mutations
+  claimTasks(input: ClaimTaskRequest): [Task!]
+  claimTask(id: ID!): Task
 }
 
 type Query {

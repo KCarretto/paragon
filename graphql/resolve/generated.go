@@ -8,6 +8,7 @@ import (
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
+	"github.com/kcarretto/paragon/ent/task"
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
 )
@@ -203,6 +204,72 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 		AddCredentialIDs(credential.ID).
 		Save(ctx)
 	return target, err
+}
+func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTaskRequest) ([]*ent.Task, error) {
+	var preds []predicate.Target
+
+	if input.MachineUUID != nil {
+		preds = append(preds, target.MachineUUID(*input.MachineUUID))
+	}
+	if input.Hostname != nil {
+		preds = append(preds, target.Hostname(*input.Hostname))
+	}
+	if input.PrimaryIP != nil {
+		preds = append(preds, target.PrimaryIP(*input.PrimaryIP))
+	}
+	if input.PrimaryMac != nil {
+		preds = append(preds, target.PrimaryMAC(*input.PrimaryMac))
+	}
+
+	// get target from input
+	target, err := r.EntClient.Target.Query().
+		Where(target.And(
+			preds...,
+		)).
+		Only(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// get all tasks for target
+	tasks, err := target.QueryTasks().
+		Where(
+			task.ClaimTimeIsNil(),
+		).
+		All(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+
+	// set claimtime on all tasks
+	currentTime := time.Now()
+	var updatedTasks []*ent.Task
+	for _, t := range tasks {
+		t, err = t.Update().
+			SetClaimTime(currentTime).
+			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+		updatedTasks = append(updatedTasks, t)
+	}
+	return updatedTasks, nil
+}
+func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, error) {
+	task, err := r.EntClient.Task.Query().
+		Where(
+			task.ClaimTimeIsNil(),
+		).
+		Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return task.Update().
+		SetClaimTime(time.Now()).
+		Save(ctx)
 }
 
 type queryResolver struct{ *Resolver }

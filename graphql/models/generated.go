@@ -13,6 +13,13 @@ type ApplyTagRequest struct {
 	EntID int `json:"entID"`
 }
 
+type ClaimTaskRequest struct {
+	MachineUUID *string `json:"machineUUID"`
+	Hostname    *string `json:"hostname"`
+	PrimaryIP   *string `json:"primaryIP"`
+	PrimaryMac  *string `json:"primaryMAC"`
+}
+
 type CreateJobRequest struct {
 	Name    string `json:"name"`
 	Content string `json:"content"`
