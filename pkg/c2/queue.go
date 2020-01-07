@@ -3,8 +3,8 @@ package c2
 import (
 	"sync"
 
-	"github.com/kcarretto/paragon/api/codec"
-	"github.com/kcarretto/paragon/api/events"
+	"github.com/kcarretto/paragon/proto/codec"
+	"github.com/kcarretto/paragon/proto/events"
 )
 
 // A Queue consumes and emits events to manage state for the C2 server.

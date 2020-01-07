@@ -10,7 +10,7 @@ RUN apk add alpine-sdk git \
 # Debug Build
 FROM base as build
 COPY ./cmd /app/cmd
-COPY ./api /app/api
+COPY ./proto /app/proto
 COPY ./teamserver /app/teamserver
 COPY ./ent /app/ent
 RUN go build -tags=debug,profile_cpu,gcp -o ./build/teamserver ./cmd/teamserver

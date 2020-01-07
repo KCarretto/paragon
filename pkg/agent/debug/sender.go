@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/kcarretto/paragon/pkg/agent"
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/proto/codec"
 	"go.uber.org/zap"
 )
 
