@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/kcarretto/paragon/pkg/agent"
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/pkg/c2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,7 +22,7 @@ func TestMessageWrite(t *testing.T) {
 }
 
 func TestMessageWriteResult(t *testing.T) {
-	expected := &codec.Result{}
+	expected := &c2.TaskResult{}
 
 	msg := &agent.Message{}
 	msg.WriteResult(expected)
@@ -31,11 +31,11 @@ func TestMessageWriteResult(t *testing.T) {
 }
 
 func TestServerMessageWrite(t *testing.T) {
-	expectedTask := &codec.Task{}
+	expectedTask := &c2.Task{}
 	expected := &agent.ServerMessage{}
 
 	msg := &agent.ServerMessage{
-		Tasks: []*codec.Task{expectedTask},
+		Tasks: []*c2.Task{expectedTask},
 	}
 	expected.WriteServerMessage(msg)
 

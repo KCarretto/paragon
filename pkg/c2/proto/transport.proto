@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package codec;
+package c2;
 
 import "google/protobuf/timestamp.proto";
 
@@ -20,10 +20,27 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 
+message ServerMessage {
+    repeated Task tasks = 1;
+}
+
 message AgentMessage {
-  AgentMetadata metadata = 1;
-  repeated Result results = 2;
-  repeated string logs = 3;
+    AgentMetadata metadata = 1;
+    repeated TaskResult results = 2;
+    repeated string logs = 3;
+}
+
+message Task {
+    int32 id = 1;
+    string content = 2;
+}
+
+message TaskResult {
+    int32 id = 1;
+    string output = 2;
+    string error = 3;
+    google.protobuf.Timestamp execStartTime = 4; // TODO: [(gogoproto.stdtime) = true];
+    google.protobuf.Timestamp execStopTime = 5;  // TODO: [(gogoproto.stdtime) = true];
 }
 
 message AgentMetadata {
@@ -35,10 +52,3 @@ message AgentMetadata {
   string primaryMAC = 6;
 }
 
-message Result {
-  string id = 1;
-  repeated string output = 2;
-  string error = 3;
-  google.protobuf.Timestamp execStartTime = 4; // TODO: [(gogoproto.stdtime) = true];
-  google.protobuf.Timestamp execStopTime = 5;  // TODO: [(gogoproto.stdtime) = true];
-}

@@ -1,10 +1,10 @@
 package main
 
 import (
-	"context"
 	"net/http"
 	"os"
 
+	"github.com/kcarretto/paragon/graphql"
 	"github.com/kcarretto/paragon/pkg/c2"
 
 	"go.uber.org/zap"
@@ -36,43 +36,31 @@ func getLogger() (logger *zap.Logger) {
 }
 
 func main() {
-	ctx := context.Background()
 	logger := getLogger()
 
-	checkinTopic, err := openTopic(ctx, "agent.checkin")
-	if err != nil {
-		logger.Panic("Failed to open pubsub topic", zap.Error(err))
-	}
-	defer checkinTopic.Shutdown(ctx)
-
-	execTopic, err := openTopic(ctx, "tasks.executed")
-	if err != nil {
-		logger.Panic("Failed to open pubsub topic", zap.Error(err))
-	}
-	defer execTopic.Shutdown(ctx)
-
-	claimTopic, err := openTopic(ctx, "tasks.claimed")
-	if err != nil {
-		logger.Panic("Failed to open pubsub topic", zap.Error(err))
-	}
-	defer claimTopic.Shutdown(ctx)
-
+	// C2 Server Address
 	httpAddr := "127.0.0.1:8080"
 	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
 		httpAddr = addr
 	}
 
+	// Teamserver URL
+	teamserverURL := "http://127.0.0.1/graphql"
+	if url := os.Getenv("TEAMSERVER_URL"); url != "" {
+		teamserverURL = url
+	}
+
+	// Initialize Server
 	srv := &c2.Server{
-		OnAgentMessage: onAgentMsg(ctx, logger.Named("events.agent.checkin"), checkinTopic, execTopic),
-		Queue: &c2.Queue{
-			OnClaim: onClaim(ctx, logger.Named("events.tasks.claimed"), claimTopic),
+		Teamserver: graphql.Client{
+			URL: teamserverURL,
 		},
 	}
+
+	// Setup routes
 	router := http.NewServeMux()
 	router.Handle("/", srv)
 	router.HandleFunc("/status", srv.ServeStatus)
-	router.HandleFunc("/events/tasks/claimed", srv.ServeEventTaskClaimed)
-	router.HandleFunc("/events/tasks/queued", srv.ServeEventTaskQueued)
 
 	handler := withLogging(logger.Named("http"), router)
 

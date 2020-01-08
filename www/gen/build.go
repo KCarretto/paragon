@@ -7,6 +7,7 @@ import (
 	"github.com/shurcooL/vfsgen"
 )
 
+// App exposes the web application build artifacts as an http.FileSystem
 var App http.FileSystem = http.Dir("build")
 
 func main() {

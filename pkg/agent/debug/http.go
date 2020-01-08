@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/kcarretto/paragon/pkg/agent"
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/pkg/c2"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +40,7 @@ func (transport *Sender) handleQueue(w http.ResponseWriter, req *http.Request) {
 	transport.Log.Debug("Request to queue task", zap.String("task", string(data)))
 
 	// Unmarshal request into task
-	var task codec.Task
+	var task c2.Task
 	if err := json.Unmarshal(data, &task); err != nil {
 		transport.Log.Error("Failed to parse request body", zap.Error(err))
 		msg := fmt.Sprintf("failed to parse request body to json: %s", err.Error())
