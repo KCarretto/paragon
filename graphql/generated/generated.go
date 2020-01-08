@@ -82,6 +82,7 @@ type ComplexityRoot struct {
 		RemoveTagFromTarget    func(childComplexity int, input *models.RemoveTagRequest) int
 		RemoveTagFromTask      func(childComplexity int, input *models.RemoveTagRequest) int
 		SetTargetFields        func(childComplexity int, input *models.SetTargetFieldsRequest) int
+		SubmitTaskResult       func(childComplexity int, input *models.SubmitTaskResultRequest) int
 	}
 
 	Query struct {
@@ -155,6 +156,7 @@ type MutationResolver interface {
 	AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error)
 	ClaimTasks(ctx context.Context, input *models.ClaimTaskRequest) ([]*ent.Task, error)
 	ClaimTask(ctx context.Context, id int) (*ent.Task, error)
+	SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error)
 }
 type QueryResolver interface {
 	Credential(ctx context.Context, id int) (*ent.Credential, error)
@@ -460,6 +462,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.SetTargetFields(childComplexity, args["input"].(*models.SetTargetFieldsRequest)), true
+
+	case "Mutation.submitTaskResult":
+		if e.complexity.Mutation.SubmitTaskResult == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_submitTaskResult_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SubmitTaskResult(childComplexity, args["input"].(*models.SubmitTaskResultRequest)), true
 
 	case "Query.credential":
 		if e.complexity.Query.Credential == nil {
@@ -930,6 +944,14 @@ input ClaimTaskRequest {
   primaryMAC: String
 }
 
+input SubmitTaskResultRequest {
+  id: ID!
+  output: String
+  error: String
+  execStartTime: Time
+  execStopTime: Time
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
@@ -955,6 +977,7 @@ type Mutation {
   # Task Mutations
   claimTasks(input: ClaimTaskRequest): [Task!]
   claimTask(id: ID!): Task
+  submitTaskResult(input: SubmitTaskResultRequest): Task!
 }
 
 type Query {
@@ -1181,6 +1204,20 @@ func (ec *executionContext) field_Mutation_setTargetFields_args(ctx context.Cont
 	var arg0 *models.SetTargetFieldsRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOSetTargetFieldsRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetTargetFieldsRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_submitTaskResult_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.SubmitTaskResultRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOSubmitTaskResultRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSubmitTaskResultRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2369,6 +2406,50 @@ func (ec *executionContext) _Mutation_claimTask(ctx context.Context, field graph
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_submitTaskResult(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_submitTaskResult_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SubmitTaskResult(rctx, args["input"].(*models.SubmitTaskResultRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Task)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_credential(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5144,6 +5225,48 @@ func (ec *executionContext) unmarshalInputSetTargetFieldsRequest(ctx context.Con
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSubmitTaskResultRequest(ctx context.Context, obj interface{}) (models.SubmitTaskResultRequest, error) {
+	var it models.SubmitTaskResultRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "output":
+			var err error
+			it.Output, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "error":
+			var err error
+			it.Error, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "execStartTime":
+			var err error
+			it.ExecStartTime, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "execStopTime":
+			var err error
+			it.ExecStopTime, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5340,6 +5463,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec._Mutation_claimTasks(ctx, field)
 		case "claimTask":
 			out.Values[i] = ec._Mutation_claimTask(ctx, field)
+		case "submitTaskResult":
+			out.Values[i] = ec._Mutation_submitTaskResult(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6618,6 +6746,18 @@ func (ec *executionContext) marshalOString2ᚖstring(ctx context.Context, sel as
 	return ec.marshalOString2string(ctx, sel, *v)
 }
 
+func (ec *executionContext) unmarshalOSubmitTaskResultRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSubmitTaskResultRequest(ctx context.Context, v interface{}) (models.SubmitTaskResultRequest, error) {
+	return ec.unmarshalInputSubmitTaskResultRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOSubmitTaskResultRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSubmitTaskResultRequest(ctx context.Context, v interface{}) (*models.SubmitTaskResultRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOSubmitTaskResultRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSubmitTaskResultRequest(ctx, v)
+	return &res, err
+}
+
 func (ec *executionContext) marshalOTag2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx context.Context, sel ast.SelectionSet, v ent.Tag) graphql.Marshaler {
 	return ec._Tag(ctx, sel, &v)
 }
@@ -6817,6 +6957,21 @@ func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v in
 
 func (ec *executionContext) marshalOTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
 	return graphql.MarshalTime(v)
+}
+
+func (ec *executionContext) unmarshalOTime2ᚖtimeᚐTime(ctx context.Context, v interface{}) (*time.Time, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOTime2timeᚐTime(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOTime2ᚖtimeᚐTime(ctx context.Context, sel ast.SelectionSet, v *time.Time) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOTime2timeᚐTime(ctx, sel, *v)
 }
 
 func (ec *executionContext) marshalO__EnumValue2ᚕgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐEnumValueᚄ(ctx context.Context, sel ast.SelectionSet, v []introspection.EnumValue) graphql.Marshaler {
