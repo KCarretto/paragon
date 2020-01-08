@@ -1,27 +1,32 @@
-package teamserver
+package graphql
 
 import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-<<<<<<< HEAD
+	"net/http"
+	"strings"
+
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql/models"
-=======
->>>>>>> caeda95d65e1bc53799056fc80dbfdb17aa1fc3e
-	"net/http"
 )
 
-// Response stores decoded JSON data returned from a GraphQL request.
-type Response struct {
-	Data   map[string]interface{}
-	Errors []string
+// An Error returned by the GraphQL server
+type Error struct {
+	Message string   `json:"message"`
+	Path    []string `json:"path"`
 }
 
-// Request stores GraphQL queries and mutations.
+// Error implements the error interface by formatting an error message of the available error info.
+func (err Error) Error() string {
+	return fmt.Sprintf("%s (path: %s)", err.Message, strings.Join(err.Path, ", "))
+}
+
+// A Request stores execution properties of GraphQL queries and mutations.
 type Request struct {
-	Query     string
-	Variables map[string]interface{}
+	Operation string      `json:"operationName"`
+	Query     string      `json:"query"`
+	Variables interface{} `json:"variables"`
 }
 
 // A Client can be used to request GraphQL queries and mutations using HTTP.
@@ -30,20 +35,20 @@ type Client struct {
 	HTTP *http.Client
 }
 
-// Do executes a GraphQL request.
-func (client Client) Do(r Request) (*Response, error) {
+// Do executes a GraphQL request and unmarshals the JSON result into the destination struct.
+func (client Client) Do(request Request, dst interface{}) error {
 	// Encode request payload
-	payload, err := json.Marshal(r)
+	payload, err := json.Marshal(request)
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode json: %w", err)
+		return fmt.Errorf("failed to encode json: %w", err)
 	}
 
 	// Build http request
-	req, err := http.NewRequest(http.MethodPost, client.URL, bytes.NewBuffer(payload))
+	httpReq, err := http.NewRequest(http.MethodPost, client.URL, bytes.NewBuffer(payload))
 	if err != nil {
-		return nil, fmt.Errorf("failed to encode request: %w", err)
+		return fmt.Errorf("failed to encode request: %w", err)
 	}
-	req.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Content-Type", "application/json")
 
 	// Set default http client if necessary
 	if client.HTTP == nil {
@@ -51,25 +56,63 @@ func (client Client) Do(r Request) (*Response, error) {
 	}
 
 	// Issue the request
-	resp, err := client.HTTP.Do(req)
+	httpResp, err := client.HTTP.Do(httpReq)
 	if err != nil {
-		return nil, fmt.Errorf("failed to send request: %w", err)
+		return fmt.Errorf("failed to send request: %w", err)
 	}
-	defer resp.Body.Close()
+	defer httpResp.Body.Close()
+
+	// Check response status
+	if httpResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("http status error: %s", httpResp.Status)
+	}
 
 	// Decode the response
-	response := &Response{}
-	data := json.NewDecoder(resp.Body)
-	if err := data.Decode(response); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
+	data := json.NewDecoder(httpResp.Body)
+	if err := data.Decode(dst); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
 	}
 
-	return response, nil
+	return nil
 }
 
-func ClaimTasks(params models.ClaimTaskRequest) ([]*ent.Task, error) {
-	// TODO: Create an new Request object with query string and variables from params
-	// TODO: Execute request and parse response into an array of tasks, or else return an error
+// ClaimTasks for a target that has the provided attributes, returning an array of tasks to execute.
+// If no tasks are available, an empty task array is returned. If no target can be found, an error
+// will be returned.
+func (client Client) ClaimTasks(vars models.ClaimTaskRequest) ([]*ent.Task, error) {
+	// Build request
+	req := Request{
+		Operation: "ClaimTasks",
+		Query: `
+		mutation ClaimTasks($params: ClaimTaskRequest!) {
+			claimTasks(input: $params) {
+			  id
+			  content
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"params": vars,
+		},
+	}
 
-	return nil, nil
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Tasks []*ent.Task `json:"claimTasks"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+
+	// Return claimed tasks
+	return resp.Data.Tasks, nil
 }
