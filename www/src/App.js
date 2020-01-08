@@ -5,8 +5,7 @@ import './App.css';
 import { XLayout, XUnimplemented } from './components/layout/';
 import Routes from './config/routes';
 import { XGraphProvider } from './graphql';
-import { XMultiJobView, XMultiTargetView, XTargetView, XTaskView } from './views';
-import XMultiTagView from './views/XMultiTagView';
+import { XJobView, XMultiJobView, XMultiTagView, XMultiTargetView, XTargetView, XTaskView } from './views';
 
 function App() {
   return (
@@ -19,6 +18,7 @@ function App() {
 
         <Route path='/targets/:id' component={XTargetView} />
         <Route path='/tasks/:id' component={XTaskView} />
+        <Route path='/jobs/:id' component={XJobView} />
 
       </XLayout>
     </XGraphProvider>
