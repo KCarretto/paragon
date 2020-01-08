@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/kcarretto/paragon/api/codec"
+	"github.com/kcarretto/paragon/pkg/c2"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/google/uuid"
@@ -45,7 +45,7 @@ func CollectMetadata(agent *Agent) {
 		}
 
 		// Initial (static) agent metadata
-		agent.Metadata = &codec.AgentMetadata{
+		agent.Metadata = &c2.AgentMetadata{
 			AgentID:     AgentVersion,
 			SessionID:   sessionID,
 			MachineUUID: machineUUID,
