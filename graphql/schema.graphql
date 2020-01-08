@@ -128,6 +128,14 @@ input ClaimTaskRequest {
   primaryMAC: String
 }
 
+input SubmitTaskResultRequest {
+  id: ID!
+  output: String
+  error: String
+  execStartTime: Time
+  execStopTime: Time
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
@@ -153,6 +161,7 @@ type Mutation {
   # Task Mutations
   claimTasks(input: ClaimTaskRequest): [Task!]
   claimTask(id: ID!): Task
+  submitTaskResult(input: SubmitTaskResultRequest): Task!
 }
 
 type Query {

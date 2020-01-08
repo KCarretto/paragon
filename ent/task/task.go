@@ -77,9 +77,4 @@ var (
 	descContent = fields[4].Descriptor()
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
 	ContentValidator = descContent.Validators[0].(func(string) error)
-
-	// descError is the schema descriptor for Error field.
-	descError = fields[6].Descriptor()
-	// ErrorValidator is a validator for the "Error" field. It is called by the builders before save.
-	ErrorValidator = descError.Validators[0].(func(string) error)
 )

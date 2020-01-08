@@ -350,6 +350,33 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 		SetClaimTime(time.Now()).
 		Save(ctx)
 }
+func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error) {
+	taskEnt, err := r.EntClient.Task.Get(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+	inputOutput := ""
+	if input.Output != nil {
+		inputOutput = *input.Output
+	}
+	inputError := ""
+	if input.Error != nil {
+		inputError = *input.Error
+	}
+	_, err = r.EntClient.Target.Update().
+		SetLastSeen(time.Now()).
+		Where(target.HasTasksWith(task.ID(taskEnt.ID))).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return taskEnt.Update().
+		SetOutput(taskEnt.Output + inputOutput).
+		SetError(taskEnt.Error + inputError).
+		SetNillableExecStartTime(input.ExecStartTime).
+		SetNillableExecStopTime(input.ExecStopTime).
+		Save(ctx)
+}
 
 type queryResolver struct{ *Resolver }
 

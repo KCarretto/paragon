@@ -257,11 +257,6 @@ func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 		}
 	}
-	if tu.Error != nil {
-		if err := task.ErrorValidator(*tu.Error); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
-		}
-	}
 	if len(tu.job) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}
@@ -663,11 +658,6 @@ func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 	if tuo.Content != nil {
 		if err := task.ContentValidator(*tuo.Content); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
-		}
-	}
-	if tuo.Error != nil {
-		if err := task.ErrorValidator(*tuo.Error); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
 		}
 	}
 	if len(tuo.job) > 1 {

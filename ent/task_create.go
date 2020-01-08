@@ -177,11 +177,6 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 	if err := task.ContentValidator(*tc.Content); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
-	if tc.Error != nil {
-		if err := task.ErrorValidator(*tc.Error); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Error\": %v", err)
-		}
-	}
 	if len(tc.job) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}

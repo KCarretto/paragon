@@ -2,6 +2,10 @@
 
 package models
 
+import (
+	"time"
+)
+
 type AddCredentialForTargetRequest struct {
 	ID        int    `json:"id"`
 	Principal string `json:"principal"`
@@ -58,4 +62,12 @@ type SetTargetFieldsRequest struct {
 	PublicIP    *string `json:"publicIP"`
 	PrimaryMac  *string `json:"primaryMAC"`
 	Hostname    *string `json:"hostname"`
+}
+
+type SubmitTaskResultRequest struct {
+	ID            int        `json:"id"`
+	Output        *string    `json:"output"`
+	Error         *string    `json:"error"`
+	ExecStartTime *time.Time `json:"execStartTime"`
+	ExecStopTime  *time.Time `json:"execStopTime"`
 }
