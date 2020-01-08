@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -79,7 +80,7 @@ func (client Client) Do(request Request, dst interface{}) error {
 // ClaimTasks for a target that has the provided attributes, returning an array of tasks to execute.
 // If no tasks are available, an empty task array is returned. If no target can be found, an error
 // will be returned.
-func (client Client) ClaimTasks(vars models.ClaimTaskRequest) ([]*ent.Task, error) {
+func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskRequest) ([]*ent.Task, error) {
 	// Build request
 	req := Request{
 		Operation: "ClaimTasks",
@@ -103,6 +104,7 @@ func (client Client) ClaimTasks(vars models.ClaimTaskRequest) ([]*ent.Task, erro
 		Errors []Error `json:"errors"`
 	}
 
+	// TODO: Set context for HTTP request
 	// Execute mutation
 	if err := client.Do(req, &resp); err != nil {
 		return nil, err
