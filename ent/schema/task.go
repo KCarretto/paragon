@@ -38,7 +38,6 @@ func (Task) Fields() []ent.Field {
 			Comment("The output from executing the task"),
 		field.String("Error").
 			Optional().
-			NotEmpty().
 			Comment("The error, if any, produced while executing the Task"),
 		field.String("SessionID").
 			Optional(),
