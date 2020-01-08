@@ -11,7 +11,6 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
-
 )
 
 var sampleUUID = "ABCD"
@@ -19,10 +18,10 @@ var sampleUUID = "ABCD"
 // HandleAgentTestCase holds parameters used to test the server's HandleAgent method.
 type HandleAgentTestCase struct {
 	ReceivedMessage c2.AgentMessage
-	ClaimedTasks []*ent.Task
-	ClaimTaskErr error
-	ExpectedParams models.ClaimTaskRequest
-	ExpectedErr error
+	ClaimedTasks    []*ent.Task
+	ClaimTaskErr    error
+	ExpectedParams  models.ClaimTaskRequest
+	ExpectedErr     error
 }
 
 // Run the test case.
@@ -48,16 +47,16 @@ func (test HandleAgentTestCase) Run(t *testing.T) {
 
 // TestHandleAgent method with various test cases.
 func TestHandleAgent(t *testing.T) {
-	testCases := []HandleAgentTestCase {
+	testCases := []HandleAgentTestCase{
 		{
-			ReceivedMessage: c2.AgentMessage {
-				Metadata: &c2.AgentMetadata {
+			ReceivedMessage: c2.AgentMessage{
+				Metadata: &c2.AgentMetadata{
 					MachineUUID: sampleUUID,
 				},
 			},
 			ClaimedTasks: []*ent.Task{
 				&ent.Task{
-					ID: 123,
+					ID:      123,
 					Content: "print('testing')",
 				},
 			},

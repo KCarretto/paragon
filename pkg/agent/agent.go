@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/kcarretto/paragon/proto/codec"
+	"github.com/kcarretto/paragon/pkg/c2"
 
 	"go.uber.org/zap"
 )
@@ -14,7 +14,7 @@ type Sender interface {
 	Send(ServerMessageWriter, Message) error
 }
 
-// A Receiver is responsible for handling messages sent by a server.
+// A Receiver is responsible for handling messages received from a server.
 type Receiver interface {
 	Receive(MessageWriter, ServerMessage)
 }
@@ -23,7 +23,7 @@ type Receiver interface {
 type Agent struct {
 	Receiver
 	Log        *zap.Logger
-	Metadata   *codec.AgentMetadata
+	Metadata   *c2.AgentMetadata
 	Transports []Transport
 
 	MaxIdleTime time.Duration

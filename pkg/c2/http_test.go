@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/pkg/c2"
 	"github.com/kcarretto/paragon/pkg/c2/mocks"
-	"github.com/kcarretto/paragon/ent"
 
 	gomock "github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ func TestServeHTTP(t *testing.T) {
 	teamserver := mocks.NewMockTeamserver(ctrl)
 	teamserver.EXPECT().ClaimTasks(gomock.Any(), gomock.Any()).Return([]*ent.Task{
 		{
-			ID: 1234,
+			ID:      1234,
 			Content: `print('another test!')`,
 		},
 	}, nil)

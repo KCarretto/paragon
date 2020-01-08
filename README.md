@@ -138,17 +138,16 @@ Below is an overview of the project structure and where each component lives. If
 | .devcontainer | Configuration for the VSCode container development environment. |
 | .github | Github configuration. |
 | .stats | A git ignored directory (which you may or may not have) for storing performance profiling output. |
-| api | Public facing API specification and implementations. |
-| api/codec | Language-agnostic proto definitions for agent/c2 communication. |
-| api/ent | Graph related API definitions used by the teamserver. |
-| api/events | Language-agnostic proto definitions for teamserver events. |
+| ent | Graph related API definitions used by the teamserver. |
+| graphql | GraphQL schema & related code generated from ent. |
 | cmd | Command line executable tools and services. |
 | dist | A git ignored directory for storing build artifacts. |
 | docker | Dockerfiles used for example deployment. |
 | ent | Graph models and schemas used by the teamserver (see Facebook's [entgo](https://entgo.io) tool for more info). |
 | pkg | Public facing libraries utilized by repository tools but also exposed to the world. |
 | pkg/agent | An abstraction to easily create an implant or communication transport. |
-| pkg/c2 | C2 service related helpers. |
+| pkg/c2 | C2 service related helpers and standardized message definitions. |
+| pkg/c2/proto | Protobuf spec to define a standardized serialization format for Agent <-> C2 communication. |
 | pkg/drop | Provides a simple method used by compiled dropper payloads. |
 | pkg/middleware | Common middleware for HTTP services. |
 | pkg/script | Python-like scripting language for dynamic configuration, automation, and cross-platform exploitation. |

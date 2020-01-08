@@ -52,7 +52,7 @@ func convertTasks(models []*ent.Task) (tasks []*Task) {
 		}
 
 		tasks = append(tasks, &Task{
-			Id: int32(task.ID),
+			Id:      int32(task.ID),
 			Content: task.Content,
 		})
 	}
@@ -76,7 +76,7 @@ func resolveTarget(metadata *AgentMetadata) (models.ClaimTaskRequest, error) {
 
 	// Otherwise combine Primary IP and Primary MAC addresses
 	return models.ClaimTaskRequest{
-		PrimaryIP: &metadata.PrimaryIP,
+		PrimaryIP:  &metadata.PrimaryIP,
 		PrimaryMac: &metadata.PrimaryMAC,
 	}, nil
 }

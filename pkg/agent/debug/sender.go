@@ -6,7 +6,7 @@ import (
 	"sync"
 
 	"github.com/kcarretto/paragon/pkg/agent"
-	"github.com/kcarretto/paragon/proto/codec"
+	"github.com/kcarretto/paragon/pkg/c2"
 	"go.uber.org/zap"
 )
 
@@ -18,7 +18,7 @@ type Sender struct {
 	active   bool
 	wg       sync.WaitGroup
 	messages []agent.Message
-	tasks    []*codec.Task
+	tasks    []*c2.Task
 }
 
 // Send appends an agent message to the result array, and writes any queued tasks to the provided
@@ -28,7 +28,7 @@ func (transport *Sender) Send(w agent.ServerMessageWriter, msg agent.Message) er
 
 	transport.messages = append(transport.messages, msg)
 
-	tasks := make([]*codec.Task, len(transport.tasks))
+	tasks := make([]*c2.Task, len(transport.tasks))
 	copy(tasks, transport.tasks)
 	transport.tasks = transport.tasks[:0]
 
@@ -40,7 +40,7 @@ func (transport *Sender) Send(w agent.ServerMessageWriter, msg agent.Message) er
 }
 
 // QueueTask buffers a task for execution.
-func (transport *Sender) QueueTask(task *codec.Task) {
+func (transport *Sender) QueueTask(task *c2.Task) {
 	transport.tasks = append(transport.tasks, task)
 }
 
