@@ -209,31 +209,111 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	var preds []predicate.Target
 
 	if input.MachineUUID != nil {
-		preds = append(preds, target.MachineUUID(*input.MachineUUID))
+		exists, err := r.EntClient.Target.Query().
+			Where(target.MachineUUID(*input.MachineUUID)).
+			Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			preds = append(preds, target.MachineUUID(*input.MachineUUID))
+
+		}
 	}
+
 	if input.Hostname != nil {
-		preds = append(preds, target.Hostname(*input.Hostname))
+		exists, err := r.EntClient.Target.Query().
+			Where(target.Hostname(*input.Hostname)).
+			Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			preds = append(preds, target.Hostname(*input.Hostname))
+
+		}
 	}
+
 	if input.PrimaryIP != nil {
-		preds = append(preds, target.PrimaryIP(*input.PrimaryIP))
+		exists, err := r.EntClient.Target.Query().
+			Where(target.PrimaryIP(*input.PrimaryIP)).
+			Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			preds = append(preds, target.PrimaryIP(*input.PrimaryIP))
+
+		}
 	}
+
 	if input.PrimaryMac != nil {
-		preds = append(preds, target.PrimaryMAC(*input.PrimaryMac))
+		exists, err := r.EntClient.Target.Query().
+			Where(target.PrimaryMAC(*input.PrimaryMac)).
+			Exist(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if exists {
+			preds = append(preds, target.PrimaryMAC(*input.PrimaryMac))
+		}
 	}
 
-	// get target from input
-	target, err := r.EntClient.Target.Query().
-		Where(target.And(
-			preds...,
-		)).
-		Only(ctx)
+	targetExists := false
+	var err error
 
+	if preds != nil {
+		// see if target already exists
+		targetExists, err = r.EntClient.Target.Query().
+			Where(target.And(
+				preds...,
+			)).
+			Exist(ctx)
+
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var targetEnt *ent.Target
+
+	// if new target then create it
+	if !targetExists && input.PrimaryIP != nil {
+		targetEnt, err = r.EntClient.Target.Create().
+			SetName(*input.PrimaryIP).
+			SetPrimaryIP(*input.PrimaryIP).
+			SetNillableHostname(input.Hostname).
+			SetNillableMachineUUID(input.MachineUUID).
+			SetNillablePrimaryMAC(input.PrimaryMac).
+			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		targetEnt, err = r.EntClient.Target.Query().
+			Where(target.And(
+				preds...,
+			)).
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// if we have new info, update
+	currentTime := time.Now()
+	targetEnt, err = targetEnt.Update().
+		SetNillableMachineUUID(input.MachineUUID).
+		SetNillableHostname(input.Hostname).
+		SetNillablePrimaryMAC(input.PrimaryMac).
+		SetLastSeen(currentTime).
+		Save(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	// get all tasks for target
-	tasks, err := target.QueryTasks().
+	tasks, err := targetEnt.QueryTasks().
 		Where(
 			task.ClaimTimeIsNil(),
 		).
@@ -244,7 +324,6 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	}
 
 	// set claimtime on all tasks
-	currentTime := time.Now()
 	var updatedTasks []*ent.Task
 	for _, t := range tasks {
 		t, err = t.Update().
