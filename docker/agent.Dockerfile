@@ -27,7 +27,7 @@ CMD ["/agent"]
 # Developer Build
 FROM base as build-dev
 COPY ./cmd /app/cmd
-COPY ./api /app/api
+COPY ./proto /app/proto
 COPY ./agent /app/agent
 COPY ./script /app/script
 RUN go build -tags=dev,profile_cpu -o ./build/agent ./cmd/agent
