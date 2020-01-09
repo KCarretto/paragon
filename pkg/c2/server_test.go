@@ -44,7 +44,7 @@ func (test HandleAgentTestCase) Run(t *testing.T) {
 	require.Equal(t, test.ExpectedErr, err)
 	require.Equal(t, len(test.ClaimedTasks), len(resp.Tasks))
 	for i, task := range test.ClaimedTasks {
-		require.Equal(t, int32(task.ID), resp.Tasks[i].Id)
+		require.Equal(t, int64(task.ID), resp.Tasks[i].Id)
 		require.Equal(t, task.Content, resp.Tasks[i].Content)
 	}
 }
