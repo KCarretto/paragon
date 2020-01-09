@@ -3,6 +3,8 @@ package c2
 import (
 	"context"
 	"fmt"
+	"log"
+	"time"
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql/models"
@@ -15,6 +17,7 @@ import (
 // Teamserver provides client methods used to interact with a teamserver.
 type Teamserver interface {
 	ClaimTasks(context.Context, models.ClaimTaskRequest) ([]*ent.Task, error)
+	SubmitTaskResult(context.Context, models.SubmitTaskResultRequest) error
 }
 
 // Server manages communication with agents. Upon check-in, the server will claim and respond with
@@ -25,7 +28,34 @@ type Server struct {
 
 // HandleAgent is a transport-agnostic method for handling agent communications.
 func (srv Server) HandleAgent(ctx context.Context, msg AgentMessage) (*ServerMessage, error) {
-	// TODO: Report agent results
+	// Submit task results
+	for _, result := range msg.Results {
+		if result == nil {
+			continue
+		}
+
+		var start *time.Time
+		if result.ExecStartTime != nil {
+			t := time.Unix(result.ExecStartTime.Seconds, int64(result.ExecStartTime.Nanos))
+			start = &t
+		}
+
+		var stop *time.Time
+		if result.ExecStopTime != nil {
+			t := time.Unix(result.ExecStopTime.Seconds, int64(result.ExecStopTime.Nanos))
+			stop = &t
+		}
+
+		if err := srv.SubmitTaskResult(ctx, models.SubmitTaskResultRequest{
+			ID:            int(result.Id),
+			Output:        &result.Output,
+			Error:         &result.Error,
+			ExecStartTime: start,
+			ExecStopTime:  stop,
+		}); err != nil {
+			log.Printf("[ERR] failed to submit task result: %s\n", err.Error())
+		}
+	}
 
 	// Determine target criteria based on reported agent metadata
 	target, err := resolveTarget(msg.Metadata)
