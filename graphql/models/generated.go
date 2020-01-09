@@ -17,18 +17,20 @@ type ApplyTagRequest struct {
 	EntID int `json:"entID"`
 }
 
-type ClaimTaskRequest struct {
+type ClaimTasksRequest struct {
 	MachineUUID *string `json:"machineUUID"`
-	Hostname    *string `json:"hostname"`
 	PrimaryIP   *string `json:"primaryIP"`
+	Hostname    *string `json:"hostname"`
 	PrimaryMac  *string `json:"primaryMAC"`
+	SessionID   *string `json:"sessionID"`
 }
 
 type CreateJobRequest struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-	Tags    []int  `json:"tags"`
-	Prev    *int   `json:"prev"`
+	Name      string  `json:"name"`
+	Content   string  `json:"content"`
+	SessionID *string `json:"sessionID"`
+	Tags      []int   `json:"tags"`
+	Prev      *int    `json:"prev"`
 }
 
 type CreateTagRequest struct {
