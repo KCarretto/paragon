@@ -41,7 +41,6 @@ func CollectMetadata(agent *Agent) {
 		machineUUID, err := machineid.ID()
 		if err != nil {
 			agent.Log.Error("Failed to collect machine UUID", zap.Error(err))
-			machineUUID = fmt.Sprintf("machine_uuid_err_%d", time.Now().Unix())
 		}
 
 		// Initial (static) agent metadata

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -68,8 +69,15 @@ func (client Client) Do(ctx context.Context, request Request, dst interface{}) e
 		return fmt.Errorf("http status error: %s", httpResp.Status)
 	}
 
+	tstData, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Received response from teamserver: %s\n", string(tstData))
+
 	// Decode the response
-	data := json.NewDecoder(httpResp.Body)
+	// data := json.NewDecoder(httpResp.Body)
+	data := json.NewDecoder(bytes.NewBuffer(tstData))
 	if err := data.Decode(dst); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -108,6 +116,8 @@ func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTasksReque
 	if err := client.Do(ctx, req, &resp); err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("Response from teamserver: %+v\n", resp)
 
 	// Check for errors
 	if resp.Errors != nil {

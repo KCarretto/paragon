@@ -9,9 +9,9 @@ RUN apk add alpine-sdk git \
 
 FROM base as build
 COPY ./cmd /app/cmd
-COPY ./api /app/api
-COPY ./agent /app/agent
-COPY ./script /app/script
+COPY ./pkg /app/pkg
+COPY ./ent /app/ent
+COPY ./graphql /app/graphql
 
 # Debug Build
 FROM build as build-debug
@@ -27,13 +27,13 @@ CMD ["/agent"]
 # Developer Build
 FROM base as build-dev
 COPY ./cmd /app/cmd
-COPY ./proto /app/proto
-COPY ./agent /app/agent
-COPY ./script /app/script
+COPY ./pkg /app/pkg
+COPY ./ent /app/ent
+COPY ./graphql /app/graphql
 RUN go build -tags=dev,profile_cpu -o ./build/agent ./cmd/agent
 
 # Developer
-FROM alpine:3.10.2 as developer
+FROM alpine:3.10.2 as dev
 WORKDIR /app
 COPY --from=build-dev /app/build/agent /agent
 CMD ["/agent"]
