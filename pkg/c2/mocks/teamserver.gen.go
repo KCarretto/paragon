@@ -36,7 +36,7 @@ func (m *MockTeamserver) EXPECT() *MockTeamserverMockRecorder {
 }
 
 // ClaimTasks mocks base method
-func (m *MockTeamserver) ClaimTasks(arg0 context.Context, arg1 models.ClaimTaskRequest) ([]*ent.Task, error) {
+func (m *MockTeamserver) ClaimTasks(arg0 context.Context, arg1 models.ClaimTasksRequest) ([]*ent.Task, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ClaimTasks", arg0, arg1)
 	ret0, _ := ret[0].([]*ent.Task)

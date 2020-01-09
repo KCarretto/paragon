@@ -80,7 +80,7 @@ func (client Client) Do(ctx context.Context, request Request, dst interface{}) e
 // ClaimTasks for a target that has the provided attributes, returning an array of tasks to execute.
 // If no tasks are available, an empty task array is returned. If no target can be found, an error
 // will be returned.
-func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskRequest) ([]*ent.Task, error) {
+func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTasksRequest) ([]*ent.Task, error) {
 	// Build request
 	req := Request{
 		Operation: "ClaimTasks",
