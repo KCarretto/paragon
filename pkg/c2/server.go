@@ -68,9 +68,12 @@ func (srv Server) HandleAgent(ctx context.Context, msg AgentMessage) (*ServerMes
 	if err != nil {
 		return nil, fmt.Errorf("failed to claim tasks from teamserver: %w", err)
 	}
+	fmt.Printf("Claimed tasks: %+v\n", tasks)
 
+	t := convertTasks(tasks)
+	fmt.Printf("Converted tasks: %+v\n", t)
 	return &ServerMessage{
-		Tasks: convertTasks(tasks),
+		Tasks: t,
 	}, nil
 }
 
@@ -82,9 +85,9 @@ func convertTasks(models []*ent.Task) (tasks []*Task) {
 		}
 
 		tasks = append(tasks, &Task{
-			Id:      int32(task.ID),
+			Id:      int64(task.ID),
 			Content: task.Content,
-		})
+		}) 
 	}
 
 	return tasks

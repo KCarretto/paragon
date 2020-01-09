@@ -31,12 +31,12 @@ message AgentMessage {
 }
 
 message Task {
-    int32 id = 1;
+    int64 id = 1;
     string content = 2;
 }
 
 message TaskResult {
-    int32 id = 1;
+    int64 id = 1;
     string output = 2;
     string error = 3;
     google.protobuf.Timestamp execStartTime = 4; // TODO: [(gogoproto.stdtime) = true];

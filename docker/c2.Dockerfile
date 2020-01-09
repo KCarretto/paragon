@@ -10,8 +10,9 @@ RUN apk add alpine-sdk git \
 # Build
 FROM base as build
 COPY ./cmd/c2 /app/cmd/c2
-COPY ./proto /app/proto
-COPY ./c2 /app/c2
+COPY ./pkg /app/pkg
+COPY ./ent /app/ent
+COPY ./graphql /app/graphql
 RUN go build -tags=gcp -o ./build/c2 ./cmd/c2
 
 # Production
