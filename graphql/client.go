@@ -37,7 +37,7 @@ type Client struct {
 }
 
 // Do executes a GraphQL request and unmarshals the JSON result into the destination struct.
-func (client Client) Do(request Request, dst interface{}) error {
+func (client Client) Do(ctx context.Context, request Request, dst interface{}) error {
 	// Encode request payload
 	payload, err := json.Marshal(request)
 	if err != nil {
@@ -104,9 +104,8 @@ func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskReques
 		Errors []Error `json:"errors"`
 	}
 
-	// TODO: Set context for HTTP request
 	// Execute mutation
-	if err := client.Do(req, &resp); err != nil {
+	if err := client.Do(ctx, req, &resp); err != nil {
 		return nil, err
 	}
 
@@ -117,4 +116,38 @@ func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskReques
 
 	// Return claimed tasks
 	return resp.Data.Tasks, nil
+}
+
+// SubmitTaskResult updates a task with execution output.
+func (client Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTaskResultRequest) error {
+	// Build request
+	req := Request{
+		Operation: "SubmitTaskResult",
+		Query: `
+		mutation SubmitTaskResult($params: SubmitTaskResultRequest!) {
+			submitTaskResult(input: $params) {
+			  id
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"params": vars,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return err
+	}
+
+	// Check for errors
+	if resp.Errors != nil {
+		return fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+
+	return nil
 }
