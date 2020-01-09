@@ -75,6 +75,7 @@ input FailCredentialRequest {
 input CreateJobRequest {
   name: String!
   content: String!
+  sessionID: String
 
   tags: [ID!]
   prev: ID
@@ -121,11 +122,12 @@ input AddCredentialForTargetRequest {
   secret: String!
 }
 
-input ClaimTaskRequest {
+input ClaimTasksRequest {
   machineUUID: String
-  hostname: String
   primaryIP: String
+  hostname: String
   primaryMAC: String
+  sessionID: String
 }
 
 input SubmitTaskResultRequest {
@@ -159,7 +161,7 @@ type Mutation {
   addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
 
   # Task Mutations
-  claimTasks(input: ClaimTaskRequest): [Task!]
+  claimTasks(input: ClaimTasksRequest): [Task!]
   claimTask(id: ID!): Task
   submitTaskResult(input: SubmitTaskResultRequest): Task!
 }

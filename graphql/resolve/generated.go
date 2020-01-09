@@ -2,6 +2,7 @@ package resolve
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
@@ -106,6 +107,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		task := r.EntClient.Task.Create().
 			SetQueueTime(currentTime).
 			SetContent(input.Content).
+			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
 			SetJobID(job.ID).
 			SaveX(ctx)
@@ -205,106 +207,42 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 		Save(ctx)
 	return target, err
 }
-func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTaskRequest) ([]*ent.Task, error) {
-	var preds []predicate.Target
-
-	if input.MachineUUID != nil {
-		exists, err := r.EntClient.Target.Query().
-			Where(target.MachineUUID(*input.MachineUUID)).
-			Exist(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			preds = append(preds, target.MachineUUID(*input.MachineUUID))
-
-		}
-	}
-
-	if input.Hostname != nil {
-		exists, err := r.EntClient.Target.Query().
-			Where(target.Hostname(*input.Hostname)).
-			Exist(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			preds = append(preds, target.Hostname(*input.Hostname))
-
-		}
-	}
-
-	if input.PrimaryIP != nil {
-		exists, err := r.EntClient.Target.Query().
-			Where(target.PrimaryIP(*input.PrimaryIP)).
-			Exist(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			preds = append(preds, target.PrimaryIP(*input.PrimaryIP))
-
-		}
-	}
-
-	if input.PrimaryMac != nil {
-		exists, err := r.EntClient.Target.Query().
-			Where(target.PrimaryMAC(*input.PrimaryMac)).
-			Exist(ctx)
-		if err != nil {
-			return nil, err
-		}
-		if exists {
-			preds = append(preds, target.PrimaryMAC(*input.PrimaryMac))
-		}
-	}
-
-	targetExists := false
-	var err error
-
-	if preds != nil {
-		// see if target already exists
-		targetExists, err = r.EntClient.Target.Query().
-			Where(target.And(
-				preds...,
-			)).
-			Exist(ctx)
-
-		if err != nil {
-			return nil, err
-		}
-	}
-
+func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error) {
 	var targetEnt *ent.Target
-
-	// if new target then create it
-	if !targetExists && input.PrimaryIP != nil {
-		targetEnt, err = r.EntClient.Target.Create().
-			SetName(*input.PrimaryIP).
-			SetPrimaryIP(*input.PrimaryIP).
-			SetNillableHostname(input.Hostname).
-			SetNillableMachineUUID(input.MachineUUID).
-			SetNillablePrimaryMAC(input.PrimaryMac).
-			Save(ctx)
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	var err error
+	if input.MachineUUID != nil {
 		targetEnt, err = r.EntClient.Target.Query().
-			Where(target.And(
-				preds...,
-			)).
+			Where(target.MachineUUID(*input.MachineUUID)).
 			Only(ctx)
 		if err != nil {
 			return nil, err
 		}
+	} else if input.PrimaryIP != nil {
+		targetEnt, err = r.EntClient.Target.Query().
+			Where(target.PrimaryIP(*input.PrimaryIP)).
+			Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		return nil, fmt.Errorf("neither machineUUID nor primaryIP  was given")
+	}
+	var sessionID string
+	if input.SessionID != nil {
+		sessionID = *input.SessionID
 	}
 
-	// if we have new info, update
+	primaryIP := targetEnt.PrimaryIP
+	if input.PrimaryIP != nil {
+		primaryIP = *input.PrimaryIP
+	}
+
+	// set lastSeen on target
 	currentTime := time.Now()
 	targetEnt, err = targetEnt.Update().
-		SetNillableMachineUUID(input.MachineUUID).
+		SetPrimaryIP(primaryIP).
 		SetNillableHostname(input.Hostname).
+		SetNillableMachineUUID(input.MachineUUID).
 		SetNillablePrimaryMAC(input.PrimaryMac).
 		SetLastSeen(currentTime).
 		Save(ctx)
@@ -315,7 +253,13 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	// get all tasks for target
 	tasks, err := targetEnt.QueryTasks().
 		Where(
-			task.ClaimTimeIsNil(),
+			task.And(
+				task.ClaimTimeIsNil(),
+				task.Or(
+					task.SessionIDIsNil(),
+					task.SessionID(sessionID),
+				),
+			),
 		).
 		All(ctx)
 

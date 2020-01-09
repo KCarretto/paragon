@@ -72,7 +72,7 @@ type ComplexityRoot struct {
 		ApplyTagToTarget       func(childComplexity int, input *models.ApplyTagRequest) int
 		ApplyTagToTask         func(childComplexity int, input *models.ApplyTagRequest) int
 		ClaimTask              func(childComplexity int, id int) int
-		ClaimTasks             func(childComplexity int, input *models.ClaimTaskRequest) int
+		ClaimTasks             func(childComplexity int, input *models.ClaimTasksRequest) int
 		CreateJob              func(childComplexity int, input *models.CreateJobRequest) int
 		CreateTag              func(childComplexity int, input *models.CreateTagRequest) int
 		CreateTarget           func(childComplexity int, input *models.CreateTargetRequest) int
@@ -154,7 +154,7 @@ type MutationResolver interface {
 	SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error)
 	DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error)
 	AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error)
-	ClaimTasks(ctx context.Context, input *models.ClaimTaskRequest) ([]*ent.Task, error)
+	ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error)
 	ClaimTask(ctx context.Context, id int) (*ent.Task, error)
 	SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error)
 }
@@ -353,7 +353,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Mutation.ClaimTasks(childComplexity, args["input"].(*models.ClaimTaskRequest)), true
+		return e.complexity.Mutation.ClaimTasks(childComplexity, args["input"].(*models.ClaimTasksRequest)), true
 
 	case "Mutation.createJob":
 		if e.complexity.Mutation.CreateJob == nil {
@@ -891,6 +891,7 @@ input FailCredentialRequest {
 input CreateJobRequest {
   name: String!
   content: String!
+  sessionID: String
 
   tags: [ID!]
   prev: ID
@@ -937,11 +938,12 @@ input AddCredentialForTargetRequest {
   secret: String!
 }
 
-input ClaimTaskRequest {
+input ClaimTasksRequest {
   machineUUID: String
-  hostname: String
   primaryIP: String
+  hostname: String
   primaryMAC: String
+  sessionID: String
 }
 
 input SubmitTaskResultRequest {
@@ -975,7 +977,7 @@ type Mutation {
   addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
 
   # Task Mutations
-  claimTasks(input: ClaimTaskRequest): [Task!]
+  claimTasks(input: ClaimTasksRequest): [Task!]
   claimTask(id: ID!): Task
   submitTaskResult(input: SubmitTaskResultRequest): Task!
 }
@@ -1075,9 +1077,9 @@ func (ec *executionContext) field_Mutation_claimTask_args(ctx context.Context, r
 func (ec *executionContext) field_Mutation_claimTasks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
-	var arg0 *models.ClaimTaskRequest
+	var arg0 *models.ClaimTasksRequest
 	if tmp, ok := rawArgs["input"]; ok {
-		arg0, err = ec.unmarshalOClaimTaskRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTaskRequest(ctx, tmp)
+		arg0, err = ec.unmarshalOClaimTasksRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTasksRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -2352,7 +2354,7 @@ func (ec *executionContext) _Mutation_claimTasks(ctx context.Context, field grap
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Mutation().ClaimTasks(rctx, args["input"].(*models.ClaimTaskRequest))
+		return ec.resolvers.Mutation().ClaimTasks(rctx, args["input"].(*models.ClaimTasksRequest))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4991,8 +4993,8 @@ func (ec *executionContext) unmarshalInputApplyTagRequest(ctx context.Context, o
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputClaimTaskRequest(ctx context.Context, obj interface{}) (models.ClaimTaskRequest, error) {
-	var it models.ClaimTaskRequest
+func (ec *executionContext) unmarshalInputClaimTasksRequest(ctx context.Context, obj interface{}) (models.ClaimTasksRequest, error) {
+	var it models.ClaimTasksRequest
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -5003,21 +5005,27 @@ func (ec *executionContext) unmarshalInputClaimTaskRequest(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
-		case "hostname":
-			var err error
-			it.Hostname, err = ec.unmarshalOString2ᚖstring(ctx, v)
-			if err != nil {
-				return it, err
-			}
 		case "primaryIP":
 			var err error
 			it.PrimaryIP, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
+		case "hostname":
+			var err error
+			it.Hostname, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "primaryMAC":
 			var err error
 			it.PrimaryMac, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "sessionID":
+			var err error
+			it.SessionID, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5042,6 +5050,12 @@ func (ec *executionContext) unmarshalInputCreateJobRequest(ctx context.Context, 
 		case "content":
 			var err error
 			it.Content, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "sessionID":
+			var err error
+			it.SessionID, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -6430,15 +6444,15 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return ec.marshalOBoolean2bool(ctx, sel, *v)
 }
 
-func (ec *executionContext) unmarshalOClaimTaskRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTaskRequest(ctx context.Context, v interface{}) (models.ClaimTaskRequest, error) {
-	return ec.unmarshalInputClaimTaskRequest(ctx, v)
+func (ec *executionContext) unmarshalOClaimTasksRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTasksRequest(ctx context.Context, v interface{}) (models.ClaimTasksRequest, error) {
+	return ec.unmarshalInputClaimTasksRequest(ctx, v)
 }
 
-func (ec *executionContext) unmarshalOClaimTaskRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTaskRequest(ctx context.Context, v interface{}) (*models.ClaimTaskRequest, error) {
+func (ec *executionContext) unmarshalOClaimTasksRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTasksRequest(ctx context.Context, v interface{}) (*models.ClaimTasksRequest, error) {
 	if v == nil {
 		return nil, nil
 	}
-	res, err := ec.unmarshalOClaimTaskRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTaskRequest(ctx, v)
+	res, err := ec.unmarshalOClaimTasksRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐClaimTasksRequest(ctx, v)
 	return &res, err
 }
 
