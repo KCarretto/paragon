@@ -54,8 +54,8 @@ func (srv *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	http.ServeContent(w, r, "index.html", modtime, f)
 }
 
-// Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
-func (srv *Server) Run() {
+// NewRouter initializes the handling mux
+func NewRouter(srv *Server) *http.ServeMux {
 	router := http.NewServeMux()
 
 	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient}}))
@@ -65,6 +65,13 @@ func (srv *Server) Run() {
 	router.HandleFunc("/status", srv.handleStatus)
 	router.Handle("/app/", http.StripPrefix("/app", http.FileServer(www.App)))
 	router.HandleFunc("/", srv.handleIndex)
+
+	return router
+}
+
+// Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
+func (srv *Server) Run() {
+	router := NewRouter(srv)
 
 	srv.Log.Info("Listening on 0.0.0.0:80")
 	if err := http.ListenAndServe("0.0.0.0:80", middleware.Chain(router, middleware.WithPanicHandling)); err != nil {
