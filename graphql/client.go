@@ -93,7 +93,7 @@ func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTasksReque
 	req := Request{
 		Operation: "ClaimTasks",
 		Query: `
-		mutation ClaimTasks($params: ClaimTaskRequest!) {
+		mutation ClaimTasks($params: ClaimTasksRequest!) {
 			claimTasks(input: $params) {
 			  id
 			  content
