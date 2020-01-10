@@ -9,11 +9,11 @@ const XTargetCard = ({ id, name, primaryIP, lastSeen, tags, tasks }) => (
         <Card.Content>
             <Card.Header href={'/targets/' + id}>{name} </Card.Header>
             {
-                moment.unix(lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
+                (!lastSeen || moment(lastSeen).isBefore(moment().subtract(5, 'minutes'))) ?
                     <Label corner='right' size='large' icon='times circle' color='red' />
                     : <Label corner='right' size='large' icon='check circle' color='green' />
             }
-            <Card.Meta>{moment.unix(lastSeen).fromNow()}</Card.Meta>
+            <Card.Meta>{lastSeen ? moment(lastSeen).fromNow() : 'Never'}</Card.Meta>
             <XTaskSummary tasks={tasks} />
         </Card.Content>
         <Card.Content extra>

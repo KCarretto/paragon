@@ -233,25 +233,26 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 		return nil, fmt.Errorf("neither valid machineUUID nor primaryIP was given")
 	}
 
-	primaryIP := targetEnt.PrimaryIP
+	// Prepare Target mutation
+	currentTime := time.Now()
+	targetMutation := targetEnt.Update().
+		SetNillableHostname(input.Hostname).
+		SetNillablePrimaryMAC(input.PrimaryMac).
+		SetLastSeen(currentTime)
+
+	// Update primary IP if available
 	if input.PrimaryIP != nil && *input.PrimaryIP != "" {
-		primaryIP = *input.PrimaryIP
+		// TODO: Validate IP
+		targetMutation.SetPrimaryIP(*input.PrimaryIP)
 	}
 
-	machineUUID := targetEnt.MachineUUID
+	// Update MachineUUID if available
 	if input.MachineUUID != nil && *input.MachineUUID != "" {
-		machineUUID = *input.MachineUUID
+		targetMutation.SetMachineUUID(*input.MachineUUID)
 	}
 
 	// set lastSeen on target
-	currentTime := time.Now()
-	targetEnt, err = targetEnt.Update().
-		SetPrimaryIP(primaryIP).
-		SetMachineUUID(machineUUID).
-		SetNillableHostname(input.Hostname).
-		SetNillablePrimaryMAC(input.PrimaryMac).
-		SetLastSeen(currentTime).
-		Save(ctx)
+	targetEnt, err = targetMutation.Save(ctx)
 	if err != nil {
 		return nil, err
 	}

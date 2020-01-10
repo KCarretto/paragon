@@ -63,14 +63,14 @@ const XTargetView = () => {
                 <Card.Content>
                     <Card.Header>{data.target.name}</Card.Header>
                     {
-                        moment.unix(data.target.lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
+                        moment(data.target.lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
                             <Label corner='right' size='large' icon='times circle' color='red' />
                             : <Label corner='right' size='large' icon='check circle' color='green' />
                     }
                     <Card.Meta>
                         <a>
                             <i aria-hidden="true" className="clock icon"></i>
-                            Last Seen: {data.target.lastSeen ? moment.unix(data.target.lastSeen).fromNow() : 'Never'}<br />
+                            Last Seen: {data.target.lastSeen ? moment(data.target.lastSeen).fromNow() : 'Never'}<br />
                         </a>
                         {data.target.primaryIP ?
                             <a>

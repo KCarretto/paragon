@@ -21,7 +21,7 @@ const XTaskSummary = ({ tasks }) => (
                         {XTaskStatus.getStatus(task).text}
                     </Feed.Extra>
                     <Feed.Meta>
-                        Last Updated: {moment.unix(XTaskStatus.getTimestamp(task)).fromNow()}
+                        Last Updated: {moment(XTaskStatus.getTimestamp(task)).fromNow()}
                     </Feed.Meta>
                     <Divider />
                 </Feed.Content>

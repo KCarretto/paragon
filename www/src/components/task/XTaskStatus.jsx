@@ -31,9 +31,9 @@ XTaskStatus.getStatus = ({ queueTime, claimTime, execStartTime, execStopTime, er
     } else if (execStopTime) {
         return XTaskStatus.COMPLETED;
     }
-    else if (!claimTime && moment.unix(queueTime).isBefore(moment().subtract(5, 'minutes'))) {
+    else if (!claimTime && moment(queueTime).isBefore(moment().subtract(5, 'minutes'))) {
         return XTaskStatus.STALE;
-    } else if (claimTime && moment.unix(claimTime).isBefore(moment().subtract(5, 'minutes'))) {
+    } else if (claimTime && moment(claimTime).isBefore(moment().subtract(5, 'minutes'))) {
         return XTaskStatus.TIMED_OUT;
     } else if (execStartTime) {
         return XTaskStatus.IN_PROGRESS;
@@ -55,18 +55,3 @@ XTaskStatus.getTimestamp = ({ queueTime, claimTime, execStartTime, execStopTime,
 }
 
 export default XTaskStatus;
-
-// ({ queueTime, claimTime, execStartTime, execStopTime, error }) => {
-//     if (error) {
-//         return <Icon fitted name='times circle' color='red' size='big' />;
-//     } else if (execStopTime) {
-//         return <Icon fitted name='check circle' color='green' size='big' />;
-//     }
-//     else if (!claimTime && moment.unix(queueTime).isBefore(moment().subtract(5, 'minutes'))) {
-//         return <Icon fitted name='warning circle' color='yellow' size='big' />;
-//     } else if (claimTime && moment.unix(claimTime).isBefore(moment().subtract(5, 'minutes'))) {
-//         return <Icon fitted name='warning circle' color='yellow' size='big' />;
-//     }
-
-//     return <Loader inline='centered' active size='small' />;
-// }
