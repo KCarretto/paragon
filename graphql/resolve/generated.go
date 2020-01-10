@@ -210,14 +210,14 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error) {
 	var targetEnt *ent.Target
 	var err error
-	if input.MachineUUID != nil {
+	if input.MachineUUID != nil && *input.MachineUUID != "" {
 		targetEnt, err = r.EntClient.Target.Query().
 			Where(target.MachineUUID(*input.MachineUUID)).
 			Only(ctx)
 		if err != nil {
 			return nil, err
 		}
-	} else if input.PrimaryIP != nil {
+	} else if input.PrimaryIP != nil && *input.PrimaryIP != "" {
 		targetEnt, err = r.EntClient.Target.Query().
 			Where(target.PrimaryIP(*input.PrimaryIP)).
 			Only(ctx)
