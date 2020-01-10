@@ -210,39 +210,45 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error) {
 	var targetEnt *ent.Target
 	var err error
+
+	// check for valid machineuuid
 	if input.MachineUUID != nil && *input.MachineUUID != "" {
 		targetEnt, err = r.EntClient.Target.Query().
 			Where(target.MachineUUID(*input.MachineUUID)).
 			Only(ctx)
-		if err != nil {
-			return nil, err
-		}
-	} else if input.PrimaryIP != nil && *input.PrimaryIP != "" {
+	}
+
+	// chack for valid primaryIP (if we didnt find a target yet)
+	if targetEnt == nil && input.PrimaryIP != nil && *input.PrimaryIP != "" {
 		targetEnt, err = r.EntClient.Target.Query().
 			Where(target.PrimaryIP(*input.PrimaryIP)).
 			Only(ctx)
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, fmt.Errorf("neither machineUUID nor primaryIP  was given")
 	}
-	var sessionID string
-	if input.SessionID != nil {
-		sessionID = *input.SessionID
+
+	// if still no target, fail
+	if targetEnt == nil {
+		return nil, fmt.Errorf("neither valid machineUUID nor primaryIP was given")
 	}
 
 	primaryIP := targetEnt.PrimaryIP
-	if input.PrimaryIP != nil {
+	if input.PrimaryIP != nil && *input.PrimaryIP != "" {
 		primaryIP = *input.PrimaryIP
+	}
+
+	machineUUID := targetEnt.MachineUUID
+	if input.MachineUUID != nil && *input.MachineUUID != "" {
+		machineUUID = *input.MachineUUID
 	}
 
 	// set lastSeen on target
 	currentTime := time.Now()
 	targetEnt, err = targetEnt.Update().
 		SetPrimaryIP(primaryIP).
+		SetMachineUUID(machineUUID).
 		SetNillableHostname(input.Hostname).
-		SetNillableMachineUUID(input.MachineUUID).
 		SetNillablePrimaryMAC(input.PrimaryMac).
 		SetLastSeen(currentTime).
 		Save(ctx)
@@ -250,16 +256,10 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 		return nil, err
 	}
 
-	// get all tasks for target
+	// get all tasks for target not claimed
 	tasks, err := targetEnt.QueryTasks().
 		Where(
-			task.And(
-				task.ClaimTimeIsNil(),
-				task.Or(
-					task.SessionIDIsNil(),
-					task.SessionID(sessionID),
-				),
-			),
+			task.ClaimTimeIsNil(),
 		).
 		All(ctx)
 
@@ -267,16 +267,24 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 		return nil, err
 	}
 
+	var sessionID string
+	if input.SessionID != nil && *input.SessionID != "" {
+		sessionID = *input.SessionID
+	}
+
 	// set claimtime on all tasks
 	var updatedTasks []*ent.Task
 	for _, t := range tasks {
-		t, err = t.Update().
-			SetClaimTime(currentTime).
-			Save(ctx)
-		if err != nil {
-			return nil, err
+		// filter by session if necessary
+		if t.SessionID == "" || t.SessionID == sessionID {
+			t, err = t.Update().
+				SetClaimTime(currentTime).
+				Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+			updatedTasks = append(updatedTasks, t)
 		}
-		updatedTasks = append(updatedTasks, t)
 	}
 	return updatedTasks, nil
 }
