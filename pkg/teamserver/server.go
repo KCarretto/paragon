@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+	"os"
 
 	"go.uber.org/zap"
 
@@ -66,8 +67,20 @@ func (srv *Server) Run() {
 	router.Handle("/app/", http.StripPrefix("/app", http.FileServer(www.App)))
 	router.HandleFunc("/", srv.handleIndex)
 
-	srv.Log.Info("Listening on 0.0.0.0:80")
-	if err := http.ListenAndServe("0.0.0.0:80", middleware.Chain(router, middleware.WithPanicHandling)); err != nil {
+	// C2 Server Address
+	httpAddr := "127.0.0.1:8080"
+	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
+		httpAddr = addr
+	}
+
+	srv.Log.Info("Teamserver Initialized", zap.String("listen_on", httpAddr))
+	if err := http.ListenAndServe(
+		httpAddr,
+		middleware.Chain(
+			router,
+			middleware.WithPanicHandling,
+			middleware.WithLogging(srv.Log.Named("info")),
+		)); err != nil {
 		panic(err)
 	}
 }

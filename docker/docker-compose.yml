@@ -28,5 +28,7 @@ services:
       context: ../
       dockerfile: "./docker/teamserver.Dockerfile"
       target: production
+    environment:
+      HTTP_ADDR: "0.0.0.0:80"
     ports:
       - "127.0.0.1:80:80"
