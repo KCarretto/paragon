@@ -23,7 +23,7 @@ func WithLogging(log *zap.Logger) func(http.Handler) http.HandlerFunc {
 	return func(f http.Handler) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-
+			// time.Sleep(time.Second * 3)
 			wrapped := &observer{w, http.StatusOK}
 			f.ServeHTTP(wrapped, r)
 
