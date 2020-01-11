@@ -77,6 +77,7 @@ input CreateJobRequest {
   content: String!
   sessionID: String
 
+  targets: [ID!]
   tags: [ID!]
   prev: ID
 }
