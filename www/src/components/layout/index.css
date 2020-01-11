@@ -1,9 +1,12 @@
 .XLayout {
     min-height: 100vh;
 }
+
 .XSidebar {
     max-width: 160px;
+    height: 100vh;
 }
+
 .XContent {
     width: calc(100% - 150px);
     margin-right: 100px;
@@ -11,4 +14,16 @@
 
 .XCircleIcon {
     box-shadow: none!important;
+}
+
+/*
+ * Prevent sidebar menu from scrolling. See #109 (https://github.com/KCarretto/paragon/issues/109)
+ */
+.pushable:not(body) {
+    transform: none;
+}
+.pushable:not(body) > .ui.sidebar,
+.pushable:not(body) > .fixed,
+.pushable:not(body) > .pusher:after {
+    position: fixed;
 }
