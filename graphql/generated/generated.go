@@ -893,6 +893,7 @@ input CreateJobRequest {
   content: String!
   sessionID: String
 
+  targets: [ID!]
   tags: [ID!]
   prev: ID
 }
@@ -5056,6 +5057,12 @@ func (ec *executionContext) unmarshalInputCreateJobRequest(ctx context.Context, 
 		case "sessionID":
 			var err error
 			it.SessionID, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "targets":
+			var err error
+			it.Targets, err = ec.unmarshalOID2ᚕintᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}

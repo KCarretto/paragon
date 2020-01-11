@@ -29,6 +29,7 @@ type CreateJobRequest struct {
 	Name      string  `json:"name"`
 	Content   string  `json:"content"`
 	SessionID *string `json:"sessionID"`
+	Targets   []int   `json:"targets"`
 	Tags      []int   `json:"tags"`
 	Prev      *int    `json:"prev"`
 }

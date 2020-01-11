@@ -6,8 +6,6 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
-	"github.com/kcarretto/paragon/ent/predicate"
-	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 	"github.com/kcarretto/paragon/graphql/generated"
@@ -83,16 +81,16 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	if input.Prev != nil {
 		jobCreator.SetPrevID(*input.Prev)
 	}
-	var tagPredicates []predicate.Target
-	for _, tagID := range input.Tags {
-		tagPredicates = append(tagPredicates, target.HasTagsWith(tag.ID(tagID)))
+
+	var targets []*ent.Target
+	for _, t := range input.Targets {
+		tar, err := r.EntClient.Target.Get(ctx, t)
+		if err != nil {
+			return nil, err
+		}
+		targets = append(targets, tar)
 	}
-	targets, err := r.EntClient.Target.Query().
-		Where(target.And(tagPredicates...)).
-		All(ctx)
-	if err != nil {
-		return nil, err
-	}
+
 	// just so all tasks and job are the same time.
 	currentTime := time.Now()
 
@@ -103,17 +101,36 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		return nil, err
 	}
 
-	for _, target := range targets {
-		task := r.EntClient.Task.Create().
+	if len(targets) == 0 {
+		_, err = r.EntClient.Task.Create().
 			SetQueueTime(currentTime).
 			SetContent(input.Content).
 			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
 			SetJobID(job.ID).
-			SaveX(ctx)
-		target.Update().
-			AddTaskIDs(task.ID).
-			SaveX(ctx)
+			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		for _, target := range targets {
+			task, err := r.EntClient.Task.Create().
+				SetQueueTime(currentTime).
+				SetContent(input.Content).
+				SetNillableSessionID(input.SessionID).
+				AddTagIDs(input.Tags...).
+				SetJobID(job.ID).
+				Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+			_, err = target.Update().
+				AddTaskIDs(task.ID).
+				Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	return job, nil
