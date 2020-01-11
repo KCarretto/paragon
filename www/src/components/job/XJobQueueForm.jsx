@@ -60,6 +60,7 @@ const XJobQueueForm = () => {
                 labelPosition='right'
                 placeholder='Enter script content'
                 name='content'
+                rows={15}
                 value={params.content}
                 onChange={handleChange}
             />
