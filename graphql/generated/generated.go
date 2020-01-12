@@ -6,8 +6,10 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -55,6 +57,16 @@ type ComplexityRoot struct {
 		Secret    func(childComplexity int) int
 	}
 
+	CredentialConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	CredentialEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
 	Job struct {
 		Content      func(childComplexity int) int
 		CreationTime func(childComplexity int) int
@@ -62,8 +74,18 @@ type ComplexityRoot struct {
 		Name         func(childComplexity int) int
 		Next         func(childComplexity int) int
 		Prev         func(childComplexity int) int
-		Tags         func(childComplexity int) int
-		Tasks        func(childComplexity int) int
+		Tags         func(childComplexity int, input *models.ConnectionInput) int
+		Tasks        func(childComplexity int, input *models.ConnectionInput) int
+	}
+
+	JobConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	JobEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Mutation struct {
@@ -85,29 +107,47 @@ type ComplexityRoot struct {
 		SubmitTaskResult       func(childComplexity int, input *models.SubmitTaskResultRequest) int
 	}
 
+	PageInfo struct {
+		EndCursor       func(childComplexity int) int
+		HasNextPage     func(childComplexity int) int
+		HasPreviousPage func(childComplexity int) int
+		StartCursor     func(childComplexity int) int
+	}
+
 	Query struct {
 		Credential  func(childComplexity int, id int) int
-		Credentials func(childComplexity int) int
+		Credentials func(childComplexity int, input *models.ConnectionInput) int
 		Job         func(childComplexity int, id int) int
-		Jobs        func(childComplexity int) int
+		Jobs        func(childComplexity int, input *models.ConnectionInput) int
+		Node        func(childComplexity int, id int) int
 		Tag         func(childComplexity int, id int) int
-		Tags        func(childComplexity int) int
+		Tags        func(childComplexity int, input *models.ConnectionInput) int
 		Target      func(childComplexity int, id int) int
-		Targets     func(childComplexity int) int
+		Targets     func(childComplexity int, input *models.ConnectionInput) int
 		Task        func(childComplexity int, id int) int
-		Tasks       func(childComplexity int) int
+		Tasks       func(childComplexity int, input *models.ConnectionInput) int
 	}
 
 	Tag struct {
 		ID      func(childComplexity int) int
-		Jobs    func(childComplexity int) int
+		Jobs    func(childComplexity int, input *models.ConnectionInput) int
 		Name    func(childComplexity int) int
-		Targets func(childComplexity int) int
-		Tasks   func(childComplexity int) int
+		Targets func(childComplexity int, input *models.ConnectionInput) int
+		Tasks   func(childComplexity int, input *models.ConnectionInput) int
+	}
+
+	TagConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	TagEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Target struct {
-		Credentials func(childComplexity int) int
+		Credentials func(childComplexity int, input *models.ConnectionInput) int
 		Hostname    func(childComplexity int) int
 		ID          func(childComplexity int) int
 		LastSeen    func(childComplexity int) int
@@ -116,8 +156,18 @@ type ComplexityRoot struct {
 		PrimaryIP   func(childComplexity int) int
 		PrimaryMAC  func(childComplexity int) int
 		PublicIP    func(childComplexity int) int
-		Tags        func(childComplexity int) int
-		Tasks       func(childComplexity int) int
+		Tags        func(childComplexity int, input *models.ConnectionInput) int
+		Tasks       func(childComplexity int, input *models.ConnectionInput) int
+	}
+
+	TargetConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	TargetEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 
 	Task struct {
@@ -131,12 +181,23 @@ type ComplexityRoot struct {
 		Output        func(childComplexity int) int
 		QueueTime     func(childComplexity int) int
 		SessionID     func(childComplexity int) int
+		Target        func(childComplexity int) int
+	}
+
+	TaskConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	TaskEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
 	}
 }
 
 type JobResolver interface {
-	Tasks(ctx context.Context, obj *ent.Job) ([]*ent.Task, error)
-	Tags(ctx context.Context, obj *ent.Job) ([]*ent.Tag, error)
+	Tasks(ctx context.Context, obj *ent.Job, input *models.ConnectionInput) (*models.TaskConnection, error)
+	Tags(ctx context.Context, obj *ent.Job, input *models.ConnectionInput) (*models.TagConnection, error)
 	Next(ctx context.Context, obj *ent.Job) (*ent.Job, error)
 	Prev(ctx context.Context, obj *ent.Job) (*ent.Job, error)
 }
@@ -160,28 +221,30 @@ type MutationResolver interface {
 }
 type QueryResolver interface {
 	Credential(ctx context.Context, id int) (*ent.Credential, error)
-	Credentials(ctx context.Context) ([]*ent.Credential, error)
+	Credentials(ctx context.Context, input *models.ConnectionInput) (*models.CredentialConnection, error)
 	Job(ctx context.Context, id int) (*ent.Job, error)
-	Jobs(ctx context.Context) ([]*ent.Job, error)
+	Jobs(ctx context.Context, input *models.ConnectionInput) (*models.JobConnection, error)
 	Tag(ctx context.Context, id int) (*ent.Tag, error)
-	Tags(ctx context.Context) ([]*ent.Tag, error)
+	Tags(ctx context.Context, input *models.ConnectionInput) (*models.TagConnection, error)
 	Target(ctx context.Context, id int) (*ent.Target, error)
-	Targets(ctx context.Context) ([]*ent.Target, error)
+	Targets(ctx context.Context, input *models.ConnectionInput) (*models.TargetConnection, error)
 	Task(ctx context.Context, id int) (*ent.Task, error)
-	Tasks(ctx context.Context) ([]*ent.Task, error)
+	Tasks(ctx context.Context, input *models.ConnectionInput) (*models.TaskConnection, error)
+	Node(ctx context.Context, id int) (*ent.Node, error)
 }
 type TagResolver interface {
-	Tasks(ctx context.Context, obj *ent.Tag) ([]*ent.Task, error)
-	Targets(ctx context.Context, obj *ent.Tag) ([]*ent.Target, error)
-	Jobs(ctx context.Context, obj *ent.Tag) ([]*ent.Job, error)
+	Tasks(ctx context.Context, obj *ent.Tag, input *models.ConnectionInput) (*models.TaskConnection, error)
+	Targets(ctx context.Context, obj *ent.Tag, input *models.ConnectionInput) (*models.TargetConnection, error)
+	Jobs(ctx context.Context, obj *ent.Tag, input *models.ConnectionInput) (*models.JobConnection, error)
 }
 type TargetResolver interface {
-	Tasks(ctx context.Context, obj *ent.Target) ([]*ent.Task, error)
-	Tags(ctx context.Context, obj *ent.Target) ([]*ent.Tag, error)
-	Credentials(ctx context.Context, obj *ent.Target) ([]*ent.Credential, error)
+	Tasks(ctx context.Context, obj *ent.Target, input *models.ConnectionInput) (*models.TaskConnection, error)
+	Tags(ctx context.Context, obj *ent.Target, input *models.ConnectionInput) (*models.TagConnection, error)
+	Credentials(ctx context.Context, obj *ent.Target, input *models.ConnectionInput) (*models.CredentialConnection, error)
 }
 type TaskResolver interface {
 	Job(ctx context.Context, obj *ent.Task) (*ent.Job, error)
+	Target(ctx context.Context, obj *ent.Task) (*ent.Target, error)
 }
 
 type executableSchema struct {
@@ -226,6 +289,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Credential.Secret(childComplexity), true
+
+	case "CredentialConnection.edges":
+		if e.complexity.CredentialConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.CredentialConnection.Edges(childComplexity), true
+
+	case "CredentialConnection.pageInfo":
+		if e.complexity.CredentialConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.CredentialConnection.PageInfo(childComplexity), true
+
+	case "CredentialEdge.cursor":
+		if e.complexity.CredentialEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.CredentialEdge.Cursor(childComplexity), true
+
+	case "CredentialEdge.node":
+		if e.complexity.CredentialEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.CredentialEdge.Node(childComplexity), true
 
 	case "Job.content":
 		if e.complexity.Job.Content == nil {
@@ -274,14 +365,52 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Job.Tags(childComplexity), true
+		args, err := ec.field_Job_tags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Job.Tags(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Job.tasks":
 		if e.complexity.Job.Tasks == nil {
 			break
 		}
 
-		return e.complexity.Job.Tasks(childComplexity), true
+		args, err := ec.field_Job_tasks_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Job.Tasks(childComplexity, args["input"].(*models.ConnectionInput)), true
+
+	case "JobConnection.edges":
+		if e.complexity.JobConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.JobConnection.Edges(childComplexity), true
+
+	case "JobConnection.pageInfo":
+		if e.complexity.JobConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.JobConnection.PageInfo(childComplexity), true
+
+	case "JobEdge.cursor":
+		if e.complexity.JobEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.JobEdge.Cursor(childComplexity), true
+
+	case "JobEdge.node":
+		if e.complexity.JobEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.JobEdge.Node(childComplexity), true
 
 	case "Mutation.addCredentialForTarget":
 		if e.complexity.Mutation.AddCredentialForTarget == nil {
@@ -475,6 +604,34 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SubmitTaskResult(childComplexity, args["input"].(*models.SubmitTaskResultRequest)), true
 
+	case "PageInfo.endCursor":
+		if e.complexity.PageInfo.EndCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.EndCursor(childComplexity), true
+
+	case "PageInfo.hasNextPage":
+		if e.complexity.PageInfo.HasNextPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasNextPage(childComplexity), true
+
+	case "PageInfo.hasPreviousPage":
+		if e.complexity.PageInfo.HasPreviousPage == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.HasPreviousPage(childComplexity), true
+
+	case "PageInfo.startCursor":
+		if e.complexity.PageInfo.StartCursor == nil {
+			break
+		}
+
+		return e.complexity.PageInfo.StartCursor(childComplexity), true
+
 	case "Query.credential":
 		if e.complexity.Query.Credential == nil {
 			break
@@ -492,7 +649,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Credentials(childComplexity), true
+		args, err := ec.field_Query_credentials_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Credentials(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Query.job":
 		if e.complexity.Query.Job == nil {
@@ -511,7 +673,24 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Jobs(childComplexity), true
+		args, err := ec.field_Query_jobs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Jobs(childComplexity, args["input"].(*models.ConnectionInput)), true
+
+	case "Query.node":
+		if e.complexity.Query.Node == nil {
+			break
+		}
+
+		args, err := ec.field_Query_node_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Node(childComplexity, args["id"].(int)), true
 
 	case "Query.tag":
 		if e.complexity.Query.Tag == nil {
@@ -530,7 +709,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Tags(childComplexity), true
+		args, err := ec.field_Query_tags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Tags(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Query.target":
 		if e.complexity.Query.Target == nil {
@@ -549,7 +733,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Targets(childComplexity), true
+		args, err := ec.field_Query_targets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Targets(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Query.task":
 		if e.complexity.Query.Task == nil {
@@ -568,7 +757,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Query.Tasks(childComplexity), true
+		args, err := ec.field_Query_tasks_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Tasks(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Tag.id":
 		if e.complexity.Tag.ID == nil {
@@ -582,7 +776,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Tag.Jobs(childComplexity), true
+		args, err := ec.field_Tag_jobs_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Tag.Jobs(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Tag.name":
 		if e.complexity.Tag.Name == nil {
@@ -596,21 +795,64 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Tag.Targets(childComplexity), true
+		args, err := ec.field_Tag_targets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Tag.Targets(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Tag.tasks":
 		if e.complexity.Tag.Tasks == nil {
 			break
 		}
 
-		return e.complexity.Tag.Tasks(childComplexity), true
+		args, err := ec.field_Tag_tasks_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Tag.Tasks(childComplexity, args["input"].(*models.ConnectionInput)), true
+
+	case "TagConnection.edges":
+		if e.complexity.TagConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TagConnection.Edges(childComplexity), true
+
+	case "TagConnection.pageInfo":
+		if e.complexity.TagConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.TagConnection.PageInfo(childComplexity), true
+
+	case "TagEdge.cursor":
+		if e.complexity.TagEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.TagEdge.Cursor(childComplexity), true
+
+	case "TagEdge.node":
+		if e.complexity.TagEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.TagEdge.Node(childComplexity), true
 
 	case "Target.credentials":
 		if e.complexity.Target.Credentials == nil {
 			break
 		}
 
-		return e.complexity.Target.Credentials(childComplexity), true
+		args, err := ec.field_Target_credentials_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Target.Credentials(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Target.hostname":
 		if e.complexity.Target.Hostname == nil {
@@ -673,14 +915,52 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Target.Tags(childComplexity), true
+		args, err := ec.field_Target_tags_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Target.Tags(childComplexity, args["input"].(*models.ConnectionInput)), true
 
 	case "Target.tasks":
 		if e.complexity.Target.Tasks == nil {
 			break
 		}
 
-		return e.complexity.Target.Tasks(childComplexity), true
+		args, err := ec.field_Target_tasks_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Target.Tasks(childComplexity, args["input"].(*models.ConnectionInput)), true
+
+	case "TargetConnection.edges":
+		if e.complexity.TargetConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TargetConnection.Edges(childComplexity), true
+
+	case "TargetConnection.pageInfo":
+		if e.complexity.TargetConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.TargetConnection.PageInfo(childComplexity), true
+
+	case "TargetEdge.cursor":
+		if e.complexity.TargetEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.TargetEdge.Cursor(childComplexity), true
+
+	case "TargetEdge.node":
+		if e.complexity.TargetEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.TargetEdge.Node(childComplexity), true
 
 	case "Task.claimTime":
 		if e.complexity.Task.ClaimTime == nil {
@@ -751,6 +1031,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Task.SessionID(childComplexity), true
+
+	case "Task.target":
+		if e.complexity.Task.Target == nil {
+			break
+		}
+
+		return e.complexity.Task.Target(childComplexity), true
+
+	case "TaskConnection.edges":
+		if e.complexity.TaskConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.TaskConnection.Edges(childComplexity), true
+
+	case "TaskConnection.pageInfo":
+		if e.complexity.TaskConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.TaskConnection.PageInfo(childComplexity), true
+
+	case "TaskEdge.cursor":
+		if e.complexity.TaskEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.TaskEdge.Cursor(childComplexity), true
+
+	case "TaskEdge.node":
+		if e.complexity.TaskEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.TaskEdge.Node(childComplexity), true
 
 	}
 	return 0, false
@@ -826,8 +1141,32 @@ directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITI
 
 scalar Time
 
-type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
-  id: ID
+
+# Needed for Relay
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input ConnectionInput {
+  # offset
+  after: String
+
+  # limit
+  first: Int
+}
+####################################
+
+
+# Target Types
+type Target implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
+  id: ID!
   name: String
   primaryIP: String
   machineUUID: String
@@ -836,22 +1175,48 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   hostname: String
   lastSeen: Time
 
-  tasks: [Task]
-  tags: [Tag]
-  credentials: [Credential]
+  tasks(input: ConnectionInput): TaskConnection
+  tags(input: ConnectionInput): TagConnection
+  credentials(input: ConnectionInput): CredentialConnection
 }
 
-type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
-  id: ID
+type TargetConnection {
+  edges: [TargetEdge]
+  pageInfo: PageInfo!
+}
+
+type TargetEdge {
+  cursor: String!
+  node: Target
+}
+####################################
+
+
+# Tag Types
+type Tag implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
+  id: ID!
   name: String
 
-  tasks: [Task]
-  targets: [Target]
-  jobs: [Job]
+  tasks(input: ConnectionInput): TaskConnection
+  targets(input: ConnectionInput): TargetConnection
+  jobs(input: ConnectionInput): JobConnection
 }
 
-type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
-  id: ID
+type TagConnection {
+  edges: [TagEdge]
+  pageInfo: PageInfo!
+}
+
+type TagEdge {
+  cursor: String!
+  node: Tag
+}
+####################################
+
+
+# Task Types
+type Task implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
+  id: ID!
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -863,26 +1228,65 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   sessionID: String
 
   job: Job
+  target: Target
 }
 
-type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
-  id: ID
+type TaskConnection {
+  edges: [TaskEdge]
+  pageInfo: PageInfo!
+}
+
+type TaskEdge {
+  cursor: String!
+  node: Task
+}
+####################################
+
+
+# Job Types
+type Job implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
+  id: ID!
   name: String
   creationTime: Time
   content: String
 
-  tasks: [Task]
-  tags: [Tag]
+  tasks(input: ConnectionInput): TaskConnection
+  tags(input: ConnectionInput): TagConnection
   next: Job
   prev: Job
 }
 
-type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
-  id: ID
+type JobConnection {
+  edges: [JobEdge]
+  pageInfo: PageInfo!
+}
+
+type JobEdge {
+  cursor: String!
+  node: Job
+}
+####################################
+
+
+# Credential Types
+type Credential implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
+  id: ID!
   principal: String
   secret: String
   fails: Int
 }
+
+type CredentialConnection {
+  edges: [CredentialEdge]
+  pageInfo: PageInfo!
+}
+
+type CredentialEdge {
+  cursor: String!
+  node: Credential
+}
+####################################
+
 
 input FailCredentialRequest {
   id: ID!
@@ -985,25 +1389,55 @@ type Mutation {
 
 type Query {
   credential(id: ID!): Credential
-  credentials: [Credential]
+  credentials(input: ConnectionInput): CredentialConnection
 
   job(id: ID!): Job
-  jobs: [Job]
+  jobs(input: ConnectionInput): JobConnection
 
   tag(id: ID!): Tag
-  tags: [Tag]
+  tags(input: ConnectionInput): TagConnection
 
   target(id: ID!): Target
-  targets: [Target]
+  targets(input: ConnectionInput): TargetConnection
 
   task(id: ID!): Task
-  tasks: [Task]
+  tasks(input: ConnectionInput): TaskConnection
+
+  node(id: ID!): Node
 }`},
 )
 
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Job_tags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Job_tasks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_addCredentialForTarget_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -1257,7 +1691,49 @@ func (ec *executionContext) field_Query_credential_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_credentials_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_job_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_jobs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_node_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 int
@@ -1285,6 +1761,20 @@ func (ec *executionContext) field_Query_tag_args(ctx context.Context, rawArgs ma
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_tags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_target_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1299,6 +1789,20 @@ func (ec *executionContext) field_Query_target_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_targets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_task_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1310,6 +1814,104 @@ func (ec *executionContext) field_Query_task_args(ctx context.Context, rawArgs m
 		}
 	}
 	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_tasks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Tag_jobs_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Tag_targets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Tag_tasks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Target_credentials_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Target_tags_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Target_tasks_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ConnectionInput
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
 	return args, nil
 }
 
@@ -1375,12 +1977,15 @@ func (ec *executionContext) _Credential_id(ctx context.Context, field graphql.Co
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2int(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Credential_principal(ctx context.Context, field graphql.CollectedField, obj *ent.Credential) (ret graphql.Marshaler) {
@@ -1485,6 +2090,148 @@ func (ec *executionContext) _Credential_fails(ctx context.Context, field graphql
 	return ec.marshalOInt2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _CredentialConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.CredentialConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "CredentialConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.CredentialEdge)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOCredentialEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CredentialConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.CredentialConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "CredentialConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CredentialEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.CredentialEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "CredentialEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _CredentialEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.CredentialEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "CredentialEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Credential)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Job_id(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -1511,12 +2258,15 @@ func (ec *executionContext) _Job_id(ctx context.Context, field graphql.Collected
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2int(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_name(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
@@ -1637,10 +2387,17 @@ func (ec *executionContext) _Job_tasks(ctx context.Context, field graphql.Collec
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Job_tasks_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Job().Tasks(rctx, obj)
+		return ec.resolvers.Job().Tasks(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1649,10 +2406,10 @@ func (ec *executionContext) _Job_tasks(ctx context.Context, field graphql.Collec
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Task)
+	res := resTmp.(*models.TaskConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
+	return ec.marshalOTaskConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_tags(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
@@ -1671,10 +2428,17 @@ func (ec *executionContext) _Job_tags(ctx context.Context, field graphql.Collect
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Job_tags_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Job().Tags(rctx, obj)
+		return ec.resolvers.Job().Tags(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1683,10 +2447,10 @@ func (ec *executionContext) _Job_tags(ctx context.Context, field graphql.Collect
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Tag)
+	res := resTmp.(*models.TagConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTag2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, field.Selections, res)
+	return ec.marshalOTagConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_next(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
@@ -1743,6 +2507,148 @@ func (ec *executionContext) _Job_prev(ctx context.Context, field graphql.Collect
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Job().Prev(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Job)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.JobConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "JobConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.JobEdge)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOJobEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.JobConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "JobConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.JobEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "JobEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _JobEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.JobEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "JobEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2455,6 +3361,148 @@ func (ec *executionContext) _Mutation_submitTaskResult(ctx context.Context, fiel
 	return ec.marshalNTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _PageInfo_hasNextPage(ctx context.Context, field graphql.CollectedField, obj *models.PageInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasNextPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PageInfo_hasPreviousPage(ctx context.Context, field graphql.CollectedField, obj *models.PageInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.HasPreviousPage, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PageInfo_startCursor(ctx context.Context, field graphql.CollectedField, obj *models.PageInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.StartCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _PageInfo_endCursor(ctx context.Context, field graphql.CollectedField, obj *models.PageInfo) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "PageInfo",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.EndCursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_credential(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -2512,10 +3560,17 @@ func (ec *executionContext) _Query_credentials(ctx context.Context, field graphq
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_credentials_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Credentials(rctx)
+		return ec.resolvers.Query().Credentials(rctx, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2524,10 +3579,10 @@ func (ec *executionContext) _Query_credentials(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Credential)
+	res := resTmp.(*models.CredentialConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOCredential2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx, field.Selections, res)
+	return ec.marshalOCredentialConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_job(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2587,10 +3642,17 @@ func (ec *executionContext) _Query_jobs(ctx context.Context, field graphql.Colle
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_jobs_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Jobs(rctx)
+		return ec.resolvers.Query().Jobs(rctx, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2599,10 +3661,10 @@ func (ec *executionContext) _Query_jobs(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Job)
+	res := resTmp.(*models.JobConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJobConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_tag(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2662,10 +3724,17 @@ func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.Colle
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_tags_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Tags(rctx)
+		return ec.resolvers.Query().Tags(rctx, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2674,10 +3743,10 @@ func (ec *executionContext) _Query_tags(ctx context.Context, field graphql.Colle
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Tag)
+	res := resTmp.(*models.TagConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTag2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, field.Selections, res)
+	return ec.marshalOTagConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_target(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2737,10 +3806,17 @@ func (ec *executionContext) _Query_targets(ctx context.Context, field graphql.Co
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_targets_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Targets(rctx)
+		return ec.resolvers.Query().Targets(rctx, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2749,10 +3825,10 @@ func (ec *executionContext) _Query_targets(ctx context.Context, field graphql.Co
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Target)
+	res := resTmp.(*models.TargetConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
+	return ec.marshalOTargetConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_task(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2812,10 +3888,17 @@ func (ec *executionContext) _Query_tasks(ctx context.Context, field graphql.Coll
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_tasks_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Tasks(rctx)
+		return ec.resolvers.Query().Tasks(rctx, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2824,10 +3907,51 @@ func (ec *executionContext) _Query_tasks(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Task)
+	res := resTmp.(*models.TaskConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
+	return ec.marshalOTaskConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_node(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_node_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Node(rctx, args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Node)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalONode2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐNode(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query___type(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -2931,12 +4055,15 @@ func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.Collected
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2int(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tag_name(ctx context.Context, field graphql.CollectedField, obj *ent.Tag) (ret graphql.Marshaler) {
@@ -2989,10 +4116,17 @@ func (ec *executionContext) _Tag_tasks(ctx context.Context, field graphql.Collec
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Tag_tasks_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Tag().Tasks(rctx, obj)
+		return ec.resolvers.Tag().Tasks(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3001,10 +4135,10 @@ func (ec *executionContext) _Tag_tasks(ctx context.Context, field graphql.Collec
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Task)
+	res := resTmp.(*models.TaskConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
+	return ec.marshalOTaskConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tag_targets(ctx context.Context, field graphql.CollectedField, obj *ent.Tag) (ret graphql.Marshaler) {
@@ -3023,10 +4157,17 @@ func (ec *executionContext) _Tag_targets(ctx context.Context, field graphql.Coll
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Tag_targets_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Tag().Targets(rctx, obj)
+		return ec.resolvers.Tag().Targets(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3035,10 +4176,10 @@ func (ec *executionContext) _Tag_targets(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Target)
+	res := resTmp.(*models.TargetConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
+	return ec.marshalOTargetConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tag_jobs(ctx context.Context, field graphql.CollectedField, obj *ent.Tag) (ret graphql.Marshaler) {
@@ -3057,10 +4198,17 @@ func (ec *executionContext) _Tag_jobs(ctx context.Context, field graphql.Collect
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Tag_jobs_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Tag().Jobs(rctx, obj)
+		return ec.resolvers.Tag().Jobs(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3069,10 +4217,152 @@ func (ec *executionContext) _Tag_jobs(ctx context.Context, field graphql.Collect
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Job)
+	res := resTmp.(*models.JobConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOJob2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
+	return ec.marshalOJobConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TagConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.TagConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TagConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.TagEdge)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTagEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TagConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.TagConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TagConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TagEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.TagEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TagEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TagEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.TagEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TagEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Tag)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Target_id(ctx context.Context, field graphql.CollectedField, obj *ent.Target) (ret graphql.Marshaler) {
@@ -3101,12 +4391,15 @@ func (ec *executionContext) _Target_id(ctx context.Context, field graphql.Collec
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2int(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Target_name(ctx context.Context, field graphql.CollectedField, obj *ent.Target) (ret graphql.Marshaler) {
@@ -3363,10 +4656,17 @@ func (ec *executionContext) _Target_tasks(ctx context.Context, field graphql.Col
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Target_tasks_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Target().Tasks(rctx, obj)
+		return ec.resolvers.Target().Tasks(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3375,10 +4675,10 @@ func (ec *executionContext) _Target_tasks(ctx context.Context, field graphql.Col
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Task)
+	res := resTmp.(*models.TaskConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
+	return ec.marshalOTaskConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Target_tags(ctx context.Context, field graphql.CollectedField, obj *ent.Target) (ret graphql.Marshaler) {
@@ -3397,10 +4697,17 @@ func (ec *executionContext) _Target_tags(ctx context.Context, field graphql.Coll
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Target_tags_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Target().Tags(rctx, obj)
+		return ec.resolvers.Target().Tags(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3409,10 +4716,10 @@ func (ec *executionContext) _Target_tags(ctx context.Context, field graphql.Coll
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Tag)
+	res := resTmp.(*models.TagConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOTag2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, field.Selections, res)
+	return ec.marshalOTagConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Target_credentials(ctx context.Context, field graphql.CollectedField, obj *ent.Target) (ret graphql.Marshaler) {
@@ -3431,10 +4738,17 @@ func (ec *executionContext) _Target_credentials(ctx context.Context, field graph
 		IsMethod: true,
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Target_credentials_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Target().Credentials(rctx, obj)
+		return ec.resolvers.Target().Credentials(rctx, obj, args["input"].(*models.ConnectionInput))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3443,10 +4757,152 @@ func (ec *executionContext) _Target_credentials(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*ent.Credential)
+	res := resTmp.(*models.CredentialConnection)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOCredential2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx, field.Selections, res)
+	return ec.marshalOCredentialConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TargetConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.TargetConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TargetConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.TargetEdge)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTargetEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TargetConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.TargetConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TargetConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TargetEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.TargetEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TargetEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TargetEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.TargetEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TargetEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Target)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Task_id(ctx context.Context, field graphql.CollectedField, obj *ent.Task) (ret graphql.Marshaler) {
@@ -3475,12 +4931,15 @@ func (ec *executionContext) _Task_id(ctx context.Context, field graphql.Collecte
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.(int)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOID2int(ctx, field.Selections, res)
+	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Task_queueTime(ctx context.Context, field graphql.CollectedField, obj *ent.Task) (ret graphql.Marshaler) {
@@ -3787,6 +5246,182 @@ func (ec *executionContext) _Task_job(ctx context.Context, field graphql.Collect
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Task_target(ctx context.Context, field graphql.CollectedField, obj *ent.Task) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Task",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Task().Target(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Target)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TaskConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.TaskConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TaskConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*models.TaskEdge)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTaskEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskEdge(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TaskConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.TaskConnection) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TaskConnection",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNPageInfo2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TaskEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.TaskEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TaskEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _TaskEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.TaskEdge) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "TaskEdge",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Task)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) ___Directive_name(ctx context.Context, field graphql.CollectedField, obj *introspection.Directive) (ret graphql.Marshaler) {
@@ -5036,6 +6671,30 @@ func (ec *executionContext) unmarshalInputClaimTasksRequest(ctx context.Context,
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputConnectionInput(ctx context.Context, obj interface{}) (models.ConnectionInput, error) {
+	var it models.ConnectionInput
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "after":
+			var err error
+			it.After, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "first":
+			var err error
+			it.First, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputCreateJobRequest(ctx context.Context, obj interface{}) (models.CreateJobRequest, error) {
 	var it models.CreateJobRequest
 	var asMap = obj.(map[string]interface{})
@@ -5292,11 +6951,55 @@ func (ec *executionContext) unmarshalInputSubmitTaskResultRequest(ctx context.Co
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _Node(ctx context.Context, sel ast.SelectionSet, obj ent.Node) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case ent.Target:
+		return ec._Target(ctx, sel, &obj)
+	case *ent.Target:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Target(ctx, sel, obj)
+	case ent.Tag:
+		return ec._Tag(ctx, sel, &obj)
+	case *ent.Tag:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Tag(ctx, sel, obj)
+	case ent.Task:
+		return ec._Task(ctx, sel, &obj)
+	case *ent.Task:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Task(ctx, sel, obj)
+	case ent.Job:
+		return ec._Job(ctx, sel, &obj)
+	case *ent.Job:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Job(ctx, sel, obj)
+	case ent.Credential:
+		return ec._Credential(ctx, sel, &obj)
+	case *ent.Credential:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Credential(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
 
-var credentialImplementors = []string{"Credential"}
+var credentialImplementors = []string{"Credential", "Node"}
 
 func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSet, obj *ent.Credential) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, credentialImplementors)
@@ -5309,6 +7012,9 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = graphql.MarshalString("Credential")
 		case "id":
 			out.Values[i] = ec._Credential_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "principal":
 			out.Values[i] = ec._Credential_principal(ctx, field, obj)
 		case "secret":
@@ -5326,7 +7032,65 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
-var jobImplementors = []string{"Job"}
+var credentialConnectionImplementors = []string{"CredentialConnection"}
+
+func (ec *executionContext) _CredentialConnection(ctx context.Context, sel ast.SelectionSet, obj *models.CredentialConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, credentialConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CredentialConnection")
+		case "edges":
+			out.Values[i] = ec._CredentialConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._CredentialConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var credentialEdgeImplementors = []string{"CredentialEdge"}
+
+func (ec *executionContext) _CredentialEdge(ctx context.Context, sel ast.SelectionSet, obj *models.CredentialEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, credentialEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("CredentialEdge")
+		case "cursor":
+			out.Values[i] = ec._CredentialEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+			out.Values[i] = ec._CredentialEdge_node(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var jobImplementors = []string{"Job", "Node"}
 
 func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj *ent.Job) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, jobImplementors)
@@ -5339,6 +7103,9 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = graphql.MarshalString("Job")
 		case "id":
 			out.Values[i] = ec._Job_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "name":
 			out.Values[i] = ec._Job_name(ctx, field, obj)
 		case "creationTime":
@@ -5389,6 +7156,64 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 				res = ec._Job_prev(ctx, field, obj)
 				return res
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var jobConnectionImplementors = []string{"JobConnection"}
+
+func (ec *executionContext) _JobConnection(ctx context.Context, sel ast.SelectionSet, obj *models.JobConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, jobConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobConnection")
+		case "edges":
+			out.Values[i] = ec._JobConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._JobConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var jobEdgeImplementors = []string{"JobEdge"}
+
+func (ec *executionContext) _JobEdge(ctx context.Context, sel ast.SelectionSet, obj *models.JobEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, jobEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("JobEdge")
+		case "cursor":
+			out.Values[i] = ec._JobEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+			out.Values[i] = ec._JobEdge_node(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5489,6 +7314,42 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var pageInfoImplementors = []string{"PageInfo"}
+
+func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet, obj *models.PageInfo) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, pageInfoImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("PageInfo")
+		case "hasNextPage":
+			out.Values[i] = ec._PageInfo_hasNextPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "hasPreviousPage":
+			out.Values[i] = ec._PageInfo_hasPreviousPage(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "startCursor":
+			out.Values[i] = ec._PageInfo_startCursor(ctx, field, obj)
+		case "endCursor":
+			out.Values[i] = ec._PageInfo_endCursor(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5625,6 +7486,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_tasks(ctx, field)
 				return res
 			})
+		case "node":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_node(ctx, field)
+				return res
+			})
 		case "__type":
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
@@ -5640,7 +7512,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var tagImplementors = []string{"Tag"}
+var tagImplementors = []string{"Tag", "Node"}
 
 func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj *ent.Tag) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, tagImplementors)
@@ -5653,6 +7525,9 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = graphql.MarshalString("Tag")
 		case "id":
 			out.Values[i] = ec._Tag_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "name":
 			out.Values[i] = ec._Tag_name(ctx, field, obj)
 		case "tasks":
@@ -5699,7 +7574,65 @@ func (ec *executionContext) _Tag(ctx context.Context, sel ast.SelectionSet, obj 
 	return out
 }
 
-var targetImplementors = []string{"Target"}
+var tagConnectionImplementors = []string{"TagConnection"}
+
+func (ec *executionContext) _TagConnection(ctx context.Context, sel ast.SelectionSet, obj *models.TagConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, tagConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TagConnection")
+		case "edges":
+			out.Values[i] = ec._TagConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._TagConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var tagEdgeImplementors = []string{"TagEdge"}
+
+func (ec *executionContext) _TagEdge(ctx context.Context, sel ast.SelectionSet, obj *models.TagEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, tagEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TagEdge")
+		case "cursor":
+			out.Values[i] = ec._TagEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+			out.Values[i] = ec._TagEdge_node(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var targetImplementors = []string{"Target", "Node"}
 
 func (ec *executionContext) _Target(ctx context.Context, sel ast.SelectionSet, obj *ent.Target) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, targetImplementors)
@@ -5712,6 +7645,9 @@ func (ec *executionContext) _Target(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = graphql.MarshalString("Target")
 		case "id":
 			out.Values[i] = ec._Target_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "name":
 			out.Values[i] = ec._Target_name(ctx, field, obj)
 		case "primaryIP":
@@ -5770,7 +7706,65 @@ func (ec *executionContext) _Target(ctx context.Context, sel ast.SelectionSet, o
 	return out
 }
 
-var taskImplementors = []string{"Task"}
+var targetConnectionImplementors = []string{"TargetConnection"}
+
+func (ec *executionContext) _TargetConnection(ctx context.Context, sel ast.SelectionSet, obj *models.TargetConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, targetConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TargetConnection")
+		case "edges":
+			out.Values[i] = ec._TargetConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._TargetConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var targetEdgeImplementors = []string{"TargetEdge"}
+
+func (ec *executionContext) _TargetEdge(ctx context.Context, sel ast.SelectionSet, obj *models.TargetEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, targetEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TargetEdge")
+		case "cursor":
+			out.Values[i] = ec._TargetEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+			out.Values[i] = ec._TargetEdge_node(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var taskImplementors = []string{"Task", "Node"}
 
 func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj *ent.Task) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, taskImplementors)
@@ -5783,6 +7777,9 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = graphql.MarshalString("Task")
 		case "id":
 			out.Values[i] = ec._Task_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
 		case "queueTime":
 			out.Values[i] = ec._Task_queueTime(ctx, field, obj)
 		case "claimTime":
@@ -5810,6 +7807,75 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 				res = ec._Task_job(ctx, field, obj)
 				return res
 			})
+		case "target":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Task_target(ctx, field, obj)
+				return res
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var taskConnectionImplementors = []string{"TaskConnection"}
+
+func (ec *executionContext) _TaskConnection(ctx context.Context, sel ast.SelectionSet, obj *models.TaskConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, taskConnectionImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TaskConnection")
+		case "edges":
+			out.Values[i] = ec._TaskConnection_edges(ctx, field, obj)
+		case "pageInfo":
+			out.Values[i] = ec._TaskConnection_pageInfo(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var taskEdgeImplementors = []string{"TaskEdge"}
+
+func (ec *executionContext) _TaskEdge(ctx context.Context, sel ast.SelectionSet, obj *models.TaskEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, taskEdgeImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("TaskEdge")
+		case "cursor":
+			out.Values[i] = ec._TaskEdge_cursor(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+			out.Values[i] = ec._TaskEdge_node(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6120,6 +8186,20 @@ func (ec *executionContext) marshalNJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋ
 		return graphql.Null
 	}
 	return ec._Job(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPageInfo2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v models.PageInfo) graphql.Marshaler {
+	return ec._PageInfo(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *models.PageInfo) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._PageInfo(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
@@ -6463,6 +8543,18 @@ func (ec *executionContext) unmarshalOClaimTasksRequest2ᚖgithubᚗcomᚋkcarre
 	return &res, err
 }
 
+func (ec *executionContext) unmarshalOConnectionInput2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx context.Context, v interface{}) (models.ConnectionInput, error) {
+	return ec.unmarshalInputConnectionInput(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOConnectionInput2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx context.Context, v interface{}) (*models.ConnectionInput, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOConnectionInput2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐConnectionInput(ctx, v)
+	return &res, err
+}
+
 func (ec *executionContext) unmarshalOCreateJobRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCreateJobRequest(ctx context.Context, v interface{}) (models.CreateJobRequest, error) {
 	return ec.unmarshalInputCreateJobRequest(ctx, v)
 }
@@ -6503,7 +8595,29 @@ func (ec *executionContext) marshalOCredential2githubᚗcomᚋkcarrettoᚋparago
 	return ec._Credential(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOCredential2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx context.Context, sel ast.SelectionSet, v []*ent.Credential) graphql.Marshaler {
+func (ec *executionContext) marshalOCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx context.Context, sel ast.SelectionSet, v *ent.Credential) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Credential(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCredentialConnection2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialConnection(ctx context.Context, sel ast.SelectionSet, v models.CredentialConnection) graphql.Marshaler {
+	return ec._CredentialConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOCredentialConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialConnection(ctx context.Context, sel ast.SelectionSet, v *models.CredentialConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._CredentialConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOCredentialEdge2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialEdge(ctx context.Context, sel ast.SelectionSet, v models.CredentialEdge) graphql.Marshaler {
+	return ec._CredentialEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOCredentialEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialEdge(ctx context.Context, sel ast.SelectionSet, v []*models.CredentialEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6530,7 +8644,7 @@ func (ec *executionContext) marshalOCredential2ᚕᚖgithubᚗcomᚋkcarrettoᚋ
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx, sel, v[i])
+			ret[i] = ec.marshalOCredentialEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6543,11 +8657,11 @@ func (ec *executionContext) marshalOCredential2ᚕᚖgithubᚗcomᚋkcarrettoᚋ
 	return ret
 }
 
-func (ec *executionContext) marshalOCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx context.Context, sel ast.SelectionSet, v *ent.Credential) graphql.Marshaler {
+func (ec *executionContext) marshalOCredentialEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCredentialEdge(ctx context.Context, sel ast.SelectionSet, v *models.CredentialEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Credential(ctx, sel, v)
+	return ec._CredentialEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalODeleteTargetRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteTargetRequest(ctx context.Context, v interface{}) (models.DeleteTargetRequest, error) {
@@ -6637,11 +8751,48 @@ func (ec *executionContext) marshalOInt2int(ctx context.Context, sel ast.Selecti
 	return graphql.MarshalInt(v)
 }
 
+func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOInt2int(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) marshalOInt2ᚖint(ctx context.Context, sel ast.SelectionSet, v *int) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec.marshalOInt2int(ctx, sel, *v)
+}
+
 func (ec *executionContext) marshalOJob2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx context.Context, sel ast.SelectionSet, v ent.Job) graphql.Marshaler {
 	return ec._Job(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx context.Context, sel ast.SelectionSet, v []*ent.Job) graphql.Marshaler {
+func (ec *executionContext) marshalOJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx context.Context, sel ast.SelectionSet, v *ent.Job) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Job(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOJobConnection2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobConnection(ctx context.Context, sel ast.SelectionSet, v models.JobConnection) graphql.Marshaler {
+	return ec._JobConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOJobConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobConnection(ctx context.Context, sel ast.SelectionSet, v *models.JobConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._JobConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOJobEdge2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobEdge(ctx context.Context, sel ast.SelectionSet, v models.JobEdge) graphql.Marshaler {
+	return ec._JobEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOJobEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobEdge(ctx context.Context, sel ast.SelectionSet, v []*models.JobEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6668,7 +8819,7 @@ func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagon
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, sel, v[i])
+			ret[i] = ec.marshalOJobEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6681,11 +8832,22 @@ func (ec *executionContext) marshalOJob2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagon
 	return ret
 }
 
-func (ec *executionContext) marshalOJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx context.Context, sel ast.SelectionSet, v *ent.Job) graphql.Marshaler {
+func (ec *executionContext) marshalOJobEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐJobEdge(ctx context.Context, sel ast.SelectionSet, v *models.JobEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
-	return ec._Job(ctx, sel, v)
+	return ec._JobEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalONode2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐNode(ctx context.Context, sel ast.SelectionSet, v ent.Node) graphql.Marshaler {
+	return ec._Node(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalONode2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐNode(ctx context.Context, sel ast.SelectionSet, v *ent.Node) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Node(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalORemoveTagRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐRemoveTagRequest(ctx context.Context, v interface{}) (models.RemoveTagRequest, error) {
@@ -6783,46 +8945,6 @@ func (ec *executionContext) marshalOTag2githubᚗcomᚋkcarrettoᚋparagonᚋent
 	return ec._Tag(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOTag2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx context.Context, sel ast.SelectionSet, v []*ent.Tag) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		rctx := &graphql.ResolverContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithResolverContext(ctx, rctx)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalOTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-	return ret
-}
-
 func (ec *executionContext) marshalOTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx context.Context, sel ast.SelectionSet, v *ent.Tag) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -6830,11 +8952,22 @@ func (ec *executionContext) marshalOTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋ
 	return ec._Tag(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTarget2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx context.Context, sel ast.SelectionSet, v ent.Target) graphql.Marshaler {
-	return ec._Target(ctx, sel, &v)
+func (ec *executionContext) marshalOTagConnection2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagConnection(ctx context.Context, sel ast.SelectionSet, v models.TagConnection) graphql.Marshaler {
+	return ec._TagConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx context.Context, sel ast.SelectionSet, v []*ent.Target) graphql.Marshaler {
+func (ec *executionContext) marshalOTagConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagConnection(ctx context.Context, sel ast.SelectionSet, v *models.TagConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TagConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTagEdge2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagEdge(ctx context.Context, sel ast.SelectionSet, v models.TagEdge) graphql.Marshaler {
+	return ec._TagEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTagEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagEdge(ctx context.Context, sel ast.SelectionSet, v []*models.TagEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6861,7 +8994,7 @@ func (ec *executionContext) marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋpara
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, sel, v[i])
+			ret[i] = ec.marshalOTagEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6872,6 +9005,17 @@ func (ec *executionContext) marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋpara
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalOTagEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTagEdge(ctx context.Context, sel ast.SelectionSet, v *models.TagEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TagEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTarget2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx context.Context, sel ast.SelectionSet, v ent.Target) graphql.Marshaler {
+	return ec._Target(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx context.Context, sel ast.SelectionSet, v *ent.Target) graphql.Marshaler {
@@ -6881,11 +9025,22 @@ func (ec *executionContext) marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagon
 	return ec._Target(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalOTask2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx context.Context, sel ast.SelectionSet, v ent.Task) graphql.Marshaler {
-	return ec._Task(ctx, sel, &v)
+func (ec *executionContext) marshalOTargetConnection2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetConnection(ctx context.Context, sel ast.SelectionSet, v models.TargetConnection) graphql.Marshaler {
+	return ec._TargetConnection(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx context.Context, sel ast.SelectionSet, v []*ent.Task) graphql.Marshaler {
+func (ec *executionContext) marshalOTargetConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetConnection(ctx context.Context, sel ast.SelectionSet, v *models.TargetConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TargetConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTargetEdge2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetEdge(ctx context.Context, sel ast.SelectionSet, v models.TargetEdge) graphql.Marshaler {
+	return ec._TargetEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTargetEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetEdge(ctx context.Context, sel ast.SelectionSet, v []*models.TargetEdge) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6912,7 +9067,7 @@ func (ec *executionContext) marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparago
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalOTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, sel, v[i])
+			ret[i] = ec.marshalOTargetEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6923,6 +9078,17 @@ func (ec *executionContext) marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparago
 	}
 	wg.Wait()
 	return ret
+}
+
+func (ec *executionContext) marshalOTargetEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTargetEdge(ctx context.Context, sel ast.SelectionSet, v *models.TargetEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TargetEdge(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTask2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx context.Context, sel ast.SelectionSet, v ent.Task) graphql.Marshaler {
+	return ec._Task(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalOTask2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTaskᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Task) graphql.Marshaler {
@@ -6970,6 +9136,68 @@ func (ec *executionContext) marshalOTask2ᚖgithubᚗcomᚋkcarrettoᚋparagon�
 		return graphql.Null
 	}
 	return ec._Task(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTaskConnection2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskConnection(ctx context.Context, sel ast.SelectionSet, v models.TaskConnection) graphql.Marshaler {
+	return ec._TaskConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTaskConnection2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskConnection(ctx context.Context, sel ast.SelectionSet, v *models.TaskConnection) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TaskConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOTaskEdge2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskEdge(ctx context.Context, sel ast.SelectionSet, v models.TaskEdge) graphql.Marshaler {
+	return ec._TaskEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOTaskEdge2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskEdge(ctx context.Context, sel ast.SelectionSet, v []*models.TaskEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOTaskEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOTaskEdge2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐTaskEdge(ctx context.Context, sel ast.SelectionSet, v *models.TaskEdge) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._TaskEdge(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {

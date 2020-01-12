@@ -98,7 +98,7 @@ var (
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "session_id", Type: field.TypeString, Nullable: true},
 		{Name: "job_id", Type: field.TypeInt, Nullable: true},
-		{Name: "target_task_id", Type: field.TypeInt, Nullable: true},
+		{Name: "target_id", Type: field.TypeInt, Nullable: true},
 	}
 	// TasksTable holds the schema information for the "tasks" table.
 	TasksTable = &schema.Table{

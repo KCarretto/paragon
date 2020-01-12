@@ -34,6 +34,8 @@ type Client struct {
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
+	// additional fields for node api
+	tables tables
 }
 
 // NewClient creates a new client configured with the given options.
@@ -618,6 +620,19 @@ func (c *TaskClient) QueryJob(t *Task) *JobQuery {
 		From(sql.Table(task.JobTable)).
 		Where(sql.EQ(task.FieldID, id))
 	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(job.FieldID), t2.C(task.JobColumn))
+
+	return query
+}
+
+// QueryTarget queries the target edge of a Task.
+func (c *TaskClient) QueryTarget(t *Task) *TargetQuery {
+	query := &TargetQuery{config: c.config}
+	id := t.ID
+	t1 := sql.Table(target.Table)
+	t2 := sql.Select(task.TargetColumn).
+		From(sql.Table(task.TargetTable)).
+		Where(sql.EQ(task.FieldID, id))
+	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(target.FieldID), t2.C(task.TargetColumn))
 
 	return query
 }

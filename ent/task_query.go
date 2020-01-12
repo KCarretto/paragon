@@ -12,6 +12,7 @@ import (
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -79,6 +80,19 @@ func (tq *TaskQuery) QueryJob() *JobQuery {
 		From(t1).
 		Join(t2).
 		On(t1.C(job.FieldID), t2.C(task.JobColumn))
+	return query
+}
+
+// QueryTarget chains the current query on the target edge.
+func (tq *TaskQuery) QueryTarget() *TargetQuery {
+	query := &TargetQuery{config: tq.config}
+	t1 := sql.Table(target.Table)
+	t2 := tq.sqlQuery()
+	t2.Select(t2.C(task.TargetColumn))
+	query.sql = sql.Select(t1.Columns(target.Columns...)...).
+		From(t1).
+		Join(t2).
+		On(t1.C(target.FieldID), t2.C(task.TargetColumn))
 	return query
 }
 

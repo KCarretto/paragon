@@ -54,5 +54,9 @@ func (Task) Edges() []ent.Edge {
 			Unique().
 			Required().
 			Comment("A Task must have job"),
+		edge.From("target", Target.Type).
+			Ref("tasks").
+			Unique().
+			Comment("A Task can be linked to a Target"),
 	}
 }

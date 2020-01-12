@@ -11,6 +11,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -33,8 +34,10 @@ type TaskUpdate struct {
 	clearSessionID     bool
 	tags               map[int]struct{}
 	job                map[int]struct{}
+	target             map[int]struct{}
 	removedTags        map[int]struct{}
 	clearedJob         bool
+	clearedTarget      bool
 	predicates         []predicate.Task
 }
 
@@ -224,6 +227,28 @@ func (tu *TaskUpdate) SetJob(j *Job) *TaskUpdate {
 	return tu.SetJobID(j.ID)
 }
 
+// SetTargetID sets the target edge to Target by id.
+func (tu *TaskUpdate) SetTargetID(id int) *TaskUpdate {
+	if tu.target == nil {
+		tu.target = make(map[int]struct{})
+	}
+	tu.target[id] = struct{}{}
+	return tu
+}
+
+// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+func (tu *TaskUpdate) SetNillableTargetID(id *int) *TaskUpdate {
+	if id != nil {
+		tu = tu.SetTargetID(*id)
+	}
+	return tu
+}
+
+// SetTarget sets the target edge to Target.
+func (tu *TaskUpdate) SetTarget(t *Target) *TaskUpdate {
+	return tu.SetTargetID(t.ID)
+}
+
 // RemoveTagIDs removes the tags edge to Tag by ids.
 func (tu *TaskUpdate) RemoveTagIDs(ids ...int) *TaskUpdate {
 	if tu.removedTags == nil {
@@ -250,6 +275,12 @@ func (tu *TaskUpdate) ClearJob() *TaskUpdate {
 	return tu
 }
 
+// ClearTarget clears the target edge to Target.
+func (tu *TaskUpdate) ClearTarget() *TaskUpdate {
+	tu.clearedTarget = true
+	return tu
+}
+
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 	if tu.Content != nil {
@@ -262,6 +293,9 @@ func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if tu.clearedJob && tu.job == nil {
 		return 0, errors.New("ent: clearing a unique edge \"job\"")
+	}
+	if len(tu.target) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
 	}
 	return tu.sqlSave(ctx)
 }
@@ -417,6 +451,26 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			}
 		}
 	}
+	if tu.clearedTarget {
+		query, args := sql.Update(task.TargetTable).
+			SetNull(task.TargetColumn).
+			Where(sql.InInts(target.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return 0, rollback(tx, err)
+		}
+	}
+	if len(tu.target) > 0 {
+		for eid := range tu.target {
+			query, args := sql.Update(task.TargetTable).
+				Set(task.TargetColumn, eid).
+				Where(sql.InInts(task.FieldID, ids...)).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return 0, rollback(tx, err)
+			}
+		}
+	}
 	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
@@ -443,8 +497,10 @@ type TaskUpdateOne struct {
 	clearSessionID     bool
 	tags               map[int]struct{}
 	job                map[int]struct{}
+	target             map[int]struct{}
 	removedTags        map[int]struct{}
 	clearedJob         bool
+	clearedTarget      bool
 }
 
 // SetQueueTime sets the QueueTime field.
@@ -627,6 +683,28 @@ func (tuo *TaskUpdateOne) SetJob(j *Job) *TaskUpdateOne {
 	return tuo.SetJobID(j.ID)
 }
 
+// SetTargetID sets the target edge to Target by id.
+func (tuo *TaskUpdateOne) SetTargetID(id int) *TaskUpdateOne {
+	if tuo.target == nil {
+		tuo.target = make(map[int]struct{})
+	}
+	tuo.target[id] = struct{}{}
+	return tuo
+}
+
+// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+func (tuo *TaskUpdateOne) SetNillableTargetID(id *int) *TaskUpdateOne {
+	if id != nil {
+		tuo = tuo.SetTargetID(*id)
+	}
+	return tuo
+}
+
+// SetTarget sets the target edge to Target.
+func (tuo *TaskUpdateOne) SetTarget(t *Target) *TaskUpdateOne {
+	return tuo.SetTargetID(t.ID)
+}
+
 // RemoveTagIDs removes the tags edge to Tag by ids.
 func (tuo *TaskUpdateOne) RemoveTagIDs(ids ...int) *TaskUpdateOne {
 	if tuo.removedTags == nil {
@@ -653,6 +731,12 @@ func (tuo *TaskUpdateOne) ClearJob() *TaskUpdateOne {
 	return tuo
 }
 
+// ClearTarget clears the target edge to Target.
+func (tuo *TaskUpdateOne) ClearTarget() *TaskUpdateOne {
+	tuo.clearedTarget = true
+	return tuo
+}
+
 // Save executes the query and returns the updated entity.
 func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 	if tuo.Content != nil {
@@ -665,6 +749,9 @@ func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 	}
 	if tuo.clearedJob && tuo.job == nil {
 		return nil, errors.New("ent: clearing a unique edge \"job\"")
+	}
+	if len(tuo.target) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
 	}
 	return tuo.sqlSave(ctx)
 }
@@ -836,6 +923,26 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		for eid := range tuo.job {
 			query, args := sql.Update(task.JobTable).
 				Set(task.JobColumn, eid).
+				Where(sql.InInts(task.FieldID, ids...)).
+				Query()
+			if err := tx.Exec(ctx, query, args, &res); err != nil {
+				return nil, rollback(tx, err)
+			}
+		}
+	}
+	if tuo.clearedTarget {
+		query, args := sql.Update(task.TargetTable).
+			SetNull(task.TargetColumn).
+			Where(sql.InInts(target.FieldID, ids...)).
+			Query()
+		if err := tx.Exec(ctx, query, args, &res); err != nil {
+			return nil, rollback(tx, err)
+		}
+	}
+	if len(tuo.target) > 0 {
+		for eid := range tuo.target {
+			query, args := sql.Update(task.TargetTable).
+				Set(task.TargetColumn, eid).
 				Where(sql.InInts(task.FieldID, ids...)).
 				Query()
 			if err := tx.Exec(ctx, query, args, &res); err != nil {

@@ -30,7 +30,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "target_task_id"
+	TasksColumn = "target_id"
 	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
 	TagsTable = "target_tags"
 	// TagsInverseTable is the table name for the Tag entity.

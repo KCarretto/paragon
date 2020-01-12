@@ -10,8 +10,32 @@ directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITI
 
 scalar Time
 
-type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
-  id: ID
+
+# Needed for Relay
+interface Node {
+  id: ID!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+input ConnectionInput {
+  # offset
+  after: String
+
+  # limit
+  first: Int
+}
+####################################
+
+
+# Target Types
+type Target implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
+  id: ID!
   name: String
   primaryIP: String
   machineUUID: String
@@ -20,22 +44,48 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   hostname: String
   lastSeen: Time
 
-  tasks: [Task]
-  tags: [Tag]
-  credentials: [Credential]
+  tasks(input: ConnectionInput): TaskConnection
+  tags(input: ConnectionInput): TagConnection
+  credentials(input: ConnectionInput): CredentialConnection
 }
 
-type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
-  id: ID
+type TargetConnection {
+  edges: [TargetEdge]
+  pageInfo: PageInfo!
+}
+
+type TargetEdge {
+  cursor: String!
+  node: Target
+}
+####################################
+
+
+# Tag Types
+type Tag implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
+  id: ID!
   name: String
 
-  tasks: [Task]
-  targets: [Target]
-  jobs: [Job]
+  tasks(input: ConnectionInput): TaskConnection
+  targets(input: ConnectionInput): TargetConnection
+  jobs(input: ConnectionInput): JobConnection
 }
 
-type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
-  id: ID
+type TagConnection {
+  edges: [TagEdge]
+  pageInfo: PageInfo!
+}
+
+type TagEdge {
+  cursor: String!
+  node: Tag
+}
+####################################
+
+
+# Task Types
+type Task implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
+  id: ID!
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -47,26 +97,65 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   sessionID: String
 
   job: Job
+  target: Target
 }
 
-type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
-  id: ID
+type TaskConnection {
+  edges: [TaskEdge]
+  pageInfo: PageInfo!
+}
+
+type TaskEdge {
+  cursor: String!
+  node: Task
+}
+####################################
+
+
+# Job Types
+type Job implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
+  id: ID!
   name: String
   creationTime: Time
   content: String
 
-  tasks: [Task]
-  tags: [Tag]
+  tasks(input: ConnectionInput): TaskConnection
+  tags(input: ConnectionInput): TagConnection
   next: Job
   prev: Job
 }
 
-type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
-  id: ID
+type JobConnection {
+  edges: [JobEdge]
+  pageInfo: PageInfo!
+}
+
+type JobEdge {
+  cursor: String!
+  node: Job
+}
+####################################
+
+
+# Credential Types
+type Credential implements Node @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
+  id: ID!
   principal: String
   secret: String
   fails: Int
 }
+
+type CredentialConnection {
+  edges: [CredentialEdge]
+  pageInfo: PageInfo!
+}
+
+type CredentialEdge {
+  cursor: String!
+  node: Credential
+}
+####################################
+
 
 input FailCredentialRequest {
   id: ID!
@@ -169,17 +258,19 @@ type Mutation {
 
 type Query {
   credential(id: ID!): Credential
-  credentials: [Credential]
+  credentials(input: ConnectionInput): CredentialConnection
 
   job(id: ID!): Job
-  jobs: [Job]
+  jobs(input: ConnectionInput): JobConnection
 
   tag(id: ID!): Tag
-  tags: [Tag]
+  tags(input: ConnectionInput): TagConnection
 
   target(id: ID!): Target
-  targets: [Target]
+  targets(input: ConnectionInput): TargetConnection
 
   task(id: ID!): Task
-  tasks: [Task]
+  tasks(input: ConnectionInput): TaskConnection
+
+  node(id: ID!): Node
 }

@@ -4,6 +4,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/kcarretto/paragon/ent"
 )
 
 type AddCredentialForTargetRequest struct {
@@ -25,6 +27,11 @@ type ClaimTasksRequest struct {
 	SessionID   *string `json:"sessionID"`
 }
 
+type ConnectionInput struct {
+	After *string `json:"after"`
+	First *int    `json:"first"`
+}
+
 type CreateJobRequest struct {
 	Name      string  `json:"name"`
 	Content   string  `json:"content"`
@@ -44,12 +51,39 @@ type CreateTargetRequest struct {
 	Tags      []int  `json:"tags"`
 }
 
+type CredentialConnection struct {
+	Edges    []*CredentialEdge `json:"edges"`
+	PageInfo *PageInfo         `json:"pageInfo"`
+}
+
+type CredentialEdge struct {
+	Cursor string          `json:"cursor"`
+	Node   *ent.Credential `json:"node"`
+}
+
 type DeleteTargetRequest struct {
 	ID int `json:"id"`
 }
 
 type FailCredentialRequest struct {
 	ID int `json:"id"`
+}
+
+type JobConnection struct {
+	Edges    []*JobEdge `json:"edges"`
+	PageInfo *PageInfo  `json:"pageInfo"`
+}
+
+type JobEdge struct {
+	Cursor string   `json:"cursor"`
+	Node   *ent.Job `json:"node"`
+}
+
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor"`
+	EndCursor       *string `json:"endCursor"`
 }
 
 type RemoveTagRequest struct {
@@ -73,4 +107,34 @@ type SubmitTaskResultRequest struct {
 	Error         *string    `json:"error"`
 	ExecStartTime *time.Time `json:"execStartTime"`
 	ExecStopTime  *time.Time `json:"execStopTime"`
+}
+
+type TagConnection struct {
+	Edges    []*TagEdge `json:"edges"`
+	PageInfo *PageInfo  `json:"pageInfo"`
+}
+
+type TagEdge struct {
+	Cursor string   `json:"cursor"`
+	Node   *ent.Tag `json:"node"`
+}
+
+type TargetConnection struct {
+	Edges    []*TargetEdge `json:"edges"`
+	PageInfo *PageInfo     `json:"pageInfo"`
+}
+
+type TargetEdge struct {
+	Cursor string      `json:"cursor"`
+	Node   *ent.Target `json:"node"`
+}
+
+type TaskConnection struct {
+	Edges    []*TaskEdge `json:"edges"`
+	PageInfo *PageInfo   `json:"pageInfo"`
+}
+
+type TaskEdge struct {
+	Cursor string    `json:"cursor"`
+	Node   *ent.Task `json:"node"`
 }

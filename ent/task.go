@@ -82,6 +82,11 @@ func (t *Task) QueryJob() *JobQuery {
 	return (&TaskClient{t.config}).QueryJob(t)
 }
 
+// QueryTarget queries the target edge of the Task.
+func (t *Task) QueryTarget() *TargetQuery {
+	return (&TaskClient{t.config}).QueryTarget(t)
+}
+
 // Update returns a builder for updating this Task.
 // Note that, you need to call Task.Unwrap() before calling this method, if this Task
 // was returned from a transaction, and the transaction was committed or rolled back.
