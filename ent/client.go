@@ -34,8 +34,6 @@ type Client struct {
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
-	// additional fields for node api
-	tables tables
 }
 
 // NewClient creates a new client configured with the given options.
