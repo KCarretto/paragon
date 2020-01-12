@@ -1,10 +1,10 @@
 import { useMutation } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { ToastContainer } from 'react-toastr';
 import { Button, Form, Loader, Modal } from 'semantic-ui-react';
 import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY } from '../../views';
 import { XTagTypeahead, XTargetTypeahead } from '../form';
+import { XErrorMessage } from '../messages';
 
 export const QUEUE_JOB_MUTATION = gql`
 mutation QueueJob($name: String!, $content: String!, $tags: [ID!], $targets: [ID!]) {
@@ -43,52 +43,10 @@ const XJobQueueModal = ({ header }) => {
                 return;
             }
             container.info(`Created job with id: ${data.job.id}`, 'Job Queued');
-        });
+        }).catch((err) => console.error("GraphQL mutation failed", err));
     }
 
-    const getModalContent = () => {
-        if (called && loading) {
-            return (
-                <Modal.Content>
-                    <Loader />
-                </Modal.Content>
-            );
-        }
-        return (
-            <Modal.Content>
-                <ToastContainer
-                    ref={ref => container = ref}
-                    className="toast-top-right"
-                />
-                <Form.Input
-                    label={{ content: 'Name' }}
-                    placeholder='Enter job name'
-                    name='name'
-                    value={params.name}
-                    onChange={handleChange}
-                />
-                <XTargetTypeahead
-                    onChange={handleChange}
-                    selectedValues={params.targets}
-                />
-                <XTagTypeahead
-                    onChange={handleChange}
-                    selectedValues={params.tags}
-                />
-                <Form.TextArea
-                    label={{ content: 'Enter script' }}
-                    placeholder='Enter script content'
-                    name='content'
-                    rows={15}
-                    value={params.content}
-                    onChange={handleChange}
-                />
-
-            </Modal.Content>
-        );
-    }
-
-
+    console.log("ERROR IS", error);
     return (
         <Modal
             centered={false}
@@ -100,8 +58,31 @@ const XJobQueueModal = ({ header }) => {
             as={Form}
             onSubmit={handleSubmit}
         >
-            <Modal.Header>{header ? header : "Queue a Job"}</Modal.Header>
-            {getModalContent()}
+            <Modal.Header>{header ? header : "Queue a Job"}<Loader disabled={!called || !loading} /></Modal.Header>
+            <Modal.Content>
+                <Form.Input
+                    label={{ content: 'Name' }}
+                    placeholder='Enter job name'
+                    name='name'
+                    value={params.name}
+                    onChange={handleChange}
+                />
+                <XTargetTypeahead
+                    onChange={handleChange}
+                />
+                <XTagTypeahead
+                    onChange={handleChange}
+                />
+                <Form.TextArea
+                    label={{ content: 'Enter script' }}
+                    placeholder='Enter script content'
+                    name='content'
+                    rows={15}
+                    value={params.content}
+                    onChange={handleChange}
+                />
+                <XErrorMessage title='Failed to Queue Job' err={error} />
+            </Modal.Content>
             <Modal.Actions>
                 <Form.Button positive floated='right'>Queue</Form.Button>
             </Modal.Actions>

@@ -15,7 +15,7 @@ export const MULTI_TAG_QUERY = gql`
 `;
 
 const XMultiTagView = () => {
-    const { loading, error, data } = useQuery(MULTI_TAG_QUERY);
+    const { called, loading, error, data } = useQuery(MULTI_TAG_QUERY);
 
     const showList = () => {
         if (!data || !data.tags || data.tags.length < 1) {
@@ -39,9 +39,8 @@ const XMultiTagView = () => {
                 <Menu.Item position='right'><XTagCreateModal /></Menu.Item>
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
-                {error ?
-                    <XErrorMessage title='Error loading tags' msg={`${error}`} />
-                    : <Loader active={loading} />}
+                <Loader disabled={!called || !loading} />
+                <XErrorMessage title='Error Loading Tags' err={error} />
                 {showList()}
             </Container>
         </Container>

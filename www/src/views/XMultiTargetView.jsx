@@ -36,7 +36,7 @@ targets {
 }`
 
 const XMultiTargetView = () => {
-    const { loading, error, data } = useQuery(MULTI_TARGET_QUERY);
+    const { called, loading, error, data } = useQuery(MULTI_TARGET_QUERY);
 
     const showCards = () => {
         if (!data || !data.targets || data.targets.length < 1) {
@@ -56,10 +56,8 @@ const XMultiTargetView = () => {
                 <Menu.Item position='right'><XTargetCreateModal /></Menu.Item>
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
-
-                {error ?
-                    <XErrorMessage title='Error loading targets' msg={`${error}`} />
-                    : <Loader active={loading} />}
+                <Loader disabled={!called || !loading} />
+                <XErrorMessage title='Error Loading Targets' err={error} />
 
                 {showCards()}
             </Container>
