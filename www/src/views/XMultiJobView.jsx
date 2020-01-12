@@ -33,7 +33,7 @@ jobs {
 }`
 
 const XMultiJobView = () => {
-    const { loading, error, data } = useQuery(MULTI_JOB_QUERY);
+    const { called, loading, error, data } = useQuery(MULTI_JOB_QUERY);
 
     const showCards = () => {
         if (!data || !data.jobs || data.jobs.length < 1) {
@@ -47,18 +47,16 @@ const XMultiJobView = () => {
     };
 
     return (
-        <div style={{ padding: '10px' }}>
+        <Container style={{ padding: '10px' }}>
             <Menu secondary>
                 <Menu.Item position='right'><XJobQueueModal /></Menu.Item>
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
-                {error ?
-                    <XErrorMessage title='Error loading jobs' msg={`${error}`} />
-                    : <Loader active={loading} />}
-
+                <Loader disabled={!called || !loading} />
+                <XErrorMessage title='Error Loading Jobs' err={error} />
                 {showCards()}
             </Container>
-        </div>
+        </Container>
     );
 }
 
