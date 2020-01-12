@@ -3,7 +3,6 @@ package resolve
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
@@ -52,101 +51,29 @@ func (r *Resolver) Task() generated.TaskResolver {
 
 type jobResolver struct{ *Resolver }
 
-func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job, input *models.ConnectionInput) (*models.TaskConnection, error) {
+func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Task, error) {
 	q := obj.QueryTasks()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TaskEdge
-	for i, edge := range edges {
-		e := &models.TaskEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TaskConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
-func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job, input *models.ConnectionInput) (*models.TagConnection, error) {
+func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Tag, error) {
 	q := obj.QueryTags()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TagEdge
-	for i, edge := range edges {
-		e := &models.TagEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TagConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 func (r *jobResolver) Next(ctx context.Context, obj *ent.Job) (*ent.Job, error) {
 	return obj.QueryNext().Only(ctx)
@@ -444,554 +371,155 @@ type queryResolver struct{ *Resolver }
 func (r *queryResolver) Credential(ctx context.Context, id int) (*ent.Credential, error) {
 	return r.EntClient.Credential.Get(ctx, id)
 }
-func (r *queryResolver) Credentials(ctx context.Context, input *models.ConnectionInput) (*models.CredentialConnection, error) {
+func (r *queryResolver) Credentials(ctx context.Context, input *models.Filter) ([]*ent.Credential, error) {
 	q := r.EntClient.Credential.Query()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.CredentialEdge
-	for i, edge := range edges {
-		e := &models.CredentialEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.CredentialConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 func (r *queryResolver) Job(ctx context.Context, id int) (*ent.Job, error) {
 	return r.EntClient.Job.Get(ctx, id)
 }
-func (r *queryResolver) Jobs(ctx context.Context, input *models.ConnectionInput) (*models.JobConnection, error) {
+func (r *queryResolver) Jobs(ctx context.Context, input *models.Filter) ([]*ent.Job, error) {
 	q := r.EntClient.Job.Query()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.JobEdge
-	for i, edge := range edges {
-		e := &models.JobEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.JobConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 func (r *queryResolver) Tag(ctx context.Context, id int) (*ent.Tag, error) {
 	return r.EntClient.Tag.Get(ctx, id)
 }
-func (r *queryResolver) Tags(ctx context.Context, input *models.ConnectionInput) (*models.TagConnection, error) {
+func (r *queryResolver) Tags(ctx context.Context, input *models.Filter) ([]*ent.Tag, error) {
 	q := r.EntClient.Tag.Query()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TagEdge
-	for i, edge := range edges {
-		e := &models.TagEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TagConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 func (r *queryResolver) Target(ctx context.Context, id int) (*ent.Target, error) {
 	return r.EntClient.Target.Get(ctx, id)
 }
-func (r *queryResolver) Targets(ctx context.Context, input *models.ConnectionInput) (*models.TargetConnection, error) {
+func (r *queryResolver) Targets(ctx context.Context, input *models.Filter) ([]*ent.Target, error) {
 	q := r.EntClient.Target.Query()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TargetEdge
-	for i, edge := range edges {
-		e := &models.TargetEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TargetConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 func (r *queryResolver) Task(ctx context.Context, id int) (*ent.Task, error) {
 	return r.EntClient.Task.Get(ctx, id)
 }
-func (r *queryResolver) Tasks(ctx context.Context, input *models.ConnectionInput) (*models.TaskConnection, error) {
+func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent.Task, error) {
 	q := r.EntClient.Task.Query()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TaskEdge
-	for i, edge := range edges {
-		e := &models.TaskEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TaskConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
-}
-func (r *queryResolver) Node(ctx context.Context, id int) (*ent.Node, error) {
-	return r.EntClient.Node(ctx, id)
+	return q.All(ctx)
 }
 
 type tagResolver struct{ *Resolver }
 
-func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag, input *models.ConnectionInput) (*models.TaskConnection, error) {
+func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Task, error) {
 	q := obj.QueryTasks()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TaskEdge
-	for i, edge := range edges {
-		e := &models.TaskEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TaskConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
-func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag, input *models.ConnectionInput) (*models.TargetConnection, error) {
+func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Target, error) {
 	q := obj.QueryTargets()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TargetEdge
-	for i, edge := range edges {
-		e := &models.TargetEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TargetConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
-func (r *tagResolver) Jobs(ctx context.Context, obj *ent.Tag, input *models.ConnectionInput) (*models.JobConnection, error) {
+func (r *tagResolver) Jobs(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Job, error) {
 	q := obj.QueryJobs()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.JobEdge
-	for i, edge := range edges {
-		e := &models.JobEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.JobConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 
 type targetResolver struct{ *Resolver }
 
-func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *models.ConnectionInput) (*models.TaskConnection, error) {
+func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Task, error) {
 	q := obj.QueryTasks()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TaskEdge
-	for i, edge := range edges {
-		e := &models.TaskEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TaskConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
-func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target, input *models.ConnectionInput) (*models.TagConnection, error) {
+func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Tag, error) {
 	q := obj.QueryTags()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.TagEdge
-	for i, edge := range edges {
-		e := &models.TagEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.TagConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
-func (r *targetResolver) Credentials(ctx context.Context, obj *ent.Target, input *models.ConnectionInput) (*models.CredentialConnection, error) {
+func (r *targetResolver) Credentials(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Credential, error) {
 	q := obj.QueryCredentials()
-	maxAmount, err := q.Count(ctx)
-	offset := 0
-	limit := 0
-	if err != nil {
-		return nil, err
-	}
-	if input.After != nil {
-		offset, err = strconv.Atoi(*input.After)
-		if err != nil {
-			return nil, err
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
 		}
-		q.Offset(offset)
-	}
-	if input.First != nil {
-		limit = *input.First
-		q.Limit(limit)
-	}
-
-	edges, err := q.All(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	startCursor := strconv.Itoa(offset)
-	endCursor := strconv.Itoa(offset + len(edges))
-	pageInfo := &models.PageInfo{
-		HasNextPage:     offset+limit < maxAmount,
-		HasPreviousPage: offset-limit > 0,
-		StartCursor:     &startCursor,
-		EndCursor:       &endCursor,
-	}
-
-	var connectionEdges []*models.CredentialEdge
-	for i, edge := range edges {
-		e := &models.CredentialEdge{
-			Cursor: strconv.Itoa(offset + i),
-			Node:   edge,
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
 		}
-		connectionEdges = append(connectionEdges, e)
 	}
-
-	return &models.CredentialConnection{
-		PageInfo: pageInfo,
-		Edges:    connectionEdges,
-	}, nil
+	return q.All(ctx)
 }
 
 type taskResolver struct{ *Resolver }
