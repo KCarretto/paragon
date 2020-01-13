@@ -1266,6 +1266,30 @@ func HasJobWith(preds ...predicate.Job) predicate.Task {
 	)
 }
 
+// HasTarget applies the HasEdge predicate on the "target" edge.
+func HasTarget() predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			s.Where(sql.NotNull(t1.C(TargetColumn)))
+		},
+	)
+}
+
+// HasTargetWith applies the HasEdge predicate on the "target" edge with a given conditions (other predicates).
+func HasTargetWith(preds ...predicate.Target) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			t1 := s.Table()
+			t2 := sql.Select(FieldID).From(sql.Table(TargetInverseTable))
+			for _, p := range preds {
+				p(t2)
+			}
+			s.Where(sql.In(t1.C(TargetColumn), t2))
+		},
+	)
+}
+
 // And groups list of predicates with the AND operator between them.
 func And(predicates ...predicate.Task) predicate.Task {
 	return predicate.Task(

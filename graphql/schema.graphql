@@ -10,6 +10,11 @@ directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITI
 
 scalar Time
 
+input Filter {
+  offset: Int
+  limit: Int
+}
+
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
@@ -20,22 +25,25 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   hostname: String
   lastSeen: Time
 
-  tasks: [Task]
-  tags: [Tag]
-  credentials: [Credential]
+  tasks(input: Filter): [Task]
+  tags(input: Filter): [Tag]
+  credentials(input: Filter): [Credential]
 }
 
+
+# Tag Types
 type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
-  id: ID
+  id: ID!
   name: String
 
-  tasks: [Task]
-  targets: [Target]
-  jobs: [Job]
+  tasks(input: Filter): [Task]
+  targets(input: Filter): [Target]
+  jobs(input: Filter): [Job]
 }
 
+
 type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
-  id: ID
+  id: ID!
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -47,26 +55,31 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   sessionID: String
 
   job: Job
+  target: Target
 }
 
+
 type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
-  id: ID
+  id: ID!
   name: String
   creationTime: Time
   content: String
 
-  tasks: [Task]
-  tags: [Tag]
+  tasks(input: Filter): [Task]
+  tags(input: Filter): [Tag]
   next: Job
   prev: Job
 }
 
+
+
 type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
-  id: ID
+  id: ID!
   principal: String
   secret: String
   fails: Int
 }
+
 
 input FailCredentialRequest {
   id: ID!
@@ -169,17 +182,17 @@ type Mutation {
 
 type Query {
   credential(id: ID!): Credential
-  credentials: [Credential]
+  credentials(input: Filter): [Credential]
 
   job(id: ID!): Job
-  jobs: [Job]
+  jobs(input: Filter): [Job]
 
   tag(id: ID!): Tag
-  tags: [Tag]
+  tags(input: Filter): [Tag]
 
   target(id: ID!): Target
-  targets: [Target]
+  targets(input: Filter): [Target]
 
   task(id: ID!): Task
-  tasks: [Task]
+  tasks(input: Filter): [Task]
 }

@@ -621,3 +621,16 @@ func (c *TaskClient) QueryJob(t *Task) *JobQuery {
 
 	return query
 }
+
+// QueryTarget queries the target edge of a Task.
+func (c *TaskClient) QueryTarget(t *Task) *TargetQuery {
+	query := &TargetQuery{config: c.config}
+	id := t.ID
+	t1 := sql.Table(target.Table)
+	t2 := sql.Select(task.TargetColumn).
+		From(sql.Table(task.TargetTable)).
+		Where(sql.EQ(task.FieldID, id))
+	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(target.FieldID), t2.C(task.TargetColumn))
+
+	return query
+}

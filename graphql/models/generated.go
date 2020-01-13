@@ -52,6 +52,11 @@ type FailCredentialRequest struct {
 	ID int `json:"id"`
 }
 
+type Filter struct {
+	Offset *int `json:"offset"`
+	Limit  *int `json:"limit"`
+}
+
 type RemoveTagRequest struct {
 	TagID int `json:"tagID"`
 	EntID int `json:"entID"`

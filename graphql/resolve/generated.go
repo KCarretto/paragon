@@ -51,17 +51,35 @@ func (r *Resolver) Task() generated.TaskResolver {
 
 type jobResolver struct{ *Resolver }
 
-func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job) ([]*ent.Task, error) {
-	return obj.QueryTasks().All(ctx)
+func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Task, error) {
+	q := obj.QueryTasks()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
-func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job) ([]*ent.Tag, error) {
-	return obj.QueryTags().All(ctx)
+func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Tag, error) {
+	q := obj.QueryTags()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 func (r *jobResolver) Next(ctx context.Context, obj *ent.Job) (*ent.Job, error) {
 	return obj.QueryNext().Only(ctx)
 }
 func (r *jobResolver) Prev(ctx context.Context, obj *ent.Job) (*ent.Job, error) {
-	return obj.QueryNext().Only(ctx)
+	return obj.QueryPrev().Only(ctx)
 }
 
 type mutationResolver struct{ *Resolver }
@@ -353,60 +371,162 @@ type queryResolver struct{ *Resolver }
 func (r *queryResolver) Credential(ctx context.Context, id int) (*ent.Credential, error) {
 	return r.EntClient.Credential.Get(ctx, id)
 }
-func (r *queryResolver) Credentials(ctx context.Context) ([]*ent.Credential, error) {
-	return r.EntClient.Credential.Query().All(ctx)
+func (r *queryResolver) Credentials(ctx context.Context, input *models.Filter) ([]*ent.Credential, error) {
+	q := r.EntClient.Credential.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 func (r *queryResolver) Job(ctx context.Context, id int) (*ent.Job, error) {
 	return r.EntClient.Job.Get(ctx, id)
 }
-func (r *queryResolver) Jobs(ctx context.Context) ([]*ent.Job, error) {
-	return r.EntClient.Job.Query().All(ctx)
+func (r *queryResolver) Jobs(ctx context.Context, input *models.Filter) ([]*ent.Job, error) {
+	q := r.EntClient.Job.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 func (r *queryResolver) Tag(ctx context.Context, id int) (*ent.Tag, error) {
 	return r.EntClient.Tag.Get(ctx, id)
 }
-func (r *queryResolver) Tags(ctx context.Context) ([]*ent.Tag, error) {
-	return r.EntClient.Tag.Query().All(ctx)
+func (r *queryResolver) Tags(ctx context.Context, input *models.Filter) ([]*ent.Tag, error) {
+	q := r.EntClient.Tag.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 func (r *queryResolver) Target(ctx context.Context, id int) (*ent.Target, error) {
 	return r.EntClient.Target.Get(ctx, id)
 }
-func (r *queryResolver) Targets(ctx context.Context) ([]*ent.Target, error) {
-	return r.EntClient.Target.Query().All(ctx)
+func (r *queryResolver) Targets(ctx context.Context, input *models.Filter) ([]*ent.Target, error) {
+	q := r.EntClient.Target.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 func (r *queryResolver) Task(ctx context.Context, id int) (*ent.Task, error) {
 	return r.EntClient.Task.Get(ctx, id)
 }
-func (r *queryResolver) Tasks(ctx context.Context) ([]*ent.Task, error) {
-	return r.EntClient.Task.Query().All(ctx)
+func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent.Task, error) {
+	q := r.EntClient.Task.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 
 type tagResolver struct{ *Resolver }
 
-func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag) ([]*ent.Task, error) {
-	return obj.QueryTasks().All(ctx)
+func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Task, error) {
+	q := obj.QueryTasks()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
-func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag) ([]*ent.Target, error) {
-	return obj.QueryTargets().All(ctx)
+func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Target, error) {
+	q := obj.QueryTargets()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
-func (r *tagResolver) Jobs(ctx context.Context, obj *ent.Tag) ([]*ent.Job, error) {
-	return obj.QueryJobs().All(ctx)
+func (r *tagResolver) Jobs(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Job, error) {
+	q := obj.QueryJobs()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 
 type targetResolver struct{ *Resolver }
 
-func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target) ([]*ent.Task, error) {
-	return obj.QueryTasks().All(ctx)
+func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Task, error) {
+	q := obj.QueryTasks()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
-func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target) ([]*ent.Tag, error) {
-	return obj.QueryTags().All(ctx)
+func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Tag, error) {
+	q := obj.QueryTags()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
-func (r *targetResolver) Credentials(ctx context.Context, obj *ent.Target) ([]*ent.Credential, error) {
-	return obj.QueryCredentials().All(ctx)
+func (r *targetResolver) Credentials(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Credential, error) {
+	q := obj.QueryCredentials()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 
 type taskResolver struct{ *Resolver }
 
 func (r *taskResolver) Job(ctx context.Context, obj *ent.Task) (*ent.Job, error) {
 	return obj.QueryJob().Only(ctx)
+}
+func (r *taskResolver) Target(ctx context.Context, obj *ent.Task) (*ent.Target, error) {
+	return obj.QueryTarget().Only(ctx)
 }

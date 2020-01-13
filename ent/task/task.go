@@ -44,6 +44,13 @@ const (
 	JobInverseTable = "jobs"
 	// JobColumn is the table column denoting the job relation/edge.
 	JobColumn = "job_id"
+	// TargetTable is the table the holds the target relation/edge.
+	TargetTable = "tasks"
+	// TargetInverseTable is the table name for the Target entity.
+	// It exists in this package in order to avoid circular dependency with the "target" package.
+	TargetInverseTable = "targets"
+	// TargetColumn is the table column denoting the target relation/edge.
+	TargetColumn = "target_id"
 )
 
 // Columns holds all SQL columns are task fields.
