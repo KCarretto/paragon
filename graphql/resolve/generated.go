@@ -2,6 +2,7 @@ package resolve
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/kcarretto/paragon/ent/task"
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
+	"github.com/kcarretto/paragon/pkg/event"
 )
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
@@ -17,6 +19,7 @@ import (
 // Resolver is the root struct for handling all resolves
 type Resolver struct {
 	EntClient *ent.Client
+	Publisher event.Publisher
 }
 
 // Job is the Resolver for the Job Ent
@@ -120,13 +123,31 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	}
 
 	if len(targets) == 0 {
-		_, err = r.EntClient.Task.Create().
+		t, err := r.EntClient.Task.Create().
 			SetQueueTime(currentTime).
 			SetContent(input.Content).
 			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
 			SetJobID(job.ID).
 			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+		tags, err := t.QueryTags().All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		e := event.TaskQueuedEvent{
+			Target:      nil,
+			Task:        t,
+			Credentials: nil,
+			Tags:        tags,
+		}
+		d, err := json.Marshal(e)
+		if err != nil {
+			return nil, err
+		}
+		err = r.Publisher.Publish(ctx, d)
 		if err != nil {
 			return nil, err
 		}
@@ -142,9 +163,31 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 			if err != nil {
 				return nil, err
 			}
-			_, err = target.Update().
+			t, err := target.Update().
 				AddTaskIDs(task.ID).
 				Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+			tags, err := task.QueryTags().All(ctx)
+			if err != nil {
+				return nil, err
+			}
+			creds, err := t.QueryCredentials().All(ctx)
+			if err != nil {
+				return nil, err
+			}
+			e := event.TaskQueuedEvent{
+				Target:      t,
+				Task:        task,
+				Credentials: creds,
+				Tags:        tags,
+			}
+			d, err := json.Marshal(e)
+			if err != nil {
+				return nil, err
+			}
+			err = r.Publisher.Publish(ctx, d)
 			if err != nil {
 				return nil, err
 			}
