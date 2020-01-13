@@ -25,6 +25,7 @@ func main() {
 	if err != nil {
 		panic("You failed to create a publisher for the assigned topic... exiting")
 	}
+	defer pub.topic.Shutdown(ctx)
 
 	server := teamserver.Server{
 		Log:       newLogger(),
