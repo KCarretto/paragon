@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Dropdown } from 'semantic-ui-react';
+import { Dropdown, Input } from 'semantic-ui-react';
 
 // Suggest targets and tags, but only suggest tags that have at least one target.
 export const SUGGEST_TARGETS_QUERY = gql`
@@ -19,8 +19,7 @@ query SuggestTargets {
 // XTargetTypeahead adds a targets field to a form, which is an array of target ids. It provides
 // tag suggestions as well, to allow the user to easily specify a set of targets with a tag.
 // NOTE: Assumes global unique ids, no conflicts from tag & target ids.
-const XTargetTypeahead = ({ onChange }) => {
-    console.log("TARGET TYPEAHEAD RENDERED")
+const XTargetTypeahead = ({ onChange, labeled }) => {
     // optMap: Map of id => { text: name, value: id }
     // tagMap: Map of tag => [targets]
     // values: [tag id | target id]
@@ -81,9 +80,11 @@ const XTargetTypeahead = ({ onChange }) => {
     });
 
     let options = Array.from(state.optMap.values());
-    return (
+    const getDropdown = () => (
         <Dropdown
             placeholder='Select targets'
+            icon=''
+            fluid
             multiple
             search
             selection
@@ -93,8 +94,21 @@ const XTargetTypeahead = ({ onChange }) => {
             name='targets'
             value={state.values}
             onChange={handleChange}
+            style={{
+                borderRadius: "0 4px 4px 0",
+            }}
         />
     );
+
+    if (labeled) {
+        return <Input
+            fluid
+            icon='desktop'
+            label='Targets'
+            input={getDropdown()}
+        />
+    }
+    return getDropdown();
 }
 
 export default XTargetTypeahead;

@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Dropdown } from 'semantic-ui-react';
+import { Dropdown, Input } from 'semantic-ui-react';
 
 // Suggest tags for the typeahead.
 export const SUGGEST_TAGS_QUERY = gql`
@@ -12,9 +12,8 @@ query SuggestTags {
     }
 }`
 
-// XTagTypeahead adds a 'tags' field to a form, which is an array [id, id] with no duplicates.
-const XTagTypeahead = ({ onChange }) => {
-    console.log("TAG TYPEAHEAD RENDERED")
+// XTagTypeahead adds a tags field to a form, which is an array of tag ids with no duplicates.
+const XTagTypeahead = ({ onChange, labeled }) => {
     // Map of id => { text: name, value: id }
     const [state, setState] = useState({ optMap: new Map(), values: [] });
 
@@ -39,15 +38,16 @@ const XTagTypeahead = ({ onChange }) => {
                 }
             ]);
 
-            console.log("Updating tag option map: ", tags);
             setState({ ...state, optMap: new Map(tags) });
         }
     });
 
     let options = Array.from(state.optMap.values());
-    return (
+    const getDropdown = () => (
         <Dropdown
             placeholder='Add tags'
+            icon=''
+            fluid
             multiple
             search
             selection
@@ -57,8 +57,23 @@ const XTagTypeahead = ({ onChange }) => {
             name='tags'
             value={state.values}
             onChange={handleChange}
+            style={{
+                borderRadius: "0 4px 4px 0",
+            }}
         />
     );
+
+    if (labeled) {
+        return (
+            <Input
+                fluid
+                label='Tags'
+                icon='tags'
+                input={getDropdown()}
+            />
+        );
+    }
+    return getDropdown();
 }
 
 export default XTagTypeahead;

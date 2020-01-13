@@ -41,6 +41,7 @@ const XMultiTargetView = () => {
     const showCards = () => {
         if (!data || !data.targets || data.targets.length < 1) {
             return (
+                // TODO: Better styling
                 <h1>No targets found!</h1>
             );
         }
