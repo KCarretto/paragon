@@ -11,21 +11,29 @@ import (
 	_ "gocloud.dev/pubsub/gcppubsub"
 )
 
-func getTopicURI(topic string) (string, error) {
-	project := os.Getenv("GCP_PROJECT")
-	if project == "" {
-		return "", fmt.Errorf("must set GCP_PROJECT environment variable to use GCP pubsub")
-	}
-
-	uri := fmt.Sprintf("gcppubsub://projects/%s/topics/%s", project, topic)
-	return uri, nil
+type GCPPublisher struct {
+	topic *pubsub.Topic
 }
 
-func openTopic(ctx context.Context, topic string) (*pubsub.Topic, error) {
-	uri, err := getTopicURI(topic)
-	if err != nil {
-		return nil, err
+func newPublisher(ctx context.Context, topic string) (*GCPPublisher, error) {
+	project := os.Getenv("GCP_PROJECT")
+	if project == "" {
+		return nil, fmt.Errorf("must set GCP_PROJECT environment variable to use GCP pubsub")
 	}
 
-	return pubsub.OpenTopic(ctx, uri)
+	topic_uri := fmt.Sprintf("gcppubsub://projects/%s/topics/%s", project, topic)
+	t, err := pubsub.OpenTopic(ctx, topic_uri)
+	if err != nil {
+		return nil, fmt.Errorf("failed to subscribe to the topic passed")
+	}
+
+	return &GCPPublisher{
+		topic: t,
+	}, nil
+}
+
+func (pub *GCPPublisher) Publish(ctx context.Context, data []byte) error {
+	return pub.topic.Send(ctx, &pubsub.Message{
+		Body: data,
+	})
 }
