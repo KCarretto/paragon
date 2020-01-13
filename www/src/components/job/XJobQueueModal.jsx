@@ -1,9 +1,9 @@
 import { useMutation } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Button, Form, Loader, Modal } from 'semantic-ui-react';
+import { Button, Form, Header, Icon, Loader, Modal } from 'semantic-ui-react';
 import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY } from '../../views';
-import { XTagTypeahead, XTargetTypeahead } from '../form';
+import { XScriptEditor, XTagTypeahead, XTargetTypeahead } from '../form';
 import { XErrorMessage } from '../messages';
 
 export const QUEUE_JOB_MUTATION = gql`
@@ -83,7 +83,34 @@ const XJobQueueModal = ({ header }) => {
                     </Form.Field>
                 </Form.Group>
 
-                <Form.Field style={{ 'margin-top': '25px' }}>
+                <Header inverted attached='top' size='large'>
+                    <Icon name='code' />
+                    {params.name ? params.name : 'Script'}
+                </Header>
+                <XScriptEditor
+                    handleChange={handleChange}
+                />
+
+                {/* <ControlledEditor
+                    options={{
+                        scrollbar: {
+                            verticalScrollbarSize: '7px',
+                        },
+                        minimap: { enabled: false },
+                        cursorStyle: 'line-thin',
+                    }}
+                    theme='dark'
+                    height='600px'
+                    value={params.content}
+                    editorDidMount={(fn, mco) => {
+                        let element = document.getElementsByTagName('textarea')[0];
+                        element.classList.remove("inputarea");
+                    }}
+                    onChange={(e, value) => { handleChange(e, { name: 'content', value: value }) }}
+                    language="python"
+                /> */}
+
+                {/* <Form.Field style={{ 'margin-top': '25px' }}>
                     <label>Script</label>
                     <Form.TextArea
                         label={{ content: 'Enter script' }}
@@ -93,11 +120,12 @@ const XJobQueueModal = ({ header }) => {
                         value={params.content}
                         onChange={handleChange}
                     />
-                </Form.Field>
+                </Form.Field> */}
                 <XErrorMessage title='Failed to Queue Job' err={error} />
             </Modal.Content>
             <Modal.Actions>
                 <Form.Button positive floated='right'>Queue</Form.Button>
+                <br />
             </Modal.Actions>
         </Modal >
     );
