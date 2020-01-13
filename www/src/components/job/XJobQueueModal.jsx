@@ -14,6 +14,7 @@ mutation QueueJob($name: String!, $content: String!, $tags: [ID!], $targets: [ID
 }`;
 
 const XJobQueueModal = ({ header }) => {
+    console.log("RENDERING MODAL")
     let container;
 
     const [isOpen, setIsOpen] = useState(false);
@@ -24,19 +25,35 @@ const XJobQueueModal = ({ header }) => {
         setIsOpen(true);
     }
 
-    const [params, setParams] = useState({ name: '', content: '', tags: [], targets: [] });
-    const handleChange = (e, { name, value }) => {
-        console.log("Updated form values: ", name, value);
-        setParams({ ...params, [name]: value });
-    }
+    const [name, setName] = useState('');
+    const [content, setContent] = useState('');
+    const [tags, setTags] = useState([]);
+    const [targets, setTargets] = useState([]);
+
+    // const [params, setParams] = useState({ name: '', content: '', tags: [], targets: [] });
+    // const handleChange = (e, { name, value }) => {
+    //     let newParams = { [name]: value };
+    //     console.log("Updated form values: ", name, value, params, newParams);
+    //     setParams(newParams);
+    // }
 
     const [queueJob, { called, loading, error }] = useMutation(QUEUE_JOB_MUTATION, {
         refetchQueries: [{ query: MULTI_JOB_QUERY }, { query: MULTI_TARGET_QUERY }],
     });
 
     const handleSubmit = () => {
-        console.log("Creating job with params: ", params);
-        queueJob({ variables: params }).then(({ data, errors }) => {
+        let vars = {
+            name: name,
+            content: content,
+            tags: tags,
+            targets: targets,
+        }
+        console.log("Creating job with vars: ", vars);
+
+        queueJob({
+            variables: vars
+        }).then(({ data, errors }) => {
+            // TODO: Display success or failure in form
             console.log("Create job result: ", data, errors);
             if (errors && errors.length > 0) {
                 container.error(errors.join('\n', 'Failed to queue job'))
@@ -65,31 +82,29 @@ const XJobQueueModal = ({ header }) => {
                     label='Job Name'
                     placeholder='Enter job name'
                     name='name'
-                    value={params.name}
-                    onChange={handleChange}
+                    value={name}
+                    onChange={(e, { value }) => setName(value)}
                 />
                 <Form.Group widths={2}>
                     <Form.Field width={6}>
                         <label>Targets</label>
                         <XTargetTypeahead
-                            onChange={handleChange}
+                            onChange={(e, { value }) => setTargets(value)}
                         />
                     </Form.Field>
                     <Form.Field width={6}>
                         <label>Tags</label>
                         <XTagTypeahead
-                            onChange={handleChange}
+                            onChange={(e, { value }) => setTags(value)}
                         />
                     </Form.Field>
                 </Form.Group>
 
                 <Header inverted attached='top' size='large'>
                     <Icon name='code' />
-                    {params.name ? params.name : 'Script'}
+                    {name ? name : 'Script'}
                 </Header>
-                <XScriptEditor
-                    handleChange={handleChange}
-                />
+                <Form.Field control={XScriptEditor} onChange={(e, { value }) => setContent(value)} />
 
                 {/* <ControlledEditor
                     options={{

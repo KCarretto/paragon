@@ -20,6 +20,7 @@ query SuggestTargets {
 // tag suggestions as well, to allow the user to easily specify a set of targets with a tag.
 // NOTE: Assumes global unique ids, no conflicts from tag & target ids.
 const XTargetTypeahead = ({ onChange }) => {
+    console.log("TARGET TYPEAHEAD RENDERED")
     // optMap: Map of id => { text: name, value: id }
     // tagMap: Map of tag => [targets]
     // values: [tag id | target id]
@@ -34,10 +35,7 @@ const XTargetTypeahead = ({ onChange }) => {
             return state.tagMap.get(id);
         }))];
 
-        console.log("New target typeahead value: ", value);
         setState({ ...state, values: value });
-
-        console.log("Updating target form ids: ", targets);
         onChange(e, { name: name, value: targets })
     }
 
@@ -83,7 +81,6 @@ const XTargetTypeahead = ({ onChange }) => {
     });
 
     let options = Array.from(state.optMap.values());
-    console.log("PROVIDING OPTIONS TO TARGET DROPDOWN: ", options)
     return (
         <Dropdown
             placeholder='Select targets'

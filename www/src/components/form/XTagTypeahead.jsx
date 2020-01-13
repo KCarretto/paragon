@@ -14,13 +14,12 @@ query SuggestTags {
 
 // XTagTypeahead adds a 'tags' field to a form, which is an array [id, id] with no duplicates.
 const XTagTypeahead = ({ onChange }) => {
+    console.log("TAG TYPEAHEAD RENDERED")
     // Map of id => { text: name, value: id }
     const [state, setState] = useState({ optMap: new Map(), values: [] });
 
     const handleChange = (e, { name, value }) => {
-        console.log("New tag typeahead value: ", value);
         setState({ ...state, values: value });
-
         onChange(e, { name: name, value: value })
     }
 
@@ -46,7 +45,6 @@ const XTagTypeahead = ({ onChange }) => {
     });
 
     let options = Array.from(state.optMap.values());
-    console.log("PROVIDING OPTIONS TO TAG DROPDOWN: ", options)
     return (
         <Dropdown
             placeholder='Add tags'
