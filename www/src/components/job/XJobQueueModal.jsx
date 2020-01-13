@@ -61,26 +61,39 @@ const XJobQueueModal = ({ header }) => {
             <Modal.Header>{header ? header : "Queue a Job"}<Loader disabled={!called || !loading} /></Modal.Header>
             <Modal.Content>
                 <Form.Input
-                    label={{ content: 'Name' }}
+                    width={6}
+                    label='Job Name'
                     placeholder='Enter job name'
                     name='name'
                     value={params.name}
                     onChange={handleChange}
                 />
-                <XTargetTypeahead
-                    onChange={handleChange}
-                />
-                <XTagTypeahead
-                    onChange={handleChange}
-                />
-                <Form.TextArea
-                    label={{ content: 'Enter script' }}
-                    placeholder='Enter script content'
-                    name='content'
-                    rows={15}
-                    value={params.content}
-                    onChange={handleChange}
-                />
+                <Form.Group widths={2}>
+                    <Form.Field width={6}>
+                        <label>Targets</label>
+                        <XTargetTypeahead
+                            onChange={handleChange}
+                        />
+                    </Form.Field>
+                    <Form.Field width={6}>
+                        <label>Tags</label>
+                        <XTagTypeahead
+                            onChange={handleChange}
+                        />
+                    </Form.Field>
+                </Form.Group>
+
+                <Form.Field style={{ 'margin-top': '25px' }}>
+                    <label>Script</label>
+                    <Form.TextArea
+                        label={{ content: 'Enter script' }}
+                        placeholder='Enter script content'
+                        name='content'
+                        rows={15}
+                        value={params.content}
+                        onChange={handleChange}
+                    />
+                </Form.Field>
                 <XErrorMessage title='Failed to Queue Job' err={error} />
             </Modal.Content>
             <Modal.Actions>

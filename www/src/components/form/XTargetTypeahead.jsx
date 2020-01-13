@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Form } from 'semantic-ui-react';
+import { Dropdown } from 'semantic-ui-react';
 
 // Suggest targets and tags, but only suggest tags that have at least one target.
 export const SUGGEST_TARGETS_QUERY = gql`
@@ -85,9 +85,8 @@ const XTargetTypeahead = ({ onChange }) => {
     let options = Array.from(state.optMap.values());
     console.log("PROVIDING OPTIONS TO TARGET DROPDOWN: ", options)
     return (
-        <Form.Dropdown
-            placeholder='Add targets'
-            fluid
+        <Dropdown
+            placeholder='Select targets'
             multiple
             search
             selection

@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Form } from 'semantic-ui-react';
+import { Dropdown } from 'semantic-ui-react';
 
 // Suggest tags for the typeahead.
 export const SUGGEST_TAGS_QUERY = gql`
@@ -48,9 +48,8 @@ const XTagTypeahead = ({ onChange }) => {
     let options = Array.from(state.optMap.values());
     console.log("PROVIDING OPTIONS TO TAG DROPDOWN: ", options)
     return (
-        <Form.Dropdown
+        <Dropdown
             placeholder='Add tags'
-            fluid
             multiple
             search
             selection
