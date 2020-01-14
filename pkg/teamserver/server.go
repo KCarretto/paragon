@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 	"os"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -14,6 +14,7 @@ import (
 	"github.com/kcarretto/paragon/graphql/resolve"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/middleware"
 	"github.com/kcarretto/paragon/www"
 )
@@ -22,6 +23,7 @@ import (
 type Server struct {
 	Log       *zap.Logger
 	EntClient *ent.Client
+	Publisher event.Publisher
 }
 
 func (srv *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -59,7 +61,7 @@ func (srv *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (srv *Server) Run() {
 	router := http.NewServeMux()
 
-	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient}}))
+	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient, Publisher: srv.Publisher}}))
 
 	router.Handle("/graphql", h)
 	router.Handle("/graphiql", handler.Playground("GraphQL", "/graphql"))
