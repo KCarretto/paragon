@@ -24,6 +24,7 @@ const XTargetTypeahead = ({ onChange, labeled }) => {
     // tagMap: Map of tag => [targets]
     // values: [tag id | target id]
     const [state, setState] = useState({ tagMap: new Map(), optMap: new Map(), values: [] });
+    const [error, setError] = useState(null);
 
     // Wrap onChange to flatten target id array.
     const handleChange = (e, { name, value }) => {
@@ -38,7 +39,7 @@ const XTargetTypeahead = ({ onChange, labeled }) => {
         onChange(e, { name: name, value: targets })
     }
 
-    const { loading, err } = useQuery(SUGGEST_TARGETS_QUERY, {
+    const { loading } = useQuery(SUGGEST_TARGETS_QUERY, {
         onCompleted: data => {
             if (!data || !data.targets) {
                 data = { targets: [] };
@@ -76,6 +77,10 @@ const XTargetTypeahead = ({ onChange, labeled }) => {
             ]);
 
             setState({ ...state, tagMap: tMap, optMap: new Map(entries) });
+            setError(null);
+        },
+        onError: err => {
+            setError(err)
         }
     });
 
@@ -88,7 +93,7 @@ const XTargetTypeahead = ({ onChange, labeled }) => {
             multiple
             search
             selection
-            error={err}
+            error={error}
             loading={loading}
             options={options}
             name='targets'

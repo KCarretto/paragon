@@ -46,10 +46,10 @@ const XJobQueueModal = ({ header }) => {
 
     return (
         <Modal
-            centered={false}
             open={isOpen}
             onClose={closeModal}
             trigger={<Button positive circular icon='plus' onClick={openModal} />}
+            size='large'
 
             // Form properties
             as={Form}
@@ -59,10 +59,11 @@ const XJobQueueModal = ({ header }) => {
         >
             <Modal.Header>{header ? header : "Queue a Job"}</Modal.Header>
             <Modal.Content>
-                <Grid verticalAlign='middle' stackable container columns={2}>
+                <Grid verticalAlign='middle' stackable container columns={'equal'}>
                     <Grid.Column>
                         <Input
                             label='Job Name'
+                            icon='cube'
                             fluid
                             placeholder='Enter job name'
                             name='name'
@@ -88,7 +89,7 @@ const XJobQueueModal = ({ header }) => {
                     control={XScriptEditor}
                     content={content}
                     onChange={(e, { value }) => setContent(value)} />
-                < Message
+                <Message
                     error
                     icon='warning'
                     header={'Failed to Queue Job'}
@@ -97,7 +98,7 @@ const XJobQueueModal = ({ header }) => {
                 />
             </Modal.Content>
             <Modal.Actions>
-                <Form.Button style={{ 'margin-bottom': '10px' }} positive floated='right'>Queue</Form.Button>
+                <Form.Button style={{ marginBottom: '10px' }} positive floated='right'>Queue</Form.Button>
             </Modal.Actions>
         </Modal >
     );

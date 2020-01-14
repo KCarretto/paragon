@@ -12,7 +12,7 @@ const XScriptEditor = ({ onChange, content }) => {
                     Initializing scripting engine...
                 </Message.Content>
             </Message>}
-            height='550px'
+            height='50vh'
             language="python"
             theme='dark'
             value={content}

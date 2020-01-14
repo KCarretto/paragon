@@ -16,6 +16,7 @@ query SuggestTags {
 const XTagTypeahead = ({ onChange, labeled }) => {
     // Map of id => { text: name, value: id }
     const [state, setState] = useState({ optMap: new Map(), values: [] });
+    const [error, setError] = useState(null);
 
     const handleChange = (e, { name, value }) => {
         setState({ ...state, values: value });
@@ -23,7 +24,7 @@ const XTagTypeahead = ({ onChange, labeled }) => {
     }
 
     // NOTE: Assumes global unique ids, no conflicts from tag & target ids.
-    const { loading, err } = useQuery(SUGGEST_TAGS_QUERY, {
+    const { loading } = useQuery(SUGGEST_TAGS_QUERY, {
         onCompleted: data => {
             if (!data || !data.tags) {
                 data = { tags: [] };
@@ -39,6 +40,10 @@ const XTagTypeahead = ({ onChange, labeled }) => {
             ]);
 
             setState({ ...state, optMap: new Map(tags) });
+            setError(null);
+        },
+        onError: err => {
+            setError(err);
         }
     });
 
@@ -51,7 +56,7 @@ const XTagTypeahead = ({ onChange, labeled }) => {
             multiple
             search
             selection
-            error={err}
+            error={error}
             loading={loading}
             options={options}
             name='tags'
