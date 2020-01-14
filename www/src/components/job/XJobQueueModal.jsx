@@ -1,10 +1,9 @@
 import { useMutation } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Button, Form, Loader, Modal } from 'semantic-ui-react';
+import { Button, Form, Grid, Header, Icon, Input, Message, Modal } from 'semantic-ui-react';
 import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY } from '../../views';
-import { XTagTypeahead, XTargetTypeahead } from '../form';
-import { XErrorMessage } from '../messages';
+import { useModal, XScriptEditor, XTagTypeahead, XTargetTypeahead } from '../form';
 
 export const QUEUE_JOB_MUTATION = gql`
 mutation QueueJob($name: String!, $content: String!, $tags: [ID!], $targets: [ID!]) {
@@ -14,77 +13,93 @@ mutation QueueJob($name: String!, $content: String!, $tags: [ID!], $targets: [ID
 }`;
 
 const XJobQueueModal = ({ header }) => {
-    let container;
+    const [openModal, closeModal, isOpen] = useModal();
+    const [error, setError] = useState(null);
 
-    const [isOpen, setIsOpen] = useState(false);
-    const closeModal = () => {
-        setIsOpen(false);
-    }
-    const openModal = () => {
-        setIsOpen(true);
-    }
+    // Form params
+    const [name, setName] = useState('');
+    const [content, setContent] = useState('\n# Enter your script here!\ndef main():\n\tprint("Hello World")');
+    const [tags, setTags] = useState([]);
+    const [targets, setTargets] = useState([]);
 
-    const [params, setParams] = useState({ name: '', content: '', tags: [], targets: [] });
-    const handleChange = (e, { name, value }) => {
-        console.log("Updated form values: ", name, value);
-        setParams({ ...params, [name]: value });
-    }
-
-    const [queueJob, { called, loading, error }] = useMutation(QUEUE_JOB_MUTATION, {
+    const [queueJob, { called, loading }] = useMutation(QUEUE_JOB_MUTATION, {
         refetchQueries: [{ query: MULTI_JOB_QUERY }, { query: MULTI_TARGET_QUERY }],
     });
 
     const handleSubmit = () => {
-        console.log("Creating job with params: ", params);
-        queueJob({ variables: params }).then(({ data, errors }) => {
-            console.log("Create job result: ", data, errors);
+        let vars = {
+            name: name,
+            content: content,
+            tags: tags,
+            targets: targets,
+        }
+
+        queueJob({
+            variables: vars
+        }).then(({ data, errors }) => {
             if (errors && errors.length > 0) {
-                container.error(errors.join('\n', 'Failed to queue job'))
+                setError({ message: errors.join('\n') })
                 return;
             }
-            container.info(`Created job with id: ${data.job.id}`, 'Job Queued');
-        }).catch((err) => console.error("GraphQL mutation failed", err));
+            closeModal();
+        }).catch((err) => setError(err));
     }
 
-    console.log("ERROR IS", error);
     return (
         <Modal
-            centered={false}
             open={isOpen}
             onClose={closeModal}
             trigger={<Button positive circular icon='plus' onClick={openModal} />}
+            size='large'
 
             // Form properties
             as={Form}
             onSubmit={handleSubmit}
+            error={called && error}
+            loading={called && loading}
         >
-            <Modal.Header>{header ? header : "Queue a Job"}<Loader disabled={!called || !loading} /></Modal.Header>
+            <Modal.Header>{header ? header : "Queue a Job"}</Modal.Header>
             <Modal.Content>
-                <Form.Input
-                    label={{ content: 'Name' }}
-                    placeholder='Enter job name'
-                    name='name'
-                    value={params.name}
-                    onChange={handleChange}
+                <Grid verticalAlign='middle' stackable container columns={'equal'}>
+                    <Grid.Column>
+                        <Input
+                            label='Job Name'
+                            icon='cube'
+                            fluid
+                            placeholder='Enter job name'
+                            name='name'
+                            value={name}
+                            onChange={(e, { value }) => setName(value)}
+                        />
+                    </Grid.Column>
+
+                    <Grid.Column>
+                        <XTagTypeahead labeled onChange={(e, { value }) => setTags(value)} />
+                    </Grid.Column>
+
+                    <Grid.Column>
+                        <XTargetTypeahead labeled onChange={(e, { value }) => setTargets(value)} />
+                    </Grid.Column>
+                </Grid>
+
+                <Header inverted attached='top' size='large'>
+                    <Icon name='code' />
+                    {name ? name : 'Script'}
+                </Header>
+                <Form.Field
+                    control={XScriptEditor}
+                    content={content}
+                    onChange={(e, { value }) => setContent(value)} />
+                <Message
+                    error
+                    icon='warning'
+                    header={'Failed to Queue Job'}
+                    onDismiss={(e, data) => setError(null)}
+                    content={error ? error.message : 'Unknown Error'}
                 />
-                <XTargetTypeahead
-                    onChange={handleChange}
-                />
-                <XTagTypeahead
-                    onChange={handleChange}
-                />
-                <Form.TextArea
-                    label={{ content: 'Enter script' }}
-                    placeholder='Enter script content'
-                    name='content'
-                    rows={15}
-                    value={params.content}
-                    onChange={handleChange}
-                />
-                <XErrorMessage title='Failed to Queue Job' err={error} />
             </Modal.Content>
             <Modal.Actions>
-                <Form.Button positive floated='right'>Queue</Form.Button>
+                <Form.Button style={{ marginBottom: '10px' }} positive floated='right'>Queue</Form.Button>
             </Modal.Actions>
         </Modal >
     );

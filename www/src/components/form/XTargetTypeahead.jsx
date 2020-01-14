@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Form } from 'semantic-ui-react';
+import { Dropdown, Input } from 'semantic-ui-react';
 
 // Suggest targets and tags, but only suggest tags that have at least one target.
 export const SUGGEST_TARGETS_QUERY = gql`
@@ -19,11 +19,12 @@ query SuggestTargets {
 // XTargetTypeahead adds a targets field to a form, which is an array of target ids. It provides
 // tag suggestions as well, to allow the user to easily specify a set of targets with a tag.
 // NOTE: Assumes global unique ids, no conflicts from tag & target ids.
-const XTargetTypeahead = ({ onChange }) => {
+const XTargetTypeahead = ({ onChange, labeled }) => {
     // optMap: Map of id => { text: name, value: id }
     // tagMap: Map of tag => [targets]
     // values: [tag id | target id]
     const [state, setState] = useState({ tagMap: new Map(), optMap: new Map(), values: [] });
+    const [error, setError] = useState(null);
 
     // Wrap onChange to flatten target id array.
     const handleChange = (e, { name, value }) => {
@@ -34,14 +35,11 @@ const XTargetTypeahead = ({ onChange }) => {
             return state.tagMap.get(id);
         }))];
 
-        console.log("New target typeahead value: ", value);
         setState({ ...state, values: value });
-
-        console.log("Updating target form ids: ", targets);
         onChange(e, { name: name, value: targets })
     }
 
-    const { loading, err } = useQuery(SUGGEST_TARGETS_QUERY, {
+    const { loading } = useQuery(SUGGEST_TARGETS_QUERY, {
         onCompleted: data => {
             if (!data || !data.targets) {
                 data = { targets: [] };
@@ -79,26 +77,43 @@ const XTargetTypeahead = ({ onChange }) => {
             ]);
 
             setState({ ...state, tagMap: tMap, optMap: new Map(entries) });
+            setError(null);
+        },
+        onError: err => {
+            setError(err)
         }
     });
 
     let options = Array.from(state.optMap.values());
-    console.log("PROVIDING OPTIONS TO TARGET DROPDOWN: ", options)
-    return (
-        <Form.Dropdown
-            placeholder='Add targets'
+    const getDropdown = () => (
+        <Dropdown
+            placeholder='Select targets'
+            icon=''
             fluid
             multiple
             search
             selection
-            error={err}
+            error={error}
             loading={loading}
             options={options}
             name='targets'
             value={state.values}
             onChange={handleChange}
+            style={{
+                borderRadius: "0 4px 4px 0",
+            }}
         />
     );
+
+    if (labeled) {
+        return <Input
+            fluid
+            icon='desktop'
+            label='Targets'
+            input={getDropdown()}
+        />
+    }
+    return getDropdown();
 }
 
 export default XTargetTypeahead;

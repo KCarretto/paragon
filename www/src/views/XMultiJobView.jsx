@@ -38,6 +38,7 @@ const XMultiJobView = () => {
     const showCards = () => {
         if (!data || !data.jobs || data.jobs.length < 1) {
             return (
+                // TODO: Better styling
                 <h1>No jobs found!</h1>
             );
         }
