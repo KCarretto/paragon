@@ -1,12 +1,12 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import moment from 'moment';
-import React from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Container, Icon, Label, Loader } from 'semantic-ui-react';
+import { Card, Container, Icon, Label } from 'semantic-ui-react';
 import { XCredentialSummary } from '../components/credential';
+import { XErrorMessage, XLoadingMessage } from '../components/messages';
 import { XTaskSummary } from '../components/task';
-
 
 
 const TARGET_QUERY = gql`
@@ -15,9 +15,9 @@ const TARGET_QUERY = gql`
         id
         name
         primaryIP
-        machineUUID
         publicIP
         primaryMAC
+        machineUUID
         hostname
         lastSeen
         tasks {
@@ -49,74 +49,104 @@ const TARGET_QUERY = gql`
 
 const XTargetView = () => {
     let { id } = useParams();
+    const [error, setError] = useState(null);
 
-    const { loading, error, data } = useQuery(TARGET_QUERY, {
+    const [name, setName] = useState(null);
+    const [primaryIP, setPrimaryIP] = useState(null);
+    const [publicIP, setPublicIP] = useState(null);
+    const [machineUUID, setMachineUUID] = useState(null);
+    const [primaryMAC, setPrimaryMAC] = useState(null);
+    const [hostname, setHostname] = useState(null);
+    const [lastSeen, setLastSeen] = useState(null);
+    const [tasks, setTasks] = useState([]);
+    const [tags, setTags] = useState([]);
+    const [creds, setCreds] = useState([]);
+
+    const { called, loading } = useQuery(TARGET_QUERY, {
         variables: { id },
-    });
+        onCompleted: data => {
+            setError(null);
 
-    if (loading) return (<Loader active />);
-    if (error) return (`${error}`);
+            setName(data.name);
+            setPrimaryIP(data.primaryIP);
+            setPublicIP(data.publicIP);
+            setPrimaryMAC(data.primaryMAC);
+            setMachineUUID(data.machineUUID);
+            setHostname(data.hostname);
+            setLastSeen(data.lastSeen);
+            setTasks(data.tasks || []);
+            setTags(data.tags || []);
+            setCreds(data.creds || []);
+        },
+        onError: err => setError(err),
+    });
 
     return (
         <Container fluid style={{ padding: '20px' }}>
+            <XErrorMessage title='Error Loading Target' err={error} />
+            <XLoadingMessage
+                title='Loading Target'
+                msg='Fetching target information...'
+                hidden={called && loading}
+            />
             <Card fluid centered>
                 <Card.Content>
-                    <Card.Header>{data.target.name}</Card.Header>
+                    <Card.Header>{name}</Card.Header>
                     {
-                        moment(data.target.lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
+                        lastSeen && moment(lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
                             <Label corner='right' size='large' icon='times circle' color='red' />
                             : <Label corner='right' size='large' icon='check circle' color='green' />
                     }
                     <Card.Meta>
                         <a>
                             <i aria-hidden="true" className="clock icon"></i>
-                            Last Seen: {data.target.lastSeen ? moment(data.target.lastSeen).fromNow() : 'Never'}<br />
+                            Last Seen: {lastSeen ? moment(lastSeen).fromNow() : 'Never'}<br />
                         </a>
-                        {data.target.primaryIP ?
+                        {primaryIP ?
                             <a>
                                 <i aria-hidden="true" className="user icon"></i>
-                                Primary IP: {data.target.primaryIP}<br />
+                                Primary IP: {primaryIP}<br />
                             </a>
                             :
                             <div></div>
                         }
-                        {data.target.hostname ?
+                        {hostname ?
                             <a>
                                 <i aria-hidden="true" className="user icon"></i>
-                                Hostname: {data.target.hostname}<br />
+                                Hostname: {hostname}<br />
                             </a>
                             :
                             <div></div>
                         }
-                        <Icon name='tags' /> {data.target.tags && data.target.tags.length != 0 ? data.target.tags.map(tag => tag.name).join(', ') : 'None'}
+                        <Icon name='tags' /> {tags && tags.length != 0 ? tags.map(tag => tag.name).join(', ') : 'None'}
                     </Card.Meta>
                     <Card.Description>
-                        <XTaskSummary tasks={data.target.tasks} />
-                        <XCredentialSummary credentials={data.target.credentials} />
+                        <XTaskSummary tasks={tasks} limit={tasks.length} />
+                        <XCredentialSummary credentials={creds} />
                     </Card.Description>
                 </Card.Content>
-                {data.target.primaryMAC || data.target.publicIP || data.target.machineUUID ?
+                {primaryMAC || publicIP || machineUUID ?
                     <Card.Content extra>
-                        {data.target.primaryMAC ?
+                        {primaryMAC ?
                             <a>
                                 <i aria-hidden="true" className="user icon"></i>
-                                Primary MAC: {data.target.primaryMAC}<br />
+                                Primary MAC: {primaryMAC}<br />
                             </a>
                             :
                             <div></div>
                         }
-                        {data.target.publicIP ?
+                        {publicIP ?
                             <a>
                                 <i aria-hidden="true" className="user icon"></i>
-                                Public IP: {data.target.publicIP}<br />
+                                Public IP: {publicIP}<br />
                             </a>
                             :
                             <div></div>
                         }
-                        {data.target.machineUUID ?
+                        {machineUUID ?
                             <a>
                                 <i aria-hidden="true" className="user icon"></i>
-                                MachineUUID: {data.target.machineUUID}<br />
+                                MachineUUID: {machineUUID}<br />
                             </a>
                             :
                             <div></div>
