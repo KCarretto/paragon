@@ -87,7 +87,7 @@ const XTargetView = () => {
             <XLoadingMessage
                 title='Loading Target'
                 msg='Fetching target information...'
-                hidden={called && loading}
+                hidden={called && !loading}
             />
             <Card fluid centered>
                 <Card.Content>

@@ -1,16 +1,21 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
-import { default as React } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Container, Icon, Label, Loader } from 'semantic-ui-react';
-import { XTaskStatus } from '../components/task';
-
+import { Card, Container, Header, Icon, Segment } from 'semantic-ui-react';
+import { XErrorMessage, XLoadingMessage } from '../components/messages';
+import { XTaskCard } from '../components/task';
 
 export const JOB_QUERY = gql`
 query Job($id: ID!) {
     job(id: $id) {
         id
-
+        name
+        content
+        tags {
+            id
+            name
+        }
         tasks {
             id
             queueTime
@@ -21,6 +26,11 @@ query Job($id: ID!) {
             output
             error
             sessionID
+
+            target {
+                id
+              	name
+            }
             job {
                 id
                 name
@@ -35,77 +45,75 @@ query Job($id: ID!) {
 
 const XJobView = () => {
     let { id } = useParams();
+    const [error, setError] = useState(null);
 
-    const { loading, error, data } = useQuery(JOB_QUERY, {
+    const [name, setName] = useState('');
+    const [content, setContent] = useState('');
+    const [tags, setTags] = useState([]);
+    const [tasks, setTasks] = useState([]);
+
+    const { called, loading } = useQuery(JOB_QUERY, {
         variables: { id },
-    });
-
-    if (loading) return (<Loader active />);
-    if (error) return (`${error}`);
-
-    const taskCards = data.job.tasks.map(task => {
-        let status = XTaskStatus.getStatus(task).icon;
-        return <Card fluid centered>
-            <Card.Content>
-                <Card.Header>
-                    <Label size='mini' icon={<Icon fitted size='big' {...status} />} attached='top right' />
-                    {task.job.name ? task.job.name : 'Untitled Job'}
-                </Card.Header>
-                {
-                    task.job.tags && task.job.tags.length != 0 ?
-                        <Card.Meta>
-                            <Icon name='tags' /> {task.job.tags.map(tag => tag.name).join(', ')}
-                        </Card.Meta>
-                        :
-                        <Card.Meta>
-                            <Icon name='tags' /> None
-                    </Card.Meta>
-                }
-                <Card.Description>
-                    <div className="ui visible message">
-                        <div className="header">
-                            Content
-                    </div>
-                        <pre>{task.content}</pre>
-                    </div>
-                    {task.output ?
-                        <div className="ui positive message">
-                            <div className="header">
-                                Output
-                        </div>
-                            <pre>{task.output}</pre>
-                        </div> :
-                        <div></div>
-                    }
-                    {task.error ?
-                        <div className="ui negative message">
-                            <div className="header">
-                                Error
-                        </div>
-                            <pre>{task.error}</pre>
-                        </div>
-                        :
-                        <div></div>
-                    }
-                </Card.Description>
-            </Card.Content>
-            {task.sessionID ?
-                <Card.Content extra>
-                    <a>
-                        <i aria-hidden="true" className="user icon"></i>
-                        {task.sessionID}
-                    </a>
-                </Card.Content>
-                :
-                <div></div>
+        onCompleted: data => {
+            setError(null);
+            if (!data || !data.job) {
+                data = { job: { name: '', content: '', tags: [], tasks: [] } }
             }
 
-        </Card>
-    })
+            setName(data.job.name || '');
+            setContent(data.job.content || '')
+            setTags(data.job.tags || []);
+            setTasks(data.job.tasks || []);
+        },
+        onError: err => setError(err),
+    });
+
+    const showCards = () => {
+        if (!tasks || tasks.length < 1) {
+            return (
+                // TODO: Better styling
+                <h1>No tasks found!</h1>
+            );
+        }
+        return (
+            <Card.Group centered itemsPerRow={4}>
+                {tasks.map(task => (<XTaskCard key={task.id} task={task} />))}
+            </Card.Group>
+        );
+    };
 
     return (
         <Container fluid style={{ padding: '20px' }}>
-            {taskCards}
+            <Header size='huge'>
+                <Icon name='cube' />
+                <Header.Content>{name}</Header.Content>
+                <Header.Subheader>
+                    {tags && tags.length > 0 ? <span><Icon name='tags' /> {tags.map(tag => tag.name).join(', ')}</span> : <span />}
+                </Header.Subheader>
+            </Header>
+
+            <XErrorMessage title='Error Loading Job' err={error} />
+            <XLoadingMessage
+                title='Loading Job'
+                msg='Fetching job information...'
+                hidden={called && !loading}
+            />
+
+            <Header size='large' attached='top' inverted>
+                <Icon name='code' />
+                <Header.Content>Content</Header.Content>
+            </Header>
+            <Segment raised attached>
+                <pre>{content || 'No Content Available'}</pre>
+            </Segment>
+
+            <Header size='large' block inverted>
+                <Icon name='tasks' />
+                <Header.Content>Tasks</Header.Content>
+            </Header>
+            {showCards()}
+            {/* <XTaskList targetHeader tasks={tasks} limit={tasks.length} /> */}
+            {/* {taskCards} */}
         </Container>
     );
 }
