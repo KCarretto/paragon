@@ -64,7 +64,7 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job, input *models.Fil
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Tag, error) {
 	q := obj.QueryTags()
@@ -125,6 +125,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	if len(targets) == 0 {
 		t, err := r.EntClient.Task.Create().
 			SetQueueTime(currentTime).
+			SetLastChangedTime(currentTime).
 			SetContent(input.Content).
 			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
@@ -155,6 +156,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		for _, target := range targets {
 			task, err := r.EntClient.Task.Create().
 				SetQueueTime(currentTime).
+				SetLastChangedTime(currentTime).
 				SetContent(input.Content).
 				SetNillableSessionID(input.SessionID).
 				AddTagIDs(input.Tags...).
@@ -357,6 +359,7 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 		// filter by session if necessary
 		if t.SessionID == "" || t.SessionID == sessionID {
 			t, err = t.Update().
+				SetLastChangedTime(currentTime).
 				SetClaimTime(currentTime).
 				Save(ctx)
 			if err != nil {
@@ -377,8 +380,10 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 		return nil, err
 	}
 
+	currentTime := time.Now()
 	return task.Update().
-		SetClaimTime(time.Now()).
+		SetClaimTime(currentTime).
+		SetLastChangedTime(currentTime).
 		Save(ctx)
 }
 func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error) {
@@ -402,6 +407,7 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 		return nil, err
 	}
 	return taskEnt.Update().
+		SetLastChangedTime(time.Now()).
 		SetOutput(taskEnt.Output + inputOutput).
 		SetError(taskEnt.Error + inputError).
 		SetNillableExecStartTime(input.ExecStartTime).
@@ -484,7 +490,7 @@ func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 
 type tagResolver struct{ *Resolver }
@@ -499,7 +505,7 @@ func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag, input *models.Fil
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Target, error) {
 	q := obj.QueryTargets()
@@ -538,7 +544,7 @@ func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *mode
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Tag, error) {
 	q := obj.QueryTags()

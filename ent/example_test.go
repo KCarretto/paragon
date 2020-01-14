@@ -57,6 +57,7 @@ func ExampleJob() {
 	t0 := client.Task.
 		Create().
 		SetQueueTime(time.Now()).
+		SetLastChangedTime(time.Now()).
 		SetClaimTime(time.Now()).
 		SetExecStartTime(time.Now()).
 		SetExecStopTime(time.Now()).
@@ -151,6 +152,7 @@ func ExampleTarget() {
 	t0 := client.Task.
 		Create().
 		SetQueueTime(time.Now()).
+		SetLastChangedTime(time.Now()).
 		SetClaimTime(time.Now()).
 		SetExecStartTime(time.Now()).
 		SetExecStopTime(time.Now()).
@@ -232,6 +234,7 @@ func ExampleTask() {
 	t := client.Task.
 		Create().
 		SetQueueTime(time.Now()).
+		SetLastChangedTime(time.Now()).
 		SetClaimTime(time.Now()).
 		SetExecStartTime(time.Now()).
 		SetExecStopTime(time.Now()).

@@ -19,6 +19,7 @@ import (
 type TaskUpdate struct {
 	config
 	QueueTime          *time.Time
+	LastChangedTime    *time.Time
 	ClaimTime          *time.Time
 	clearClaimTime     bool
 	ExecStartTime      *time.Time
@@ -58,6 +59,12 @@ func (tu *TaskUpdate) SetNillableQueueTime(t *time.Time) *TaskUpdate {
 	if t != nil {
 		tu.SetQueueTime(*t)
 	}
+	return tu
+}
+
+// SetLastChangedTime sets the LastChangedTime field.
+func (tu *TaskUpdate) SetLastChangedTime(t time.Time) *TaskUpdate {
+	tu.LastChangedTime = &t
 	return tu
 }
 
@@ -356,6 +363,9 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := tu.QueueTime; value != nil {
 		builder.Set(task.FieldQueueTime, *value)
 	}
+	if value := tu.LastChangedTime; value != nil {
+		builder.Set(task.FieldLastChangedTime, *value)
+	}
 	if value := tu.ClaimTime; value != nil {
 		builder.Set(task.FieldClaimTime, *value)
 	}
@@ -482,6 +492,7 @@ type TaskUpdateOne struct {
 	config
 	id                 int
 	QueueTime          *time.Time
+	LastChangedTime    *time.Time
 	ClaimTime          *time.Time
 	clearClaimTime     bool
 	ExecStartTime      *time.Time
@@ -514,6 +525,12 @@ func (tuo *TaskUpdateOne) SetNillableQueueTime(t *time.Time) *TaskUpdateOne {
 	if t != nil {
 		tuo.SetQueueTime(*t)
 	}
+	return tuo
+}
+
+// SetLastChangedTime sets the LastChangedTime field.
+func (tuo *TaskUpdateOne) SetLastChangedTime(t time.Time) *TaskUpdateOne {
+	tuo.LastChangedTime = &t
 	return tuo
 }
 
@@ -815,6 +832,10 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 	if value := tuo.QueueTime; value != nil {
 		builder.Set(task.FieldQueueTime, *value)
 		t.QueueTime = *value
+	}
+	if value := tuo.LastChangedTime; value != nil {
+		builder.Set(task.FieldLastChangedTime, *value)
+		t.LastChangedTime = *value
 	}
 	if value := tuo.ClaimTime; value != nil {
 		builder.Set(task.FieldClaimTime, *value)

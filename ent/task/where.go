@@ -119,6 +119,15 @@ func QueueTime(v time.Time) predicate.Task {
 	)
 }
 
+// LastChangedTime applies equality check predicate on the "LastChangedTime" field. It's identical to LastChangedTimeEQ.
+func LastChangedTime(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldLastChangedTime), v))
+		},
+	)
+}
+
 // ClaimTime applies equality check predicate on the "ClaimTime" field. It's identical to ClaimTimeEQ.
 func ClaimTime(v time.Time) predicate.Task {
 	return predicate.Task(
@@ -270,6 +279,98 @@ func QueueTimeLTE(v time.Time) predicate.Task {
 	return predicate.Task(
 		func(s *sql.Selector) {
 			s.Where(sql.LTE(s.C(FieldQueueTime), v))
+		},
+	)
+}
+
+// LastChangedTimeEQ applies the EQ predicate on the "LastChangedTime" field.
+func LastChangedTimeEQ(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldLastChangedTime), v))
+		},
+	)
+}
+
+// LastChangedTimeNEQ applies the NEQ predicate on the "LastChangedTime" field.
+func LastChangedTimeNEQ(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.NEQ(s.C(FieldLastChangedTime), v))
+		},
+	)
+}
+
+// LastChangedTimeIn applies the In predicate on the "LastChangedTime" field.
+func LastChangedTimeIn(vs ...time.Time) predicate.Task {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Task(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.In(s.C(FieldLastChangedTime), v...))
+		},
+	)
+}
+
+// LastChangedTimeNotIn applies the NotIn predicate on the "LastChangedTime" field.
+func LastChangedTimeNotIn(vs ...time.Time) predicate.Task {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Task(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.NotIn(s.C(FieldLastChangedTime), v...))
+		},
+	)
+}
+
+// LastChangedTimeGT applies the GT predicate on the "LastChangedTime" field.
+func LastChangedTimeGT(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.GT(s.C(FieldLastChangedTime), v))
+		},
+	)
+}
+
+// LastChangedTimeGTE applies the GTE predicate on the "LastChangedTime" field.
+func LastChangedTimeGTE(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.GTE(s.C(FieldLastChangedTime), v))
+		},
+	)
+}
+
+// LastChangedTimeLT applies the LT predicate on the "LastChangedTime" field.
+func LastChangedTimeLT(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.LT(s.C(FieldLastChangedTime), v))
+		},
+	)
+}
+
+// LastChangedTimeLTE applies the LTE predicate on the "LastChangedTime" field.
+func LastChangedTimeLTE(v time.Time) predicate.Task {
+	return predicate.Task(
+		func(s *sql.Selector) {
+			s.Where(sql.LTE(s.C(FieldLastChangedTime), v))
 		},
 	)
 }
