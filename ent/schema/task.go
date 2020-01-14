@@ -21,9 +21,11 @@ func (Task) Fields() []ent.Field {
 				return time.Now()
 			}).
 			Comment("The timestamp for when the Task was queued/created"),
+		field.Time("LastChangedTime").
+			Comment("The timestamp for when the Task was last changed"),
 		field.Time("ClaimTime").
 			Optional().
-			Comment("The timestamp for when the Task was claime."),
+			Comment("The timestamp for when the Task was claim"),
 		field.Time("ExecStartTime").
 			Optional().
 			Comment("The timestamp for when the Task was executed"),

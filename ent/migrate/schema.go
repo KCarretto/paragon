@@ -90,6 +90,7 @@ var (
 	TasksColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "queue_time", Type: field.TypeTime},
+		{Name: "last_changed_time", Type: field.TypeTime},
 		{Name: "claim_time", Type: field.TypeTime, Nullable: true},
 		{Name: "exec_start_time", Type: field.TypeTime, Nullable: true},
 		{Name: "exec_stop_time", Type: field.TypeTime, Nullable: true},
@@ -108,14 +109,14 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:  "tasks_jobs_tasks",
-				Columns: []*schema.Column{TasksColumns[9]},
+				Columns: []*schema.Column{TasksColumns[10]},
 
 				RefColumns: []*schema.Column{JobsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:  "tasks_targets_tasks",
-				Columns: []*schema.Column{TasksColumns[10]},
+				Columns: []*schema.Column{TasksColumns[11]},
 
 				RefColumns: []*schema.Column{TargetsColumns[0]},
 				OnDelete:   schema.SetNull,

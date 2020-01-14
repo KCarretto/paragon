@@ -15,17 +15,18 @@ import (
 // TaskCreate is the builder for creating a Task entity.
 type TaskCreate struct {
 	config
-	QueueTime     *time.Time
-	ClaimTime     *time.Time
-	ExecStartTime *time.Time
-	ExecStopTime  *time.Time
-	Content       *string
-	Output        *string
-	Error         *string
-	SessionID     *string
-	tags          map[int]struct{}
-	job           map[int]struct{}
-	target        map[int]struct{}
+	QueueTime       *time.Time
+	LastChangedTime *time.Time
+	ClaimTime       *time.Time
+	ExecStartTime   *time.Time
+	ExecStopTime    *time.Time
+	Content         *string
+	Output          *string
+	Error           *string
+	SessionID       *string
+	tags            map[int]struct{}
+	job             map[int]struct{}
+	target          map[int]struct{}
 }
 
 // SetQueueTime sets the QueueTime field.
@@ -39,6 +40,12 @@ func (tc *TaskCreate) SetNillableQueueTime(t *time.Time) *TaskCreate {
 	if t != nil {
 		tc.SetQueueTime(*t)
 	}
+	return tc
+}
+
+// SetLastChangedTime sets the LastChangedTime field.
+func (tc *TaskCreate) SetLastChangedTime(t time.Time) *TaskCreate {
+	tc.LastChangedTime = &t
 	return tc
 }
 
@@ -194,6 +201,9 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 		v := task.DefaultQueueTime()
 		tc.QueueTime = &v
 	}
+	if tc.LastChangedTime == nil {
+		return nil, errors.New("ent: missing required field \"LastChangedTime\"")
+	}
 	if tc.Content == nil {
 		return nil, errors.New("ent: missing required field \"Content\"")
 	}
@@ -236,6 +246,10 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 	if value := tc.QueueTime; value != nil {
 		builder.Set(task.FieldQueueTime, *value)
 		t.QueueTime = *value
+	}
+	if value := tc.LastChangedTime; value != nil {
+		builder.Set(task.FieldLastChangedTime, *value)
+		t.LastChangedTime = *value
 	}
 	if value := tc.ClaimTime; value != nil {
 		builder.Set(task.FieldClaimTime, *value)
