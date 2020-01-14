@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
-import { Form } from 'semantic-ui-react';
+import { Dropdown, Input } from 'semantic-ui-react';
 
 // Suggest tags for the typeahead.
 export const SUGGEST_TAGS_QUERY = gql`
@@ -12,20 +12,19 @@ query SuggestTags {
     }
 }`
 
-// XTagTypeahead adds a 'tags' field to a form, which is an array [id, id] with no duplicates.
-const XTagTypeahead = ({ onChange }) => {
+// XTagTypeahead adds a tags field to a form, which is an array of tag ids with no duplicates.
+const XTagTypeahead = ({ onChange, labeled }) => {
     // Map of id => { text: name, value: id }
     const [state, setState] = useState({ optMap: new Map(), values: [] });
+    const [error, setError] = useState(null);
 
     const handleChange = (e, { name, value }) => {
-        console.log("New tag typeahead value: ", value);
         setState({ ...state, values: value });
-
         onChange(e, { name: name, value: value })
     }
 
     // NOTE: Assumes global unique ids, no conflicts from tag & target ids.
-    const { loading, err } = useQuery(SUGGEST_TAGS_QUERY, {
+    const { loading } = useQuery(SUGGEST_TAGS_QUERY, {
         onCompleted: data => {
             if (!data || !data.tags) {
                 data = { tags: [] };
@@ -40,28 +39,46 @@ const XTagTypeahead = ({ onChange }) => {
                 }
             ]);
 
-            console.log("Updating tag option map: ", tags);
             setState({ ...state, optMap: new Map(tags) });
+            setError(null);
+        },
+        onError: err => {
+            setError(err);
         }
     });
 
     let options = Array.from(state.optMap.values());
-    console.log("PROVIDING OPTIONS TO TAG DROPDOWN: ", options)
-    return (
-        <Form.Dropdown
+    const getDropdown = () => (
+        <Dropdown
             placeholder='Add tags'
+            icon=''
             fluid
             multiple
             search
             selection
-            error={err}
+            error={error}
             loading={loading}
             options={options}
             name='tags'
             value={state.values}
             onChange={handleChange}
+            style={{
+                borderRadius: "0 4px 4px 0",
+            }}
         />
     );
+
+    if (labeled) {
+        return (
+            <Input
+                fluid
+                label='Tags'
+                icon='tags'
+                input={getDropdown()}
+            />
+        );
+    }
+    return getDropdown();
 }
 
 export default XTagTypeahead;

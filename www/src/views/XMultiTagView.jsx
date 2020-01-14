@@ -20,6 +20,7 @@ const XMultiTagView = () => {
     const showList = () => {
         if (!data || !data.tags || data.tags.length < 1) {
             return (
+                // TODO: Better styling
                 <h1>No tags found!</h1>
             );
         }
