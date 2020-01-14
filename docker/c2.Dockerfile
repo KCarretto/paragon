@@ -13,7 +13,7 @@ COPY ./cmd/c2 /app/cmd/c2
 COPY ./pkg /app/pkg
 COPY ./ent /app/ent
 COPY ./graphql /app/graphql
-RUN go build -tags=gcp -o ./build/c2 ./cmd/c2
+RUN go build -o ./build/c2 ./cmd/c2
 
 # Production
 FROM alpine:3.10.2 as production

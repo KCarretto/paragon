@@ -2,6 +2,7 @@ package resolve
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/kcarretto/paragon/ent/task"
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
+	"github.com/kcarretto/paragon/pkg/event"
 )
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
@@ -17,6 +19,7 @@ import (
 // Resolver is the root struct for handling all resolves
 type Resolver struct {
 	EntClient *ent.Client
+	Publisher event.Publisher
 }
 
 // Job is the Resolver for the Job Ent
@@ -61,7 +64,7 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job, input *models.Fil
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Tag, error) {
 	q := obj.QueryTags()
@@ -120,8 +123,9 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	}
 
 	if len(targets) == 0 {
-		_, err = r.EntClient.Task.Create().
+		t, err := r.EntClient.Task.Create().
 			SetQueueTime(currentTime).
+			SetLastChangedTime(currentTime).
 			SetContent(input.Content).
 			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
@@ -130,10 +134,29 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		if err != nil {
 			return nil, err
 		}
+		tags, err := t.QueryTags().All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		e := event.TaskQueuedEvent{
+			Target:      nil,
+			Task:        t,
+			Credentials: nil,
+			Tags:        tags,
+		}
+		d, err := json.Marshal(e)
+		if err != nil {
+			return nil, err
+		}
+		err = r.Publisher.Publish(ctx, d)
+		if err != nil {
+			return nil, err
+		}
 	} else {
 		for _, target := range targets {
 			task, err := r.EntClient.Task.Create().
 				SetQueueTime(currentTime).
+				SetLastChangedTime(currentTime).
 				SetContent(input.Content).
 				SetNillableSessionID(input.SessionID).
 				AddTagIDs(input.Tags...).
@@ -142,9 +165,31 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 			if err != nil {
 				return nil, err
 			}
-			_, err = target.Update().
+			t, err := target.Update().
 				AddTaskIDs(task.ID).
 				Save(ctx)
+			if err != nil {
+				return nil, err
+			}
+			tags, err := task.QueryTags().All(ctx)
+			if err != nil {
+				return nil, err
+			}
+			creds, err := t.QueryCredentials().All(ctx)
+			if err != nil {
+				return nil, err
+			}
+			e := event.TaskQueuedEvent{
+				Target:      t,
+				Task:        task,
+				Credentials: creds,
+				Tags:        tags,
+			}
+			d, err := json.Marshal(e)
+			if err != nil {
+				return nil, err
+			}
+			err = r.Publisher.Publish(ctx, d)
 			if err != nil {
 				return nil, err
 			}
@@ -314,6 +359,7 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 		// filter by session if necessary
 		if t.SessionID == "" || t.SessionID == sessionID {
 			t, err = t.Update().
+				SetLastChangedTime(currentTime).
 				SetClaimTime(currentTime).
 				Save(ctx)
 			if err != nil {
@@ -334,8 +380,10 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 		return nil, err
 	}
 
+	currentTime := time.Now()
 	return task.Update().
-		SetClaimTime(time.Now()).
+		SetClaimTime(currentTime).
+		SetLastChangedTime(currentTime).
 		Save(ctx)
 }
 func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error) {
@@ -359,6 +407,7 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 		return nil, err
 	}
 	return taskEnt.Update().
+		SetLastChangedTime(time.Now()).
 		SetOutput(taskEnt.Output + inputOutput).
 		SetError(taskEnt.Error + inputError).
 		SetNillableExecStartTime(input.ExecStartTime).
@@ -441,7 +490,7 @@ func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 
 type tagResolver struct{ *Resolver }
@@ -456,7 +505,7 @@ func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag, input *models.Fil
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Target, error) {
 	q := obj.QueryTargets()
@@ -495,7 +544,7 @@ func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *mode
 			q.Limit(*input.Limit)
 		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
 func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Tag, error) {
 	q := obj.QueryTags()

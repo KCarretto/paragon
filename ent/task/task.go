@@ -15,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldQueueTime holds the string denoting the queuetime vertex property in the database.
 	FieldQueueTime = "queue_time"
+	// FieldLastChangedTime holds the string denoting the lastchangedtime vertex property in the database.
+	FieldLastChangedTime = "last_changed_time"
 	// FieldClaimTime holds the string denoting the claimtime vertex property in the database.
 	FieldClaimTime = "claim_time"
 	// FieldExecStartTime holds the string denoting the execstarttime vertex property in the database.
@@ -57,6 +59,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldQueueTime,
+	FieldLastChangedTime,
 	FieldClaimTime,
 	FieldExecStartTime,
 	FieldExecStopTime,
@@ -81,7 +84,7 @@ var (
 	DefaultQueueTime = descQueueTime.Default.(func() time.Time)
 
 	// descContent is the schema descriptor for Content field.
-	descContent = fields[4].Descriptor()
+	descContent = fields[5].Descriptor()
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
 	ContentValidator = descContent.Validators[0].(func(string) error)
 )

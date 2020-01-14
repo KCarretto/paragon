@@ -17,6 +17,8 @@ type Task struct {
 	ID int `json:"id,omitempty"`
 	// QueueTime holds the value of the "QueueTime" field.
 	QueueTime time.Time `json:"QueueTime,omitempty"`
+	// LastChangedTime holds the value of the "LastChangedTime" field.
+	LastChangedTime time.Time `json:"LastChangedTime,omitempty"`
 	// ClaimTime holds the value of the "ClaimTime" field.
 	ClaimTime time.Time `json:"ClaimTime,omitempty"`
 	// ExecStartTime holds the value of the "ExecStartTime" field.
@@ -36,20 +38,22 @@ type Task struct {
 // FromRows scans the sql response data into Task.
 func (t *Task) FromRows(rows *sql.Rows) error {
 	var vt struct {
-		ID            int
-		QueueTime     sql.NullTime
-		ClaimTime     sql.NullTime
-		ExecStartTime sql.NullTime
-		ExecStopTime  sql.NullTime
-		Content       sql.NullString
-		Output        sql.NullString
-		Error         sql.NullString
-		SessionID     sql.NullString
+		ID              int
+		QueueTime       sql.NullTime
+		LastChangedTime sql.NullTime
+		ClaimTime       sql.NullTime
+		ExecStartTime   sql.NullTime
+		ExecStopTime    sql.NullTime
+		Content         sql.NullString
+		Output          sql.NullString
+		Error           sql.NullString
+		SessionID       sql.NullString
 	}
 	// the order here should be the same as in the `task.Columns`.
 	if err := rows.Scan(
 		&vt.ID,
 		&vt.QueueTime,
+		&vt.LastChangedTime,
 		&vt.ClaimTime,
 		&vt.ExecStartTime,
 		&vt.ExecStopTime,
@@ -62,6 +66,7 @@ func (t *Task) FromRows(rows *sql.Rows) error {
 	}
 	t.ID = vt.ID
 	t.QueueTime = vt.QueueTime.Time
+	t.LastChangedTime = vt.LastChangedTime.Time
 	t.ClaimTime = vt.ClaimTime.Time
 	t.ExecStartTime = vt.ExecStartTime.Time
 	t.ExecStopTime = vt.ExecStopTime.Time
@@ -112,6 +117,8 @@ func (t *Task) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", t.ID))
 	builder.WriteString(", QueueTime=")
 	builder.WriteString(t.QueueTime.Format(time.ANSIC))
+	builder.WriteString(", LastChangedTime=")
+	builder.WriteString(t.LastChangedTime.Format(time.ANSIC))
 	builder.WriteString(", ClaimTime=")
 	builder.WriteString(t.ClaimTime.Format(time.ANSIC))
 	builder.WriteString(", ExecStartTime=")

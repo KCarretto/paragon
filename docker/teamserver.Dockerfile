@@ -14,7 +14,7 @@ COPY ./pkg /app/pkg
 COPY ./graphql /app/graphql
 COPY ./ent /app/ent
 COPY ./www /app/www
-RUN go build -tags=debug,profile_cpu,gcp -o ./build/teamserver ./cmd/teamserver
+RUN go build -tags=debug,profile_cpu -o ./build/teamserver ./cmd/teamserver
 
 # Production
 FROM alpine:3.10.2 as production
