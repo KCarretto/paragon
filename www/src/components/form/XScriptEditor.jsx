@@ -1,17 +1,14 @@
 import { ControlledEditor } from "@monaco-editor/react";
 import React from 'react';
-import { Icon, Message } from 'semantic-ui-react';
+import { XLoadingMessage } from '../messages';
 
 const XScriptEditor = ({ onChange, content }) => {
     return (
         <ControlledEditor
-            loading={<Message icon size='massive'>
-                <Icon name='circle notched' loading />
-                <Message.Content>
-                    <Message.Header>Loading Script Editor</Message.Header>
-                    Initializing scripting engine...
-                </Message.Content>
-            </Message>}
+            loading={<XLoadingMessage
+                title='Loading Script Editor'
+                msg='Initializing scripting engine...'
+            />}
             height='50vh'
             language="python"
             theme='dark'

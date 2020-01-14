@@ -1,31 +1,37 @@
-import PropTypes from 'prop-types';
+import moment from 'moment';
 import React from 'react';
-import { Button, Card, Icon, Progress } from 'semantic-ui-react';
+import { Button, Card, Icon } from 'semantic-ui-react';
+import { XTaskStatus } from '.';
 
-const XTaskCard = ({ name, tags }) => (
-    <Card>
-        <Card.Content>
-            <Card.Header>
-                <Icon name='linkify' size='small' />
-                {name ? name : 'Untitled Task'}
-            </Card.Header>
-            <Card.Meta>
-                <Icon name='tags' /> {tags ? tags.join(', ') : 'None'}
-            </Card.Meta>
-            <Card.Description>
-                <Button icon labelPosition='right'>Subscribe<Icon name='bell' /></Button>
-                <Button icon labelPosition='right'>View<Icon name='external' /></Button>
-            </Card.Description>
-        </Card.Content>
-        <Card.Content extra>
-            <Progress color='red' size='small' percent={50} active>In Progress</Progress>
-        </Card.Content>
-    </Card>
-)
+const XTaskCard = ({ task }) => {
+    const target = task.target || { id: 0, name: 'Untitled Target' }
 
-XTaskCard.propTypes = {
-    name: PropTypes.string,
-    tags: PropTypes.arrayOf(PropTypes.string),
+    return (
+        <Card>
+            <Card.Content>
+                <Card.Header href={'/targets/' + target.id} >
+                    <Icon
+                        floated='right'
+                        size='large'
+                        {...XTaskStatus.getStatus(task).icon}
+                    />
+                    {target.name}
+                </Card.Header>
+                <Card.Meta textAlign='center' style={{ verticalAlign: 'middle' }}>
+                    {moment(XTaskStatus.getTimestamp(task)).fromNow()}
+                    <Button basic animated href={'/tasks/' + task.id} color='blue' size='small' floated='right'>
+                        <Button.Content visible>View Task</Button.Content>
+                        <Button.Content hidden>
+                            <Icon name='arrow right' />
+                        </Button.Content>
+                    </Button>
+                </Card.Meta>
+            </Card.Content>
+            {/* <Card.Content extra textAlign='center'>
+
+            </Card.Content> */}
+        </Card>
+    );
 }
 
-export default XTaskCard
+export default XTaskCard;
