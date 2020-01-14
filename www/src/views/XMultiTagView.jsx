@@ -1,7 +1,7 @@
 import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React from 'react';
-import { Container, Icon, List, Loader, Menu } from 'semantic-ui-react';
+import { Container, Label, Loader, Menu } from 'semantic-ui-react';
 import { XErrorMessage } from '../components/messages';
 import { XTagCreateModal } from '../components/tag';
 
@@ -25,12 +25,11 @@ const XMultiTagView = () => {
             );
         }
         return (
-            <List>{data.tags.map(({ name }) =>
-                <List.Item>
-                    <Icon name='tag' />
-                    <List.Content>{name}</List.Content>
-                </List.Item>
-            )}</List>
+            <Label.Group tag size='big'>
+                {data.tags.map((tag, index) =>
+                    <Label key={index}>{tag.name}</Label>
+                )}
+            </Label.Group>
         );
     };
 
@@ -41,8 +40,8 @@ const XMultiTagView = () => {
             </Menu>
             <Container fluid style={{ padding: '20px' }}>
                 <Loader disabled={!called || !loading} />
-                <XErrorMessage title='Error Loading Tags' err={error} />
                 {showList()}
+                <XErrorMessage title='Error Loading Tags' err={error} />
             </Container>
         </Container>
     );

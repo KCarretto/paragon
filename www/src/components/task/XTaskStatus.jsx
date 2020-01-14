@@ -16,7 +16,8 @@ const XTaskStatus = {
     // Task has successfully completed execution
     COMPLETED: { text: 'Execution has successfully completed.', icon: { name: 'check circle', color: 'green', className: 'XCircleIcon', bordered: false, circular: true } },
     // Task has been queued for longer than expected
-    STALE: { text: 'Queue time is taking longer than expected.', icon: { name: 'wait', color: 'yellow', className: 'XCircleIcon', bordered: false, circular: true } },
+    //className: 'XCircleIcon', bordered: false, circular: true
+    STALE: { text: 'Queue time is taking longer than expected.', icon: { name: 'wait', color: 'yellow', } },
     // Task has been claimed, but hasn't started execution within a reasonable amount of time
     TIMED_OUT: { text: 'Execution is taking longer than expected to complete.', icon: { name: 'circle notched', color: 'red', className: 'XCircleIcon', bordered: false, circular: true, loading: true } },
     // Task encountered fatal error during execution

@@ -122,17 +122,18 @@ type ComplexityRoot struct {
 	}
 
 	Task struct {
-		ClaimTime     func(childComplexity int) int
-		Content       func(childComplexity int) int
-		Error         func(childComplexity int) int
-		ExecStartTime func(childComplexity int) int
-		ExecStopTime  func(childComplexity int) int
-		ID            func(childComplexity int) int
-		Job           func(childComplexity int) int
-		Output        func(childComplexity int) int
-		QueueTime     func(childComplexity int) int
-		SessionID     func(childComplexity int) int
-		Target        func(childComplexity int) int
+		ClaimTime       func(childComplexity int) int
+		Content         func(childComplexity int) int
+		Error           func(childComplexity int) int
+		ExecStartTime   func(childComplexity int) int
+		ExecStopTime    func(childComplexity int) int
+		ID              func(childComplexity int) int
+		Job             func(childComplexity int) int
+		LastChangedTime func(childComplexity int) int
+		Output          func(childComplexity int) int
+		QueueTime       func(childComplexity int) int
+		SessionID       func(childComplexity int) int
+		Target          func(childComplexity int) int
 	}
 }
 
@@ -799,6 +800,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Task.Job(childComplexity), true
 
+	case "Task.lastChangedTime":
+		if e.complexity.Task.LastChangedTime == nil {
+			break
+		}
+
+		return e.complexity.Task.LastChangedTime(childComplexity), true
+
 	case "Task.output":
 		if e.complexity.Task.Output == nil {
 			break
@@ -935,6 +943,9 @@ type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
 
 type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   id: ID!
+
+  lastChangedTime: Time
+
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -3856,6 +3867,40 @@ func (ec *executionContext) _Task_id(ctx context.Context, field graphql.Collecte
 	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Task_lastChangedTime(ctx context.Context, field graphql.CollectedField, obj *ent.Task) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Task",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastChangedTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Task_queueTime(ctx context.Context, field graphql.CollectedField, obj *ent.Task) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -6226,6 +6271,8 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
+		case "lastChangedTime":
+			out.Values[i] = ec._Task_lastChangedTime(ctx, field, obj)
 		case "queueTime":
 			out.Values[i] = ec._Task_queueTime(ctx, field, obj)
 		case "claimTime":
