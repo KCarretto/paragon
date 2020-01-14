@@ -14,8 +14,9 @@ mutation QueueJob($name: String!, $content: String!, $tags: [ID!], $targets: [ID
 
 const XJobQueueModal = ({ header }) => {
     const [openModal, closeModal, isOpen] = useModal();
-    const [err, setError] = useState(null);
+    const [error, setError] = useState(null);
 
+    // Form params
     const [name, setName] = useState('');
     const [content, setContent] = useState('\n# Enter your script here!\ndef main():\n\tprint("Hello World")');
     const [tags, setTags] = useState([]);
@@ -41,7 +42,7 @@ const XJobQueueModal = ({ header }) => {
                 return;
             }
             closeModal();
-        }).catch((error) => setError(error));
+        }).catch((err) => setError(err));
     }
 
     return (
@@ -54,7 +55,7 @@ const XJobQueueModal = ({ header }) => {
             // Form properties
             as={Form}
             onSubmit={handleSubmit}
-            error={called && err}
+            error={called && error}
             loading={called && loading}
         >
             <Modal.Header>{header ? header : "Queue a Job"}</Modal.Header>
@@ -94,7 +95,7 @@ const XJobQueueModal = ({ header }) => {
                     icon='warning'
                     header={'Failed to Queue Job'}
                     onDismiss={(e, data) => setError(null)}
-                    content={err ? err.message : 'Unknown Error'}
+                    content={error ? error.message : 'Unknown Error'}
                 />
             </Modal.Content>
             <Modal.Actions>
