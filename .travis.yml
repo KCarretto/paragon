@@ -8,9 +8,9 @@ env:
     - GO111MODULE=on
 
 before_install:
-  - go get github.com/mattn/goveralls
+  - GO111MODULE=off go get github.com/mattn/goveralls
   # - go get -u github.com/reviewdog/reviewdog/cmd/reviewdog
-  - go get -u golang.org/x/lint/golint
+  - GO111MODULE=off go get -u golang.org/x/lint/golint
 
   # Lock linter version to env: $GOLANGCI_LINT_VERSION
   - curl -sfL https://install.goreleaser.com/github.com/golangci/golangci-lint.sh | sh -s -- -b $(go env GOPATH)/bin ${GOLANGCI_LINT_VERSION-v1.17.1}
