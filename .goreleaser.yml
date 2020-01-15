@@ -3,6 +3,7 @@ project_name: paragon
 
 before:
   hooks:
+    - go mod tidy
     - go mod download
 
 builds:
