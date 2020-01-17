@@ -8,9 +8,9 @@ monaco
     .init()
     .then(monaco => {
         monaco.languages.register({ id: 'renegade' });
-        // monaco.languages.setMonarchTokensProvider('renegade', renegade_language);
-        // monaco.languages.setLanguageConfiguration('renegade', renegade_conf(monaco));
-        // monaco.languages.registerCompletionItemProvider('renegade', renegade_autocomplete(monaco));
+        monaco.languages.setMonarchTokensProvider('renegade', renegade_language);
+        monaco.languages.setLanguageConfiguration('renegade', renegade_conf(monaco));
+        monaco.languages.registerCompletionItemProvider('renegade', renegade_autocomplete(monaco));
     });
 
 const XScriptEditor = ({ onChange, content }) => {
