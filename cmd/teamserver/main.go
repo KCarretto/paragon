@@ -2,28 +2,31 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"os"
 
 	"github.com/kcarretto/paragon/pkg/teamserver"
 )
 
-const DEFAULT_TOPIC = "TOPIC"
+// DefaultTopic is the default pubsub topic where events will be published. It can be configured
+// by setting the PUB_TOPIC environment variable.
+const DefaultTopic = "TOPIC"
 
 func main() {
+	ctx := context.Background()
+
 	topic := os.Getenv("PUB_TOPIC")
 	if topic == "" {
-		log.Println("You did not set PUB_TOPIC environment variable to publish events, is this a mistake?")
+		log.Println("[WARN] No PUB_TOPIC environment variable set to publish events, is this a mistake?")
 	}
-
-	ctx := context.Background()
 
 	client := getClient(ctx)
 	defer client.Close()
 
 	pub, err := newPublisher(ctx, topic)
 	if err != nil {
-		panic("You failed to create a publisher for the assigned topic... exiting")
+		panic(fmt.Errorf("You failed to create a publisher for the assigned topic: %+v", err))
 	}
 	defer pub.topic.Shutdown(ctx)
 
