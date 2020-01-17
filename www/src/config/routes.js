@@ -4,7 +4,7 @@ import { Icon } from 'semantic-ui-react';
 const routes = [
     {
         title: 'News Feed',
-        link: '/new_feed',
+        link: '/news_feed',
         icon: <Icon name='newspaper' />,
     },
     {

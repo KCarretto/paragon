@@ -21,16 +21,14 @@ const XTaskSummary = ({ tasks, limit }) => {
                             <Icon fitted size='big' {...XTaskStatus.getStatus(task).icon} />
                         </Feed.Label>
                         <Feed.Content>
+                            <Feed.Date>
+                                {moment(XTaskStatus.getTimestamp(task)).fromNow()}
+                            </Feed.Date>
                             <Feed.Summary>
-                                <Link to={'/tasks/' + task.id}><List.Header>{task.job.name}
-                                </List.Header></Link>
+                                <Link to={'/tasks/' + task.id}>
+                                    <List.Header>{task.job.name}</List.Header>
+                                </Link>
                             </Feed.Summary>
-                            <Feed.Extra text>
-                                {XTaskStatus.getStatus(task).text}
-                            </Feed.Extra>
-                            <Feed.Meta>
-                                Last Updated: {moment(XTaskStatus.getTimestamp(task)).fromNow()}
-                            </Feed.Meta>
                             <Divider />
                         </Feed.Content>
                     </Feed.Event>

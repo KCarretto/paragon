@@ -93,6 +93,8 @@
 		"ms-vscode.go",
 		"shardulm94.trailing-spaces",
 		"zxh404.vscode-proto3",
-		"flowtype.flow-for-vscode"
+		"flowtype.flow-for-vscode",
+		"xaver.clang-format",
+		"apollographql.vscode-apollo"
 	]
 }

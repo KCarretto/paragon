@@ -26,6 +26,7 @@ targets {
             claimTime
             execStartTime
             execStopTime
+            error
 
             job {
                 id
@@ -36,7 +37,9 @@ targets {
 }`
 
 const XMultiTargetView = () => {
-    const { called, loading, error, data } = useQuery(MULTI_TARGET_QUERY);
+    const { called, loading, error, data } = useQuery(MULTI_TARGET_QUERY, {
+        pollInterval: 5000,
+    });
 
     const showCards = () => {
         if (!data || !data.targets || data.targets.length < 1) {

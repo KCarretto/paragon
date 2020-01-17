@@ -1,7 +1,8 @@
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
-import { Card, Icon, Label } from 'semantic-ui-react';
+import { Card, Label } from 'semantic-ui-react';
+import { XTags } from '../tag';
 import { XTaskSummary } from '../task';
 
 const XTargetCard = ({ id, name, primaryIP, lastSeen, tags, tasks }) => (
@@ -17,7 +18,7 @@ const XTargetCard = ({ id, name, primaryIP, lastSeen, tags, tasks }) => (
             <XTaskSummary tasks={tasks} />
         </Card.Content>
         <Card.Content extra>
-            <Icon name='tags' /> {tags ? tags.map(tag => tag.name).join(', ') : 'None'}
+            <XTags tags={tags} defaultText='None' />
         </Card.Content>
     </Card>
 )

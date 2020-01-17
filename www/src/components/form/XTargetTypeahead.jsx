@@ -58,7 +58,7 @@ const XTargetTypeahead = ({ onChange, labeled }) => {
                         value: target.id
                     },
                 ],
-                ... !target.tags ? [] : target.tags.map(tag => {
+                ...!target.tags ? [] : target.tags.map(tag => {
 
                     // Maintain a map of tag => [targets]
                     if (!tMap.has(tag.id)) {

@@ -3,9 +3,10 @@ import gql from 'graphql-tag';
 import moment from 'moment';
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Container, Icon, Label } from 'semantic-ui-react';
+import { Card, Container, Label } from 'semantic-ui-react';
 import { XCredentialSummary } from '../components/credential';
 import { XErrorMessage, XLoadingMessage } from '../components/messages';
+import { XTargetHeader } from '../components/target';
 import { XTaskSummary } from '../components/task';
 
 
@@ -64,25 +65,28 @@ const XTargetView = () => {
 
     const { called, loading } = useQuery(TARGET_QUERY, {
         variables: { id },
+        pollInterval: 5000,
         onCompleted: data => {
             setError(null);
 
-            setName(data.name);
-            setPrimaryIP(data.primaryIP);
-            setPublicIP(data.publicIP);
-            setPrimaryMAC(data.primaryMAC);
-            setMachineUUID(data.machineUUID);
-            setHostname(data.hostname);
-            setLastSeen(data.lastSeen);
-            setTasks(data.tasks || []);
-            setTags(data.tags || []);
-            setCreds(data.creds || []);
+            setName(data.target.name);
+            setPrimaryIP(data.target.primaryIP);
+            setPublicIP(data.target.publicIP);
+            setPrimaryMAC(data.target.primaryMAC);
+            setMachineUUID(data.target.machineUUID);
+            setHostname(data.target.hostname);
+            setLastSeen(data.target.lastSeen);
+            setTasks(data.target.tasks || []);
+            setTags(data.target.tags || []);
+            setCreds(data.target.creds || []);
         },
         onError: err => setError(err),
     });
 
     return (
         <Container fluid style={{ padding: '20px' }}>
+            <XTargetHeader name={name} tags={tags} />
+
             <XErrorMessage title='Error Loading Target' err={error} />
             <XLoadingMessage
                 title='Loading Target'
@@ -91,7 +95,6 @@ const XTargetView = () => {
             />
             <Card fluid centered>
                 <Card.Content>
-                    <Card.Header>{name}</Card.Header>
                     {
                         lastSeen && moment(lastSeen).isBefore(moment().subtract(5, 'minutes')) ?
                             <Label corner='right' size='large' icon='times circle' color='red' />
@@ -118,7 +121,6 @@ const XTargetView = () => {
                             :
                             <div></div>
                         }
-                        <Icon name='tags' /> {tags && tags.length != 0 ? tags.map(tag => tag.name).join(', ') : 'None'}
                     </Card.Meta>
                     <Card.Description>
                         <XTaskSummary tasks={tasks} limit={tasks.length} />
