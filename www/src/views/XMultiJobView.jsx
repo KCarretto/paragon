@@ -33,7 +33,9 @@ jobs {
 }`
 
 const XMultiJobView = () => {
-    const { called, loading, error, data } = useQuery(MULTI_JOB_QUERY);
+    const { called, loading, error, data } = useQuery(MULTI_JOB_QUERY, {
+        pollInterval: 5000,
+    });
 
     const showCards = () => {
         if (!data || !data.jobs || data.jobs.length < 1) {

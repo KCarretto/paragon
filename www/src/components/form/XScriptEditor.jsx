@@ -1,16 +1,16 @@
 import { ControlledEditor, monaco } from "@monaco-editor/react";
 import React from 'react';
+//import { renegade_autocomplete, renegade_conf, renegade_language } from '../../config/renegade';
 import { XLoadingMessage } from '../messages';
-import { renegade_autocomplete, renegade_conf, renegade_language } from './Renegade';
 
 
 monaco
     .init()
     .then(monaco => {
         monaco.languages.register({ id: 'renegade' });
-        monaco.languages.setMonarchTokensProvider('renegade', renegade_language);
-        monaco.languages.setLanguageConfiguration('renegade', renegade_conf(monaco));
-        monaco.languages.registerCompletionItemProvider('renegade', renegade_autocomplete(monaco));
+        // monaco.languages.setMonarchTokensProvider('renegade', renegade_language);
+        // monaco.languages.setLanguageConfiguration('renegade', renegade_conf(monaco));
+        // monaco.languages.registerCompletionItemProvider('renegade', renegade_autocomplete(monaco));
     });
 
 const XScriptEditor = ({ onChange, content }) => {

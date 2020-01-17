@@ -2,9 +2,10 @@ import { useQuery } from '@apollo/react-hooks';
 import gql from 'graphql-tag';
 import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Card, Container, Header, Icon, Segment } from 'semantic-ui-react';
+import { Card, Container, Header, Icon } from 'semantic-ui-react';
+import { XJobHeader } from '../components/job';
 import { XErrorMessage, XLoadingMessage } from '../components/messages';
-import { XTaskCard } from '../components/task';
+import { XTaskCard, XTaskContent } from '../components/task';
 
 export const JOB_QUERY = gql`
 query Job($id: ID!) {
@@ -54,6 +55,7 @@ const XJobView = () => {
 
     const { called, loading } = useQuery(JOB_QUERY, {
         variables: { id },
+        pollInterval: 5000,
         onCompleted: data => {
             setError(null);
             if (!data || !data.job) {
@@ -84,13 +86,7 @@ const XJobView = () => {
 
     return (
         <Container fluid style={{ padding: '20px' }}>
-            <Header size='huge'>
-                <Icon name='cube' />
-                <Header.Content>{name}</Header.Content>
-                <Header.Subheader>
-                    {tags && tags.length > 0 ? <span><Icon name='tags' /> {tags.map(tag => tag.name).join(', ')}</span> : <span />}
-                </Header.Subheader>
-            </Header>
+            <XJobHeader name={name} tags={tags} />
 
             <XErrorMessage title='Error Loading Job' err={error} />
             <XLoadingMessage
@@ -99,21 +95,14 @@ const XJobView = () => {
                 hidden={called && !loading}
             />
 
-            <Header size='large' attached='top' inverted>
-                <Icon name='code' />
-                <Header.Content>Content</Header.Content>
-            </Header>
-            <Segment raised attached>
-                <pre>{content || 'No Content Available'}</pre>
-            </Segment>
+            <XTaskContent content={content} />
 
             <Header size='large' block inverted>
                 <Icon name='tasks' />
                 <Header.Content>Tasks</Header.Content>
             </Header>
+
             {showCards()}
-            {/* <XTaskList targetHeader tasks={tasks} limit={tasks.length} /> */}
-            {/* {taskCards} */}
         </Container>
     );
 }

@@ -6,7 +6,16 @@ const XUnimplemented = (props) => (
         <Message
             icon='wrench'
             header='Under Construction'
-            content='This page has yet to be implemented, please try again later.'
+            content={
+                <span>This page has yet to be implemented, please try again later.
+                    <a
+                        href="https://github.com/KCarretto/paragon/pulls"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Want to help?
+                        </a>
+                </span>}
             size='massive'
             warning
         />
