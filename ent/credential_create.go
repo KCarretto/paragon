@@ -16,6 +16,7 @@ type CredentialCreate struct {
 	config
 	principal *string
 	secret    *string
+	kind      *credential.Kind
 	fails     *int
 }
 
@@ -28,6 +29,12 @@ func (cc *CredentialCreate) SetPrincipal(s string) *CredentialCreate {
 // SetSecret sets the secret field.
 func (cc *CredentialCreate) SetSecret(s string) *CredentialCreate {
 	cc.secret = &s
+	return cc
+}
+
+// SetKind sets the kind field.
+func (cc *CredentialCreate) SetKind(c credential.Kind) *CredentialCreate {
+	cc.kind = &c
 	return cc
 }
 
@@ -52,6 +59,12 @@ func (cc *CredentialCreate) Save(ctx context.Context) (*Credential, error) {
 	}
 	if cc.secret == nil {
 		return nil, errors.New("ent: missing required field \"secret\"")
+	}
+	if cc.kind == nil {
+		return nil, errors.New("ent: missing required field \"kind\"")
+	}
+	if err := credential.KindValidator(*cc.kind); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
 	}
 	if cc.fails == nil {
 		v := credential.DefaultFails
@@ -91,6 +104,10 @@ func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
 	if value := cc.secret; value != nil {
 		builder.Set(credential.FieldSecret, *value)
 		c.Secret = *value
+	}
+	if value := cc.kind; value != nil {
+		builder.Set(credential.FieldKind, *value)
+		c.Kind = *value
 	}
 	if value := cc.fails; value != nil {
 		builder.Set(credential.FieldFails, *value)
