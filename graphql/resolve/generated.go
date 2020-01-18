@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 	"github.com/kcarretto/paragon/graphql/generated"
@@ -20,6 +21,10 @@ import (
 type Resolver struct {
 	EntClient *ent.Client
 	Publisher event.Publisher
+}
+
+func (r *Resolver) Credential() generated.CredentialResolver {
+	return &credentialResolver{r}
 }
 
 // Job is the Resolver for the Job Ent
@@ -50,6 +55,13 @@ func (r *Resolver) Target() generated.TargetResolver {
 // Task is the Resolver for the Task Ent
 func (r *Resolver) Task() generated.TaskResolver {
 	return &taskResolver{r}
+}
+
+type credentialResolver struct{ *Resolver }
+
+func (r *credentialResolver) Kind(ctx context.Context, obj *ent.Credential) (*string, error) {
+	kind := obj.Kind.String()
+	return &kind, nil
 }
 
 type jobResolver struct{ *Resolver }
@@ -275,10 +287,14 @@ func (r *mutationResolver) DeleteTarget(ctx context.Context, input *models.Delet
 	return err != nil, err
 }
 func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error) {
+	kind := credential.KindPassword
+	if input.Kind != nil {
+		kind = credential.Kind(*input.Kind)
+	}
 	credential, err := r.EntClient.Credential.Create().
 		SetPrincipal(input.Principal).
 		SetSecret(input.Secret).
-		SetType(input.Type).
+		SetKind(kind).
 		Save(ctx)
 	if err != nil {
 		return nil, err

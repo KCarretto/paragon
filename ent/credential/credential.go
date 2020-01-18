@@ -3,6 +3,8 @@
 package credential
 
 import (
+	"fmt"
+
 	"github.com/kcarretto/paragon/ent/schema"
 )
 
@@ -15,8 +17,8 @@ const (
 	FieldPrincipal = "principal"
 	// FieldSecret holds the string denoting the secret vertex property in the database.
 	FieldSecret = "secret"
-	// FieldType holds the string denoting the type vertex property in the database.
-	FieldType = "type"
+	// FieldKind holds the string denoting the kind vertex property in the database.
+	FieldKind = "kind"
 	// FieldFails holds the string denoting the fails vertex property in the database.
 	FieldFails = "fails"
 
@@ -29,7 +31,7 @@ var Columns = []string{
 	FieldID,
 	FieldPrincipal,
 	FieldSecret,
-	FieldType,
+	FieldKind,
 	FieldFails,
 }
 
@@ -43,3 +45,26 @@ var (
 	// FailsValidator is a validator for the "fails" field. It is called by the builders before save.
 	FailsValidator = descFails.Validators[0].(func(int) error)
 )
+
+// Kind defines the type for the kind enum field.
+type Kind string
+
+const (
+	KindPassword    Kind = "password"
+	KindKey         Kind = "key"
+	KindCertificate Kind = "certificate"
+)
+
+func (s Kind) String() string {
+	return string(s)
+}
+
+// KindValidator is a validator for the "kind" field enum values. It is called by the builders before save.
+func KindValidator(kind Kind) error {
+	switch kind {
+	case KindPassword, KindKey, KindCertificate:
+		return nil
+	default:
+		return fmt.Errorf("credential: invalid enum value for kind field: %q", kind)
+	}
+}

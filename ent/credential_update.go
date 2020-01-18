@@ -16,7 +16,7 @@ type CredentialUpdate struct {
 	config
 	principal  *string
 	secret     *string
-	_type      *string
+	kind       *credential.Kind
 	fails      *int
 	addfails   *int
 	predicates []predicate.Credential
@@ -40,9 +40,9 @@ func (cu *CredentialUpdate) SetSecret(s string) *CredentialUpdate {
 	return cu
 }
 
-// SetType sets the type field.
-func (cu *CredentialUpdate) SetType(s string) *CredentialUpdate {
-	cu._type = &s
+// SetKind sets the kind field.
+func (cu *CredentialUpdate) SetKind(c credential.Kind) *CredentialUpdate {
+	cu.kind = &c
 	return cu
 }
 
@@ -73,6 +73,11 @@ func (cu *CredentialUpdate) AddFails(i int) *CredentialUpdate {
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (cu *CredentialUpdate) Save(ctx context.Context) (int, error) {
+	if cu.kind != nil {
+		if err := credential.KindValidator(*cu.kind); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
+		}
+	}
 	if cu.fails != nil {
 		if err := credential.FailsValidator(*cu.fails); err != nil {
 			return 0, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
@@ -140,8 +145,8 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := cu.secret; value != nil {
 		builder.Set(credential.FieldSecret, *value)
 	}
-	if value := cu._type; value != nil {
-		builder.Set(credential.FieldType, *value)
+	if value := cu.kind; value != nil {
+		builder.Set(credential.FieldKind, *value)
 	}
 	if value := cu.fails; value != nil {
 		builder.Set(credential.FieldFails, *value)
@@ -167,7 +172,7 @@ type CredentialUpdateOne struct {
 	id        int
 	principal *string
 	secret    *string
-	_type     *string
+	kind      *credential.Kind
 	fails     *int
 	addfails  *int
 }
@@ -184,9 +189,9 @@ func (cuo *CredentialUpdateOne) SetSecret(s string) *CredentialUpdateOne {
 	return cuo
 }
 
-// SetType sets the type field.
-func (cuo *CredentialUpdateOne) SetType(s string) *CredentialUpdateOne {
-	cuo._type = &s
+// SetKind sets the kind field.
+func (cuo *CredentialUpdateOne) SetKind(c credential.Kind) *CredentialUpdateOne {
+	cuo.kind = &c
 	return cuo
 }
 
@@ -217,6 +222,11 @@ func (cuo *CredentialUpdateOne) AddFails(i int) *CredentialUpdateOne {
 
 // Save executes the query and returns the updated entity.
 func (cuo *CredentialUpdateOne) Save(ctx context.Context) (*Credential, error) {
+	if cuo.kind != nil {
+		if err := credential.KindValidator(*cuo.kind); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
+		}
+	}
 	if cuo.fails != nil {
 		if err := credential.FailsValidator(*cuo.fails); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
@@ -289,9 +299,9 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 		builder.Set(credential.FieldSecret, *value)
 		c.Secret = *value
 	}
-	if value := cuo._type; value != nil {
-		builder.Set(credential.FieldType, *value)
-		c.Type = *value
+	if value := cuo.kind; value != nil {
+		builder.Set(credential.FieldKind, *value)
+		c.Kind = *value
 	}
 	if value := cuo.fails; value != nil {
 		builder.Set(credential.FieldFails, *value)

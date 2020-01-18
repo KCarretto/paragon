@@ -80,7 +80,7 @@ type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   id: ID!
   principal: String
   secret: String
-  type: String
+  kind: String
   fails: Int
 }
 
@@ -138,7 +138,7 @@ input AddCredentialForTargetRequest {
   id: ID!
   principal: String!
   secret: String!
-  type: String!
+  kind: String
 }
 
 input ClaimTasksRequest {

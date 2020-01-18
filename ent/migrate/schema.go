@@ -15,7 +15,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "principal", Type: field.TypeString},
 		{Name: "secret", Type: field.TypeString},
-		{Name: "type", Type: field.TypeString},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"password", "key", "certificate"}},
 		{Name: "fails", Type: field.TypeInt, Default: credential.DefaultFails},
 		{Name: "target_credential_id", Type: field.TypeInt, Nullable: true},
 	}

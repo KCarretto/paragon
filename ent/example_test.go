@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+
+	"github.com/kcarretto/paragon/ent/credential"
 )
 
 // dsn for the database. In order to run the tests locally, run the following command:
@@ -34,7 +36,7 @@ func ExampleCredential() {
 		Create().
 		SetPrincipal("string").
 		SetSecret("string").
-		SetType("string").
+		SetKind(credential.KindPassword).
 		SetFails(1).
 		SaveX(ctx)
 	log.Println("credential created:", c)
@@ -172,7 +174,7 @@ func ExampleTarget() {
 		Create().
 		SetPrincipal("string").
 		SetSecret("string").
-		SetType("string").
+		SetKind(credential.KindPassword).
 		SetFails(1).
 		SaveX(ctx)
 	log.Println("credential created:", c2)
