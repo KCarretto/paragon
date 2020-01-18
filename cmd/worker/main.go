@@ -15,6 +15,8 @@ load("ssh", "exec")
 def main():
 	print("Running!")
 	exec("touch /tmp/hello_world.txt")
+
+	print(exec("echo hello world"))
 `
 
 func main() {

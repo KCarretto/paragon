@@ -2,19 +2,14 @@ package event
 
 import (
 	"context"
-
-	"github.com/kcarretto/paragon/ent"
 )
 
-// TaskQueued is a struct used to serialize a Task Queued event to pubsub
-type TaskQueued struct {
-	Target      *ent.Target
-	Task        *ent.Task
-	Credentials []*ent.Credential
-	Tags        []*ent.Tag
-}
-
-// Publisher is a generic interface for publishing to a topic
+// A Publisher broadcasts events to a topic.
 type Publisher interface {
 	Publish(context.Context, []byte) error
+}
+
+// A Subscriber registers event handlers for events received on a topic.
+type Subscriber interface {
+	Subscribe(topic string, handler func(context.Context, []byte)) error
 }
