@@ -138,7 +138,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		if err != nil {
 			return nil, err
 		}
-		e := event.TaskQueuedEvent{
+		e := event.TaskQueued{
 			Target:      nil,
 			Task:        t,
 			Credentials: nil,

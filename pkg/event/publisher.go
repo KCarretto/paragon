@@ -6,8 +6,8 @@ import (
 	"github.com/kcarretto/paragon/ent"
 )
 
-// TaskQueuedEvent is a struct used to serialize a Task Queued event to pubsub
-type TaskQueuedEvent struct {
+// TaskQueued is a struct used to serialize a Task Queued event to pubsub
+type TaskQueued struct {
 	Target      *ent.Target
 	Task        *ent.Task
 	Credentials []*ent.Credential
