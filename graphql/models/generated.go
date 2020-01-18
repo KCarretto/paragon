@@ -10,6 +10,7 @@ type AddCredentialForTargetRequest struct {
 	ID        int    `json:"id"`
 	Principal string `json:"principal"`
 	Secret    string `json:"secret"`
+	Type      string `json:"type"`
 }
 
 type ApplyTagRequest struct {

@@ -15,6 +15,8 @@ const (
 	FieldPrincipal = "principal"
 	// FieldSecret holds the string denoting the secret vertex property in the database.
 	FieldSecret = "secret"
+	// FieldType holds the string denoting the type vertex property in the database.
+	FieldType = "type"
 	// FieldFails holds the string denoting the fails vertex property in the database.
 	FieldFails = "fails"
 
@@ -27,6 +29,7 @@ var Columns = []string{
 	FieldID,
 	FieldPrincipal,
 	FieldSecret,
+	FieldType,
 	FieldFails,
 }
 
@@ -34,7 +37,7 @@ var (
 	fields = schema.Credential{}.Fields()
 
 	// descFails is the schema descriptor for fails field.
-	descFails = fields[2].Descriptor()
+	descFails = fields[3].Descriptor()
 	// DefaultFails holds the default value on creation for the fails field.
 	DefaultFails = descFails.Default.(int)
 	// FailsValidator is a validator for the "fails" field. It is called by the builders before save.

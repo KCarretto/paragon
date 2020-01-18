@@ -16,6 +16,7 @@ type CredentialUpdate struct {
 	config
 	principal  *string
 	secret     *string
+	_type      *string
 	fails      *int
 	addfails   *int
 	predicates []predicate.Credential
@@ -36,6 +37,12 @@ func (cu *CredentialUpdate) SetPrincipal(s string) *CredentialUpdate {
 // SetSecret sets the secret field.
 func (cu *CredentialUpdate) SetSecret(s string) *CredentialUpdate {
 	cu.secret = &s
+	return cu
+}
+
+// SetType sets the type field.
+func (cu *CredentialUpdate) SetType(s string) *CredentialUpdate {
+	cu._type = &s
 	return cu
 }
 
@@ -133,6 +140,9 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	if value := cu.secret; value != nil {
 		builder.Set(credential.FieldSecret, *value)
 	}
+	if value := cu._type; value != nil {
+		builder.Set(credential.FieldType, *value)
+	}
 	if value := cu.fails; value != nil {
 		builder.Set(credential.FieldFails, *value)
 	}
@@ -157,6 +167,7 @@ type CredentialUpdateOne struct {
 	id        int
 	principal *string
 	secret    *string
+	_type     *string
 	fails     *int
 	addfails  *int
 }
@@ -170,6 +181,12 @@ func (cuo *CredentialUpdateOne) SetPrincipal(s string) *CredentialUpdateOne {
 // SetSecret sets the secret field.
 func (cuo *CredentialUpdateOne) SetSecret(s string) *CredentialUpdateOne {
 	cuo.secret = &s
+	return cuo
+}
+
+// SetType sets the type field.
+func (cuo *CredentialUpdateOne) SetType(s string) *CredentialUpdateOne {
+	cuo._type = &s
 	return cuo
 }
 
@@ -271,6 +288,10 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 	if value := cuo.secret; value != nil {
 		builder.Set(credential.FieldSecret, *value)
 		c.Secret = *value
+	}
+	if value := cuo._type; value != nil {
+		builder.Set(credential.FieldType, *value)
+		c.Type = *value
 	}
 	if value := cuo.fails; value != nil {
 		builder.Set(credential.FieldFails, *value)

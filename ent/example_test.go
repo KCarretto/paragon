@@ -34,6 +34,7 @@ func ExampleCredential() {
 		Create().
 		SetPrincipal("string").
 		SetSecret("string").
+		SetType("string").
 		SetFails(1).
 		SaveX(ctx)
 	log.Println("credential created:", c)
@@ -171,6 +172,7 @@ func ExampleTarget() {
 		Create().
 		SetPrincipal("string").
 		SetSecret("string").
+		SetType("string").
 		SetFails(1).
 		SaveX(ctx)
 	log.Println("credential created:", c2)

@@ -16,6 +16,7 @@ type CredentialCreate struct {
 	config
 	principal *string
 	secret    *string
+	_type     *string
 	fails     *int
 }
 
@@ -28,6 +29,12 @@ func (cc *CredentialCreate) SetPrincipal(s string) *CredentialCreate {
 // SetSecret sets the secret field.
 func (cc *CredentialCreate) SetSecret(s string) *CredentialCreate {
 	cc.secret = &s
+	return cc
+}
+
+// SetType sets the type field.
+func (cc *CredentialCreate) SetType(s string) *CredentialCreate {
+	cc._type = &s
 	return cc
 }
 
@@ -52,6 +59,9 @@ func (cc *CredentialCreate) Save(ctx context.Context) (*Credential, error) {
 	}
 	if cc.secret == nil {
 		return nil, errors.New("ent: missing required field \"secret\"")
+	}
+	if cc._type == nil {
+		return nil, errors.New("ent: missing required field \"type\"")
 	}
 	if cc.fails == nil {
 		v := credential.DefaultFails
@@ -91,6 +101,10 @@ func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
 	if value := cc.secret; value != nil {
 		builder.Set(credential.FieldSecret, *value)
 		c.Secret = *value
+	}
+	if value := cc._type; value != nil {
+		builder.Set(credential.FieldType, *value)
+		c.Type = *value
 	}
 	if value := cc.fails; value != nil {
 		builder.Set(credential.FieldFails, *value)

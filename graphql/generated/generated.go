@@ -54,6 +54,7 @@ type ComplexityRoot struct {
 		ID        func(childComplexity int) int
 		Principal func(childComplexity int) int
 		Secret    func(childComplexity int) int
+		Type      func(childComplexity int) int
 	}
 
 	Job struct {
@@ -230,6 +231,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Credential.Secret(childComplexity), true
+
+	case "Credential.type":
+		if e.complexity.Credential.Type == nil {
+			break
+		}
+
+		return e.complexity.Credential.Type(childComplexity), true
 
 	case "Job.content":
 		if e.complexity.Job.Content == nil {
@@ -979,6 +987,7 @@ type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   id: ID!
   principal: String
   secret: String
+  type: String
   fails: Int
 }
 
@@ -1036,6 +1045,7 @@ input AddCredentialForTargetRequest {
   id: ID!
   principal: String!
   secret: String!
+  type: String!
 }
 
 input ClaimTasksRequest {
@@ -1721,6 +1731,40 @@ func (ec *executionContext) _Credential_secret(ctx context.Context, field graphq
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.Secret, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Credential_type(ctx context.Context, field graphql.CollectedField, obj *ent.Credential) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Credential",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5416,6 +5460,12 @@ func (ec *executionContext) unmarshalInputAddCredentialForTargetRequest(ctx cont
 			if err != nil {
 				return it, err
 			}
+		case "type":
+			var err error
+			it.Type, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -5792,6 +5842,8 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 			out.Values[i] = ec._Credential_principal(ctx, field, obj)
 		case "secret":
 			out.Values[i] = ec._Credential_secret(ctx, field, obj)
+		case "type":
+			out.Values[i] = ec._Credential_type(ctx, field, obj)
 		case "fails":
 			out.Values[i] = ec._Credential_fails(ctx, field, obj)
 		default:

@@ -18,6 +18,8 @@ type Credential struct {
 	Principal string `json:"principal,omitempty"`
 	// Secret holds the value of the "secret" field.
 	Secret string `json:"secret,omitempty"`
+	// Type holds the value of the "type" field.
+	Type string `json:"type,omitempty"`
 	// Fails holds the value of the "fails" field.
 	Fails int `json:"fails,omitempty"`
 }
@@ -28,6 +30,7 @@ func (c *Credential) FromRows(rows *sql.Rows) error {
 		ID        int
 		Principal sql.NullString
 		Secret    sql.NullString
+		Type      sql.NullString
 		Fails     sql.NullInt64
 	}
 	// the order here should be the same as in the `credential.Columns`.
@@ -35,6 +38,7 @@ func (c *Credential) FromRows(rows *sql.Rows) error {
 		&vc.ID,
 		&vc.Principal,
 		&vc.Secret,
+		&vc.Type,
 		&vc.Fails,
 	); err != nil {
 		return err
@@ -42,6 +46,7 @@ func (c *Credential) FromRows(rows *sql.Rows) error {
 	c.ID = vc.ID
 	c.Principal = vc.Principal.String
 	c.Secret = vc.Secret.String
+	c.Type = vc.Type.String
 	c.Fails = int(vc.Fails.Int64)
 	return nil
 }
@@ -73,6 +78,8 @@ func (c *Credential) String() string {
 	builder.WriteString(c.Principal)
 	builder.WriteString(", secret=")
 	builder.WriteString(c.Secret)
+	builder.WriteString(", type=")
+	builder.WriteString(c.Type)
 	builder.WriteString(", fails=")
 	builder.WriteString(fmt.Sprintf("%v", c.Fails))
 	builder.WriteByte(')')

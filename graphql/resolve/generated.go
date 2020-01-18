@@ -278,6 +278,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	credential, err := r.EntClient.Credential.Create().
 		SetPrincipal(input.Principal).
 		SetSecret(input.Secret).
+		SetType(input.Type).
 		Save(ctx)
 	if err != nil {
 		return nil, err
