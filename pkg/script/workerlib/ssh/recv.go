@@ -1,6 +1,8 @@
 package ssh
 
 import (
+	"log"
+
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/pkg/sftp"
 )
@@ -31,6 +33,7 @@ func (env Environment) RecvFromTarget(parser script.ArgParser) (script.Retval, e
 
 	f, err := session.Open(remotePath)
 	if err != nil {
+		log.Printf("Failed to open remote path %q: %v", remotePath, err)
 		return nil, err
 	}
 
