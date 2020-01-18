@@ -18,7 +18,7 @@ func (env Environment) RecvFromTarget(parser script.ArgParser) (script.Retval, e
 		return nil, err
 	}
 
-	client, err := env.Remote.Connect()
+	client, err := env.Connect(env.RemoteHost)
 	if err != nil {
 		return nil, err
 	}
