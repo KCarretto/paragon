@@ -8,8 +8,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -173,105 +175,122 @@ func (jc *JobCreate) SaveX(ctx context.Context) *Job {
 
 func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 	var (
-		res sql.Result
-		j   = &Job{config: jc.config}
+		j     = &Job{config: jc.config}
+		_spec = &sqlgraph.CreateSpec{
+			Table: job.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: job.FieldID,
+			},
+		}
 	)
-	tx, err := jc.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder := sql.Dialect(jc.driver.Dialect()).
-		Insert(job.Table).
-		Default()
 	if value := jc.Name; value != nil {
-		builder.Set(job.FieldName, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: job.FieldName,
+		})
 		j.Name = *value
 	}
 	if value := jc.CreationTime; value != nil {
-		builder.Set(job.FieldCreationTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: job.FieldCreationTime,
+		})
 		j.CreationTime = *value
 	}
 	if value := jc.Content; value != nil {
-		builder.Set(job.FieldContent, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: job.FieldContent,
+		})
 		j.Content = *value
 	}
-	query, args := builder.Query()
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return nil, rollback(tx, err)
+	if nodes := jc.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, rollback(tx, err)
+	if nodes := jc.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	j.ID = int(id)
-	if len(jc.tasks) > 0 {
-		p := sql.P()
-		for eid := range jc.tasks {
-			p.Or().EQ(task.FieldID, eid)
+	if nodes := jc.prev; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   job.PrevTable,
+			Columns: []string{job.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(job.TasksTable).
-			Set(job.TasksColumn, id).
-			Where(sql.And(p, sql.IsNull(job.TasksColumn))).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return nil, rollback(tx, err)
-		}
-		if int(affected) < len(jc.tasks) {
-			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Job\"", keys(jc.tasks))})
-		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if len(jc.tags) > 0 {
-		for eid := range jc.tags {
-
-			query, args := sql.Insert(job.TagsTable).
-				Columns(job.TagsPrimaryKey[0], job.TagsPrimaryKey[1]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if nodes := jc.next; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   job.NextTable,
+			Columns: []string{job.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if len(jc.prev) > 0 {
-		eid := keys(jc.prev)[0]
-		query, args := sql.Update(job.PrevTable).
-			Set(job.PrevColumn, eid).
-			Where(sql.EQ(job.FieldID, id).And().IsNull(job.PrevColumn)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+	if err := sqlgraph.CreateNode(ctx, jc.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
 		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return nil, rollback(tx, err)
-		}
-		if int(affected) < len(jc.prev) {
-			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"prev\" %v already connected to a different \"Job\"", keys(jc.prev))})
-		}
-	}
-	if len(jc.next) > 0 {
-		eid := keys(jc.next)[0]
-		query, args := sql.Update(job.NextTable).
-			Set(job.NextColumn, id).
-			Where(sql.EQ(job.FieldID, eid).And().IsNull(job.NextColumn)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
-		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return nil, rollback(tx, err)
-		}
-		if int(affected) < len(jc.next) {
-			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"next\" %v already connected to a different \"Job\"", keys(jc.next))})
-		}
-	}
-	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	j.ID = int(id)
 	return j, nil
 }

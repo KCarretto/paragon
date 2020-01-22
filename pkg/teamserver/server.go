@@ -14,6 +14,7 @@ import (
 	"github.com/kcarretto/paragon/graphql/resolve"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/middleware"
 	"github.com/kcarretto/paragon/www"
@@ -59,6 +60,8 @@ func (srv *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run() {
+	cdnSVC := cdn.HTTP{EntClient: srv.EntClient}
+
 	router := http.NewServeMux()
 
 	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient, Publisher: srv.Publisher}}))
@@ -67,6 +70,8 @@ func (srv *Server) Run() {
 	router.Handle("/graphiql", handler.Playground("GraphQL", "/graphql"))
 	router.HandleFunc("/status", srv.handleStatus)
 	router.Handle("/app/", http.StripPrefix("/app", http.FileServer(www.App)))
+	router.HandleFunc("/cdn/upload", cdnSVC.HandleFileUpload)
+	router.Handle("/cdn/download/", http.StripPrefix("/cdn/download", http.HandlerFunc(cdnSVC.HandleFileDownload)))
 	router.HandleFunc("/", srv.handleIndex)
 
 	// C2 Server Address

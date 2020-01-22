@@ -7,7 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 )
 
@@ -87,43 +88,54 @@ func (cc *CredentialCreate) SaveX(ctx context.Context) *Credential {
 
 func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
 	var (
-		res sql.Result
-		c   = &Credential{config: cc.config}
+		c     = &Credential{config: cc.config}
+		_spec = &sqlgraph.CreateSpec{
+			Table: credential.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: credential.FieldID,
+			},
+		}
 	)
-	tx, err := cc.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder := sql.Dialect(cc.driver.Dialect()).
-		Insert(credential.Table).
-		Default()
 	if value := cc.principal; value != nil {
-		builder.Set(credential.FieldPrincipal, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: credential.FieldPrincipal,
+		})
 		c.Principal = *value
 	}
 	if value := cc.secret; value != nil {
-		builder.Set(credential.FieldSecret, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: credential.FieldSecret,
+		})
 		c.Secret = *value
 	}
 	if value := cc.kind; value != nil {
-		builder.Set(credential.FieldKind, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  *value,
+			Column: credential.FieldKind,
+		})
 		c.Kind = *value
 	}
 	if value := cc.fails; value != nil {
-		builder.Set(credential.FieldFails, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  *value,
+			Column: credential.FieldFails,
+		})
 		c.Fails = *value
 	}
-	query, args := builder.Query()
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return nil, rollback(tx, err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, rollback(tx, err)
-	}
-	c.ID = int(id)
-	if err := tx.Commit(); err != nil {
+	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
+		}
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	c.ID = int(id)
 	return c, nil
 }

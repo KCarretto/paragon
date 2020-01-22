@@ -44,12 +44,17 @@ const (
 	NextColumn = "prev_id"
 )
 
-// Columns holds all SQL columns are job fields.
+// Columns holds all SQL columns for job fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldCreationTime,
 	FieldContent,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Job type.
+var ForeignKeys = []string{
+	"prev_id",
 }
 
 var (

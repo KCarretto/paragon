@@ -4,12 +4,14 @@ package ent
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
@@ -309,184 +311,223 @@ func (tu *TargetUpdate) ExecX(ctx context.Context) {
 }
 
 func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	selector := sql.Select(target.FieldID).From(sql.Table(target.Table))
-	for _, p := range tu.predicates {
-		p(selector)
+	_spec := &sqlgraph.UpdateSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   target.Table,
+			Columns: target.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: target.FieldID,
+			},
+		},
 	}
-	rows := &sql.Rows{}
-	query, args := selector.Query()
-	if err = tu.driver.Query(ctx, query, args, rows); err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			return 0, fmt.Errorf("ent: failed reading id: %v", err)
+	if ps := tu.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
 		}
-		ids = append(ids, id)
 	}
-	if len(ids) == 0 {
-		return 0, nil
-	}
-
-	tx, err := tu.driver.Tx(ctx)
-	if err != nil {
-		return 0, err
-	}
-	var (
-		res     sql.Result
-		builder = sql.Update(target.Table).Where(sql.InInts(target.FieldID, ids...))
-	)
 	if value := tu.Name; value != nil {
-		builder.Set(target.FieldName, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldName,
+		})
 	}
 	if value := tu.PrimaryIP; value != nil {
-		builder.Set(target.FieldPrimaryIP, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPrimaryIP,
+		})
 	}
 	if value := tu.MachineUUID; value != nil {
-		builder.Set(target.FieldMachineUUID, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldMachineUUID,
+		})
 	}
 	if tu.clearMachineUUID {
-		builder.SetNull(target.FieldMachineUUID)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldMachineUUID,
+		})
 	}
 	if value := tu.PublicIP; value != nil {
-		builder.Set(target.FieldPublicIP, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPublicIP,
+		})
 	}
 	if tu.clearPublicIP {
-		builder.SetNull(target.FieldPublicIP)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldPublicIP,
+		})
 	}
 	if value := tu.PrimaryMAC; value != nil {
-		builder.Set(target.FieldPrimaryMAC, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPrimaryMAC,
+		})
 	}
 	if tu.clearPrimaryMAC {
-		builder.SetNull(target.FieldPrimaryMAC)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldPrimaryMAC,
+		})
 	}
 	if value := tu.Hostname; value != nil {
-		builder.Set(target.FieldHostname, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldHostname,
+		})
 	}
 	if tu.clearHostname {
-		builder.SetNull(target.FieldHostname)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldHostname,
+		})
 	}
 	if value := tu.LastSeen; value != nil {
-		builder.Set(target.FieldLastSeen, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: target.FieldLastSeen,
+		})
 	}
 	if tu.clearLastSeen {
-		builder.SetNull(target.FieldLastSeen)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: target.FieldLastSeen,
+		})
 	}
-	if !builder.Empty() {
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+	if nodes := tu.removedTasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(tu.removedTasks) > 0 {
-		eids := make([]int, len(tu.removedTasks))
-		for eid := range tu.removedTasks {
-			eids = append(eids, eid)
+	if nodes := tu.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(target.TasksTable).
-			SetNull(target.TasksColumn).
-			Where(sql.InInts(target.TasksColumn, ids...)).
-			Where(sql.InInts(task.FieldID, eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(tu.tasks) > 0 {
-		for _, id := range ids {
-			p := sql.P()
-			for eid := range tu.tasks {
-				p.Or().EQ(task.FieldID, eid)
-			}
-			query, args := sql.Update(target.TasksTable).
-				Set(target.TasksColumn, id).
-				Where(sql.And(p, sql.IsNull(target.TasksColumn))).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return 0, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return 0, rollback(tx, err)
-			}
-			if int(affected) < len(tu.tasks) {
-				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Target\"", keys(tu.tasks))})
-			}
+	if nodes := tu.removedTags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(tu.removedTags) > 0 {
-		eids := make([]int, len(tu.removedTags))
-		for eid := range tu.removedTags {
-			eids = append(eids, eid)
+	if nodes := tu.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
-		query, args := sql.Delete(target.TagsTable).
-			Where(sql.InInts(target.TagsPrimaryKey[0], ids...)).
-			Where(sql.InInts(target.TagsPrimaryKey[1], eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(tu.tags) > 0 {
-		values := make([][]int, 0, len(ids))
-		for _, id := range ids {
-			for eid := range tu.tags {
-				values = append(values, []int{id, eid})
-			}
+	if nodes := tu.removedCredentials; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
 		}
-		builder := sql.Insert(target.TagsTable).
-			Columns(target.TagsPrimaryKey[0], target.TagsPrimaryKey[1])
-		for _, v := range values {
-			builder.Values(v[0], v[1])
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
-		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(tu.removedCredentials) > 0 {
-		eids := make([]int, len(tu.removedCredentials))
-		for eid := range tu.removedCredentials {
-			eids = append(eids, eid)
+	if nodes := tu.credentials; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(target.CredentialsTable).
-			SetNull(target.CredentialsColumn).
-			Where(sql.InInts(target.CredentialsColumn, ids...)).
-			Where(sql.InInts(credential.FieldID, eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(tu.credentials) > 0 {
-		for _, id := range ids {
-			p := sql.P()
-			for eid := range tu.credentials {
-				p.Or().EQ(credential.FieldID, eid)
-			}
-			query, args := sql.Update(target.CredentialsTable).
-				Set(target.CredentialsColumn, id).
-				Where(sql.And(p, sql.IsNull(target.CredentialsColumn))).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return 0, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return 0, rollback(tx, err)
-			}
-			if int(affected) < len(tu.credentials) {
-				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"credentials\" %v already connected to a different \"Target\"", keys(tu.credentials))})
-			}
+	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
 		}
-	}
-	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
-	return len(ids), nil
+	return n, nil
 }
 
 // TargetUpdateOne is the builder for updating a single Target entity.
@@ -778,201 +819,217 @@ func (tuo *TargetUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) {
-	selector := sql.Select(target.Columns...).From(sql.Table(target.Table))
-	target.ID(tuo.id)(selector)
-	rows := &sql.Rows{}
-	query, args := selector.Query()
-	if err = tuo.driver.Query(ctx, query, args, rows); err != nil {
-		return nil, err
+	_spec := &sqlgraph.UpdateSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   target.Table,
+			Columns: target.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Value:  tuo.id,
+				Type:   field.TypeInt,
+				Column: target.FieldID,
+			},
+		},
 	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		t = &Target{config: tuo.config}
-		if err := t.FromRows(rows); err != nil {
-			return nil, fmt.Errorf("ent: failed scanning row into Target: %v", err)
-		}
-		id = t.ID
-		ids = append(ids, id)
-	}
-	switch n := len(ids); {
-	case n == 0:
-		return nil, &ErrNotFound{fmt.Sprintf("Target with id: %v", tuo.id)}
-	case n > 1:
-		return nil, fmt.Errorf("ent: more than one Target with the same id: %v", tuo.id)
-	}
-
-	tx, err := tuo.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var (
-		res     sql.Result
-		builder = sql.Update(target.Table).Where(sql.InInts(target.FieldID, ids...))
-	)
 	if value := tuo.Name; value != nil {
-		builder.Set(target.FieldName, *value)
-		t.Name = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldName,
+		})
 	}
 	if value := tuo.PrimaryIP; value != nil {
-		builder.Set(target.FieldPrimaryIP, *value)
-		t.PrimaryIP = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPrimaryIP,
+		})
 	}
 	if value := tuo.MachineUUID; value != nil {
-		builder.Set(target.FieldMachineUUID, *value)
-		t.MachineUUID = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldMachineUUID,
+		})
 	}
 	if tuo.clearMachineUUID {
-		var value string
-		t.MachineUUID = value
-		builder.SetNull(target.FieldMachineUUID)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldMachineUUID,
+		})
 	}
 	if value := tuo.PublicIP; value != nil {
-		builder.Set(target.FieldPublicIP, *value)
-		t.PublicIP = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPublicIP,
+		})
 	}
 	if tuo.clearPublicIP {
-		var value string
-		t.PublicIP = value
-		builder.SetNull(target.FieldPublicIP)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldPublicIP,
+		})
 	}
 	if value := tuo.PrimaryMAC; value != nil {
-		builder.Set(target.FieldPrimaryMAC, *value)
-		t.PrimaryMAC = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPrimaryMAC,
+		})
 	}
 	if tuo.clearPrimaryMAC {
-		var value string
-		t.PrimaryMAC = value
-		builder.SetNull(target.FieldPrimaryMAC)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldPrimaryMAC,
+		})
 	}
 	if value := tuo.Hostname; value != nil {
-		builder.Set(target.FieldHostname, *value)
-		t.Hostname = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldHostname,
+		})
 	}
 	if tuo.clearHostname {
-		var value string
-		t.Hostname = value
-		builder.SetNull(target.FieldHostname)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Column: target.FieldHostname,
+		})
 	}
 	if value := tuo.LastSeen; value != nil {
-		builder.Set(target.FieldLastSeen, *value)
-		t.LastSeen = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: target.FieldLastSeen,
+		})
 	}
 	if tuo.clearLastSeen {
-		var value time.Time
-		t.LastSeen = value
-		builder.SetNull(target.FieldLastSeen)
+		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Column: target.FieldLastSeen,
+		})
 	}
-	if !builder.Empty() {
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+	if nodes := tuo.removedTasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(tuo.removedTasks) > 0 {
-		eids := make([]int, len(tuo.removedTasks))
-		for eid := range tuo.removedTasks {
-			eids = append(eids, eid)
+	if nodes := tuo.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(target.TasksTable).
-			SetNull(target.TasksColumn).
-			Where(sql.InInts(target.TasksColumn, ids...)).
-			Where(sql.InInts(task.FieldID, eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(tuo.tasks) > 0 {
-		for _, id := range ids {
-			p := sql.P()
-			for eid := range tuo.tasks {
-				p.Or().EQ(task.FieldID, eid)
-			}
-			query, args := sql.Update(target.TasksTable).
-				Set(target.TasksColumn, id).
-				Where(sql.And(p, sql.IsNull(target.TasksColumn))).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return nil, rollback(tx, err)
-			}
-			if int(affected) < len(tuo.tasks) {
-				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Target\"", keys(tuo.tasks))})
-			}
+	if nodes := tuo.removedTags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(tuo.removedTags) > 0 {
-		eids := make([]int, len(tuo.removedTags))
-		for eid := range tuo.removedTags {
-			eids = append(eids, eid)
+	if nodes := tuo.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
-		query, args := sql.Delete(target.TagsTable).
-			Where(sql.InInts(target.TagsPrimaryKey[0], ids...)).
-			Where(sql.InInts(target.TagsPrimaryKey[1], eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(tuo.tags) > 0 {
-		values := make([][]int, 0, len(ids))
-		for _, id := range ids {
-			for eid := range tuo.tags {
-				values = append(values, []int{id, eid})
-			}
+	if nodes := tuo.removedCredentials; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
 		}
-		builder := sql.Insert(target.TagsTable).
-			Columns(target.TagsPrimaryKey[0], target.TagsPrimaryKey[1])
-		for _, v := range values {
-			builder.Values(v[0], v[1])
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
-		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(tuo.removedCredentials) > 0 {
-		eids := make([]int, len(tuo.removedCredentials))
-		for eid := range tuo.removedCredentials {
-			eids = append(eids, eid)
+	if nodes := tuo.credentials; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(target.CredentialsTable).
-			SetNull(target.CredentialsColumn).
-			Where(sql.InInts(target.CredentialsColumn, ids...)).
-			Where(sql.InInts(credential.FieldID, eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(tuo.credentials) > 0 {
-		for _, id := range ids {
-			p := sql.P()
-			for eid := range tuo.credentials {
-				p.Or().EQ(credential.FieldID, eid)
-			}
-			query, args := sql.Update(target.CredentialsTable).
-				Set(target.CredentialsColumn, id).
-				Where(sql.And(p, sql.IsNull(target.CredentialsColumn))).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return nil, rollback(tx, err)
-			}
-			if int(affected) < len(tuo.credentials) {
-				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"credentials\" %v already connected to a different \"Target\"", keys(tuo.credentials))})
-			}
+	t = &Target{config: tuo.config}
+	_spec.Assign = t.assignValues
+	_spec.ScanValues = t.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
 		}
-	}
-	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
 	return t, nil

@@ -10,6 +10,7 @@ import (
 	"github.com/kcarretto/paragon/ent/migrate"
 
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/facebookincubator/ent/dialect"
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -26,6 +28,8 @@ type Client struct {
 	Schema *migrate.Schema
 	// Credential is the client for interacting with the Credential builders.
 	Credential *CredentialClient
+	// File is the client for interacting with the File builders.
+	File *FileClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
 	// Tag is the client for interacting with the Tag builders.
@@ -44,6 +48,7 @@ func NewClient(opts ...Option) *Client {
 		config:     c,
 		Schema:     migrate.NewSchema(c.driver),
 		Credential: NewCredentialClient(c),
+		File:       NewFileClient(c),
 		Job:        NewJobClient(c),
 		Tag:        NewTagClient(c),
 		Target:     NewTargetClient(c),
@@ -56,13 +61,12 @@ func NewClient(opts ...Option) *Client {
 // Optional parameters can be added for configuring the client.
 func Open(driverName, dataSourceName string, options ...Option) (*Client, error) {
 	switch driverName {
-	case dialect.MySQL, dialect.SQLite:
+	case dialect.MySQL, dialect.Postgres, dialect.SQLite:
 		drv, err := sql.Open(driverName, dataSourceName)
 		if err != nil {
 			return nil, err
 		}
 		return NewClient(append(options, Driver(drv))...), nil
-
 	default:
 		return nil, fmt.Errorf("unsupported driver: %q", driverName)
 	}
@@ -81,6 +85,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		config:     cfg,
 		Credential: NewCredentialClient(cfg),
+		File:       NewFileClient(cfg),
 		Job:        NewJobClient(cfg),
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
@@ -104,6 +109,7 @@ func (c *Client) Debug() *Client {
 		config:     cfg,
 		Schema:     migrate.NewSchema(cfg.driver),
 		Credential: NewCredentialClient(cfg),
+		File:       NewFileClient(cfg),
 		Job:        NewJobClient(cfg),
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
@@ -180,6 +186,70 @@ func (c *CredentialClient) GetX(ctx context.Context, id int) *Credential {
 	return cr
 }
 
+// FileClient is a client for the File schema.
+type FileClient struct {
+	config
+}
+
+// NewFileClient returns a client for the File from the given config.
+func NewFileClient(c config) *FileClient {
+	return &FileClient{config: c}
+}
+
+// Create returns a create builder for File.
+func (c *FileClient) Create() *FileCreate {
+	return &FileCreate{config: c.config}
+}
+
+// Update returns an update builder for File.
+func (c *FileClient) Update() *FileUpdate {
+	return &FileUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *FileClient) UpdateOne(f *File) *FileUpdateOne {
+	return c.UpdateOneID(f.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *FileClient) UpdateOneID(id int) *FileUpdateOne {
+	return &FileUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for File.
+func (c *FileClient) Delete() *FileDelete {
+	return &FileDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *FileClient) DeleteOne(f *File) *FileDeleteOne {
+	return c.DeleteOneID(f.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *FileClient) DeleteOneID(id int) *FileDeleteOne {
+	return &FileDeleteOne{c.Delete().Where(file.ID(id))}
+}
+
+// Create returns a query builder for File.
+func (c *FileClient) Query() *FileQuery {
+	return &FileQuery{config: c.config}
+}
+
+// Get returns a File entity by its id.
+func (c *FileClient) Get(ctx context.Context, id int) (*File, error) {
+	return c.Query().Where(file.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *FileClient) GetX(ctx context.Context, id int) *File {
+	f, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
 // JobClient is a client for the Job schema.
 type JobClient struct {
 	config
@@ -248,8 +318,12 @@ func (c *JobClient) GetX(ctx context.Context, id int) *Job {
 func (c *JobClient) QueryTasks(j *Job) *TaskQuery {
 	query := &TaskQuery{config: c.config}
 	id := j.ID
-	query.sql = sql.Select().From(sql.Table(task.Table)).
-		Where(sql.EQ(job.TasksColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, job.TasksTable, job.TasksColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -258,18 +332,12 @@ func (c *JobClient) QueryTasks(j *Job) *TaskQuery {
 func (c *JobClient) QueryTags(j *Job) *TagQuery {
 	query := &TagQuery{config: c.config}
 	id := j.ID
-	t1 := sql.Table(tag.Table)
-	t2 := sql.Table(job.Table)
-	t3 := sql.Table(job.TagsTable)
-	t4 := sql.Select(t3.C(job.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(job.TagsPrimaryKey[0]), t2.C(job.FieldID)).
-		Where(sql.EQ(t2.C(job.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(job.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, job.TagsTable, job.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -278,11 +346,12 @@ func (c *JobClient) QueryTags(j *Job) *TagQuery {
 func (c *JobClient) QueryPrev(j *Job) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := j.ID
-	t1 := sql.Table(job.Table)
-	t2 := sql.Select(job.PrevColumn).
-		From(sql.Table(job.PrevTable)).
-		Where(sql.EQ(job.FieldID, id))
-	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(job.FieldID), t2.C(job.PrevColumn))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, true, job.PrevTable, job.PrevColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -291,8 +360,12 @@ func (c *JobClient) QueryPrev(j *Job) *JobQuery {
 func (c *JobClient) QueryNext(j *Job) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := j.ID
-	query.sql = sql.Select().From(sql.Table(job.Table)).
-		Where(sql.EQ(job.NextColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -365,18 +438,12 @@ func (c *TagClient) GetX(ctx context.Context, id int) *Tag {
 func (c *TagClient) QueryTargets(t *Tag) *TargetQuery {
 	query := &TargetQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(target.Table)
-	t2 := sql.Table(tag.Table)
-	t3 := sql.Table(tag.TargetsTable)
-	t4 := sql.Select(t3.C(tag.TargetsPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.TargetsPrimaryKey[1]), t2.C(tag.FieldID)).
-		Where(sql.EQ(t2.C(tag.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(target.FieldID), t4.C(tag.TargetsPrimaryKey[0]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(tag.Table, tag.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, tag.TargetsTable, tag.TargetsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -385,18 +452,12 @@ func (c *TagClient) QueryTargets(t *Tag) *TargetQuery {
 func (c *TagClient) QueryTasks(t *Tag) *TaskQuery {
 	query := &TaskQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(task.Table)
-	t2 := sql.Table(tag.Table)
-	t3 := sql.Table(tag.TasksTable)
-	t4 := sql.Select(t3.C(tag.TasksPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.TasksPrimaryKey[1]), t2.C(tag.FieldID)).
-		Where(sql.EQ(t2.C(tag.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(task.FieldID), t4.C(tag.TasksPrimaryKey[0]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(tag.Table, tag.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, tag.TasksTable, tag.TasksPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -405,18 +466,12 @@ func (c *TagClient) QueryTasks(t *Tag) *TaskQuery {
 func (c *TagClient) QueryJobs(t *Tag) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(job.Table)
-	t2 := sql.Table(tag.Table)
-	t3 := sql.Table(tag.JobsTable)
-	t4 := sql.Select(t3.C(tag.JobsPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.JobsPrimaryKey[1]), t2.C(tag.FieldID)).
-		Where(sql.EQ(t2.C(tag.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(job.FieldID), t4.C(tag.JobsPrimaryKey[0]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(tag.Table, tag.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, tag.JobsTable, tag.JobsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -489,8 +544,12 @@ func (c *TargetClient) GetX(ctx context.Context, id int) *Target {
 func (c *TargetClient) QueryTasks(t *Target) *TaskQuery {
 	query := &TaskQuery{config: c.config}
 	id := t.ID
-	query.sql = sql.Select().From(sql.Table(task.Table)).
-		Where(sql.EQ(target.TasksColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(target.Table, target.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, target.TasksTable, target.TasksColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -499,18 +558,12 @@ func (c *TargetClient) QueryTasks(t *Target) *TaskQuery {
 func (c *TargetClient) QueryTags(t *Target) *TagQuery {
 	query := &TagQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(tag.Table)
-	t2 := sql.Table(target.Table)
-	t3 := sql.Table(target.TagsTable)
-	t4 := sql.Select(t3.C(target.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(target.TagsPrimaryKey[0]), t2.C(target.FieldID)).
-		Where(sql.EQ(t2.C(target.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(target.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(target.Table, target.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, target.TagsTable, target.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -519,8 +572,12 @@ func (c *TargetClient) QueryTags(t *Target) *TagQuery {
 func (c *TargetClient) QueryCredentials(t *Target) *CredentialQuery {
 	query := &CredentialQuery{config: c.config}
 	id := t.ID
-	query.sql = sql.Select().From(sql.Table(credential.Table)).
-		Where(sql.EQ(target.CredentialsColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(target.Table, target.FieldID, id),
+		sqlgraph.To(credential.Table, credential.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, target.CredentialsTable, target.CredentialsColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -593,18 +650,12 @@ func (c *TaskClient) GetX(ctx context.Context, id int) *Task {
 func (c *TaskClient) QueryTags(t *Task) *TagQuery {
 	query := &TagQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(tag.Table)
-	t2 := sql.Table(task.Table)
-	t3 := sql.Table(task.TagsTable)
-	t4 := sql.Select(t3.C(task.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(task.TagsPrimaryKey[0]), t2.C(task.FieldID)).
-		Where(sql.EQ(t2.C(task.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(task.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(task.Table, task.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, task.TagsTable, task.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -613,11 +664,12 @@ func (c *TaskClient) QueryTags(t *Task) *TagQuery {
 func (c *TaskClient) QueryJob(t *Task) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(job.Table)
-	t2 := sql.Select(task.JobColumn).
-		From(sql.Table(task.JobTable)).
-		Where(sql.EQ(task.FieldID, id))
-	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(job.FieldID), t2.C(task.JobColumn))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(task.Table, task.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, task.JobTable, task.JobColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -626,11 +678,12 @@ func (c *TaskClient) QueryJob(t *Task) *JobQuery {
 func (c *TaskClient) QueryTarget(t *Task) *TargetQuery {
 	query := &TargetQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(target.Table)
-	t2 := sql.Select(task.TargetColumn).
-		From(sql.Table(task.TargetTable)).
-		Where(sql.EQ(task.FieldID, id))
-	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(target.FieldID), t2.C(task.TargetColumn))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(task.Table, task.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, task.TargetTable, task.TargetColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }

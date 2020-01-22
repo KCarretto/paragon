@@ -2,6 +2,7 @@ import React from 'react';
 import { Route } from 'react-router-dom';
 import 'semantic-ui-css/semantic.min.css';
 import './App.css';
+import { XFileUploadModal } from './components/file';
 import { XLayout, XUnimplemented } from './components/layout/';
 import Routes from './config/routes';
 import { XGraphProvider } from './graphql';
@@ -22,6 +23,8 @@ const App = () => (
       <Route path='/targets/:id' component={XTargetView} />
       <Route path='/tasks/:id' component={XTaskView} />
       <Route path='/jobs/:id' component={XJobView} />
+
+      <Route path='/upload_test' component={XFileUploadModal} />
 
     </XLayout>
   </XGraphProvider>

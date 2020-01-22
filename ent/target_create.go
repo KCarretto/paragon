@@ -5,11 +5,12 @@ package ent
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
@@ -193,107 +194,135 @@ func (tc *TargetCreate) SaveX(ctx context.Context) *Target {
 
 func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 	var (
-		res sql.Result
-		t   = &Target{config: tc.config}
+		t     = &Target{config: tc.config}
+		_spec = &sqlgraph.CreateSpec{
+			Table: target.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: target.FieldID,
+			},
+		}
 	)
-	tx, err := tc.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder := sql.Dialect(tc.driver.Dialect()).
-		Insert(target.Table).
-		Default()
 	if value := tc.Name; value != nil {
-		builder.Set(target.FieldName, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldName,
+		})
 		t.Name = *value
 	}
 	if value := tc.PrimaryIP; value != nil {
-		builder.Set(target.FieldPrimaryIP, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPrimaryIP,
+		})
 		t.PrimaryIP = *value
 	}
 	if value := tc.MachineUUID; value != nil {
-		builder.Set(target.FieldMachineUUID, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldMachineUUID,
+		})
 		t.MachineUUID = *value
 	}
 	if value := tc.PublicIP; value != nil {
-		builder.Set(target.FieldPublicIP, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPublicIP,
+		})
 		t.PublicIP = *value
 	}
 	if value := tc.PrimaryMAC; value != nil {
-		builder.Set(target.FieldPrimaryMAC, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldPrimaryMAC,
+		})
 		t.PrimaryMAC = *value
 	}
 	if value := tc.Hostname; value != nil {
-		builder.Set(target.FieldHostname, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: target.FieldHostname,
+		})
 		t.Hostname = *value
 	}
 	if value := tc.LastSeen; value != nil {
-		builder.Set(target.FieldLastSeen, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: target.FieldLastSeen,
+		})
 		t.LastSeen = *value
 	}
-	query, args := builder.Query()
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return nil, rollback(tx, err)
+	if nodes := tc.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, rollback(tx, err)
+	if nodes := tc.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	t.ID = int(id)
-	if len(tc.tasks) > 0 {
-		p := sql.P()
-		for eid := range tc.tasks {
-			p.Or().EQ(task.FieldID, eid)
+	if nodes := tc.credentials; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(target.TasksTable).
-			Set(target.TasksColumn, id).
-			Where(sql.And(p, sql.IsNull(target.TasksColumn))).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return nil, rollback(tx, err)
-		}
-		if int(affected) < len(tc.tasks) {
-			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Target\"", keys(tc.tasks))})
-		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if len(tc.tags) > 0 {
-		for eid := range tc.tags {
-
-			query, args := sql.Insert(target.TagsTable).
-				Columns(target.TagsPrimaryKey[0], target.TagsPrimaryKey[1]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
 		}
-	}
-	if len(tc.credentials) > 0 {
-		p := sql.P()
-		for eid := range tc.credentials {
-			p.Or().EQ(credential.FieldID, eid)
-		}
-		query, args := sql.Update(target.CredentialsTable).
-			Set(target.CredentialsColumn, id).
-			Where(sql.And(p, sql.IsNull(target.CredentialsColumn))).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
-		}
-		affected, err := res.RowsAffected()
-		if err != nil {
-			return nil, rollback(tx, err)
-		}
-		if int(affected) < len(tc.credentials) {
-			return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"credentials\" %v already connected to a different \"Target\"", keys(tc.credentials))})
-		}
-	}
-	if err := tx.Commit(); err != nil {
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	t.ID = int(id)
 	return t, nil
 }

@@ -8,7 +8,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/tag"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -233,97 +237,151 @@ func (tc *TaskCreate) SaveX(ctx context.Context) *Task {
 
 func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 	var (
-		res sql.Result
-		t   = &Task{config: tc.config}
+		t     = &Task{config: tc.config}
+		_spec = &sqlgraph.CreateSpec{
+			Table: task.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: task.FieldID,
+			},
+		}
 	)
-	tx, err := tc.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder := sql.Dialect(tc.driver.Dialect()).
-		Insert(task.Table).
-		Default()
 	if value := tc.QueueTime; value != nil {
-		builder.Set(task.FieldQueueTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldQueueTime,
+		})
 		t.QueueTime = *value
 	}
 	if value := tc.LastChangedTime; value != nil {
-		builder.Set(task.FieldLastChangedTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldLastChangedTime,
+		})
 		t.LastChangedTime = *value
 	}
 	if value := tc.ClaimTime; value != nil {
-		builder.Set(task.FieldClaimTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldClaimTime,
+		})
 		t.ClaimTime = *value
 	}
 	if value := tc.ExecStartTime; value != nil {
-		builder.Set(task.FieldExecStartTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldExecStartTime,
+		})
 		t.ExecStartTime = *value
 	}
 	if value := tc.ExecStopTime; value != nil {
-		builder.Set(task.FieldExecStopTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldExecStopTime,
+		})
 		t.ExecStopTime = *value
 	}
 	if value := tc.Content; value != nil {
-		builder.Set(task.FieldContent, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldContent,
+		})
 		t.Content = *value
 	}
 	if value := tc.Output; value != nil {
-		builder.Set(task.FieldOutput, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldOutput,
+		})
 		t.Output = *value
 	}
 	if value := tc.Error; value != nil {
-		builder.Set(task.FieldError, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldError,
+		})
 		t.Error = *value
 	}
 	if value := tc.SessionID; value != nil {
-		builder.Set(task.FieldSessionID, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldSessionID,
+		})
 		t.SessionID = *value
 	}
-	query, args := builder.Query()
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return nil, rollback(tx, err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, rollback(tx, err)
-	}
-	t.ID = int(id)
-	if len(tc.tags) > 0 {
-		for eid := range tc.tags {
-
-			query, args := sql.Insert(task.TagsTable).
-				Columns(task.TagsPrimaryKey[0], task.TagsPrimaryKey[1]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if nodes := tc.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   task.TagsTable,
+			Columns: task.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
-	}
-	if len(tc.job) > 0 {
-		for eid := range tc.job {
-			query, args := sql.Update(task.JobTable).
-				Set(task.JobColumn, eid).
-				Where(sql.EQ(task.FieldID, id)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if len(tc.target) > 0 {
-		for eid := range tc.target {
-			query, args := sql.Update(task.TargetTable).
-				Set(task.TargetColumn, eid).
-				Where(sql.EQ(task.FieldID, id)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if nodes := tc.job; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.JobTable,
+			Columns: []string{task.JobColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := tx.Commit(); err != nil {
+	if nodes := tc.target; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.TargetTable,
+			Columns: []string{task.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
+		}
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	t.ID = int(id)
 	return t, nil
 }

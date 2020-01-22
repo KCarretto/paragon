@@ -4,6 +4,7 @@ package migrate
 
 import (
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/file"
 
 	"github.com/facebookincubator/ent/dialect/sql/schema"
 	"github.com/facebookincubator/ent/schema/field"
@@ -33,6 +34,22 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 		},
+	}
+	// FilesColumns holds the columns for the "files" table.
+	FilesColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "creation_time", Type: field.TypeTime},
+		{Name: "last_modified_time", Type: field.TypeTime},
+		{Name: "size", Type: field.TypeInt, Default: file.DefaultSize},
+		{Name: "content", Type: field.TypeBytes},
+	}
+	// FilesTable holds the schema information for the "files" table.
+	FilesTable = &schema.Table{
+		Name:        "files",
+		Columns:     FilesColumns,
+		PrimaryKey:  []*schema.Column{FilesColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{},
 	}
 	// JobsColumns holds the columns for the "jobs" table.
 	JobsColumns = []*schema.Column{
@@ -208,6 +225,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CredentialsTable,
+		FilesTable,
 		JobsTable,
 		TagsTable,
 		TargetsTable,

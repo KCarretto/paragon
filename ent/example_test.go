@@ -45,6 +45,34 @@ func ExampleCredential() {
 
 	// Output:
 }
+func ExampleFile() {
+	if dsn == "" {
+		return
+	}
+	ctx := context.Background()
+	drv, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("failed creating database client: %v", err)
+	}
+	defer drv.Close()
+	client := NewClient(Driver(drv))
+	// creating vertices for the file's edges.
+
+	// create file vertex with its edges.
+	f := client.File.
+		Create().
+		SetName("string").
+		SetCreationTime(time.Now()).
+		SetLastModifiedTime(time.Now()).
+		SetSize(1).
+		SetContent(nil).
+		SaveX(ctx)
+	log.Println("file created:", f)
+
+	// query edges.
+
+	// Output:
+}
 func ExampleJob() {
 	if dsn == "" {
 		return
