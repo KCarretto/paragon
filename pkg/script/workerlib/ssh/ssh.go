@@ -4,6 +4,7 @@ package ssh
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/script"
@@ -38,11 +39,15 @@ func (conn *Connector) Connect(host string) (*ssh.Client, error) {
 		return nil, fmt.Errorf("no client configs found for host: %s", host)
 	}
 
+	// Append host
+	host = host + ":22"
+
 	// TODO: Implement caching
 	for _, config := range configs {
+		log.Printf("[DBG] Connecting to %s with config %+v", host, config)
 		client, err := ssh.Dial("tcp", host, config)
 		if err != nil {
-			// TODO: Log error
+			log.Printf("[ERR] Failed to %s: %+v", host, err)
 			continue
 		}
 

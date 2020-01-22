@@ -152,7 +152,9 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 
 	configs := w.ConfigureSSH(target.ID)
-	log.Printf("[DBG] SSH Client Configs: %+v", configs[0])
+	for i, config := range configs {
+		log.Printf("[DBG] Adding SSH Client Config (%d): %+v", i+1, config)
+	}
 	w.SSH.SetConfigs(target.PrimaryIP, configs...)
 
 	output := new(bytes.Buffer)

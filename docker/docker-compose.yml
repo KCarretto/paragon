@@ -28,10 +28,27 @@ services:
       context: ../
       dockerfile: "./docker/teamserver.Dockerfile"
       target: production
+    depends_on:
+      - nats
     environment:
       HTTP_ADDR: "0.0.0.0:80"
+      PUB_TOPIC: "my_topic"
+      NATS_URL: "paragon_nats_1"
     ports:
       - "127.0.0.1:80:80"
+
+  worker:
+    build:
+      context: ../
+      dockerfile: "./docker/worker.Dockerfile"
+      target: production
+    depends_on:
+      - nats
+      - teamserver
+    environment:
+      HTTP_ADDR: "0.0.0.0:80"
+      PUB_TOPIC: "my_topic"
+      NATS_URL: "paragon_nats_1"
 
   target:
     build:
@@ -40,3 +57,9 @@ services:
       target: dev
     ports:
       - "127.0.0.1:22:22"
+
+  nats:
+    image: nats:latest
+    hostname: nats
+    ports:
+      - "127.0.0.1:8222:8222"
