@@ -17,6 +17,9 @@ func (Credential) Fields() []ent.Field {
 			Comment("The principal for the Credential"),
 		field.String("secret").
 			Comment("The secret for the Credential"),
+		field.Enum("kind").
+			Values("password", "key", "certificate").
+			Comment("The kind of the credential (password, key, etc)"),
 		field.Int("fails").
 			Default(0).
 			Min(0).

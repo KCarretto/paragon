@@ -15,6 +15,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "principal", Type: field.TypeString},
 		{Name: "secret", Type: field.TypeString},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"password", "key", "certificate"}},
 		{Name: "fails", Type: field.TypeInt, Default: credential.DefaultFails},
 		{Name: "target_credential_id", Type: field.TypeInt, Nullable: true},
 	}
@@ -26,7 +27,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:  "credentials_targets_credentials",
-				Columns: []*schema.Column{CredentialsColumns[4]},
+				Columns: []*schema.Column{CredentialsColumns[5]},
 
 				RefColumns: []*schema.Column{TargetsColumns[0]},
 				OnDelete:   schema.SetNull,

@@ -409,6 +409,62 @@ func SecretContainsFold(v string) predicate.Credential {
 	)
 }
 
+// KindEQ applies the EQ predicate on the "kind" field.
+func KindEQ(v Kind) predicate.Credential {
+	return predicate.Credential(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldKind), v))
+		},
+	)
+}
+
+// KindNEQ applies the NEQ predicate on the "kind" field.
+func KindNEQ(v Kind) predicate.Credential {
+	return predicate.Credential(
+		func(s *sql.Selector) {
+			s.Where(sql.NEQ(s.C(FieldKind), v))
+		},
+	)
+}
+
+// KindIn applies the In predicate on the "kind" field.
+func KindIn(vs ...Kind) predicate.Credential {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Credential(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.In(s.C(FieldKind), v...))
+		},
+	)
+}
+
+// KindNotIn applies the NotIn predicate on the "kind" field.
+func KindNotIn(vs ...Kind) predicate.Credential {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Credential(
+		func(s *sql.Selector) {
+			// if not arguments were provided, append the FALSE constants,
+			// since we can't apply "IN ()". This will make this predicate falsy.
+			if len(vs) == 0 {
+				s.Where(sql.False())
+				return
+			}
+			s.Where(sql.NotIn(s.C(FieldKind), v...))
+		},
+	)
+}
+
 // FailsEQ applies the EQ predicate on the "fails" field.
 func FailsEQ(v int) predicate.Credential {
 	return predicate.Credential(

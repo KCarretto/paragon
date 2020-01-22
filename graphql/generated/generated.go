@@ -37,6 +37,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Credential() CredentialResolver
 	Job() JobResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
@@ -52,6 +53,7 @@ type ComplexityRoot struct {
 	Credential struct {
 		Fails     func(childComplexity int) int
 		ID        func(childComplexity int) int
+		Kind      func(childComplexity int) int
 		Principal func(childComplexity int) int
 		Secret    func(childComplexity int) int
 	}
@@ -137,6 +139,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type CredentialResolver interface {
+	Kind(ctx context.Context, obj *ent.Credential) (*string, error)
+}
 type JobResolver interface {
 	Tasks(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Task, error)
 	Tags(ctx context.Context, obj *ent.Job, input *models.Filter) ([]*ent.Tag, error)
@@ -216,6 +221,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Credential.ID(childComplexity), true
+
+	case "Credential.kind":
+		if e.complexity.Credential.Kind == nil {
+			break
+		}
+
+		return e.complexity.Credential.Kind(childComplexity), true
 
 	case "Credential.principal":
 		if e.complexity.Credential.Principal == nil {
@@ -979,6 +991,7 @@ type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   id: ID!
   principal: String
   secret: String
+  kind: String
   fails: Int
 }
 
@@ -1036,6 +1049,7 @@ input AddCredentialForTargetRequest {
   id: ID!
   principal: String!
   secret: String!
+  kind: String
 }
 
 input ClaimTasksRequest {
@@ -1733,6 +1747,40 @@ func (ec *executionContext) _Credential_secret(ctx context.Context, field graphq
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Credential_kind(ctx context.Context, field graphql.CollectedField, obj *ent.Credential) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Credential",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Credential().Kind(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Credential_fails(ctx context.Context, field graphql.CollectedField, obj *ent.Credential) (ret graphql.Marshaler) {
@@ -5416,6 +5464,12 @@ func (ec *executionContext) unmarshalInputAddCredentialForTargetRequest(ctx cont
 			if err != nil {
 				return it, err
 			}
+		case "kind":
+			var err error
+			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		}
 	}
 
@@ -5786,12 +5840,23 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 		case "id":
 			out.Values[i] = ec._Credential_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "principal":
 			out.Values[i] = ec._Credential_principal(ctx, field, obj)
 		case "secret":
 			out.Values[i] = ec._Credential_secret(ctx, field, obj)
+		case "kind":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Credential_kind(ctx, field, obj)
+				return res
+			})
 		case "fails":
 			out.Values[i] = ec._Credential_fails(ctx, field, obj)
 		default:

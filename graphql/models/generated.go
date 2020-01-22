@@ -7,9 +7,10 @@ import (
 )
 
 type AddCredentialForTargetRequest struct {
-	ID        int    `json:"id"`
-	Principal string `json:"principal"`
-	Secret    string `json:"secret"`
+	ID        int     `json:"id"`
+	Principal string  `json:"principal"`
+	Secret    string  `json:"secret"`
+	Kind      *string `json:"kind"`
 }
 
 type ApplyTagRequest struct {

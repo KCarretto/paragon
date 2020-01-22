@@ -6,7 +6,7 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 )
 
-// Detect uses runtime.GOOS to detect what OS the agent is running on.
+// DetectOS uses runtime.GOOS to detect what OS the agent is running on.
 //
 //  Enum for return value {
 //   "linux"
@@ -27,7 +27,7 @@ import (
 //      print("hax0rz")
 //  else:
 //      print("boring af")
-func Detect(parser script.ArgParser) (script.Retval, error) {
+func DetectOS(parser script.ArgParser) (script.Retval, error) {
 	var osStr string
 	switch runtime.GOOS {
 	case "linux":
