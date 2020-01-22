@@ -55,7 +55,7 @@ const (
 	TargetColumn = "target_id"
 )
 
-// Columns holds all SQL columns are task fields.
+// Columns holds all SQL columns for task fields.
 var Columns = []string{
 	FieldID,
 	FieldQueueTime,
@@ -67,6 +67,12 @@ var Columns = []string{
 	FieldOutput,
 	FieldError,
 	FieldSessionID,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Task type.
+var ForeignKeys = []string{
+	"job_id",
+	"target_id",
 }
 
 var (

@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Credential is the client for interacting with the Credential builders.
 	Credential *CredentialClient
+	// File is the client for interacting with the File builders.
+	File *FileClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
 	// Tag is the client for interacting with the Tag builders.
@@ -40,6 +42,7 @@ func (tx *Tx) Client() *Client {
 		config:     tx.config,
 		Schema:     migrate.NewSchema(tx.driver),
 		Credential: NewCredentialClient(tx.config),
+		File:       NewFileClient(tx.config),
 		Job:        NewJobClient(tx.config),
 		Tag:        NewTagClient(tx.config),
 		Target:     NewTargetClient(tx.config),

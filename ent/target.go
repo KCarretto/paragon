@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/target"
 )
 
 // Target is the model entity for the Target schema.
@@ -29,41 +30,79 @@ type Target struct {
 	Hostname string `json:"Hostname,omitempty"`
 	// LastSeen holds the value of the "LastSeen" field.
 	LastSeen time.Time `json:"LastSeen,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TargetQuery when eager-loading is set.
+	Edges struct {
+		// Tasks holds the value of the tasks edge.
+		Tasks []*Task
+		// Tags holds the value of the tags edge.
+		Tags []*Tag
+		// Credentials holds the value of the credentials edge.
+		Credentials []*Credential
+	} `json:"edges"`
 }
 
-// FromRows scans the sql response data into Target.
-func (t *Target) FromRows(rows *sql.Rows) error {
-	var vt struct {
-		ID          int
-		Name        sql.NullString
-		PrimaryIP   sql.NullString
-		MachineUUID sql.NullString
-		PublicIP    sql.NullString
-		PrimaryMAC  sql.NullString
-		Hostname    sql.NullString
-		LastSeen    sql.NullTime
+// scanValues returns the types for scanning values from sql.Rows.
+func (*Target) scanValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Name
+		&sql.NullString{}, // PrimaryIP
+		&sql.NullString{}, // MachineUUID
+		&sql.NullString{}, // PublicIP
+		&sql.NullString{}, // PrimaryMAC
+		&sql.NullString{}, // Hostname
+		&sql.NullTime{},   // LastSeen
 	}
-	// the order here should be the same as in the `target.Columns`.
-	if err := rows.Scan(
-		&vt.ID,
-		&vt.Name,
-		&vt.PrimaryIP,
-		&vt.MachineUUID,
-		&vt.PublicIP,
-		&vt.PrimaryMAC,
-		&vt.Hostname,
-		&vt.LastSeen,
-	); err != nil {
-		return err
+}
+
+// assignValues assigns the values that were returned from sql.Rows (after scanning)
+// to the Target fields.
+func (t *Target) assignValues(values ...interface{}) error {
+	if m, n := len(values), len(target.Columns); m < n {
+		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	t.ID = vt.ID
-	t.Name = vt.Name.String
-	t.PrimaryIP = vt.PrimaryIP.String
-	t.MachineUUID = vt.MachineUUID.String
-	t.PublicIP = vt.PublicIP.String
-	t.PrimaryMAC = vt.PrimaryMAC.String
-	t.Hostname = vt.Hostname.String
-	t.LastSeen = vt.LastSeen.Time
+	value, ok := values[0].(*sql.NullInt64)
+	if !ok {
+		return fmt.Errorf("unexpected type %T for field id", value)
+	}
+	t.ID = int(value.Int64)
+	values = values[1:]
+	if value, ok := values[0].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Name", values[0])
+	} else if value.Valid {
+		t.Name = value.String
+	}
+	if value, ok := values[1].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PrimaryIP", values[1])
+	} else if value.Valid {
+		t.PrimaryIP = value.String
+	}
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field MachineUUID", values[2])
+	} else if value.Valid {
+		t.MachineUUID = value.String
+	}
+	if value, ok := values[3].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PublicIP", values[3])
+	} else if value.Valid {
+		t.PublicIP = value.String
+	}
+	if value, ok := values[4].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PrimaryMAC", values[4])
+	} else if value.Valid {
+		t.PrimaryMAC = value.String
+	}
+	if value, ok := values[5].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Hostname", values[5])
+	} else if value.Valid {
+		t.Hostname = value.String
+	}
+	if value, ok := values[6].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field LastSeen", values[6])
+	} else if value.Valid {
+		t.LastSeen = value.Time
+	}
 	return nil
 }
 
@@ -125,18 +164,6 @@ func (t *Target) String() string {
 
 // Targets is a parsable slice of Target.
 type Targets []*Target
-
-// FromRows scans the sql response data into Targets.
-func (t *Targets) FromRows(rows *sql.Rows) error {
-	for rows.Next() {
-		vt := &Target{}
-		if err := vt.FromRows(rows); err != nil {
-			return err
-		}
-		*t = append(*t, vt)
-	}
-	return nil
-}
 
 func (t Targets) config(cfg config) {
 	for _i := range t {

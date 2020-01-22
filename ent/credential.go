@@ -22,33 +22,69 @@ type Credential struct {
 	// Kind holds the value of the "kind" field.
 	Kind credential.Kind `json:"kind,omitempty"`
 	// Fails holds the value of the "fails" field.
-	Fails int `json:"fails,omitempty"`
+	Fails                int `json:"fails,omitempty"`
+	target_credential_id *int
 }
 
-// FromRows scans the sql response data into Credential.
-func (c *Credential) FromRows(rows *sql.Rows) error {
-	var vc struct {
-		ID        int
-		Principal sql.NullString
-		Secret    sql.NullString
-		Kind      sql.NullString
-		Fails     sql.NullInt64
+// scanValues returns the types for scanning values from sql.Rows.
+func (*Credential) scanValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // principal
+		&sql.NullString{}, // secret
+		&sql.NullString{}, // kind
+		&sql.NullInt64{},  // fails
 	}
-	// the order here should be the same as in the `credential.Columns`.
-	if err := rows.Scan(
-		&vc.ID,
-		&vc.Principal,
-		&vc.Secret,
-		&vc.Kind,
-		&vc.Fails,
-	); err != nil {
-		return err
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Credential) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // target_credential_id
 	}
-	c.ID = vc.ID
-	c.Principal = vc.Principal.String
-	c.Secret = vc.Secret.String
-	c.Kind = credential.Kind(vc.Kind.String)
-	c.Fails = int(vc.Fails.Int64)
+}
+
+// assignValues assigns the values that were returned from sql.Rows (after scanning)
+// to the Credential fields.
+func (c *Credential) assignValues(values ...interface{}) error {
+	if m, n := len(values), len(credential.Columns); m < n {
+		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
+	}
+	value, ok := values[0].(*sql.NullInt64)
+	if !ok {
+		return fmt.Errorf("unexpected type %T for field id", value)
+	}
+	c.ID = int(value.Int64)
+	values = values[1:]
+	if value, ok := values[0].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field principal", values[0])
+	} else if value.Valid {
+		c.Principal = value.String
+	}
+	if value, ok := values[1].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field secret", values[1])
+	} else if value.Valid {
+		c.Secret = value.String
+	}
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field kind", values[2])
+	} else if value.Valid {
+		c.Kind = credential.Kind(value.String)
+	}
+	if value, ok := values[3].(*sql.NullInt64); !ok {
+		return fmt.Errorf("unexpected type %T for field fails", values[3])
+	} else if value.Valid {
+		c.Fails = int(value.Int64)
+	}
+	values = values[4:]
+	if len(values) == len(credential.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field target_credential_id", value)
+		} else if value.Valid {
+			c.target_credential_id = new(int)
+			*c.target_credential_id = int(value.Int64)
+		}
+	}
 	return nil
 }
 
@@ -89,18 +125,6 @@ func (c *Credential) String() string {
 
 // Credentials is a parsable slice of Credential.
 type Credentials []*Credential
-
-// FromRows scans the sql response data into Credentials.
-func (c *Credentials) FromRows(rows *sql.Rows) error {
-	for rows.Next() {
-		vc := &Credential{}
-		if err := vc.FromRows(rows); err != nil {
-			return err
-		}
-		*c = append(*c, vc)
-	}
-	return nil
-}
 
 func (c Credentials) config(cfg config) {
 	for _i := range c {

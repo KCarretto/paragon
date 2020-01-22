@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -109,61 +111,65 @@ func (cu *CredentialUpdate) ExecX(ctx context.Context) {
 }
 
 func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	selector := sql.Select(credential.FieldID).From(sql.Table(credential.Table))
-	for _, p := range cu.predicates {
-		p(selector)
+	_spec := &sqlgraph.UpdateSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   credential.Table,
+			Columns: credential.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: credential.FieldID,
+			},
+		},
 	}
-	rows := &sql.Rows{}
-	query, args := selector.Query()
-	if err = cu.driver.Query(ctx, query, args, rows); err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			return 0, fmt.Errorf("ent: failed reading id: %v", err)
+	if ps := cu.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
 		}
-		ids = append(ids, id)
 	}
-	if len(ids) == 0 {
-		return 0, nil
-	}
-
-	tx, err := cu.driver.Tx(ctx)
-	if err != nil {
-		return 0, err
-	}
-	var (
-		res     sql.Result
-		builder = sql.Update(credential.Table).Where(sql.InInts(credential.FieldID, ids...))
-	)
 	if value := cu.principal; value != nil {
-		builder.Set(credential.FieldPrincipal, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: credential.FieldPrincipal,
+		})
 	}
 	if value := cu.secret; value != nil {
-		builder.Set(credential.FieldSecret, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: credential.FieldSecret,
+		})
 	}
 	if value := cu.kind; value != nil {
-		builder.Set(credential.FieldKind, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  *value,
+			Column: credential.FieldKind,
+		})
 	}
 	if value := cu.fails; value != nil {
-		builder.Set(credential.FieldFails, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  *value,
+			Column: credential.FieldFails,
+		})
 	}
 	if value := cu.addfails; value != nil {
-		builder.Add(credential.FieldFails, *value)
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  *value,
+			Column: credential.FieldFails,
+		})
 	}
-	if !builder.Empty() {
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
 		}
-	}
-	if err = tx.Commit(); err != nil {
 		return 0, err
 	}
-	return len(ids), nil
+	return n, nil
 }
 
 // CredentialUpdateOne is the builder for updating a single Credential entity.
@@ -258,66 +264,59 @@ func (cuo *CredentialUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err error) {
-	selector := sql.Select(credential.Columns...).From(sql.Table(credential.Table))
-	credential.ID(cuo.id)(selector)
-	rows := &sql.Rows{}
-	query, args := selector.Query()
-	if err = cuo.driver.Query(ctx, query, args, rows); err != nil {
-		return nil, err
+	_spec := &sqlgraph.UpdateSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   credential.Table,
+			Columns: credential.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Value:  cuo.id,
+				Type:   field.TypeInt,
+				Column: credential.FieldID,
+			},
+		},
 	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		c = &Credential{config: cuo.config}
-		if err := c.FromRows(rows); err != nil {
-			return nil, fmt.Errorf("ent: failed scanning row into Credential: %v", err)
-		}
-		id = c.ID
-		ids = append(ids, id)
-	}
-	switch n := len(ids); {
-	case n == 0:
-		return nil, &ErrNotFound{fmt.Sprintf("Credential with id: %v", cuo.id)}
-	case n > 1:
-		return nil, fmt.Errorf("ent: more than one Credential with the same id: %v", cuo.id)
-	}
-
-	tx, err := cuo.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var (
-		res     sql.Result
-		builder = sql.Update(credential.Table).Where(sql.InInts(credential.FieldID, ids...))
-	)
 	if value := cuo.principal; value != nil {
-		builder.Set(credential.FieldPrincipal, *value)
-		c.Principal = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: credential.FieldPrincipal,
+		})
 	}
 	if value := cuo.secret; value != nil {
-		builder.Set(credential.FieldSecret, *value)
-		c.Secret = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: credential.FieldSecret,
+		})
 	}
 	if value := cuo.kind; value != nil {
-		builder.Set(credential.FieldKind, *value)
-		c.Kind = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  *value,
+			Column: credential.FieldKind,
+		})
 	}
 	if value := cuo.fails; value != nil {
-		builder.Set(credential.FieldFails, *value)
-		c.Fails = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  *value,
+			Column: credential.FieldFails,
+		})
 	}
 	if value := cuo.addfails; value != nil {
-		builder.Add(credential.FieldFails, *value)
-		c.Fails += *value
+		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+			Type:   field.TypeInt,
+			Value:  *value,
+			Column: credential.FieldFails,
+		})
 	}
-	if !builder.Empty() {
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+	c = &Credential{config: cuo.config}
+	_spec.Assign = c.assignValues
+	_spec.ScanValues = c.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, cuo.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
 		}
-	}
-	if err = tx.Commit(); err != nil {
 		return nil, err
 	}
 	return c, nil
