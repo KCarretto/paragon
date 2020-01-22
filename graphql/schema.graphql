@@ -91,6 +91,17 @@ type File @goModel(model: "github.com/kcarretto/paragon/ent.File") {
   size: Int
   hash: String
   contentType: String
+
+  links(input: Filter): [Link]
+}
+
+type Link @goModel(model: "github.com/kcarretto/paragon/ent.Link") {
+  id: ID!
+  alias: String
+  expirationTime: Time
+  clicks: Int
+
+  file: File
 }
 
 
@@ -166,6 +177,20 @@ input SubmitTaskResultRequest {
   execStopTime: Time
 }
 
+input CreateLinkRequest {
+    alias: String!
+    ExpirationTime: Time
+    clicks: Int
+    file: ID!
+}
+
+input SetLinkFieldsRequest {
+    id: ID!
+    alias: String
+    ExpirationTime: Time
+    clicks: Int
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
@@ -192,9 +217,17 @@ type Mutation {
   claimTasks(input: ClaimTasksRequest): [Task!]
   claimTask(id: ID!): Task
   submitTaskResult(input: SubmitTaskResultRequest): Task!
+
+  # Link Mutations
+  createLink(input: CreateLinkRequest): Link!
+  setLinkFields(input: SetLinkFieldsRequest): Link!
+
 }
 
 type Query {
+  link(id: ID!): Link
+  links(input: Filter): [Link]
+
   file(id: ID!): File
   files(input: Filter): [File]
 

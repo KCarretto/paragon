@@ -35,6 +35,13 @@ type CreateJobRequest struct {
 	Prev      *int    `json:"prev"`
 }
 
+type CreateLinkRequest struct {
+	Alias          string     `json:"alias"`
+	ExpirationTime *time.Time `json:"ExpirationTime"`
+	Clicks         *int       `json:"clicks"`
+	File           int        `json:"file"`
+}
+
 type CreateTagRequest struct {
 	Name string `json:"name"`
 }
@@ -61,6 +68,13 @@ type Filter struct {
 type RemoveTagRequest struct {
 	TagID int `json:"tagID"`
 	EntID int `json:"entID"`
+}
+
+type SetLinkFieldsRequest struct {
+	ID             int        `json:"id"`
+	Alias          *string    `json:"alias"`
+	ExpirationTime *time.Time `json:"ExpirationTime"`
+	Clicks         *int       `json:"clicks"`
 }
 
 type SetTargetFieldsRequest struct {

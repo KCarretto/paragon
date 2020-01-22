@@ -23,8 +23,14 @@ type Resolver struct {
 	Publisher event.Publisher
 }
 
+// Credential is the Resolver for the Credential Ent
 func (r *Resolver) Credential() generated.CredentialResolver {
 	return &credentialResolver{r}
+}
+
+// File is the Resolver for the File Ent
+func (r *Resolver) File() generated.FileResolver {
+	return &fileResolver{r}
 }
 
 // Job is the Resolver for the Job Ent
@@ -32,12 +38,17 @@ func (r *Resolver) Job() generated.JobResolver {
 	return &jobResolver{r}
 }
 
-// Mutation is the Resolver for all Mutations
+// Link is the Resolver for the Link Ent
+func (r *Resolver) Link() generated.LinkResolver {
+	return &linkResolver{r}
+}
+
+// Mutation is the Resolver for the Mutations
 func (r *Resolver) Mutation() generated.MutationResolver {
 	return &mutationResolver{r}
 }
 
-// Query is the Resolver for all Queries
+// Query is the Resolver for the Queries
 func (r *Resolver) Query() generated.QueryResolver {
 	return &queryResolver{r}
 }
@@ -62,6 +73,21 @@ type credentialResolver struct{ *Resolver }
 func (r *credentialResolver) Kind(ctx context.Context, obj *ent.Credential) (*string, error) {
 	kind := obj.Kind.String()
 	return &kind, nil
+}
+
+type fileResolver struct{ *Resolver }
+
+func (r *fileResolver) Links(ctx context.Context, obj *ent.File, input *models.Filter) ([]*ent.Link, error) {
+	q := obj.QueryLinks()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
 }
 
 type jobResolver struct{ *Resolver }
@@ -95,6 +121,12 @@ func (r *jobResolver) Next(ctx context.Context, obj *ent.Job) (*ent.Job, error) 
 }
 func (r *jobResolver) Prev(ctx context.Context, obj *ent.Job) (*ent.Job, error) {
 	return obj.QueryPrev().Only(ctx)
+}
+
+type linkResolver struct{ *Resolver }
+
+func (r *linkResolver) File(ctx context.Context, obj *ent.Link) (*ent.File, error) {
+	return obj.QueryFile().Only(ctx)
 }
 
 type mutationResolver struct{ *Resolver }
@@ -431,9 +463,49 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 		SetNillableExecStopTime(input.ExecStopTime).
 		Save(ctx)
 }
+func (r *mutationResolver) CreateLink(ctx context.Context, input *models.CreateLinkRequest) (*ent.Link, error) {
+	linkCreator := r.EntClient.Link.Create().
+		SetAlias(input.Alias).
+		SetFileID(input.File)
+	if input.ExpirationTime != nil {
+		linkCreator.SetExpirationTime(*input.ExpirationTime)
+	}
+	if input.Clicks != nil {
+		linkCreator.SetClicks(*input.Clicks)
+	}
+	return linkCreator.Save(ctx)
+}
+func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetLinkFieldsRequest) (*ent.Link, error) {
+	linkUpdater := r.EntClient.Link.UpdateOneID(input.ID)
+	if input.Alias != nil {
+		linkUpdater.SetAlias(*input.Alias)
+	}
+	if input.ExpirationTime != nil {
+		linkUpdater.SetExpirationTime(*input.ExpirationTime)
+	}
+	if input.Clicks != nil {
+		linkUpdater.SetClicks(*input.Clicks)
+	}
+	return linkUpdater.Save(ctx)
+}
 
 type queryResolver struct{ *Resolver }
 
+func (r *queryResolver) Link(ctx context.Context, id int) (*ent.Link, error) {
+	return r.EntClient.Link.Get(ctx, id)
+}
+func (r *queryResolver) Links(ctx context.Context, input *models.Filter) ([]*ent.Link, error) {
+	q := r.EntClient.Link.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
+}
 func (r *queryResolver) File(ctx context.Context, id int) (*ent.File, error) {
 	return r.EntClient.File.Get(ctx, id)
 }
