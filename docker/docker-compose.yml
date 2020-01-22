@@ -12,7 +12,7 @@ services:
       DEBUG_API_PASSWORD: "password123"
       DEBUG_API_ADDR: "0.0.0.0:8080"
     ports:
-      - "127.0.0.1:8080:8080"
+      - "127.0.0.1:1337:8080"
 
   c2:
     build:
