@@ -1,4 +1,4 @@
-// +build nats
+// +build gcp
 
 package main
 
@@ -33,20 +33,19 @@ func newSubscriber(ctx context.Context) (event.Subscriber, error) {
 func (sub *GCPSubscriber) Subscribe(topic string, handler func(context.Context, []byte)) error {
 	project := os.Getenv("GCP_PROJECT")
 	if project == "" {
-		return nil, fmt.Errorf("must set GCP_PROJECT environment variable to use GCP pubsub")
+		return fmt.Errorf("must set GCP_PROJECT environment variable to use GCP pubsub")
 	}
 
 	topic_uri := fmt.Sprintf("gcppubsub://projects/%s/topics/%s", project, topic)
-	t, err := pubsub.OpenSubscription(ctx, topic_uri)
+	s, err := pubsub.OpenSubscription(ctx, topic_uri)
 	if err != nil {
-		return nil, fmt.Errorf("failed to subscribe to the topic passed")
+		return fmt.Errorf("failed to subscribe to the topic passed")
 	}
 
 	sub.wg.Add(1)
 
 	go func() {
 		defer sub.wg.Done()
-		defer nc.Close()
 		defer s.Shutdown(sub.ctx)
 
 		for {
