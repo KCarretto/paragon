@@ -21,6 +21,8 @@ type FileCreate struct {
 	LastModifiedTime *time.Time
 	Size             *int
 	Content          *[]byte
+	Hash             *string
+	ContentType      *string
 }
 
 // SetName sets the Name field.
@@ -69,6 +71,18 @@ func (fc *FileCreate) SetContent(b []byte) *FileCreate {
 	return fc
 }
 
+// SetHash sets the Hash field.
+func (fc *FileCreate) SetHash(s string) *FileCreate {
+	fc.Hash = &s
+	return fc
+}
+
+// SetContentType sets the ContentType field.
+func (fc *FileCreate) SetContentType(s string) *FileCreate {
+	fc.ContentType = &s
+	return fc
+}
+
 // Save creates the File in the database.
 func (fc *FileCreate) Save(ctx context.Context) (*File, error) {
 	if fc.Name == nil {
@@ -93,6 +107,12 @@ func (fc *FileCreate) Save(ctx context.Context) (*File, error) {
 	}
 	if fc.Content == nil {
 		return nil, errors.New("ent: missing required field \"Content\"")
+	}
+	if fc.Hash == nil {
+		return nil, errors.New("ent: missing required field \"Hash\"")
+	}
+	if fc.ContentType == nil {
+		return nil, errors.New("ent: missing required field \"ContentType\"")
 	}
 	return fc.sqlSave(ctx)
 }
@@ -156,6 +176,22 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 			Column: file.FieldContent,
 		})
 		f.Content = *value
+	}
+	if value := fc.Hash; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: file.FieldHash,
+		})
+		f.Hash = *value
+	}
+	if value := fc.ContentType; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: file.FieldContentType,
+		})
+		f.ContentType = *value
 	}
 	if err := sqlgraph.CreateNode(ctx, fc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {

@@ -15,6 +15,7 @@ input Filter {
   limit: Int
 }
 
+
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
@@ -31,7 +32,6 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
 }
 
 
-# Tag Types
 type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
   id: ID!
   name: String
@@ -75,13 +75,22 @@ type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
 }
 
 
-
 type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   id: ID!
   principal: String
   secret: String
   kind: String
   fails: Int
+}
+
+type File @goModel(model: "github.com/kcarretto/paragon/ent.File") {
+  id: ID!
+  name: String
+  creationTime: Time
+  lastModifiedTime: Time
+  size: Int
+  hash: String
+  contentType: String
 }
 
 
@@ -186,6 +195,9 @@ type Mutation {
 }
 
 type Query {
+  file(id: ID!): File
+  files(input: Filter): [File]
+
   credential(id: ID!): Credential
   credentials(input: Filter): [Credential]
 

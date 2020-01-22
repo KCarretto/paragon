@@ -26,6 +26,10 @@ type File struct {
 	Size int `json:"Size,omitempty"`
 	// Content holds the value of the "Content" field.
 	Content []byte `json:"Content,omitempty"`
+	// Hash holds the value of the "Hash" field.
+	Hash string `json:"Hash,omitempty"`
+	// ContentType holds the value of the "ContentType" field.
+	ContentType string `json:"ContentType,omitempty"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -37,6 +41,8 @@ func (*File) scanValues() []interface{} {
 		&sql.NullTime{},   // LastModifiedTime
 		&sql.NullInt64{},  // Size
 		&[]byte{},         // Content
+		&sql.NullString{}, // Hash
+		&sql.NullString{}, // ContentType
 	}
 }
 
@@ -77,6 +83,16 @@ func (f *File) assignValues(values ...interface{}) error {
 	} else if value != nil {
 		f.Content = *value
 	}
+	if value, ok := values[5].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Hash", values[5])
+	} else if value.Valid {
+		f.Hash = value.String
+	}
+	if value, ok := values[6].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field ContentType", values[6])
+	} else if value.Valid {
+		f.ContentType = value.String
+	}
 	return nil
 }
 
@@ -113,6 +129,10 @@ func (f *File) String() string {
 	builder.WriteString(fmt.Sprintf("%v", f.Size))
 	builder.WriteString(", Content=")
 	builder.WriteString(fmt.Sprintf("%v", f.Content))
+	builder.WriteString(", Hash=")
+	builder.WriteString(f.Hash)
+	builder.WriteString(", ContentType=")
+	builder.WriteString(f.ContentType)
 	builder.WriteByte(')')
 	return builder.String()
 }

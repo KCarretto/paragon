@@ -23,6 +23,8 @@ type FileUpdate struct {
 	Size             *int
 	addSize          *int
 	Content          *[]byte
+	Hash             *string
+	ContentType      *string
 	predicates       []predicate.File
 }
 
@@ -86,6 +88,18 @@ func (fu *FileUpdate) AddSize(i int) *FileUpdate {
 // SetContent sets the Content field.
 func (fu *FileUpdate) SetContent(b []byte) *FileUpdate {
 	fu.Content = &b
+	return fu
+}
+
+// SetHash sets the Hash field.
+func (fu *FileUpdate) SetHash(s string) *FileUpdate {
+	fu.Hash = &s
+	return fu
+}
+
+// SetContentType sets the ContentType field.
+func (fu *FileUpdate) SetContentType(s string) *FileUpdate {
+	fu.ContentType = &s
 	return fu
 }
 
@@ -186,6 +200,20 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: file.FieldContent,
 		})
 	}
+	if value := fu.Hash; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: file.FieldHash,
+		})
+	}
+	if value := fu.ContentType; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: file.FieldContentType,
+		})
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, fu.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -205,6 +233,8 @@ type FileUpdateOne struct {
 	Size             *int
 	addSize          *int
 	Content          *[]byte
+	Hash             *string
+	ContentType      *string
 }
 
 // SetName sets the Name field.
@@ -261,6 +291,18 @@ func (fuo *FileUpdateOne) AddSize(i int) *FileUpdateOne {
 // SetContent sets the Content field.
 func (fuo *FileUpdateOne) SetContent(b []byte) *FileUpdateOne {
 	fuo.Content = &b
+	return fuo
+}
+
+// SetHash sets the Hash field.
+func (fuo *FileUpdateOne) SetHash(s string) *FileUpdateOne {
+	fuo.Hash = &s
+	return fuo
+}
+
+// SetContentType sets the ContentType field.
+func (fuo *FileUpdateOne) SetContentType(s string) *FileUpdateOne {
+	fuo.ContentType = &s
 	return fuo
 }
 
@@ -353,6 +395,20 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (f *File, err error) {
 			Type:   field.TypeBytes,
 			Value:  *value,
 			Column: file.FieldContent,
+		})
+	}
+	if value := fuo.Hash; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: file.FieldHash,
+		})
+	}
+	if value := fuo.ContentType; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: file.FieldContentType,
 		})
 	}
 	f = &File{config: fuo.config}

@@ -58,6 +58,16 @@ type ComplexityRoot struct {
 		Secret    func(childComplexity int) int
 	}
 
+	File struct {
+		ContentType      func(childComplexity int) int
+		CreationTime     func(childComplexity int) int
+		Hash             func(childComplexity int) int
+		ID               func(childComplexity int) int
+		LastModifiedTime func(childComplexity int) int
+		Name             func(childComplexity int) int
+		Size             func(childComplexity int) int
+	}
+
 	Job struct {
 		Content      func(childComplexity int) int
 		CreationTime func(childComplexity int) int
@@ -91,6 +101,8 @@ type ComplexityRoot struct {
 	Query struct {
 		Credential  func(childComplexity int, id int) int
 		Credentials func(childComplexity int, input *models.Filter) int
+		File        func(childComplexity int, id int) int
+		Files       func(childComplexity int, input *models.Filter) int
 		Job         func(childComplexity int, id int) int
 		Jobs        func(childComplexity int, input *models.Filter) int
 		Tag         func(childComplexity int, id int) int
@@ -167,6 +179,8 @@ type MutationResolver interface {
 	SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error)
 }
 type QueryResolver interface {
+	File(ctx context.Context, id int) (*ent.File, error)
+	Files(ctx context.Context, input *models.Filter) ([]*ent.File, error)
 	Credential(ctx context.Context, id int) (*ent.Credential, error)
 	Credentials(ctx context.Context, input *models.Filter) ([]*ent.Credential, error)
 	Job(ctx context.Context, id int) (*ent.Job, error)
@@ -242,6 +256,55 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Credential.Secret(childComplexity), true
+
+	case "File.contentType":
+		if e.complexity.File.ContentType == nil {
+			break
+		}
+
+		return e.complexity.File.ContentType(childComplexity), true
+
+	case "File.creationTime":
+		if e.complexity.File.CreationTime == nil {
+			break
+		}
+
+		return e.complexity.File.CreationTime(childComplexity), true
+
+	case "File.hash":
+		if e.complexity.File.Hash == nil {
+			break
+		}
+
+		return e.complexity.File.Hash(childComplexity), true
+
+	case "File.id":
+		if e.complexity.File.ID == nil {
+			break
+		}
+
+		return e.complexity.File.ID(childComplexity), true
+
+	case "File.lastModifiedTime":
+		if e.complexity.File.LastModifiedTime == nil {
+			break
+		}
+
+		return e.complexity.File.LastModifiedTime(childComplexity), true
+
+	case "File.name":
+		if e.complexity.File.Name == nil {
+			break
+		}
+
+		return e.complexity.File.Name(childComplexity), true
+
+	case "File.size":
+		if e.complexity.File.Size == nil {
+			break
+		}
+
+		return e.complexity.File.Size(childComplexity), true
 
 	case "Job.content":
 		if e.complexity.Job.Content == nil {
@@ -524,6 +587,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Credentials(childComplexity, args["input"].(*models.Filter)), true
+
+	case "Query.file":
+		if e.complexity.Query.File == nil {
+			break
+		}
+
+		args, err := ec.field_Query_file_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.File(childComplexity, args["id"].(int)), true
+
+	case "Query.files":
+		if e.complexity.Query.Files == nil {
+			break
+		}
+
+		args, err := ec.field_Query_files_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Files(childComplexity, args["input"].(*models.Filter)), true
 
 	case "Query.job":
 		if e.complexity.Query.Job == nil {
@@ -926,6 +1013,7 @@ input Filter {
   limit: Int
 }
 
+
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
@@ -942,7 +1030,6 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
 }
 
 
-# Tag Types
 type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
   id: ID!
   name: String
@@ -986,13 +1073,22 @@ type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
 }
 
 
-
 type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   id: ID!
   principal: String
   secret: String
   kind: String
   fails: Int
+}
+
+type File @goModel(model: "github.com/kcarretto/paragon/ent.File") {
+  id: ID!
+  name: String
+  creationTime: Time
+  lastModifiedTime: Time
+  size: Int
+  hash: String
+  contentType: String
 }
 
 
@@ -1097,6 +1193,9 @@ type Mutation {
 }
 
 type Query {
+  file(id: ID!): File
+  files(input: Filter): [File]
+
   credential(id: ID!): Credential
   credentials(input: Filter): [Credential]
 
@@ -1399,6 +1498,34 @@ func (ec *executionContext) field_Query_credential_args(ctx context.Context, raw
 }
 
 func (ec *executionContext) field_Query_credentials_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.Filter
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOFilter2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_file_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_files_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *models.Filter
@@ -1815,6 +1942,247 @@ func (ec *executionContext) _Credential_fails(ctx context.Context, field graphql
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_name(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_creationTime(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CreationTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_lastModifiedTime(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.LastModifiedTime, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(time.Time)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_size(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Size, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_hash(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Hash, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _File_contentType(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "File",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ContentType, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Job_id(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
@@ -2802,6 +3170,88 @@ func (ec *executionContext) _Mutation_submitTaskResult(ctx context.Context, fiel
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNTask2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTask(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_file(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_file_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().File(rctx, args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.File)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOFile2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_files(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_files_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Files(rctx, args["input"].(*models.Filter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.File)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOFile2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_credential(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -5870,6 +6320,45 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 	return out
 }
 
+var fileImplementors = []string{"File"}
+
+func (ec *executionContext) _File(ctx context.Context, sel ast.SelectionSet, obj *ent.File) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, fileImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("File")
+		case "id":
+			out.Values[i] = ec._File_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "name":
+			out.Values[i] = ec._File_name(ctx, field, obj)
+		case "creationTime":
+			out.Values[i] = ec._File_creationTime(ctx, field, obj)
+		case "lastModifiedTime":
+			out.Values[i] = ec._File_lastModifiedTime(ctx, field, obj)
+		case "size":
+			out.Values[i] = ec._File_size(ctx, field, obj)
+		case "hash":
+			out.Values[i] = ec._File_hash(ctx, field, obj)
+		case "contentType":
+			out.Values[i] = ec._File_contentType(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var jobImplementors = []string{"Job"}
 
 func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj *ent.Job) graphql.Marshaler {
@@ -6062,6 +6551,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "file":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_file(ctx, field)
+				return res
+			})
+		case "files":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_files(ctx, field)
+				return res
+			})
 		case "credential":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -7138,6 +7649,57 @@ func (ec *executionContext) unmarshalOFailCredentialRequest2ᚖgithubᚗcomᚋkc
 	}
 	res, err := ec.unmarshalOFailCredentialRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐFailCredentialRequest(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalOFile2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx context.Context, sel ast.SelectionSet, v ent.File) graphql.Marshaler {
+	return ec._File(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOFile2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx context.Context, sel ast.SelectionSet, v []*ent.File) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOFile2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOFile2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx context.Context, sel ast.SelectionSet, v *ent.File) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._File(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOFilter2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐFilter(ctx context.Context, v interface{}) (models.Filter, error) {

@@ -6,7 +6,7 @@ require (
 	github.com/99designs/gqlgen v0.10.2
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
-	github.com/facebookincubator/ent v0.0.0-20200121100401-fd8c07717c8a
+	github.com/facebookincubator/ent v0.0.0-20200122095037-28b9ef193fb3
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/gogo/protobuf v1.3.1
@@ -14,9 +14,9 @@ require (
 	github.com/google/uuid v1.1.1
 	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
+	github.com/nats-io/nats.go v1.9.1
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/errors v0.9.1
-	github.com/nats-io/nats.go v1.9.1
 	github.com/pkg/profile v1.3.0
 	github.com/pkg/sftp v1.11.0
 	github.com/shirou/gopsutil v2.19.9+incompatible
@@ -33,7 +33,7 @@ require (
 	go.uber.org/zap v1.10.0
 	gocloud.dev v0.18.0
 	gocloud.dev/pubsub/natspubsub v0.18.0
-	golang.org/x/crypto v0.0.0-20190820162420-60c769a6c586
+	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20191002035440-2ec189313ef0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
 	golang.org/x/tools v0.0.0-20200122002620-f88bd7050267 // indirect

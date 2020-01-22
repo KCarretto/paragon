@@ -434,6 +434,21 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 
 type queryResolver struct{ *Resolver }
 
+func (r *queryResolver) File(ctx context.Context, id int) (*ent.File, error) {
+	return r.EntClient.File.Get(ctx, id)
+}
+func (r *queryResolver) Files(ctx context.Context, input *models.Filter) ([]*ent.File, error) {
+	q := r.EntClient.File.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
+}
 func (r *queryResolver) Credential(ctx context.Context, id int) (*ent.Credential, error) {
 	return r.EntClient.Credential.Get(ctx, id)
 }
