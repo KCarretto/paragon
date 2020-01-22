@@ -93,5 +93,6 @@ func (h HTTP) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
 
 	file := fileQuery.OnlyX(ctx)
 	content := bytes.NewReader(file.Content)
+	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeContent(w, r, filename, file.LastModifiedTime, content)
 }
