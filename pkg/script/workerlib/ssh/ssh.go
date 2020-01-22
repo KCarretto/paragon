@@ -3,8 +3,9 @@
 package ssh
 
 import (
-	"io"
+	"fmt"
 
+	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/script"
 	"golang.org/x/crypto/ssh"
 )
@@ -18,25 +19,43 @@ func Import(env Environment) script.Library {
 	}
 }
 
-// A Connector is responsible for establishing ssh sessions or reusing existing ones.
-type Connector interface {
-	Connect() (*ssh.Client, error)
+// Connector is responsible for establishing ssh sessions or reusing existing ones.
+type Connector struct {
+	Configs map[string][]*ssh.ClientConfig
 }
 
-// An Uploader uploads files that were received from the remote system. It is responsible for
-// closing the file after writing if the file implements io.Closer.
-type Uploader interface {
-	Upload(name string, file io.Reader) error
+func (conn *Connector) SetConfigs(remoteHost string, configs ...*ssh.ClientConfig) {
+	if conn.Configs == nil {
+		conn.Configs = make(map[string][]*ssh.ClientConfig)
+	}
+
+	conn.Configs[remoteHost] = configs
 }
 
-// A Downloader provides a file by name that will be sent to the remote system.
-type Downloader interface {
-	Download(name string) (io.Reader, error)
+func (conn *Connector) Connect(host string) (*ssh.Client, error) {
+	configs, ok := conn.Configs[host]
+	if !ok || configs == nil {
+		return nil, fmt.Errorf("no client configs found for host: %s", host)
+	}
+
+	// TODO: Implement caching
+	for _, config := range configs {
+		client, err := ssh.Dial("tcp", host, config)
+		if err != nil {
+			// TODO: Log error
+			continue
+		}
+
+		return client, nil
+	}
+
+	return nil, fmt.Errorf("All client configs failed to connect")
 }
 
 // An Environment used for the execution of a single task.
 type Environment struct {
-	Remote Connector
-	Uploader
-	Downloader
+	RemoteHost string
+	*Connector
+	cdn.Uploader
+	cdn.Downloader
 }

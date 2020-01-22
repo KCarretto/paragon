@@ -28,7 +28,7 @@ func (env Environment) SendToTarget(parser script.ArgParser) (script.Retval, err
 		return nil, err
 	}
 
-	client, err := env.Remote.Connect()
+	client, err := env.Connect(env.RemoteHost)
 	if err != nil {
 		return nil, err
 	}
