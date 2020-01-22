@@ -5,6 +5,7 @@ package migrate
 import (
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/link"
 
 	"github.com/facebookincubator/ent/dialect/sql/schema"
 	"github.com/facebookincubator/ent/schema/field"
@@ -72,6 +73,29 @@ var (
 				Columns: []*schema.Column{JobsColumns[4]},
 
 				RefColumns: []*schema.Column{JobsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
+	// LinksColumns holds the columns for the "links" table.
+	LinksColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "alias", Type: field.TypeString, Unique: true},
+		{Name: "expiration_time", Type: field.TypeTime, Nullable: true},
+		{Name: "clicks", Type: field.TypeInt, Default: link.DefaultClicks},
+		{Name: "file_id", Type: field.TypeInt, Nullable: true},
+	}
+	// LinksTable holds the schema information for the "links" table.
+	LinksTable = &schema.Table{
+		Name:       "links",
+		Columns:    LinksColumns,
+		PrimaryKey: []*schema.Column{LinksColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:  "links_files_links",
+				Columns: []*schema.Column{LinksColumns[4]},
+
+				RefColumns: []*schema.Column{FilesColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -229,6 +253,7 @@ var (
 		CredentialsTable,
 		FilesTable,
 		JobsTable,
+		LinksTable,
 		TagsTable,
 		TargetsTable,
 		TasksTable,
@@ -241,6 +266,7 @@ var (
 func init() {
 	CredentialsTable.ForeignKeys[0].RefTable = TargetsTable
 	JobsTable.ForeignKeys[0].RefTable = JobsTable
+	LinksTable.ForeignKeys[0].RefTable = FilesTable
 	TasksTable.ForeignKeys[0].RefTable = JobsTable
 	TasksTable.ForeignKeys[1].RefTable = TargetsTable
 	JobTagsTable.ForeignKeys[0].RefTable = JobsTable

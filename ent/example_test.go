@@ -57,6 +57,13 @@ func ExampleFile() {
 	defer drv.Close()
 	client := NewClient(Driver(drv))
 	// creating vertices for the file's edges.
+	l0 := client.Link.
+		Create().
+		SetAlias("string").
+		SetExpirationTime(time.Now()).
+		SetClicks(1).
+		SaveX(ctx)
+	log.Println("link created:", l0)
 
 	// create file vertex with its edges.
 	f := client.File.
@@ -68,10 +75,16 @@ func ExampleFile() {
 		SetContent(nil).
 		SetHash("string").
 		SetContentType("string").
+		AddLinks(l0).
 		SaveX(ctx)
 	log.Println("file created:", f)
 
 	// query edges.
+	l0, err = f.QueryLinks().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying links: %v", err)
+	}
+	log.Println("links found:", l0)
 
 	// Output:
 }
@@ -143,6 +156,32 @@ func ExampleJob() {
 		log.Fatalf("failed querying next: %v", err)
 	}
 	log.Println("next found:", j3)
+
+	// Output:
+}
+func ExampleLink() {
+	if dsn == "" {
+		return
+	}
+	ctx := context.Background()
+	drv, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("failed creating database client: %v", err)
+	}
+	defer drv.Close()
+	client := NewClient(Driver(drv))
+	// creating vertices for the link's edges.
+
+	// create link vertex with its edges.
+	l := client.Link.
+		Create().
+		SetAlias("string").
+		SetExpirationTime(time.Now()).
+		SetClicks(1).
+		SaveX(ctx)
+	log.Println("link created:", l)
+
+	// query edges.
 
 	// Output:
 }

@@ -12,6 +12,7 @@ import (
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
@@ -32,6 +33,8 @@ type Client struct {
 	File *FileClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// Link is the client for interacting with the Link builders.
+	Link *LinkClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
@@ -50,6 +53,7 @@ func NewClient(opts ...Option) *Client {
 		Credential: NewCredentialClient(c),
 		File:       NewFileClient(c),
 		Job:        NewJobClient(c),
+		Link:       NewLinkClient(c),
 		Tag:        NewTagClient(c),
 		Target:     NewTargetClient(c),
 		Task:       NewTaskClient(c),
@@ -87,6 +91,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Credential: NewCredentialClient(cfg),
 		File:       NewFileClient(cfg),
 		Job:        NewJobClient(cfg),
+		Link:       NewLinkClient(cfg),
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
 		Task:       NewTaskClient(cfg),
@@ -111,6 +116,7 @@ func (c *Client) Debug() *Client {
 		Credential: NewCredentialClient(cfg),
 		File:       NewFileClient(cfg),
 		Job:        NewJobClient(cfg),
+		Link:       NewLinkClient(cfg),
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
 		Task:       NewTaskClient(cfg),
@@ -250,6 +256,20 @@ func (c *FileClient) GetX(ctx context.Context, id int) *File {
 	return f
 }
 
+// QueryLinks queries the links edge of a File.
+func (c *FileClient) QueryLinks(f *File) *LinkQuery {
+	query := &LinkQuery{config: c.config}
+	id := f.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(file.Table, file.FieldID, id),
+		sqlgraph.To(link.Table, link.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, file.LinksTable, file.LinksColumn),
+	)
+	query.sql = sqlgraph.Neighbors(f.driver.Dialect(), step)
+
+	return query
+}
+
 // JobClient is a client for the Job schema.
 type JobClient struct {
 	config
@@ -366,6 +386,84 @@ func (c *JobClient) QueryNext(j *Job) *JobQuery {
 		sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
 	)
 	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
+
+	return query
+}
+
+// LinkClient is a client for the Link schema.
+type LinkClient struct {
+	config
+}
+
+// NewLinkClient returns a client for the Link from the given config.
+func NewLinkClient(c config) *LinkClient {
+	return &LinkClient{config: c}
+}
+
+// Create returns a create builder for Link.
+func (c *LinkClient) Create() *LinkCreate {
+	return &LinkCreate{config: c.config}
+}
+
+// Update returns an update builder for Link.
+func (c *LinkClient) Update() *LinkUpdate {
+	return &LinkUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LinkClient) UpdateOne(l *Link) *LinkUpdateOne {
+	return c.UpdateOneID(l.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LinkClient) UpdateOneID(id int) *LinkUpdateOne {
+	return &LinkUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for Link.
+func (c *LinkClient) Delete() *LinkDelete {
+	return &LinkDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *LinkClient) DeleteOne(l *Link) *LinkDeleteOne {
+	return c.DeleteOneID(l.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *LinkClient) DeleteOneID(id int) *LinkDeleteOne {
+	return &LinkDeleteOne{c.Delete().Where(link.ID(id))}
+}
+
+// Create returns a query builder for Link.
+func (c *LinkClient) Query() *LinkQuery {
+	return &LinkQuery{config: c.config}
+}
+
+// Get returns a Link entity by its id.
+func (c *LinkClient) Get(ctx context.Context, id int) (*Link, error) {
+	return c.Query().Where(link.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LinkClient) GetX(ctx context.Context, id int) *Link {
+	l, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return l
+}
+
+// QueryFile queries the file edge of a Link.
+func (c *LinkClient) QueryFile(l *Link) *FileQuery {
+	query := &FileQuery{config: c.config}
+	id := l.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(link.Table, link.FieldID, id),
+		sqlgraph.To(file.Table, file.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, link.FileTable, link.FileColumn),
+	)
+	query.sql = sqlgraph.Neighbors(l.driver.Dialect(), step)
 
 	return query
 }

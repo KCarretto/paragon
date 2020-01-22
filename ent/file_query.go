@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -12,6 +13,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
 
@@ -23,6 +25,8 @@ type FileQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.File
+	// eager-loading edges.
+	withLinks *LinkQuery
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -49,6 +53,18 @@ func (fq *FileQuery) Offset(offset int) *FileQuery {
 func (fq *FileQuery) Order(o ...Order) *FileQuery {
 	fq.order = append(fq.order, o...)
 	return fq
+}
+
+// QueryLinks chains the current query on the links edge.
+func (fq *FileQuery) QueryLinks() *LinkQuery {
+	query := &LinkQuery{config: fq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(file.Table, file.FieldID, fq.sqlQuery()),
+		sqlgraph.To(link.Table, link.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, file.LinksTable, file.LinksColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(fq.driver.Dialect(), step)
+	return query
 }
 
 // First returns the first File entity in the query. Returns *ErrNotFound when no file was found.
@@ -220,6 +236,17 @@ func (fq *FileQuery) Clone() *FileQuery {
 	}
 }
 
+//  WithLinks tells the query-builder to eager-loads the nodes that are connected to
+// the "links" edge. The optional arguments used to configure the query builder of the edge.
+func (fq *FileQuery) WithLinks(opts ...func(*LinkQuery)) *FileQuery {
+	query := &LinkQuery{config: fq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	fq.withLinks = query
+	return fq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -286,6 +313,35 @@ func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := fq.withLinks; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*File)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Link(func(s *sql.Selector) {
+			s.Where(sql.InValues(file.LinksColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.file_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "file_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "file_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Links = append(node.Edges.Links, n)
+		}
+	}
+
 	return nodes, nil
 }
 

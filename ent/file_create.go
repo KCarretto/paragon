@@ -11,6 +11,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/link"
 )
 
 // FileCreate is the builder for creating a File entity.
@@ -23,6 +24,7 @@ type FileCreate struct {
 	Content          *[]byte
 	Hash             *string
 	ContentType      *string
+	links            map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -81,6 +83,26 @@ func (fc *FileCreate) SetHash(s string) *FileCreate {
 func (fc *FileCreate) SetContentType(s string) *FileCreate {
 	fc.ContentType = &s
 	return fc
+}
+
+// AddLinkIDs adds the links edge to Link by ids.
+func (fc *FileCreate) AddLinkIDs(ids ...int) *FileCreate {
+	if fc.links == nil {
+		fc.links = make(map[int]struct{})
+	}
+	for i := range ids {
+		fc.links[ids[i]] = struct{}{}
+	}
+	return fc
+}
+
+// AddLinks adds the links edges to Link.
+func (fc *FileCreate) AddLinks(l ...*Link) *FileCreate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return fc.AddLinkIDs(ids...)
 }
 
 // Save creates the File in the database.
@@ -192,6 +214,25 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 			Column: file.FieldContentType,
 		})
 		f.ContentType = *value
+	}
+	if nodes := fc.links; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if err := sqlgraph.CreateNode(ctx, fc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {

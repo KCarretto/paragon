@@ -30,6 +30,13 @@ const (
 
 	// Table holds the table name of the file in the database.
 	Table = "files"
+	// LinksTable is the table the holds the links relation/edge.
+	LinksTable = "links"
+	// LinksInverseTable is the table name for the Link entity.
+	// It exists in this package in order to avoid circular dependency with the "link" package.
+	LinksInverseTable = "links"
+	// LinksColumn is the table column denoting the links relation/edge.
+	LinksColumn = "file_id"
 )
 
 // Columns holds all SQL columns for file fields.

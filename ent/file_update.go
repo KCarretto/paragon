@@ -11,6 +11,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
 
@@ -25,6 +26,8 @@ type FileUpdate struct {
 	Content          *[]byte
 	Hash             *string
 	ContentType      *string
+	links            map[int]struct{}
+	removedLinks     map[int]struct{}
 	predicates       []predicate.File
 }
 
@@ -101,6 +104,46 @@ func (fu *FileUpdate) SetHash(s string) *FileUpdate {
 func (fu *FileUpdate) SetContentType(s string) *FileUpdate {
 	fu.ContentType = &s
 	return fu
+}
+
+// AddLinkIDs adds the links edge to Link by ids.
+func (fu *FileUpdate) AddLinkIDs(ids ...int) *FileUpdate {
+	if fu.links == nil {
+		fu.links = make(map[int]struct{})
+	}
+	for i := range ids {
+		fu.links[ids[i]] = struct{}{}
+	}
+	return fu
+}
+
+// AddLinks adds the links edges to Link.
+func (fu *FileUpdate) AddLinks(l ...*Link) *FileUpdate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return fu.AddLinkIDs(ids...)
+}
+
+// RemoveLinkIDs removes the links edge to Link by ids.
+func (fu *FileUpdate) RemoveLinkIDs(ids ...int) *FileUpdate {
+	if fu.removedLinks == nil {
+		fu.removedLinks = make(map[int]struct{})
+	}
+	for i := range ids {
+		fu.removedLinks[ids[i]] = struct{}{}
+	}
+	return fu
+}
+
+// RemoveLinks removes links edges to Link.
+func (fu *FileUpdate) RemoveLinks(l ...*Link) *FileUpdate {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return fu.RemoveLinkIDs(ids...)
 }
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
@@ -214,6 +257,44 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: file.FieldContentType,
 		})
 	}
+	if nodes := fu.removedLinks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fu.links; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, fu.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -235,6 +316,8 @@ type FileUpdateOne struct {
 	Content          *[]byte
 	Hash             *string
 	ContentType      *string
+	links            map[int]struct{}
+	removedLinks     map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -304,6 +387,46 @@ func (fuo *FileUpdateOne) SetHash(s string) *FileUpdateOne {
 func (fuo *FileUpdateOne) SetContentType(s string) *FileUpdateOne {
 	fuo.ContentType = &s
 	return fuo
+}
+
+// AddLinkIDs adds the links edge to Link by ids.
+func (fuo *FileUpdateOne) AddLinkIDs(ids ...int) *FileUpdateOne {
+	if fuo.links == nil {
+		fuo.links = make(map[int]struct{})
+	}
+	for i := range ids {
+		fuo.links[ids[i]] = struct{}{}
+	}
+	return fuo
+}
+
+// AddLinks adds the links edges to Link.
+func (fuo *FileUpdateOne) AddLinks(l ...*Link) *FileUpdateOne {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return fuo.AddLinkIDs(ids...)
+}
+
+// RemoveLinkIDs removes the links edge to Link by ids.
+func (fuo *FileUpdateOne) RemoveLinkIDs(ids ...int) *FileUpdateOne {
+	if fuo.removedLinks == nil {
+		fuo.removedLinks = make(map[int]struct{})
+	}
+	for i := range ids {
+		fuo.removedLinks[ids[i]] = struct{}{}
+	}
+	return fuo
+}
+
+// RemoveLinks removes links edges to Link.
+func (fuo *FileUpdateOne) RemoveLinks(l ...*Link) *FileUpdateOne {
+	ids := make([]int, len(l))
+	for i := range l {
+		ids[i] = l[i].ID
+	}
+	return fuo.RemoveLinkIDs(ids...)
 }
 
 // Save executes the query and returns the updated entity.
@@ -410,6 +533,44 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (f *File, err error) {
 			Value:  *value,
 			Column: file.FieldContentType,
 		})
+	}
+	if nodes := fuo.removedLinks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fuo.links; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	f = &File{config: fuo.config}
 	_spec.Assign = f.assignValues

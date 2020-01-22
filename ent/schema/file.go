@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent"
+	"github.com/facebookincubator/ent/schema/edge"
 	"github.com/facebookincubator/ent/schema/field"
 )
 
@@ -37,5 +38,13 @@ func (File) Fields() []ent.Field {
 			Comment("A SHA3 digest of the content field"),
 		field.String("ContentType").
 			Comment("The content type of content"),
+	}
+}
+
+// Edges of the File.
+func (File) Edges() []ent.Edge {
+	return []ent.Edge{
+		edge.To("links", Link.Type).
+			Comment("A File can have many links assigned to it"),
 	}
 }

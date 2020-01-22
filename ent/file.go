@@ -30,6 +30,12 @@ type File struct {
 	Hash string `json:"Hash,omitempty"`
 	// ContentType holds the value of the "ContentType" field.
 	ContentType string `json:"ContentType,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the FileQuery when eager-loading is set.
+	Edges struct {
+		// Links holds the value of the links edge.
+		Links []*Link
+	} `json:"edges"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -94,6 +100,11 @@ func (f *File) assignValues(values ...interface{}) error {
 		f.ContentType = value.String
 	}
 	return nil
+}
+
+// QueryLinks queries the links edge of the File.
+func (f *File) QueryLinks() *LinkQuery {
+	return (&FileClient{f.config}).QueryLinks(f)
 }
 
 // Update returns a builder for updating this File.

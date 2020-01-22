@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
 
@@ -862,6 +863,36 @@ func ContentTypeEqualFold(v string) predicate.File {
 func ContentTypeContainsFold(v string) predicate.File {
 	return predicate.File(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// HasLinks applies the HasEdge predicate on the "links" edge.
+func HasLinks() predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LinksTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LinksTable, LinksColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	},
+	)
+}
+
+// HasLinksWith applies the HasEdge predicate on the "links" edge with a given conditions (other predicates).
+func HasLinksWith(preds ...predicate.Link) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(LinksInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, LinksTable, LinksColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	},
 	)
 }
