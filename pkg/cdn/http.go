@@ -2,6 +2,7 @@ package cdn
 
 import (
 	"bytes"
+	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/file"
+	"golang.org/x/crypto/sha3"
 )
 
 const (
@@ -55,10 +57,15 @@ func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fileID int
+	digestBytes := sha3.Sum256(content)
+	digest := base64.StdEncoding.EncodeToString(digestBytes[:])
+	contentType := http.DetectContentType(content)
 	if exists {
 		fileID = fileQuery.OnlyXID(ctx)
 		h.EntClient.File.UpdateOneID(fileID).
 			SetContent(content).
+			SetHash(digest).
+			SetContentType(contentType).
 			SetSize(len(content)).
 			SetLastModifiedTime(time.Now()).
 			SaveX(ctx)
@@ -67,6 +74,8 @@ func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 			SetName(fileName).
 			SetSize(len(content)).
 			SetContent(content).
+			SetHash(digest).
+			SetContentType(contentType).
 			SetLastModifiedTime(time.Now()).
 			SaveX(ctx).ID
 	}

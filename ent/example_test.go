@@ -66,6 +66,8 @@ func ExampleFile() {
 		SetLastModifiedTime(time.Now()).
 		SetSize(1).
 		SetContent(nil).
+		SetHash("string").
+		SetContentType("string").
 		SaveX(ctx)
 	log.Println("file created:", f)
 

@@ -43,6 +43,8 @@ var (
 		{Name: "last_modified_time", Type: field.TypeTime},
 		{Name: "size", Type: field.TypeInt, Default: file.DefaultSize},
 		{Name: "content", Type: field.TypeBytes},
+		{Name: "hash", Type: field.TypeString},
+		{Name: "content_type", Type: field.TypeString},
 	}
 	// FilesTable holds the schema information for the "files" table.
 	FilesTable = &schema.Table{

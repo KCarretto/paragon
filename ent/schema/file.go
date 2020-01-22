@@ -19,7 +19,7 @@ func (File) Fields() []ent.Field {
 			NotEmpty().
 			MinLen(1).
 			Unique().
-			Comment("The name of the file, used to reference it for downloads."),
+			Comment("The name of the file, used to reference it for downloads"),
 		field.Time("CreationTime").
 			Default(func() time.Time {
 				return time.Now()
@@ -33,5 +33,9 @@ func (File) Fields() []ent.Field {
 			Comment("The size of the file in bytes"),
 		field.Bytes("Content").
 			Comment("The content of the file"),
+		field.String("Hash").
+			Comment("A SHA3 digest of the content field"),
+		field.String("ContentType").
+			Comment("The content type of content"),
 	}
 }

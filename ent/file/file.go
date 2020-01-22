@@ -23,6 +23,10 @@ const (
 	FieldSize = "size"
 	// FieldContent holds the string denoting the content vertex property in the database.
 	FieldContent = "content"
+	// FieldHash holds the string denoting the hash vertex property in the database.
+	FieldHash = "hash"
+	// FieldContentType holds the string denoting the contenttype vertex property in the database.
+	FieldContentType = "content_type"
 
 	// Table holds the table name of the file in the database.
 	Table = "files"
@@ -36,6 +40,8 @@ var Columns = []string{
 	FieldLastModifiedTime,
 	FieldSize,
 	FieldContent,
+	FieldHash,
+	FieldContentType,
 }
 
 var (

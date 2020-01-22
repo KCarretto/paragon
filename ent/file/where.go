@@ -142,6 +142,22 @@ func Content(v []byte) predicate.File {
 	)
 }
 
+// Hash applies equality check predicate on the "Hash" field. It's identical to HashEQ.
+func Hash(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldHash), v))
+	},
+	)
+}
+
+// ContentType applies equality check predicate on the "ContentType" field. It's identical to ContentTypeEQ.
+func ContentType(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldContentType), v))
+	},
+	)
+}
+
 // NameEQ applies the EQ predicate on the "Name" field.
 func NameEQ(v string) predicate.File {
 	return predicate.File(func(s *sql.Selector) {
@@ -598,6 +614,254 @@ func ContentLT(v []byte) predicate.File {
 func ContentLTE(v []byte) predicate.File {
 	return predicate.File(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldContent), v))
+	},
+	)
+}
+
+// HashEQ applies the EQ predicate on the "Hash" field.
+func HashEQ(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashNEQ applies the NEQ predicate on the "Hash" field.
+func HashNEQ(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashIn applies the In predicate on the "Hash" field.
+func HashIn(vs ...string) predicate.File {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.File(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldHash), v...))
+	},
+	)
+}
+
+// HashNotIn applies the NotIn predicate on the "Hash" field.
+func HashNotIn(vs ...string) predicate.File {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.File(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldHash), v...))
+	},
+	)
+}
+
+// HashGT applies the GT predicate on the "Hash" field.
+func HashGT(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashGTE applies the GTE predicate on the "Hash" field.
+func HashGTE(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashLT applies the LT predicate on the "Hash" field.
+func HashLT(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashLTE applies the LTE predicate on the "Hash" field.
+func HashLTE(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashContains applies the Contains predicate on the "Hash" field.
+func HashContains(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashHasPrefix applies the HasPrefix predicate on the "Hash" field.
+func HashHasPrefix(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashHasSuffix applies the HasSuffix predicate on the "Hash" field.
+func HashHasSuffix(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashEqualFold applies the EqualFold predicate on the "Hash" field.
+func HashEqualFold(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldHash), v))
+	},
+	)
+}
+
+// HashContainsFold applies the ContainsFold predicate on the "Hash" field.
+func HashContainsFold(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldHash), v))
+	},
+	)
+}
+
+// ContentTypeEQ applies the EQ predicate on the "ContentType" field.
+func ContentTypeEQ(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeNEQ applies the NEQ predicate on the "ContentType" field.
+func ContentTypeNEQ(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeIn applies the In predicate on the "ContentType" field.
+func ContentTypeIn(vs ...string) predicate.File {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.File(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldContentType), v...))
+	},
+	)
+}
+
+// ContentTypeNotIn applies the NotIn predicate on the "ContentType" field.
+func ContentTypeNotIn(vs ...string) predicate.File {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.File(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldContentType), v...))
+	},
+	)
+}
+
+// ContentTypeGT applies the GT predicate on the "ContentType" field.
+func ContentTypeGT(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeGTE applies the GTE predicate on the "ContentType" field.
+func ContentTypeGTE(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeLT applies the LT predicate on the "ContentType" field.
+func ContentTypeLT(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeLTE applies the LTE predicate on the "ContentType" field.
+func ContentTypeLTE(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeContains applies the Contains predicate on the "ContentType" field.
+func ContentTypeContains(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeHasPrefix applies the HasPrefix predicate on the "ContentType" field.
+func ContentTypeHasPrefix(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeHasSuffix applies the HasSuffix predicate on the "ContentType" field.
+func ContentTypeHasSuffix(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeEqualFold applies the EqualFold predicate on the "ContentType" field.
+func ContentTypeEqualFold(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldContentType), v))
+	},
+	)
+}
+
+// ContentTypeContainsFold applies the ContainsFold predicate on the "ContentType" field.
+func ContentTypeContainsFold(v string) predicate.File {
+	return predicate.File(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldContentType), v))
 	},
 	)
 }
