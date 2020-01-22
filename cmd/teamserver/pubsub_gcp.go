@@ -11,6 +11,7 @@ import (
 	_ "gocloud.dev/pubsub/gcppubsub"
 )
 
+// NatsPublisher implements GCP variant of the Publisher interface.
 type GCPPublisher struct {
 	topic *pubsub.Topic
 }

@@ -6,11 +6,8 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-
-	"github.com/kcarretto/paragon/ent"
-	"github.com/kcarretto/paragon/pkg/event"
-	"github.com/kcarretto/paragon/pkg/script/workerlib/ssh"
-	"github.com/kcarretto/paragon/pkg/worker"
+	"os"
+	"time"
 )
 
 const simpleTask = `
@@ -45,40 +42,61 @@ func (t *testUploader) Upload(name string, file io.Reader) (err error) {
 }
 
 func main() {
-	log.Printf("Testing worker")
-	uploader := &testUploader{}
 
-	w := &worker.Worker{
-		Uploader: uploader,
-		Downloader: &testDownloader{
-			File: "test file\n\twoot \twoot!\n\n",
-		},
-		SSH: &ssh.Connector{},
+	sub, _ := newSubscriber(context.Background())
+	if closer, ok := sub.(io.Closer); ok {
+		defer closer.Close()
 	}
 
-	w.HandleTaskQueued(context.Background(), event.TaskQueued{
-		Target: &ent.Target{
-			ID:        1,
-			PrimaryIP: "127.0.0.1:22",
-		},
-		Credentials: []*ent.Credential{
-			&ent.Credential{
-				ID:        11,
-				Principal: "root",
-				Secret:    "changeme",
-			},
-		},
-		Task: &ent.Task{
-			ID:      21,
-			Content: simpleTask,
-		},
-		Tags: []*ent.Tag{
-			&ent.Tag{
-				ID:   22,
-				Name: worker.ServiceTag,
-			},
-		},
-	})
+	topic := os.Getenv("PUB_TOPIC")
+	if topic == "" {
+		log.Println("[WARN] No PUB_TOPIC environment variable set to publish events, is this a mistake?")
+	}
 
-	log.Printf("[DBG] File content received: %s", string(uploader.Result))
+	if err := sub.Subscribe(topic, func(ctx context.Context, b []byte) {
+		log.Printf("[INFO] message recieved: %v\n", string(b))
+	}); err != nil {
+		panic(err)
+	}
+
+	for {
+		time.Sleep(time.Second)
+	}
+
+	// log.Printf("Testing worker")
+	// uploader := &testUploader{}
+
+	// w := &worker.Worker{
+	// 	Uploader: uploader,
+	// 	Downloader: &testDownloader{
+	// 		File: "test file\n\twoot \twoot!\n\n",
+	// 	},
+	// 	SSH: &ssh.Connector{},
+	// }
+
+	// w.HandleTaskQueued(context.Background(), event.TaskQueued{
+	// 	Target: &ent.Target{
+	// 		ID:        1,
+	// 		PrimaryIP: "127.0.0.1:22",
+	// 	},
+	// 	Credentials: []*ent.Credential{
+	// 		&ent.Credential{
+	// 			ID:        11,
+	// 			Principal: "root",
+	// 			Secret:    "changeme",
+	// 		},
+	// 	},
+	// 	Task: &ent.Task{
+	// 		ID:      21,
+	// 		Content: simpleTask,
+	// 	},
+	// 	Tags: []*ent.Tag{
+	// 		&ent.Tag{
+	// 			ID:   22,
+	// 			Name: worker.ServiceTag,
+	// 		},
+	// 	},
+	// })
+
+	// log.Printf("[DBG] File content received: %s", string(uploader.Result))
 }
