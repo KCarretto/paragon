@@ -2,11 +2,10 @@ import React from 'react';
 import { Route } from 'react-router-dom';
 import 'semantic-ui-css/semantic.min.css';
 import './App.css';
-import { XFileUploadModal } from './components/file';
 import { XLayout, XUnimplemented } from './components/layout/';
 import Routes from './config/routes';
 import { XGraphProvider } from './graphql';
-import { XJobView, XMultiJobView, XMultiTagView, XMultiTargetView, XTargetView, XTaskView } from './views';
+import { XJobView, XMultiFileView, XMultiJobView, XMultiTagView, XMultiTargetView, XTargetView, XTaskView } from './views';
 
 const App = () => (
   <XGraphProvider>
@@ -18,7 +17,7 @@ const App = () => (
       <Route exact path='/targets' component={XMultiTargetView} />
       <Route exact path='/jobs' component={XMultiJobView} />
       <Route exact path='/tags' component={XMultiTagView} />
-      <Route exact path='/payloads' component={XFileUploadModal} />
+      <Route exact path='/files' component={XMultiFileView} />
 
       <Route path='/targets/:id' component={XTargetView} />
       <Route path='/tasks/:id' component={XTaskView} />
