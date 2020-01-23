@@ -1,22 +1,32 @@
 # Dependency Cache
 FROM golang:1.13.1-alpine as base
-COPY ./go.mod /app/go.mod
-COPY ./go.sum /app/go.sum
 WORKDIR /app
 RUN apk add alpine-sdk git \
-    && go mod download \
-    && mkdir ./build
+    && mkdir -p /app/build
+COPY ./go.mod /app/go.mod
+COPY ./go.sum /app/go.sum
+RUN go mod download
 
-# Debug Build
-FROM base as build
+# Build Cache
+FROM base as build-cache
 COPY ./cmd /app/cmd
+COPY ./ent /app/ent
 COPY ./pkg /app/pkg
 COPY ./graphql /app/graphql
-COPY ./ent /app/ent
-RUN go build -tags=nats -o ./build/worker ./cmd/worker
+COPY ./www /app/www
+
+# Dev
+FROM build-cache as dev
+CMD ["/app/build/worker"]
+EXPOSE 80 443 8080
+RUN go build -tags=debug,profile_cpu,nats -o /app/build/worker ./cmd/worker
+
+# Production Build
+FROM build-cache as prod-build
+RUN go build -o /app/build/worker ./cmd/worker
 
 # Production
 FROM alpine:3.10.2 as production
 WORKDIR /app
-COPY --from=build /app/build/worker /worker
+COPY --from=prod-build /app/build/worker /worker
 CMD ["/worker"]

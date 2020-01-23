@@ -24,7 +24,6 @@ RUN apk add alpine-sdk git protobuf-dev libgcc libstdc++ npm \
     github.com/gogo/protobuf/protoc-gen-gogoslick \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
     && rm -rf /tmp/goinstall
-
 COPY go.mod /app/go.mod
 COPY go.sum /app/go.sum
 RUN go mod download

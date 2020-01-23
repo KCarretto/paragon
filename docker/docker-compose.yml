@@ -18,7 +18,7 @@ services:
     build:
       context: ../
       dockerfile: "./docker/c2.Dockerfile"
-      target: production
+      target: dev
     environment:
       HTTP_ADDR: "0.0.0.0:80"
       TEAMSERVER_URL: "http://paragon_teamserver_1/graphql"
@@ -27,7 +27,7 @@ services:
     build:
       context: ../
       dockerfile: "./docker/teamserver.Dockerfile"
-      target: production
+      target: dev
     depends_on:
       - nats
     environment:
@@ -41,7 +41,7 @@ services:
     build:
       context: ../
       dockerfile: "./docker/worker.Dockerfile"
-      target: production
+      target: dev
     depends_on:
       - nats
       - teamserver
