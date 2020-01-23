@@ -72,6 +72,7 @@ func (srv *Server) Run() {
 	router.Handle("/app/", http.StripPrefix("/app", http.FileServer(www.App)))
 	router.HandleFunc("/cdn/upload", cdnSVC.HandleFileUpload)
 	router.Handle("/cdn/download/", http.StripPrefix("/cdn/download", http.HandlerFunc(cdnSVC.HandleFileDownload)))
+	router.Handle("/l/", http.StripPrefix("/l", http.HandlerFunc(cdnSVC.HandleLink)))
 	router.HandleFunc("/", srv.handleIndex)
 
 	// C2 Server Address
