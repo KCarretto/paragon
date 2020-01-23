@@ -1,6 +1,6 @@
 import { ControlledEditor, monaco } from "@monaco-editor/react";
 import React from 'react';
-import { renegade_autocomplete, renegade_conf, renegade_language } from '../../config/renegade';
+import { renegade_autocomplete, renegade_conf, renegade_language } from '../../config/Renegade';
 import { XLoadingMessage } from '../messages';
 
 

@@ -23,8 +23,8 @@ const routes = [
         icon: <Icon name='tags' />,
     },
     {
-        title: 'Payloads',
-        link: '/payloads',
+        title: 'Files',
+        link: '/files',
         icon: <Icon name='gift' />,
     },
     {
