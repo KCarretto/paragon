@@ -8,14 +8,11 @@ require (
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/facebookincubator/ent v0.0.0-20200122095037-28b9ef193fb3
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/go-openapi/inflect v0.19.0 // indirect
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.3.1
 	github.com/google/uuid v1.1.1
-	github.com/mattn/go-runewidth v0.0.8 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/nats-io/nats.go v1.9.1
-	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/pkg/profile v1.3.0
 	github.com/pkg/sftp v1.11.0
@@ -23,8 +20,6 @@ require (
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
-	github.com/spf13/cobra v0.0.5 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.4.0
 	github.com/vektah/gqlparser v1.2.0
 	go.starlark.net v0.0.0-20191018214235-58de16fb0ee7
