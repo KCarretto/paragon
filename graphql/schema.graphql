@@ -179,7 +179,7 @@ input SubmitTaskResultRequest {
 
 input CreateLinkRequest {
     alias: String!
-    ExpirationTime: Time
+    expirationTime: Time
     clicks: Int
     file: ID!
 }
