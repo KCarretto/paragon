@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"context"
 	"log"
+	"time"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/graphql"
+	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script"
@@ -86,7 +89,8 @@ func (store credStore) ConfigureSSH(targetID int) (configs []*ssh.ClientConfig) 
 type Worker struct {
 	cdn.Uploader
 	cdn.Downloader
-	SSH *sshlib.Connector
+	SSH   *sshlib.Connector
+	Graph graphql.Client
 
 	credStore
 }
@@ -137,7 +141,6 @@ func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
 	}
 
 	if target.PrimaryIP == "" {
-		// TODO: Log invalid primary IP
 		log.Printf("[DBG] task queued event with invalid target ip")
 		return
 	}
@@ -146,7 +149,7 @@ func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
 }
 
 func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent.Target) {
-	log.Printf("Executing new task")
+	log.Printf("[DBG] Executing new task (%d)", task.ID)
 	if w.SSH == nil {
 		w.SSH = &sshlib.Connector{}
 	}
@@ -159,6 +162,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 
 	output := new(bytes.Buffer)
 
+	start := time.Now()
 	code := script.New(
 		string(task.ID),
 		bytes.NewBufferString(task.Content),
@@ -173,14 +177,20 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		),
 	)
 
-	err := code.Exec(ctx)
-
-	log.Printf("RESULT: %s", output.String())
-
-	// TODO: Write result
-	if err != nil {
-		log.Printf("ERR: Failed to run script: %v", err)
-		return
+	var errStr string
+	if err := code.Exec(ctx); err != nil {
+		errStr = err.Error()
 	}
+	end := time.Now()
 
+	outputStr := output.String()
+	if err := w.Graph.SubmitTaskResult(ctx, models.SubmitTaskResultRequest{
+		ID:            task.ID,
+		Output:        &outputStr,
+		Error:         &errStr,
+		ExecStartTime: &start,
+		ExecStopTime:  &end,
+	}); err != nil {
+		log.Printf("[ERR] Failed to submit task execution result: %+v", err)
+	}
 }
