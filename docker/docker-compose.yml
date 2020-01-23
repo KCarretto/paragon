@@ -46,7 +46,7 @@ services:
       - nats
       - teamserver
     environment:
-      HTTP_ADDR: "0.0.0.0:80"
+      TEAMSERVER_URL: "http://paragon_teamserver_1"
       PUB_TOPIC: "my_topic"
       NATS_URL: "paragon_nats_1"
 

@@ -1,61 +1,43 @@
 package main
 
 import (
-	"bytes"
+	"fmt"
 	"context"
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"time"
 
+	"github.com/kcarretto/paragon/graphql"
+	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script/workerlib/ssh"
 	"github.com/kcarretto/paragon/pkg/worker"
 )
 
-const simpleTask = `
-load("ssh", "exec", "sendToTarget", "recvFromTarget")
-
-def main():
-	print("Running!")
-	exec("touch /tmp/hello_world.txt")
-
-	print(exec("echo hello world"))
-
-	sendToTarget("some_file", "/tmp/some_file")
-
-	recvFromTarget("hello_world", "/etc/ssh/sshd_config")
-`
-
-type testDownloader struct {
-	File string
-}
-
-func (t *testDownloader) Download(filename string) (io.Reader, error) {
-	return bytes.NewBufferString(t.File), nil
-}
-
-type testUploader struct {
-	Result []byte
-}
-
-func (t *testUploader) Upload(name string, file io.Reader) (err error) {
-	t.Result, err = ioutil.ReadAll(file)
-	return
-}
-
 func main() {
+	teamserverURL := "http://127.0.0.1:80"
+	if url := os.Getenv("TEAMSERVER_URL"); url != "" {
+		teamserverURL = url
+	}
+	graph := graphql.Client{
+		URL: fmt.Sprintf("%s/%s", teamserverURL, "graphql"),
+	}
+
+	cdnURL := teamserverURL
+	if url := os.Getenv("CDN_URL"); url != "" {
+		cdnURL = url
+	}
+	cdn := cdn.CDN{URL: cdnURL}
+
 	log.Printf("Testing worker")
-	uploader := &testUploader{}
 
 	w := &worker.Worker{
-		Uploader: uploader,
-		Downloader: &testDownloader{
-			File: "test file\n\twoot \twoot!\n\n",
-		},
-		SSH: &ssh.Connector{},
+		Uploader:   cdn,
+		Downloader: cdn,
+		SSH:        &ssh.Connector{},
+		Graph:      graph,
 	}
 
 	sub, _ := newSubscriber(context.Background())
@@ -107,8 +89,6 @@ func main() {
 	// 		},
 	// 	},
 	// })
-
-	log.Printf("[DBG] File content received: %s", string(uploader.Result))
 
 	for {
 		time.Sleep(time.Second)

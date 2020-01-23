@@ -13,18 +13,16 @@ const App = () => (
     <XLayout routeMap={Routes} className='App'>
       <Route exact path='/' component={XUnimplemented} />
       <Route exact path='/news_feed' component={XUnimplemented} />
-      <Route exact path='/payloads' component={XUnimplemented} />
       <Route exact path='/profile' component={XUnimplemented} />
 
       <Route exact path='/targets' component={XMultiTargetView} />
       <Route exact path='/jobs' component={XMultiJobView} />
       <Route exact path='/tags' component={XMultiTagView} />
+      <Route exact path='/payloads' component={XFileUploadModal} />
 
       <Route path='/targets/:id' component={XTargetView} />
       <Route path='/tasks/:id' component={XTaskView} />
       <Route path='/jobs/:id' component={XJobView} />
-
-      <Route path='/upload_test' component={XFileUploadModal} />
 
     </XLayout>
   </XGraphProvider>
