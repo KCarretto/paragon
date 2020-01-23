@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"context"
 	"encoding/json"
 	"io"
@@ -21,7 +22,7 @@ func main() {
 		teamserverURL = url
 	}
 	graph := graphql.Client{
-		URL: teamserverURL,
+		URL: fmt.Sprintf("%s/%s", teamserverURL, "graphql"),
 	}
 
 	cdnURL := teamserverURL
