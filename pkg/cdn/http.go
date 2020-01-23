@@ -5,12 +5,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"path/filepath"
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/link"
 	"golang.org/x/crypto/sha3"
 )
 
@@ -104,4 +106,45 @@ func (h HTTP) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
 	content := bytes.NewReader(file.Content)
 	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeContent(w, r, filename, file.LastModifiedTime, content)
+}
+
+// HandleLink is an http.HandlerFunc which loads a file by its link and serves it's content.
+func (h HTTP) HandleLink(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+
+	alias := filepath.Base(r.URL.Path)
+	if alias == "" || alias == "." || alias == "/" {
+		http.Error(w, "invalid alias provided in request URI", http.StatusBadRequest)
+		return
+	}
+
+	linkQuery := h.EntClient.Link.Query().Where(link.Alias(alias))
+
+	if exists := linkQuery.ExistX(ctx); !exists {
+		log.Printf("alias: %v", alias)
+		http.Error(w, "alias not found", http.StatusNotFound)
+		return
+	}
+
+	link := linkQuery.OnlyX(ctx)
+	if link.Clicks == 0 || (link.ExpirationTime.Before(time.Now()) && !link.ExpirationTime.IsZero()) {
+		h.EntClient.Link.DeleteOneID(link.ID).ExecX(ctx)
+		log.Printf("alias 2: %v", alias)
+		log.Printf("alias 2: %v", time.Now())
+		http.Error(w, "alias not found", http.StatusNotFound)
+		return
+	}
+	// a click has been used!
+	if link.Clicks > 0 {
+		link.Update().
+			AddClicks(-1).
+			SaveX(ctx)
+	}
+	file := link.QueryFile().OnlyX(ctx)
+	content := bytes.NewReader(file.Content)
+	w.Header().Set("Content-Type", "application/octet-stream")
+	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
+	w.Header().Set("Pragma", "no-cache")
+	w.Header().Set("Expires", "0")
+	http.ServeContent(w, r, file.Name, file.LastModifiedTime, content)
 }

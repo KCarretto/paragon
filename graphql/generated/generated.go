@@ -1297,7 +1297,7 @@ input SubmitTaskResultRequest {
 
 input CreateLinkRequest {
     alias: String!
-    ExpirationTime: Time
+    expirationTime: Time
     clicks: Int
     file: ID!
 }
@@ -6659,7 +6659,7 @@ func (ec *executionContext) unmarshalInputCreateLinkRequest(ctx context.Context,
 			if err != nil {
 				return it, err
 			}
-		case "ExpirationTime":
+		case "expirationTime":
 			var err error
 			it.ExpirationTime, err = ec.unmarshalOTime2ᚖtimeᚐTime(ctx, v)
 			if err != nil {

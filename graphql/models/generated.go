@@ -37,7 +37,7 @@ type CreateJobRequest struct {
 
 type CreateLinkRequest struct {
 	Alias          string     `json:"alias"`
-	ExpirationTime *time.Time `json:"ExpirationTime"`
+	ExpirationTime *time.Time `json:"expirationTime"`
 	Clicks         *int       `json:"clicks"`
 	File           int        `json:"file"`
 }
