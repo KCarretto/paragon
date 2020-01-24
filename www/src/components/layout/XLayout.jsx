@@ -1,15 +1,24 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import { BrowserRouter as Router, Switch } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
+import XLogin from '../../views/XLogin';
 import XSidebar from './XSidebar';
 
 
 const XLayout = (props) => (
     <Router>
         <Switch>
-            <XSidebar routeMap={props.routeMap}>
-                {props.children}
-            </XSidebar>
+            <Route
+                path="/login"
+                component={XLogin}
+            />
+            <Route
+                path="/"
+            >
+                <XSidebar routeMap={props.routeMap}>
+                    {props.children}
+                </XSidebar>
+            </Route>
         </Switch>
     </Router>
 

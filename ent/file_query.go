@@ -290,8 +290,8 @@ func (fq *FileQuery) Select(field string, fields ...string) *FileSelect {
 
 func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 	var (
-		nodes []*File
-		_spec = fq.querySpec()
+		nodes []*File = []*File{}
+		_spec         = fq.querySpec()
 	)
 	_spec.ScanValues = func() []interface{} {
 		node := &File{config: fq.config}
@@ -309,7 +309,6 @@ func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 	if err := sqlgraph.QueryNodes(ctx, fq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

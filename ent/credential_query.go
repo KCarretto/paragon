@@ -264,9 +264,9 @@ func (cq *CredentialQuery) Select(field string, fields ...string) *CredentialSel
 
 func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	var (
-		nodes   []*Credential
-		withFKs = cq.withFKs
-		_spec   = cq.querySpec()
+		nodes   []*Credential = []*Credential{}
+		withFKs               = cq.withFKs
+		_spec                 = cq.querySpec()
 	)
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, credential.ForeignKeys...)
@@ -290,7 +290,6 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	if err := sqlgraph.QueryNodes(ctx, cq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

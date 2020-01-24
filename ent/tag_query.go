@@ -340,8 +340,8 @@ func (tq *TagQuery) Select(field string, fields ...string) *TagSelect {
 
 func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 	var (
-		nodes []*Tag
-		_spec = tq.querySpec()
+		nodes []*Tag = []*Tag{}
+		_spec        = tq.querySpec()
 	)
 	_spec.ScanValues = func() []interface{} {
 		node := &Tag{config: tq.config}
@@ -359,7 +359,6 @@ func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

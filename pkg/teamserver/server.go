@@ -14,6 +14,7 @@ import (
 	"github.com/kcarretto/paragon/graphql/resolve"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/middleware"
@@ -60,12 +61,14 @@ func (srv *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 // Run begins the handlers for processing the subscriptions to the `tasks.claimed` and `tasks.executed` topics
 func (srv *Server) Run() {
-	cdnSVC := cdn.HTTP{EntClient: srv.EntClient}
-
 	router := http.NewServeMux()
 
-	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient, Publisher: srv.Publisher}}))
+	cdnSVC := cdn.HTTP{EntClient: srv.EntClient}
+	authSVC := auth.NewOAuthServer(srv.EntClient)
+	router.HandleFunc("/oauth/signup", authSVC.HandleSignup)
+	router.HandleFunc("/oauth/authorize", authSVC.HandleAuth)
 
+	h := handler.GraphQL(generated.NewExecutableSchema(generated.Config{Resolvers: &resolve.Resolver{EntClient: srv.EntClient, Publisher: srv.Publisher}}))
 	router.Handle("/graphql", h)
 	router.Handle("/graphiql", handler.Playground("GraphQL", "/graphql"))
 	router.HandleFunc("/status", srv.handleStatus)
