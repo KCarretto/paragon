@@ -8,13 +8,13 @@ import (
 	"net/http"
 )
 
-type CDN struct {
+type Client struct {
 	HTTP *http.Client
 	URL  string
 }
 
 // Upload a file to the CDN.
-func (cdn CDN) Upload(name string, file io.Reader) error {
+func (cdn Client) Upload(name string, file io.Reader) error {
 	url := fmt.Sprintf("%s/%s", cdn.URL, "cdn/upload")
 
 	body := &bytes.Buffer{}
@@ -53,7 +53,7 @@ func (cdn CDN) Upload(name string, file io.Reader) error {
 }
 
 // Download a file from the CDN.
-func (cdn CDN) Download(name string) (io.Reader, error) {
+func (cdn Client) Download(name string) (io.Reader, error) {
 	url := fmt.Sprintf("%s/%s/%s", cdn.URL, "cdn/download", name)
 	if cdn.HTTP == nil {
 		cdn.HTTP = http.DefaultClient
