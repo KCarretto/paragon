@@ -1,9 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -29,7 +29,7 @@ func main() {
 	if url := os.Getenv("CDN_URL"); url != "" {
 		cdnURL = url
 	}
-	cdn := cdn.CDN{URL: cdnURL}
+	cdn := cdn.Client{URL: cdnURL}
 
 	log.Printf("Testing worker")
 
