@@ -13,14 +13,16 @@ import (
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/event"
+	"go.uber.org/zap"
 )
 
 // THIS CODE IS A STARTING POINT ONLY. IT WILL NOT BE UPDATED WITH SCHEMA CHANGES.
 
 // Resolver is the root struct for handling all resolves
 type Resolver struct {
-	EntClient *ent.Client
-	Publisher event.Publisher
+	Log    *zap.Logger
+	Graph  *ent.Client
+	Events event.Publisher
 }
 
 // Credential is the Resolver for the Credential Ent
@@ -132,14 +134,14 @@ func (r *linkResolver) File(ctx context.Context, obj *ent.Link) (*ent.File, erro
 type mutationResolver struct{ *Resolver }
 
 func (r *mutationResolver) FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error) {
-	cred, err := r.EntClient.Credential.GetX(ctx, input.ID).
+	cred, err := r.Graph.Credential.GetX(ctx, input.ID).
 		Update().
 		AddFails(1).
 		Save(ctx)
 	return cred, err
 }
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
-	jobCreator := r.EntClient.Job.Create().
+	jobCreator := r.Graph.Job.Create().
 		SetName(input.Name).
 		SetContent(input.Content).
 		AddTagIDs(input.Tags...)
@@ -149,7 +151,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 
 	var targets []*ent.Target
 	for _, t := range input.Targets {
-		tar, err := r.EntClient.Target.Get(ctx, t)
+		tar, err := r.Graph.Target.Get(ctx, t)
 		if err != nil {
 			return nil, err
 		}
@@ -167,7 +169,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	}
 
 	if len(targets) == 0 {
-		t, err := r.EntClient.Task.Create().
+		t, err := r.Graph.Task.Create().
 			SetQueueTime(currentTime).
 			SetLastChangedTime(currentTime).
 			SetContent(input.Content).
@@ -192,13 +194,13 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		if err != nil {
 			return nil, err
 		}
-		err = r.Publisher.Publish(ctx, d)
+		err = r.Events.Publish(ctx, d)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		for _, target := range targets {
-			task, err := r.EntClient.Task.Create().
+			task, err := r.Graph.Task.Create().
 				SetQueueTime(currentTime).
 				SetLastChangedTime(currentTime).
 				SetContent(input.Content).
@@ -233,7 +235,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 			if err != nil {
 				return nil, err
 			}
-			err = r.Publisher.Publish(ctx, d)
+			err = r.Events.Publish(ctx, d)
 			if err != nil {
 				return nil, err
 			}
@@ -243,7 +245,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	return job, nil
 }
 func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error) {
-	tag, err := r.EntClient.Tag.Create().
+	tag, err := r.Graph.Tag.Create().
 		SetName(input.Name).
 		Save(ctx)
 	if err != nil {
@@ -252,43 +254,43 @@ func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTa
 	return tag, nil
 }
 func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (*ent.Task, error) {
-	task, err := r.EntClient.Task.UpdateOneID(input.EntID).
+	task, err := r.Graph.Task.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
 	return task, err
 }
 func (r *mutationResolver) ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (*ent.Target, error) {
-	target, err := r.EntClient.Target.UpdateOneID(input.EntID).
+	target, err := r.Graph.Target.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
 	return target, err
 }
 func (r *mutationResolver) ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (*ent.Job, error) {
-	job, err := r.EntClient.Job.UpdateOneID(input.EntID).
+	job, err := r.Graph.Job.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
 	return job, err
 }
 func (r *mutationResolver) RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (*ent.Task, error) {
-	task, err := r.EntClient.Task.UpdateOneID(input.EntID).
+	task, err := r.Graph.Task.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
 	return task, err
 }
 func (r *mutationResolver) RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (*ent.Target, error) {
-	target, err := r.EntClient.Target.UpdateOneID(input.EntID).
+	target, err := r.Graph.Target.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
 	return target, err
 }
 func (r *mutationResolver) RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (*ent.Job, error) {
-	job, err := r.EntClient.Job.UpdateOneID(input.EntID).
+	job, err := r.Graph.Job.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
 	return job, err
 }
 func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (*ent.Target, error) {
-	target, err := r.EntClient.Target.Create().
+	target, err := r.Graph.Target.Create().
 		SetName(input.Name).
 		SetPrimaryIP(input.PrimaryIP).
 		AddTagIDs(input.Tags...).
@@ -299,7 +301,7 @@ func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.Creat
 	return target, nil
 }
 func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error) {
-	targetUpdater := r.EntClient.Target.UpdateOneID(input.ID)
+	targetUpdater := r.Graph.Target.UpdateOneID(input.ID)
 	if input.Name != nil {
 		targetUpdater.SetName(*input.Name)
 	}
@@ -315,7 +317,7 @@ func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.Se
 	return target, err
 }
 func (r *mutationResolver) DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error) {
-	err := r.EntClient.Target.DeleteOneID(input.ID).Exec(ctx)
+	err := r.Graph.Target.DeleteOneID(input.ID).Exec(ctx)
 	return err != nil, err
 }
 func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error) {
@@ -323,7 +325,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	if input.Kind != nil {
 		kind = credential.Kind(*input.Kind)
 	}
-	credential, err := r.EntClient.Credential.Create().
+	credential, err := r.Graph.Credential.Create().
 		SetPrincipal(input.Principal).
 		SetSecret(input.Secret).
 		SetKind(kind).
@@ -331,7 +333,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	if err != nil {
 		return nil, err
 	}
-	target, err := r.EntClient.Target.UpdateOneID(input.ID).
+	target, err := r.Graph.Target.UpdateOneID(input.ID).
 		AddCredentialIDs(credential.ID).
 		Save(ctx)
 	return target, err
@@ -342,14 +344,14 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 
 	// check for valid machineuuid
 	if input.MachineUUID != nil && *input.MachineUUID != "" {
-		targetEnt, err = r.EntClient.Target.Query().
+		targetEnt, err = r.Graph.Target.Query().
 			Where(target.MachineUUID(*input.MachineUUID)).
 			Only(ctx)
 	}
 
 	// chack for valid primaryIP (if we didnt find a target yet)
 	if targetEnt == nil && input.PrimaryIP != nil && *input.PrimaryIP != "" {
-		targetEnt, err = r.EntClient.Target.Query().
+		targetEnt, err = r.Graph.Target.Query().
 			Where(target.PrimaryIP(*input.PrimaryIP)).
 			Only(ctx)
 		if err != nil {
@@ -420,7 +422,7 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	return updatedTasks, nil
 }
 func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, error) {
-	task, err := r.EntClient.Task.Query().
+	task, err := r.Graph.Task.Query().
 		Where(
 			task.ClaimTimeIsNil(),
 		).
@@ -436,7 +438,7 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 		Save(ctx)
 }
 func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error) {
-	taskEnt, err := r.EntClient.Task.Get(ctx, input.ID)
+	taskEnt, err := r.Graph.Task.Get(ctx, input.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +450,7 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 	if input.Error != nil {
 		inputError = *input.Error
 	}
-	_, err = r.EntClient.Target.Update().
+	_, err = r.Graph.Target.Update().
 		SetLastSeen(time.Now()).
 		Where(target.HasTasksWith(task.ID(taskEnt.ID))).
 		Save(ctx)
@@ -464,7 +466,7 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 		Save(ctx)
 }
 func (r *mutationResolver) CreateLink(ctx context.Context, input *models.CreateLinkRequest) (*ent.Link, error) {
-	linkCreator := r.EntClient.Link.Create().
+	linkCreator := r.Graph.Link.Create().
 		SetAlias(input.Alias).
 		SetFileID(input.File)
 	if input.ExpirationTime != nil {
@@ -476,7 +478,7 @@ func (r *mutationResolver) CreateLink(ctx context.Context, input *models.CreateL
 	return linkCreator.Save(ctx)
 }
 func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetLinkFieldsRequest) (*ent.Link, error) {
-	linkUpdater := r.EntClient.Link.UpdateOneID(input.ID)
+	linkUpdater := r.Graph.Link.UpdateOneID(input.ID)
 	if input.Alias != nil {
 		linkUpdater.SetAlias(*input.Alias)
 	}
@@ -492,10 +494,10 @@ func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetL
 type queryResolver struct{ *Resolver }
 
 func (r *queryResolver) Link(ctx context.Context, id int) (*ent.Link, error) {
-	return r.EntClient.Link.Get(ctx, id)
+	return r.Graph.Link.Get(ctx, id)
 }
 func (r *queryResolver) Links(ctx context.Context, input *models.Filter) ([]*ent.Link, error) {
-	q := r.EntClient.Link.Query()
+	q := r.Graph.Link.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)
@@ -507,10 +509,10 @@ func (r *queryResolver) Links(ctx context.Context, input *models.Filter) ([]*ent
 	return q.All(ctx)
 }
 func (r *queryResolver) File(ctx context.Context, id int) (*ent.File, error) {
-	return r.EntClient.File.Get(ctx, id)
+	return r.Graph.File.Get(ctx, id)
 }
 func (r *queryResolver) Files(ctx context.Context, input *models.Filter) ([]*ent.File, error) {
-	q := r.EntClient.File.Query()
+	q := r.Graph.File.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)
@@ -522,10 +524,10 @@ func (r *queryResolver) Files(ctx context.Context, input *models.Filter) ([]*ent
 	return q.All(ctx)
 }
 func (r *queryResolver) Credential(ctx context.Context, id int) (*ent.Credential, error) {
-	return r.EntClient.Credential.Get(ctx, id)
+	return r.Graph.Credential.Get(ctx, id)
 }
 func (r *queryResolver) Credentials(ctx context.Context, input *models.Filter) ([]*ent.Credential, error) {
-	q := r.EntClient.Credential.Query()
+	q := r.Graph.Credential.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)
@@ -537,10 +539,10 @@ func (r *queryResolver) Credentials(ctx context.Context, input *models.Filter) (
 	return q.All(ctx)
 }
 func (r *queryResolver) Job(ctx context.Context, id int) (*ent.Job, error) {
-	return r.EntClient.Job.Get(ctx, id)
+	return r.Graph.Job.Get(ctx, id)
 }
 func (r *queryResolver) Jobs(ctx context.Context, input *models.Filter) ([]*ent.Job, error) {
-	q := r.EntClient.Job.Query()
+	q := r.Graph.Job.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)
@@ -552,10 +554,10 @@ func (r *queryResolver) Jobs(ctx context.Context, input *models.Filter) ([]*ent.
 	return q.All(ctx)
 }
 func (r *queryResolver) Tag(ctx context.Context, id int) (*ent.Tag, error) {
-	return r.EntClient.Tag.Get(ctx, id)
+	return r.Graph.Tag.Get(ctx, id)
 }
 func (r *queryResolver) Tags(ctx context.Context, input *models.Filter) ([]*ent.Tag, error) {
-	q := r.EntClient.Tag.Query()
+	q := r.Graph.Tag.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)
@@ -567,10 +569,10 @@ func (r *queryResolver) Tags(ctx context.Context, input *models.Filter) ([]*ent.
 	return q.All(ctx)
 }
 func (r *queryResolver) Target(ctx context.Context, id int) (*ent.Target, error) {
-	return r.EntClient.Target.Get(ctx, id)
+	return r.Graph.Target.Get(ctx, id)
 }
 func (r *queryResolver) Targets(ctx context.Context, input *models.Filter) ([]*ent.Target, error) {
-	q := r.EntClient.Target.Query()
+	q := r.Graph.Target.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)
@@ -582,10 +584,10 @@ func (r *queryResolver) Targets(ctx context.Context, input *models.Filter) ([]*e
 	return q.All(ctx)
 }
 func (r *queryResolver) Task(ctx context.Context, id int) (*ent.Task, error) {
-	return r.EntClient.Task.Get(ctx, id)
+	return r.Graph.Task.Get(ctx, id)
 }
 func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent.Task, error) {
-	q := r.EntClient.Task.Query()
+	q := r.Graph.Task.Query()
 	if input != nil {
 		if input.Offset != nil {
 			q.Offset(*input.Offset)

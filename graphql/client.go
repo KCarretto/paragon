@@ -10,8 +10,15 @@ import (
 	"strings"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
 )
+
+// QueryResolver is an alias for github.com/kcarretto/paragon/graphql/generated.QueryResolver
+type QueryResolver generated.QueryResolver
+
+// MutationResolver is an alias for github.com/kcarretto/paragon/graphql/generated.MutationResolver
+type MutationResolver generated.MutationResolver
 
 // An Error returned by the GraphQL server
 type Error struct {
