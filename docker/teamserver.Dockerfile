@@ -13,7 +13,7 @@ COPY ./cmd /app/cmd
 COPY ./pkg /app/pkg
 COPY ./ent /app/ent
 COPY ./graphql /app/graphql
-COPY ./www /app/www
+COPY ./www/assets.gen.go /app/www/assets.gen.go
 
 # Dev
 FROM build-cache as dev
