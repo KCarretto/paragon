@@ -5,10 +5,15 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
+
+	"github.com/kcarretto/paragon/ent"
 )
 
-func (svc *Service) Authenticate(req *http.Request) (*Context, error) {
+type HTTPAuthenticator struct {
+	Graph *ent.Client
+}
+
+func (auth HTTPAuthenticator) Authenticate(req *http.Request) (*Context, error) {
 	userID, err := parseUserID(req)
 	if err != nil {
 		return nil, err
@@ -19,11 +24,11 @@ func (svc *Service) Authenticate(req *http.Request) (*Context, error) {
 		return nil, err
 	}
 
-	return svc.AuthenticateUser(req.Context(), userID, token)
+	return auth.AuthenticateUser(req.Context(), userID, token)
 }
 
-func (svc *Service) AuthenticateUser(ctx context.Context, userID int, token Secret) (*Context, error) {
-	user, err := svc.Graph.User.Get(ctx, userID)
+func (auth HTTPAuthenticator) AuthenticateUser(ctx context.Context, userID int, token Secret) (*Context, error) {
+	user, err := auth.Graph.User.Get(ctx, userID)
 	if err != nil || user == nil {
 		return nil, fmt.Errorf("invalid user cookie: %w", err)
 	}
@@ -60,9 +65,7 @@ func parseUserID(req *http.Request) (int, error) {
 	if err != nil {
 		return -1, fmt.Errorf("no user cookie set: %w", err)
 	}
-	if userCookie.Expires.Before(time.Now()) {
-		return -1, fmt.Errorf("user cookie expired")
-	}
+
 	userID, err := strconv.Atoi(userCookie.Value)
 	if err != nil {
 		return -1, fmt.Errorf("invalid user cookie: %w", err)
@@ -74,10 +77,6 @@ func parseSessionToken(req *http.Request) (Secret, error) {
 	sessionCookie, err := req.Cookie(SessionCookieName)
 	if err != nil {
 		return "", fmt.Errorf("no session cookie set: %w", err)
-	}
-
-	if sessionCookie.Expires.Before(time.Now()) {
-		return "", fmt.Errorf("session cookie expired")
 	}
 
 	sessionToken := Secret(sessionCookie.Value)

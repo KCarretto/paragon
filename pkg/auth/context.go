@@ -6,6 +6,13 @@ import (
 	"github.com/kcarretto/paragon/ent"
 )
 
+const (
+	SessionTokenLength = 256
+	SessionCookieName  = "pg-session"
+	UserCookieName     = "pg-userid"
+	LoginURL           = "/oauth/login"
+)
+
 // UserContext of an authenticated user.
 type UserContext interface {
 	UserID() int

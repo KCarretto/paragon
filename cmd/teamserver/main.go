@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/pkg/auth"
-	"github.com/kcarretto/paragon/pkg/middleware"
 	"github.com/kcarretto/paragon/pkg/teamserver"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
@@ -61,13 +60,7 @@ func ServeHTTP(logger *zap.Logger, addr string, svc *teamserver.Service) error {
 		zap.Duration("start_latency", time.Since(start)),
 	)
 
-	return http.ListenAndServe(
-		addr,
-		middleware.Chain(
-			router,
-			middleware.WithPanicHandling,
-			middleware.WithLogging(logger),
-		))
+	return http.ListenAndServe(addr, router)
 }
 
 func main() {

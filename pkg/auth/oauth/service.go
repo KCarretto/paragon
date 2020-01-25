@@ -1,4 +1,4 @@
-package auth
+package oauth
 
 import (
 	"crypto/rand"
@@ -10,6 +10,8 @@ import (
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/user"
+	"github.com/kcarretto/paragon/pkg/auth"
+	"github.com/kcarretto/paragon/pkg/service"
 	"go.uber.org/zap"
 
 	"golang.org/x/oauth2"
@@ -23,13 +25,7 @@ type userInfo struct {
 	IsVerified bool   `json:"email_verified"`
 }
 
-const (
-	OAuthStateLength   = 64
-	SessionTokenLength = 256
-	SessionCookieName  = "pg-session"
-	UserCookieName     = "pg-userid"
-	LoginURL           = "/oauth/login"
-)
+const OAuthStateLength = 64
 
 var oauth2State string
 
@@ -50,54 +46,56 @@ type Service struct {
 
 // HTTP registers http handlers for the Auth service.
 func (svc *Service) HTTP(router *http.ServeMux) {
-	router.HandleFunc("/oauth/authorize", svc.HandleOAuth)
-	router.HandleFunc("/oauth/login", svc.HandleLogin)
+	login := &service.Endpoint{
+		Handler: service.HandlerFn(svc.HandleLogin),
+	}
+	authorize := &service.Endpoint{
+		Handler: service.HandlerFn(svc.HandleOAuth),
+	}
+
+	router.Handle("/oauth/login", login)
+	router.Handle("/oauth/authorize", authorize)
 }
 
 // HandleLogin creates an OAuth 2.0 code url and redirects the client.
-func (svc Service) HandleLogin(w http.ResponseWriter, req *http.Request) {
+func (svc Service) HandleLogin(w http.ResponseWriter, req *http.Request) error {
 	url := svc.Config.AuthCodeURL(oauth2State)
 	http.Redirect(w, req, url, http.StatusTemporaryRedirect)
+	return nil
 }
 
 // HandleOAuth authorizes users after being redirected from the OAuth consent screen with an access code.
-func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) {
+func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 	if state := req.URL.Query().Get("state"); state != oauth2State {
-		http.Error(w, `{"error":"invalid oauth2 state"}`, http.StatusBadRequest)
-		return
+		return fmt.Errorf("invalid oauth2 state")
 	}
 
 	code := req.URL.Query().Get("code")
 	token, err := svc.Config.Exchange(req.Context(), code)
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"failed to validate oauth2 code: %s"}`, err.Error()), http.StatusBadRequest)
-		return
+		return fmt.Errorf("failed to validate oauth2 code: %w", err)
 	}
 
 	client := svc.Config.Client(req.Context(), token)
 	resp, err := client.Get("https://www.googleapis.com/oauth2/v3/userinfo")
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"failed to retrieve oauth2 profile info: %s"}`, err.Error()), http.StatusBadRequest)
-		return
+		return fmt.Errorf("failed to retrieve oauth2 profile info: %w", err)
 	}
 	defer resp.Body.Close()
 
 	var profile userInfo
 	decoder := json.NewDecoder(resp.Body)
 	if err := decoder.Decode(&profile); err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"failed to parse oauth2 profile info: %s"}`, err.Error()), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to parse oauth2 profile info: %w", err)
 	}
 	if profile.OAuthID == "" {
-		http.Error(w, `{"error":"invalid oauth2 subject id"}`, http.StatusInternalServerError)
-		return
+		return fmt.Errorf("invalid oauth2 subject id: %w", err)
 	}
 
 	userQuery := svc.Graph.User.Query().Where(user.OAuthID(profile.OAuthID))
 	exists, err := userQuery.Exist(req.Context())
 	if err != nil {
-		http.Error(w, fmt.Sprintf(`{"error":"failed to retrieve user info: %s"}`, err.Error()), http.StatusInternalServerError)
-		return
+		return fmt.Errorf("failed to retrieve user info: %w", err)
 	}
 
 	var usr *ent.User
@@ -107,7 +105,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) {
 	} else {
 		usr = svc.Graph.User.Create().
 			SetOAuthID(profile.OAuthID).
-			SetSessionToken(string(NewSecret(SessionTokenLength))).
+			SetSessionToken(string(auth.NewSecret(auth.SessionTokenLength))).
 			SetName(profile.Name).
 			SetEmail(profile.Email).
 			SetPhotoURL(profile.PhotoURL).
@@ -116,24 +114,25 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) {
 
 	if usr.SessionToken == "" {
 		usr = usr.Update().
-			SetSessionToken(string(NewSecret(SessionTokenLength))).
+			SetSessionToken(string(auth.NewSecret(auth.SessionTokenLength))).
 			SaveX(req.Context())
 	}
 
 	http.SetCookie(w, &http.Cookie{
-		Name:     SessionCookieName,
+		Name:     auth.SessionCookieName,
 		Value:    usr.SessionToken,
 		Path:     "/",
 		HttpOnly: true,
 		Expires:  time.Now().AddDate(0, 0, 1),
 	})
 	http.SetCookie(w, &http.Cookie{
-		Name:    UserCookieName,
+		Name:    auth.UserCookieName,
 		Value:   fmt.Sprintf("%d", usr.ID),
 		Path:    "/",
 		Expires: time.Now().AddDate(0, 0, 1),
 	})
 	http.Redirect(w, req, "/index.html", http.StatusTemporaryRedirect)
+	return nil
 }
 
 // type SignupRequest struct {

@@ -10,9 +10,10 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
-	"github.com/kcarretto/paragon/pkg/auth"
+	"github.com/kcarretto/paragon/pkg/auth/oauth"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
+	"github.com/kcarretto/paragon/pkg/service"
 	"github.com/kcarretto/paragon/www"
 )
 
@@ -25,20 +26,17 @@ type Service struct {
 }
 
 // HandleStatus returns JSON status: OK if the teamserver is running without error.
-func (svc *Service) HandleStatus(w http.ResponseWriter, r *http.Request) {
+func (svc *Service) HandleStatus(w http.ResponseWriter, r *http.Request) error {
 	if _, err := io.WriteString(w, `{"status":"OK"}`); err != nil {
-		http.Error(
-			w,
-			fmt.Sprintf("failed to write response data: %s", err.Error()),
-			http.StatusInternalServerError,
-		)
+		return fmt.Errorf("failed to write response data: %w", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
+	return nil
 }
 
 // HTTP registers http handlers for the Teamserver.
 func (svc *Service) HTTP(router *http.ServeMux) {
-	authSVC := &auth.Service{
+	oauthSVC := &oauth.Service{
 		Log:    svc.Log.Named("auth"),
 		Graph:  svc.Graph,
 		Config: svc.OAuth,
@@ -55,11 +53,14 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 	wwwSVC := &www.Service{
 		Log: svc.Log.Named("www"),
 	}
+	status := &service.Endpoint{
+		Handler: service.HandlerFn(svc.HandleStatus),
+	}
 
 	graphqlSVC.HTTP(router)
 	cdnSVC.HTTP(router)
 	wwwSVC.HTTP(router)
 
-	router.HandleFunc("/status", svc.HandleStatus)
-	authSVC.HTTP(router)
+	router.Handle("/status", status)
+	oauthSVC.HTTP(router)
 }

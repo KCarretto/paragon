@@ -1,9 +1,11 @@
 package www
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
+	"github.com/kcarretto/paragon/pkg/service"
 	"go.uber.org/zap"
 )
 
@@ -12,11 +14,10 @@ type Service struct {
 	Log *zap.Logger
 }
 
-func (svc Service) handleIndex(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleIndex(w http.ResponseWriter, r *http.Request) error {
 	f, err := App.Open("index.html")
 	if err != nil {
-		http.Error(w, "Failed to load index.html", http.StatusNotFound)
-		return
+		return fmt.Errorf("Failed to load index.html")
 	}
 
 	var modtime time.Time
@@ -25,10 +26,17 @@ func (svc Service) handleIndex(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.ServeContent(w, r, "index.html", modtime, f)
+	return nil
 }
 
 // HTTP registers http handlers for the Teamserver UI.
 func (svc *Service) HTTP(router *http.ServeMux) {
-	router.Handle("/app/", http.StripPrefix("/app", http.FileServer(App)))
-	router.HandleFunc("/", svc.handleIndex)
+	app := &service.Endpoint{
+		Handler: service.HTTPHandler(http.FileServer(App)),
+	}
+	index := &service.Endpoint{
+		Handler: service.HandlerFn(svc.HandleIndex),
+	}
+	router.Handle("/app/", http.StripPrefix("/app", app))
+	router.Handle("/", index)
 }
