@@ -13,25 +13,30 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
+	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
 )
 
-const (
-	MaxFileSize int64 = 10 << 20
-	MaxMemSize        = 10 << 20
-)
+const maxMemSize = 10 << 20
 
-// HTTP handlers for file upload & download.
-type HTTP struct {
-	EntClient *ent.Client
+// Service provides HTTP handlers for the CDN.
+type Service struct {
+	Log   *zap.Logger
+	Graph *ent.Client
+}
+
+// HTTP registers http handlers for the CDN.
+func (svc *Service) HTTP(router *http.ServeMux) {
+	router.HandleFunc("/cdn/upload", svc.HandleFileUpload)
+	router.Handle("/cdn/download/", http.StripPrefix("/cdn/download", http.HandlerFunc(svc.HandleFileDownload)))
+	router.Handle("/l/", http.StripPrefix("/l", http.HandlerFunc(svc.HandleLink)))
 }
 
 // HandleFileUpload is an http.HandlerFunc which parses multipart forms and upserts file objects.
-func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	// r.Body = http.MaxBytesReader(w, r.Body, MaxFileSize)
-	if err := r.ParseMultipartForm(MaxMemSize); err != nil {
+	if err := r.ParseMultipartForm(maxMemSize); err != nil {
 		http.Error(w, fmt.Sprintf("failed to parse multipart form: %v", err), http.StatusBadRequest)
 		return
 	}
@@ -42,7 +47,7 @@ func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileQuery := h.EntClient.File.Query().Where(file.Name(fileName))
+	fileQuery := svc.Graph.File.Query().Where(file.Name(fileName))
 	exists := fileQuery.ExistX(ctx)
 
 	f, _, err := r.FormFile("fileContent")
@@ -64,7 +69,7 @@ func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	contentType := http.DetectContentType(content)
 	if exists {
 		fileID = fileQuery.OnlyXID(ctx)
-		h.EntClient.File.UpdateOneID(fileID).
+		svc.Graph.File.UpdateOneID(fileID).
 			SetContent(content).
 			SetHash(digest).
 			SetContentType(contentType).
@@ -72,7 +77,7 @@ func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 			SetLastModifiedTime(time.Now()).
 			SaveX(ctx)
 	} else {
-		fileID = h.EntClient.File.Create().
+		fileID = svc.Graph.File.Create().
 			SetName(fileName).
 			SetSize(len(content)).
 			SetContent(content).
@@ -86,7 +91,7 @@ func (h HTTP) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleFileDownload is an http.HandlerFunc which loads a file by name and serves it's content.
-func (h HTTP) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	filename := filepath.Base(r.URL.Path)
@@ -95,7 +100,7 @@ func (h HTTP) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileQuery := h.EntClient.File.Query().Where(file.Name(filename))
+	fileQuery := svc.Graph.File.Query().Where(file.Name(filename))
 
 	if exists := fileQuery.ExistX(ctx); !exists {
 		http.Error(w, "file not found", http.StatusNotFound)
@@ -109,7 +114,7 @@ func (h HTTP) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
 }
 
 // HandleLink is an http.HandlerFunc which loads a file by its link and serves it's content.
-func (h HTTP) HandleLink(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleLink(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
 	alias := filepath.Base(r.URL.Path)
@@ -118,7 +123,7 @@ func (h HTTP) HandleLink(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	linkQuery := h.EntClient.Link.Query().Where(link.Alias(alias))
+	linkQuery := svc.Graph.Link.Query().Where(link.Alias(alias))
 
 	if exists := linkQuery.ExistX(ctx); !exists {
 		log.Printf("alias: %v", alias)
@@ -128,7 +133,7 @@ func (h HTTP) HandleLink(w http.ResponseWriter, r *http.Request) {
 
 	link := linkQuery.OnlyX(ctx)
 	if link.Clicks == 0 || (link.ExpirationTime.Before(time.Now()) && !link.ExpirationTime.IsZero()) {
-		h.EntClient.Link.DeleteOneID(link.ID).ExecX(ctx)
+		svc.Graph.Link.DeleteOneID(link.ID).ExecX(ctx)
 		log.Printf("alias 2: %v", alias)
 		log.Printf("alias 2: %v", time.Now())
 		http.Error(w, "alias not found", http.StatusNotFound)
