@@ -13,6 +13,7 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/pkg/middleware"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
 )
@@ -21,14 +22,19 @@ const maxMemSize = 10 << 20
 
 // Service provides HTTP handlers for the CDN.
 type Service struct {
+	middleware.Authenticator
+
 	Log   *zap.Logger
 	Graph *ent.Client
 }
 
 // HTTP registers http handlers for the CDN.
 func (svc *Service) HTTP(router *http.ServeMux) {
-	router.HandleFunc("/cdn/upload", svc.HandleFileUpload)
-	router.Handle("/cdn/download/", http.StripPrefix("/cdn/download", http.HandlerFunc(svc.HandleFileDownload)))
+	router.HandleFunc("/cdn/upload", middleware.Wrap(svc.HandleFileUpload).
+		Auth(svc.Authenticator).
+		Logging(svc.Log)
+	)
+	router.Handle("/cdn/download/", middleware.WithAuth(svc)(http.StripPrefix("/cdn/download", http.HandlerFunc(svc.HandleFileDownload))))
 	router.Handle("/l/", http.StripPrefix("/l", http.HandlerFunc(svc.HandleLink)))
 }
 

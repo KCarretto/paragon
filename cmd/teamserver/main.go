@@ -7,15 +7,22 @@ import (
 	"os"
 	"time"
 
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/middleware"
 	"github.com/kcarretto/paragon/pkg/teamserver"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 )
 
 // HTTPAddr for the teamserver to listen on. Configure with HTTP_ADDR env variable.
 var (
-	HTTPAddr = "127.0.0.1:8080"
-	start    time.Time
+	start time.Time
+
+	HTTPAddr          = "127.0.0.1:8080"
+	OAuthClientID     string
+	OAuthClientSecret auth.Secret
+	OAuthDomain       = "http://127.0.0.1:8080"
 )
 
 // DefaultTopic is the default pubsub topic where events will be published. It can be configured
@@ -26,6 +33,15 @@ func init() {
 	start = time.Now()
 	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
 		HTTPAddr = addr
+	}
+	if clientID := os.Getenv("OAUTH_CLIENT_ID"); clientID != "" {
+		OAuthClientID = clientID
+	}
+	if clientSecret := os.Getenv("OAUTH_CLIENT_SECRET"); clientSecret != "" {
+		OAuthClientSecret = auth.Secret(clientSecret)
+	}
+	if domain := os.Getenv("OAUTH_DOMAIN"); domain != "" {
+		OAuthDomain = domain
 	}
 }
 
@@ -72,7 +88,18 @@ func main() {
 		Log:    logger,
 		Graph:  graph,
 		Events: publisher,
+		OAuth: &oauth2.Config{
+			ClientID:     OAuthClientID,
+			ClientSecret: string(OAuthClientSecret),
+			RedirectURL:  OAuthDomain + "/oauth/authorize",
+			Scopes: []string{
+				"https://www.googleapis.com/auth/userinfo.profile",
+			},
+			Endpoint: google.Endpoint,
+		},
 	}
 
-	ServeHTTP(logger.Named("http"), HTTPAddr, svc)
+	if err := ServeHTTP(logger.Named("http"), HTTPAddr, svc); err != nil {
+		logger.Fatal("HTTP server failure", zap.Error(err))
+	}
 }

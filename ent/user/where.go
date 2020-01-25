@@ -108,10 +108,26 @@ func Name(v string) predicate.User {
 	)
 }
 
-// OAuthState applies equality check predicate on the "OAuthState" field. It's identical to OAuthStateEQ.
-func OAuthState(v string) predicate.User {
+// Email applies equality check predicate on the "Email" field. It's identical to EmailEQ.
+func Email(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldOAuthState), v))
+		s.Where(sql.EQ(s.C(FieldEmail), v))
+	},
+	)
+}
+
+// OAuthID applies equality check predicate on the "OAuthID" field. It's identical to OAuthIDEQ.
+func OAuthID(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// PhotoURL applies equality check predicate on the "PhotoURL" field. It's identical to PhotoURLEQ.
+func PhotoURL(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldPhotoURL), v))
 	},
 	)
 }
@@ -256,24 +272,24 @@ func NameContainsFold(v string) predicate.User {
 	)
 }
 
-// OAuthStateEQ applies the EQ predicate on the "OAuthState" field.
-func OAuthStateEQ(v string) predicate.User {
+// EmailEQ applies the EQ predicate on the "Email" field.
+func EmailEQ(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldOAuthState), v))
+		s.Where(sql.EQ(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateNEQ applies the NEQ predicate on the "OAuthState" field.
-func OAuthStateNEQ(v string) predicate.User {
+// EmailNEQ applies the NEQ predicate on the "Email" field.
+func EmailNEQ(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldOAuthState), v))
+		s.Where(sql.NEQ(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateIn applies the In predicate on the "OAuthState" field.
-func OAuthStateIn(vs ...string) predicate.User {
+// EmailIn applies the In predicate on the "Email" field.
+func EmailIn(vs ...string) predicate.User {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -285,13 +301,13 @@ func OAuthStateIn(vs ...string) predicate.User {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.In(s.C(FieldOAuthState), v...))
+		s.Where(sql.In(s.C(FieldEmail), v...))
 	},
 	)
 }
 
-// OAuthStateNotIn applies the NotIn predicate on the "OAuthState" field.
-func OAuthStateNotIn(vs ...string) predicate.User {
+// EmailNotIn applies the NotIn predicate on the "Email" field.
+func EmailNotIn(vs ...string) predicate.User {
 	v := make([]interface{}, len(vs))
 	for i := range v {
 		v[i] = vs[i]
@@ -303,79 +319,327 @@ func OAuthStateNotIn(vs ...string) predicate.User {
 			s.Where(sql.False())
 			return
 		}
-		s.Where(sql.NotIn(s.C(FieldOAuthState), v...))
+		s.Where(sql.NotIn(s.C(FieldEmail), v...))
 	},
 	)
 }
 
-// OAuthStateGT applies the GT predicate on the "OAuthState" field.
-func OAuthStateGT(v string) predicate.User {
+// EmailGT applies the GT predicate on the "Email" field.
+func EmailGT(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.GT(s.C(FieldOAuthState), v))
+		s.Where(sql.GT(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateGTE applies the GTE predicate on the "OAuthState" field.
-func OAuthStateGTE(v string) predicate.User {
+// EmailGTE applies the GTE predicate on the "Email" field.
+func EmailGTE(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.GTE(s.C(FieldOAuthState), v))
+		s.Where(sql.GTE(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateLT applies the LT predicate on the "OAuthState" field.
-func OAuthStateLT(v string) predicate.User {
+// EmailLT applies the LT predicate on the "Email" field.
+func EmailLT(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.LT(s.C(FieldOAuthState), v))
+		s.Where(sql.LT(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateLTE applies the LTE predicate on the "OAuthState" field.
-func OAuthStateLTE(v string) predicate.User {
+// EmailLTE applies the LTE predicate on the "Email" field.
+func EmailLTE(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.LTE(s.C(FieldOAuthState), v))
+		s.Where(sql.LTE(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateContains applies the Contains predicate on the "OAuthState" field.
-func OAuthStateContains(v string) predicate.User {
+// EmailContains applies the Contains predicate on the "Email" field.
+func EmailContains(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.Contains(s.C(FieldOAuthState), v))
+		s.Where(sql.Contains(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateHasPrefix applies the HasPrefix predicate on the "OAuthState" field.
-func OAuthStateHasPrefix(v string) predicate.User {
+// EmailHasPrefix applies the HasPrefix predicate on the "Email" field.
+func EmailHasPrefix(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.HasPrefix(s.C(FieldOAuthState), v))
+		s.Where(sql.HasPrefix(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateHasSuffix applies the HasSuffix predicate on the "OAuthState" field.
-func OAuthStateHasSuffix(v string) predicate.User {
+// EmailHasSuffix applies the HasSuffix predicate on the "Email" field.
+func EmailHasSuffix(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.HasSuffix(s.C(FieldOAuthState), v))
+		s.Where(sql.HasSuffix(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateEqualFold applies the EqualFold predicate on the "OAuthState" field.
-func OAuthStateEqualFold(v string) predicate.User {
+// EmailEqualFold applies the EqualFold predicate on the "Email" field.
+func EmailEqualFold(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.EqualFold(s.C(FieldOAuthState), v))
+		s.Where(sql.EqualFold(s.C(FieldEmail), v))
 	},
 	)
 }
 
-// OAuthStateContainsFold applies the ContainsFold predicate on the "OAuthState" field.
-func OAuthStateContainsFold(v string) predicate.User {
+// EmailContainsFold applies the ContainsFold predicate on the "Email" field.
+func EmailContainsFold(v string) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.ContainsFold(s.C(FieldOAuthState), v))
+		s.Where(sql.ContainsFold(s.C(FieldEmail), v))
+	},
+	)
+}
+
+// OAuthIDEQ applies the EQ predicate on the "OAuthID" field.
+func OAuthIDEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDNEQ applies the NEQ predicate on the "OAuthID" field.
+func OAuthIDNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDIn applies the In predicate on the "OAuthID" field.
+func OAuthIDIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldOAuthID), v...))
+	},
+	)
+}
+
+// OAuthIDNotIn applies the NotIn predicate on the "OAuthID" field.
+func OAuthIDNotIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldOAuthID), v...))
+	},
+	)
+}
+
+// OAuthIDGT applies the GT predicate on the "OAuthID" field.
+func OAuthIDGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDGTE applies the GTE predicate on the "OAuthID" field.
+func OAuthIDGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDLT applies the LT predicate on the "OAuthID" field.
+func OAuthIDLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDLTE applies the LTE predicate on the "OAuthID" field.
+func OAuthIDLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDContains applies the Contains predicate on the "OAuthID" field.
+func OAuthIDContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDHasPrefix applies the HasPrefix predicate on the "OAuthID" field.
+func OAuthIDHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDHasSuffix applies the HasSuffix predicate on the "OAuthID" field.
+func OAuthIDHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDEqualFold applies the EqualFold predicate on the "OAuthID" field.
+func OAuthIDEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// OAuthIDContainsFold applies the ContainsFold predicate on the "OAuthID" field.
+func OAuthIDContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldOAuthID), v))
+	},
+	)
+}
+
+// PhotoURLEQ applies the EQ predicate on the "PhotoURL" field.
+func PhotoURLEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLNEQ applies the NEQ predicate on the "PhotoURL" field.
+func PhotoURLNEQ(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLIn applies the In predicate on the "PhotoURL" field.
+func PhotoURLIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldPhotoURL), v...))
+	},
+	)
+}
+
+// PhotoURLNotIn applies the NotIn predicate on the "PhotoURL" field.
+func PhotoURLNotIn(vs ...string) predicate.User {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.User(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldPhotoURL), v...))
+	},
+	)
+}
+
+// PhotoURLGT applies the GT predicate on the "PhotoURL" field.
+func PhotoURLGT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLGTE applies the GTE predicate on the "PhotoURL" field.
+func PhotoURLGTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLLT applies the LT predicate on the "PhotoURL" field.
+func PhotoURLLT(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLLTE applies the LTE predicate on the "PhotoURL" field.
+func PhotoURLLTE(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLContains applies the Contains predicate on the "PhotoURL" field.
+func PhotoURLContains(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLHasPrefix applies the HasPrefix predicate on the "PhotoURL" field.
+func PhotoURLHasPrefix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLHasSuffix applies the HasSuffix predicate on the "PhotoURL" field.
+func PhotoURLHasSuffix(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLEqualFold applies the EqualFold predicate on the "PhotoURL" field.
+func PhotoURLEqualFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldPhotoURL), v))
+	},
+	)
+}
+
+// PhotoURLContainsFold applies the ContainsFold predicate on the "PhotoURL" field.
+func PhotoURLContainsFold(v string) predicate.User {
+	return predicate.User(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldPhotoURL), v))
 	},
 	)
 }

@@ -16,8 +16,10 @@ import (
 // UserUpdate is the builder for updating User entities.
 type UserUpdate struct {
 	config
-	Name              *string
-	OAuthState        *string
+	Name  *string
+	Email *string
+
+	PhotoURL          *string
 	SessionToken      *string
 	clearSessionToken bool
 	Activated         *bool
@@ -36,9 +38,15 @@ func (uu *UserUpdate) SetName(s string) *UserUpdate {
 	return uu
 }
 
-// SetOAuthState sets the OAuthState field.
-func (uu *UserUpdate) SetOAuthState(s string) *UserUpdate {
-	uu.OAuthState = &s
+// SetEmail sets the Email field.
+func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
+	uu.Email = &s
+	return uu
+}
+
+// SetPhotoURL sets the PhotoURL field.
+func (uu *UserUpdate) SetPhotoURL(s string) *UserUpdate {
+	uu.PhotoURL = &s
 	return uu
 }
 
@@ -134,11 +142,18 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldName,
 		})
 	}
-	if value := uu.OAuthState; value != nil {
+	if value := uu.Email; value != nil {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
-			Column: user.FieldOAuthState,
+			Column: user.FieldEmail,
+		})
+	}
+	if value := uu.PhotoURL; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: user.FieldPhotoURL,
 		})
 	}
 	if value := uu.SessionToken; value != nil {
@@ -173,9 +188,11 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UserUpdateOne is the builder for updating a single User entity.
 type UserUpdateOne struct {
 	config
-	id                int
-	Name              *string
-	OAuthState        *string
+	id    int
+	Name  *string
+	Email *string
+
+	PhotoURL          *string
 	SessionToken      *string
 	clearSessionToken bool
 	Activated         *bool
@@ -187,9 +204,15 @@ func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 	return uuo
 }
 
-// SetOAuthState sets the OAuthState field.
-func (uuo *UserUpdateOne) SetOAuthState(s string) *UserUpdateOne {
-	uuo.OAuthState = &s
+// SetEmail sets the Email field.
+func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
+	uuo.Email = &s
+	return uuo
+}
+
+// SetPhotoURL sets the PhotoURL field.
+func (uuo *UserUpdateOne) SetPhotoURL(s string) *UserUpdateOne {
+	uuo.PhotoURL = &s
 	return uuo
 }
 
@@ -279,11 +302,18 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 			Column: user.FieldName,
 		})
 	}
-	if value := uuo.OAuthState; value != nil {
+	if value := uuo.Email; value != nil {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
-			Column: user.FieldOAuthState,
+			Column: user.FieldEmail,
+		})
+	}
+	if value := uuo.PhotoURL; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: user.FieldPhotoURL,
 		})
 	}
 	if value := uuo.SessionToken; value != nil {

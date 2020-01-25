@@ -13,8 +13,12 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name vertex property in the database.
 	FieldName = "name"
-	// FieldOAuthState holds the string denoting the oauthstate vertex property in the database.
-	FieldOAuthState = "o_auth_state"
+	// FieldEmail holds the string denoting the email vertex property in the database.
+	FieldEmail = "email"
+	// FieldOAuthID holds the string denoting the oauthid vertex property in the database.
+	FieldOAuthID = "o_auth_id"
+	// FieldPhotoURL holds the string denoting the photourl vertex property in the database.
+	FieldPhotoURL = "photo_url"
 	// FieldSessionToken holds the string denoting the sessiontoken vertex property in the database.
 	FieldSessionToken = "session_token"
 	// FieldActivated holds the string denoting the activated vertex property in the database.
@@ -28,7 +32,9 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
-	FieldOAuthState,
+	FieldEmail,
+	FieldOAuthID,
+	FieldPhotoURL,
 	FieldSessionToken,
 	FieldActivated,
 }
@@ -56,7 +62,7 @@ var (
 	}()
 
 	// descActivated is the schema descriptor for Activated field.
-	descActivated = fields[3].Descriptor()
+	descActivated = fields[5].Descriptor()
 	// DefaultActivated holds the default value on creation for the Activated field.
 	DefaultActivated = descActivated.Default.(bool)
 )

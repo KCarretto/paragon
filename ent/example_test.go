@@ -345,7 +345,9 @@ func ExampleUser() {
 	u := client.User.
 		Create().
 		SetName("string").
-		SetOAuthState("string").
+		SetEmail("string").
+		SetOAuthID("string").
+		SetPhotoURL("string").
 		SetSessionToken("string").
 		SetActivated(true).
 		SaveX(ctx)

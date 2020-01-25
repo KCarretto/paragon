@@ -172,7 +172,9 @@ var (
 	UsersColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true, Size: 25},
-		{Name: "o_auth_state", Type: field.TypeString, Unique: true},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "o_auth_id", Type: field.TypeString, Unique: true},
+		{Name: "photo_url", Type: field.TypeString},
 		{Name: "session_token", Type: field.TypeString, Nullable: true},
 		{Name: "activated", Type: field.TypeBool, Default: user.DefaultActivated},
 	}

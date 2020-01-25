@@ -8,7 +8,9 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql"
 	"go.uber.org/zap"
+	"golang.org/x/oauth2"
 
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/www"
@@ -19,6 +21,7 @@ type Service struct {
 	Log    *zap.Logger
 	Graph  *ent.Client
 	Events event.Publisher
+	OAuth  *oauth2.Config
 }
 
 // HandleStatus returns JSON status: OK if the teamserver is running without error.
@@ -35,6 +38,11 @@ func (svc *Service) HandleStatus(w http.ResponseWriter, r *http.Request) {
 
 // HTTP registers http handlers for the Teamserver.
 func (svc *Service) HTTP(router *http.ServeMux) {
+	authSVC := &auth.Service{
+		Log:    svc.Log.Named("auth"),
+		Graph:  svc.Graph,
+		Config: svc.OAuth,
+	}
 	graphqlSVC := &graphql.Service{
 		Log:    svc.Log.Named("graphql"),
 		Graph:  svc.Graph,
@@ -48,9 +56,10 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 		Log: svc.Log.Named("www"),
 	}
 
-	router.HandleFunc("/status", svc.HandleStatus)
-
 	graphqlSVC.HTTP(router)
 	cdnSVC.HTTP(router)
 	wwwSVC.HTTP(router)
+
+	router.HandleFunc("/status", svc.HandleStatus)
+	authSVC.HTTP(router)
 }

@@ -18,10 +18,16 @@ func (User) Fields() []ent.Field {
 			MaxLen(25).
 			Unique().
 			Comment("The name displayed for the user"),
-		field.String("OAuthState").
+		field.String("Email").
+			Unique().
+			Comment("The user email address"),
+		field.String("OAuthID").
 			Sensitive().
 			Unique().
-			Comment("State used during OAuth signup"),
+			Immutable().
+			Comment("OAuth Subject ID of the user"),
+		field.String("PhotoURL").
+			Comment("URL to the user's profile photo."),
 		field.String("SessionToken").
 			Optional().
 			Sensitive().
