@@ -20,7 +20,7 @@ services:
       dockerfile: "./docker/c2.Dockerfile"
       target: dev
     environment:
-      HTTP_ADDR: "0.0.0.0:80"
+      PG_HTTP_ADDR: "0.0.0.0:80"
       TEAMSERVER_URL: "http://paragon_teamserver_1/graphql"
 
   teamserver:
@@ -31,7 +31,7 @@ services:
     depends_on:
       - nats
     environment:
-      HTTP_ADDR: "0.0.0.0:80"
+      PG_HTTP_ADDR: "0.0.0.0:80"
       PUB_TOPIC: "my_topic"
       NATS_URL: "paragon_nats_1"
     ports:

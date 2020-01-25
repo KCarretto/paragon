@@ -30,7 +30,7 @@ const DefaultTopic = "TOPIC"
 
 func init() {
 	start = time.Now()
-	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
+	if addr := os.Getenv("PG_HTTP_ADDR"); addr != "" {
 		HTTPAddr = addr
 	}
 	if clientID := os.Getenv("OAUTH_CLIENT_ID"); clientID != "" {
