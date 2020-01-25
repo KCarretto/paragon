@@ -1,5 +1,5 @@
 import moment from "moment";
-import React from "react";
+import * as React from "react";
 import { Link } from "react-router-dom";
 import { Divider, Feed, Header, Icon, List } from "semantic-ui-react";
 import { XTaskStatus } from ".";
@@ -18,20 +18,24 @@ const XTaskSummary = ({ tasks = [], limit = 3 }: TaskSummaryParams) => {
       <Header sub>Recent Tasks</Header>
       {tasks.length > 0 ? (
         tasks
-          .sort(
-            (a, b) =>
-              (XTaskStatus.getTimestamp(a) || 0) -
-              (XTaskStatus.getTimestamp(b) || 0)
+          .sort((a, b) =>
+            moment(new XTaskStatus().getTimestamp(a)).diff(
+              moment(new XTaskStatus().getTimestamp(b))
+            )
           )
           .slice(0, limit)
           .map((task, index) => (
             <Feed.Event key={index}>
               <Feed.Label>
-                <Icon fitted size="big" {...XTaskStatus.getStatus(task).icon} />
+                <Icon
+                  fitted
+                  size="big"
+                  {...new XTaskStatus().getStatus(task).icon}
+                />
               </Feed.Label>
               <Feed.Content>
                 <Feed.Date>
-                  {moment(XTaskStatus.getTimestamp(task)).fromNow()}
+                  {moment(new XTaskStatus().getTimestamp(task)).fromNow()}
                 </Feed.Date>
                 <Feed.Summary>
                   <Link to={"/tasks/" + task.id}>
