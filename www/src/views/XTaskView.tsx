@@ -60,10 +60,10 @@ const XTaskView = () => {
   const [content, setContent] = useState<string>(null);
   const [output, setOutput] = useState<string>(null);
   const [error, setError] = useState<string>(null);
-  const [sessionID, setSessionID] = useState<String>(null);
+  const [sessionID, setSessionID] = useState<string>(null);
   const [target, setTarget] = useState<Target>({});
-  const [jobID, setJobID] = useState<String>(null);
-  const [name, setName] = useState<String>("");
+  const [jobID, setJobID] = useState<string>(null);
+  const [name, setName] = useState<string>("");
   const [tags, setTags] = useState<Tag[]>([]);
 
   const { called, loading } = useQuery<TaskQueryResponse>(TASK_QUERY, {
@@ -124,7 +124,7 @@ const XTaskView = () => {
         <XJobHeader
           name={name}
           tags={tags}
-          icon={new Icon({ size: "large", ...status })}
+          icon={React.createElement(Icon, { size: "large", ...status })}
         />
       </a>
       {!target || !target.id ? (
@@ -155,9 +155,9 @@ const XTaskView = () => {
         hidden={called && !loading}
       />
 
-      <XTaskContent {...content} />
-      <XTaskOutput {...output} />
-      <XTaskError {...error} />
+      <XTaskContent content={content} />
+      <XTaskOutput output={output} />
+      <XTaskError error={error} />
     </Container>
   );
 };

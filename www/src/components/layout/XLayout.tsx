@@ -6,7 +6,7 @@ import XSidebar from "./XSidebar";
 
 type LayoutProps = {
   routeMap: Route[];
-  className: String;
+  className: string;
 };
 
 const XLayout: FunctionComponent<LayoutProps> = props => (

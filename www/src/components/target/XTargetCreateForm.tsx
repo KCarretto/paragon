@@ -5,7 +5,7 @@ import { useState } from "react";
 import { DropdownItemProps, Form, Loader } from "semantic-ui-react";
 import { Target } from "../../graphql/models";
 import { MULTI_TAG_QUERY, MULTI_TARGET_QUERY } from "../../views";
-import { MultiTagResult } from "../../views/XMultiTagView";
+import { MultiTagResponse } from "../../views/XMultiTagView";
 import { XErrorMessage } from "../messages";
 
 const CREATE_TARGET = gql`
@@ -24,15 +24,15 @@ const CREATE_TARGET = gql`
 `;
 
 type Params = {
-  name: String;
-  primaryIP: String;
+  name: string;
+  primaryIP: string;
   tags: number[];
 };
 
 const XTargetCreateForm = () => {
   const [tagOptions, setTagOptions] = useState<DropdownItemProps[]>([]);
 
-  const tagQueryResult = useQuery<MultiTagResult>(MULTI_TAG_QUERY, {
+  const tagQueryResult = useQuery<MultiTagResponse>(MULTI_TAG_QUERY, {
     onCompleted: data => {
       if (!data || !data.tags || data.tags.length < 1) {
         return;

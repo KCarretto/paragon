@@ -3,7 +3,7 @@ import * as React from "react";
 import { Message } from "semantic-ui-react";
 
 export type ErrorMessageParams = {
-  title: String;
+  title: string;
   err: ApolloError;
 };
 

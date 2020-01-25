@@ -28,8 +28,8 @@ const XTargetCreateModal = () => {
   const [error, setError] = useState<ApolloError>(null);
 
   // Form Params
-  const [name, setName] = useState<String>("");
-  const [primaryIP, setPrimaryIP] = useState<String>("");
+  const [name, setName] = useState<string>("");
+  const [primaryIP, setPrimaryIP] = useState<string>("");
   const [tags, setTags] = useState<Tag[]>([]);
 
   const [createTarget, { called, loading }] = useMutation(

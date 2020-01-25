@@ -57,12 +57,12 @@ const XTargetView = () => {
   let { id } = useParams();
   const [error, setError] = useState<ApolloError>(null);
 
-  const [name, setName] = useState<String>(null);
-  const [primaryIP, setPrimaryIP] = useState<String>(null);
-  const [publicIP, setPublicIP] = useState<String>(null);
-  const [machineUUID, setMachineUUID] = useState<String>(null);
-  const [primaryMAC, setPrimaryMAC] = useState<String>(null);
-  const [hostname, setHostname] = useState<String>(null);
+  const [name, setName] = useState<string>(null);
+  const [primaryIP, setPrimaryIP] = useState<string>(null);
+  const [publicIP, setPublicIP] = useState<string>(null);
+  const [machineUUID, setMachineUUID] = useState<string>(null);
+  const [primaryMAC, setPrimaryMAC] = useState<string>(null);
+  const [hostname, setHostname] = useState<string>(null);
   const [lastSeen, setLastSeen] = useState<any>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [tags, setTags] = useState<Tag[]>([]);

@@ -7,53 +7,50 @@ type CredentialState = {
 };
 
 interface CredentialStatus {
-  WORKING: CredentialState;
-  UNSURE: CredentialState;
-  FAILING: CredentialState;
   getStatus(c: Credential): CredentialState;
 }
 
 class XCredentialStatus implements CredentialStatus {
-  WORKING: {
-    text: "The Credential has never failed.";
+  static WORKING: CredentialState = {
+    text: "The Credential has never failed.",
     icon: {
-      name: "check circle";
-      color: "green";
-      className: "XCircleIcon";
-      bordered: false;
-      circular: true;
-    };
+      name: "check circle",
+      color: "green",
+      className: "XCircleIcon",
+      bordered: false,
+      circular: true
+    }
   };
 
-  UNSURE: {
-    text: "The credential has failed atleast once.";
+  static UNSURE: CredentialState = {
+    text: "The credential has failed atleast once.",
     icon: {
-      name: "times circle";
-      color: "yellow";
-      className: "XCircleIcon";
-      bordered: false;
-      circular: true;
-    };
+      name: "times circle",
+      color: "yellow",
+      className: "XCircleIcon",
+      bordered: false,
+      circular: true
+    }
   };
 
-  FAILING: {
-    text: "The credential has failed atleast eight times.";
+  static FAILING: CredentialState = {
+    text: "The credential has failed atleast eight times.",
     icon: {
-      name: "times circle";
-      color: "red";
-      className: "XCircleIcon";
-      bordered: false;
-      circular: true;
-    };
+      name: "times circle",
+      color: "red",
+      className: "XCircleIcon",
+      bordered: false,
+      circular: true
+    }
   };
 
   public getStatus(c: Credential): CredentialState {
     if (c.fails > 8) {
-      return this.FAILING;
+      return XCredentialStatus.FAILING;
     } else if (c.fails > 0) {
-      return this.UNSURE;
+      return XCredentialStatus.UNSURE;
     }
-    return this.WORKING;
+    return XCredentialStatus.WORKING;
   }
 }
 

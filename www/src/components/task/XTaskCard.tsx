@@ -35,9 +35,6 @@ const XTaskCard = (task: Task) => {
           </Button>
         </Card.Meta>
       </Card.Content>
-      {/* <Card.Content extra textAlign='center'>
-
-            </Card.Content> */}
     </Card>
   );
 };

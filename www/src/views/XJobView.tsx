@@ -56,8 +56,8 @@ const XJobView = () => {
   let { id } = useParams();
   const [error, setError] = useState<ApolloError>(null);
 
-  const [name, setName] = useState<String>("");
-  const [content, setContent] = useState<String>("");
+  const [name, setName] = useState<string>("");
+  const [content, setContent] = useState<string>("");
   const [tags, setTags] = useState<Tag[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
 
@@ -105,7 +105,7 @@ const XJobView = () => {
         hidden={called && !loading}
       />
 
-      <XTaskContent {...content} />
+      <XTaskContent content={content} />
 
       <Header size="large" block inverted>
         <Icon name="tasks" />

@@ -1,13 +1,17 @@
 import * as React from "react";
 import { Header, Icon, Segment } from "semantic-ui-react";
 
-export default (error: String) => {
+type Params = {
+  error: string;
+};
+
+const XTaskError = ({ error }: Params) => {
   if (!error) {
     return <span />;
   }
 
   return (
-    <div>
+    <React.Fragment>
       <Header
         inverted
         size="large"
@@ -21,6 +25,8 @@ export default (error: String) => {
       <Segment raised attached>
         <pre>{error}</pre>
       </Segment>
-    </div>
+    </React.Fragment>
   );
 };
+
+export default XTaskError;

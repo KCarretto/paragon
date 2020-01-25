@@ -6,11 +6,17 @@ import { XTaskStatus } from ".";
 import { Task } from "../../graphql/models";
 
 type TaskSummaryParams = {
-  tasks?: Task[];
+  tasks: Task[];
   limit?: number;
 };
 
-const XTaskSummary = ({ tasks = [], limit = 3 }: TaskSummaryParams) => {
+const XTaskSummary = ({ tasks, limit }: TaskSummaryParams) => {
+  if (tasks === null) {
+    tasks = [];
+  }
+  if (limit === null) {
+    limit = 3;
+  }
   const unshown = tasks.length - limit;
 
   return (

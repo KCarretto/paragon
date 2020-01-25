@@ -38,7 +38,7 @@ export const QUEUE_JOB_MUTATION = gql`
 `;
 
 type JobQueueModalParams = {
-  header?: String;
+  header?: string;
 };
 
 const XJobQueueModal = ({ header }: JobQueueModalParams) => {
@@ -46,8 +46,8 @@ const XJobQueueModal = ({ header }: JobQueueModalParams) => {
   const [error, setError] = useState<ApolloError>(null);
 
   // Form params
-  const [name, setName] = useState<String>("");
-  const [content, setContent] = useState<String>(
+  const [name, setName] = useState<string>("");
+  const [content, setContent] = useState<string>(
     '\n# Enter your script here!\ndef main():\n\tprint("Hello World")'
   );
   const [tags, setTags] = useState<Tag[]>([]);

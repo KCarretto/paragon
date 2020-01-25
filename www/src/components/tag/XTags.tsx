@@ -4,7 +4,7 @@ import { Tag } from "../../graphql/models";
 
 type TagParams = {
   tags: Tag[];
-  defaultText?: String;
+  defaultText?: string;
 };
 
 export default ({ tags = [], defaultText }: TagParams) => {

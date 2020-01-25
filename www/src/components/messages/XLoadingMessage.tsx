@@ -2,8 +2,8 @@ import * as React from "react";
 import { Icon, Message } from "semantic-ui-react";
 
 type LoadingMessageParams = {
-  title: String;
-  msg: String;
+  title: string;
+  msg: string;
   hidden?: boolean;
 };
 

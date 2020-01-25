@@ -23,7 +23,7 @@ const XSidebar: FunctionComponent<SidebarProps> = props => (
       className="XSidebar"
     >
       {props.routeMap
-        ? props.routeMap.map((value, index) => {
+        ? props.routeMap.map((value: Route, index: number) => {
             return (
               <Menu.Item as={Link} to={value.link} key={index}>
                 {value.icon}
