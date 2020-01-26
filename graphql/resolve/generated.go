@@ -959,6 +959,9 @@ func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent
 func (r *queryResolver) User(ctx context.Context, id int) (*ent.User, error) {
 	return r.Graph.User.Get(ctx, id)
 }
+func (r *queryResolver) Me(ctx context.Context) (*ent.User, error) {
+	return auth.GetUser(ctx), nil
+}
 func (r *queryResolver) Users(ctx context.Context, input *models.Filter) ([]*ent.User, error) {
 	q := r.Graph.User.Query()
 	if input != nil {

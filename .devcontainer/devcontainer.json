@@ -92,9 +92,9 @@
   // Uncomment the next line if you want to publish any ports.
   "appPort": [
     // Teamserver
-    "127.0.0.1:90:80",
-    "127.0.0.1:9090:8080",
-    "127.0.0.1:943:443",
+    "127.0.0.1:80:80",
+    "127.0.0.1:8080:8080",
+    "127.0.0.1:443:443",
     // Go Language server debug
     "127.0.0.1:6060:6060"
   ],
