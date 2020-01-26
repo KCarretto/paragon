@@ -12,7 +12,6 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
-	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/service"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
@@ -24,19 +23,23 @@ const maxMemSize = 10 << 20
 type Service struct {
 	Log   *zap.Logger
 	Graph *ent.Client
+	Auth  service.Authenticator
 }
 
 // HTTP registers http handlers for the CDN.
 func (svc *Service) HTTP(router *http.ServeMux) {
 	upload := &service.Endpoint{
-		Authenticator: auth.HTTPAuthenticator{Graph: svc.Graph},
+		Log:           svc.Log.Named("upload"),
+		Authenticator: svc.Auth,
 		Handler:       service.HandlerFn(svc.HandleFileUpload),
 	}
 	download := &service.Endpoint{
-		Authenticator: auth.HTTPAuthenticator{Graph: svc.Graph},
+		Log:           svc.Log.Named("download"),
+		Authenticator: svc.Auth,
 		Handler:       service.HandlerFn(svc.HandleFileDownload),
 	}
 	links := &service.Endpoint{
+		Log:     svc.Log.Named("links"),
 		Handler: service.HandlerFn(svc.HandleFileUpload),
 	}
 

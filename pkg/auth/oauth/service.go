@@ -47,9 +47,11 @@ type Service struct {
 // HTTP registers http handlers for the Auth service.
 func (svc *Service) HTTP(router *http.ServeMux) {
 	login := &service.Endpoint{
+		Log:     svc.Log.Named("login"),
 		Handler: service.HandlerFn(svc.HandleLogin),
 	}
 	authorize := &service.Endpoint{
+		Log:     svc.Log.Named("authorize"),
 		Handler: service.HandlerFn(svc.HandleOAuth),
 	}
 
@@ -103,6 +105,9 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 	if exists {
 		usr = userQuery.OnlyX(req.Context())
 	} else {
+		// TODO: Setup TOFU for admin
+		// num := svc.Graph.User.Query().CountX(req.Context())
+
 		usr = svc.Graph.User.Create().
 			SetOAuthID(profile.OAuthID).
 			SetSessionToken(string(auth.NewSecret(auth.SessionTokenLength))).

@@ -34,49 +34,17 @@ func (auth HTTPAuthenticator) Authenticate(req *http.Request) (context.Context, 
 		return nil, err
 	}
 
-	return auth.AuthenticateUser(req.Context(), userID, token)
-}
-
-func (auth HTTPAuthenticator) AuthenticateUser(ctx context.Context, userID int, token Secret) (context.Context, error) {
-	user, err := auth.Graph.User.Get(ctx, userID)
+	user, err := auth.Graph.User.Get(req.Context(), userID)
 	if err != nil || user == nil {
 		return nil, fmt.Errorf("invalid user cookie: %w", err)
 	}
 
-	if user.SessionToken == "" {
-		return nil, fmt.Errorf("user must reauthenticate")
-	}
-
-	if !token.Equals(Secret(user.SessionToken)) {
+	if token == "" || !token.Equals(Secret(user.SessionToken)) {
 		return nil, fmt.Errorf("invalid session cookie")
 	}
 
-	return context.WithValue(ctx, userContextKey, user), nil
+	return context.WithValue(req.Context(), userContextKey, user), nil
 }
-
-func GetUser(ctx context.Context) *ent.User {
-	if v := ctx.Value(userContextKey); v != nil {
-		if usr, ok := v.(*ent.User); ok {
-			return usr
-		}
-		panic(fmt.Errorf("Received non-user value for user context key: %v", v))
-	}
-
-	return nil
-}
-
-// func CreateUserSession(ctx context.Context, user *ent.User) *Context {
-// 	if user.SessionToken == "" {
-// 		token := NewSecret(SessionTokenLength)
-// 		user = user.Update().SetSessionToken(string(token)).SaveX(ctx)
-// 	}
-// 	return &Context{
-// 		Context:      ctx,
-// 		userID:       user.ID,
-// 		user:         user,
-// 		sessionToken: Secret(user.SessionToken),
-// 	}
-// }
 
 func parseUserID(req *http.Request) (int, error) {
 	userCookie, err := req.Cookie(UserCookieName)
