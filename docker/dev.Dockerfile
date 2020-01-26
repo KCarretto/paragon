@@ -29,7 +29,7 @@ RUN apt-get update \
 RUN npm install -g npm
 RUN npm install -g eslint
 RUN npm install -g typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin \
-    @types/react graphql @graphql-codegen/cli
+    @types/react
 RUN echo "export PG_HTTP_ADDR='0.0.0.0:80'" >> ~/.bashrc
 COPY go.mod /app/go.mod
 COPY go.sum /app/go.sum

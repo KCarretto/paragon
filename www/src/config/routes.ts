@@ -1,13 +1,13 @@
 import * as React from "react";
 import { Icon, IconProps } from 'semantic-ui-react';
 
-export type Route = {
+export type RouteConfig = {
     title: string,
     link: string,
     icon: React.CElement<IconProps, Icon>
 }
 
-export const Routes: Route[] = [
+export const Routes: RouteConfig[] = [
     {
         title: 'News Feed',
         link: '/news_feed',
