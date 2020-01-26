@@ -15,6 +15,7 @@ import (
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // JobUpdate is the builder for updating Job entities.
@@ -27,10 +28,12 @@ type JobUpdate struct {
 	tags         map[int]struct{}
 	prev         map[int]struct{}
 	next         map[int]struct{}
+	owner        map[int]struct{}
 	removedTasks map[int]struct{}
 	removedTags  map[int]struct{}
 	clearedPrev  bool
 	clearedNext  bool
+	clearedOwner bool
 	predicates   []predicate.Job
 }
 
@@ -150,6 +153,20 @@ func (ju *JobUpdate) SetNext(j *Job) *JobUpdate {
 	return ju.SetNextID(j.ID)
 }
 
+// SetOwnerID sets the owner edge to User by id.
+func (ju *JobUpdate) SetOwnerID(id int) *JobUpdate {
+	if ju.owner == nil {
+		ju.owner = make(map[int]struct{})
+	}
+	ju.owner[id] = struct{}{}
+	return ju
+}
+
+// SetOwner sets the owner edge to User.
+func (ju *JobUpdate) SetOwner(u *User) *JobUpdate {
+	return ju.SetOwnerID(u.ID)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (ju *JobUpdate) RemoveTaskIDs(ids ...int) *JobUpdate {
 	if ju.removedTasks == nil {
@@ -202,6 +219,12 @@ func (ju *JobUpdate) ClearNext() *JobUpdate {
 	return ju
 }
 
+// ClearOwner clears the owner edge to User.
+func (ju *JobUpdate) ClearOwner() *JobUpdate {
+	ju.clearedOwner = true
+	return ju
+}
+
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 	if ju.Name != nil {
@@ -219,6 +242,12 @@ func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if len(ju.next) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"next\"")
+	}
+	if len(ju.owner) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"owner\"")
+	}
+	if ju.clearedOwner && ju.owner == nil {
+		return 0, errors.New("ent: clearing a unique edge \"owner\"")
 	}
 	return ju.sqlSave(ctx)
 }
@@ -430,6 +459,41 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if ju.clearedOwner {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ju.owner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ju.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -450,10 +514,12 @@ type JobUpdateOne struct {
 	tags         map[int]struct{}
 	prev         map[int]struct{}
 	next         map[int]struct{}
+	owner        map[int]struct{}
 	removedTasks map[int]struct{}
 	removedTags  map[int]struct{}
 	clearedPrev  bool
 	clearedNext  bool
+	clearedOwner bool
 }
 
 // SetName sets the Name field.
@@ -566,6 +632,20 @@ func (juo *JobUpdateOne) SetNext(j *Job) *JobUpdateOne {
 	return juo.SetNextID(j.ID)
 }
 
+// SetOwnerID sets the owner edge to User by id.
+func (juo *JobUpdateOne) SetOwnerID(id int) *JobUpdateOne {
+	if juo.owner == nil {
+		juo.owner = make(map[int]struct{})
+	}
+	juo.owner[id] = struct{}{}
+	return juo
+}
+
+// SetOwner sets the owner edge to User.
+func (juo *JobUpdateOne) SetOwner(u *User) *JobUpdateOne {
+	return juo.SetOwnerID(u.ID)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (juo *JobUpdateOne) RemoveTaskIDs(ids ...int) *JobUpdateOne {
 	if juo.removedTasks == nil {
@@ -618,6 +698,12 @@ func (juo *JobUpdateOne) ClearNext() *JobUpdateOne {
 	return juo
 }
 
+// ClearOwner clears the owner edge to User.
+func (juo *JobUpdateOne) ClearOwner() *JobUpdateOne {
+	juo.clearedOwner = true
+	return juo
+}
+
 // Save executes the query and returns the updated entity.
 func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 	if juo.Name != nil {
@@ -635,6 +721,12 @@ func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 	}
 	if len(juo.next) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
+	}
+	if len(juo.owner) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
+	}
+	if juo.clearedOwner && juo.owner == nil {
+		return nil, errors.New("ent: clearing a unique edge \"owner\"")
 	}
 	return juo.sqlSave(ctx)
 }
@@ -832,6 +924,41 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if juo.clearedOwner {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := juo.owner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
 				},
 			},
 		}

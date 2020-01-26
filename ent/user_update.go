@@ -9,6 +9,8 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/user"
 )
@@ -23,6 +25,11 @@ type UserUpdate struct {
 	SessionToken      *string
 	clearSessionToken bool
 	Activated         *bool
+	IsAdmin           *bool
+	jobs              map[int]struct{}
+	events            map[int]struct{}
+	removedJobs       map[int]struct{}
+	removedEvents     map[int]struct{}
 	predicates        []predicate.User
 }
 
@@ -83,6 +90,100 @@ func (uu *UserUpdate) SetNillableActivated(b *bool) *UserUpdate {
 		uu.SetActivated(*b)
 	}
 	return uu
+}
+
+// SetIsAdmin sets the IsAdmin field.
+func (uu *UserUpdate) SetIsAdmin(b bool) *UserUpdate {
+	uu.IsAdmin = &b
+	return uu
+}
+
+// SetNillableIsAdmin sets the IsAdmin field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsAdmin(b *bool) *UserUpdate {
+	if b != nil {
+		uu.SetIsAdmin(*b)
+	}
+	return uu
+}
+
+// AddJobIDs adds the jobs edge to Job by ids.
+func (uu *UserUpdate) AddJobIDs(ids ...int) *UserUpdate {
+	if uu.jobs == nil {
+		uu.jobs = make(map[int]struct{})
+	}
+	for i := range ids {
+		uu.jobs[ids[i]] = struct{}{}
+	}
+	return uu
+}
+
+// AddJobs adds the jobs edges to Job.
+func (uu *UserUpdate) AddJobs(j ...*Job) *UserUpdate {
+	ids := make([]int, len(j))
+	for i := range j {
+		ids[i] = j[i].ID
+	}
+	return uu.AddJobIDs(ids...)
+}
+
+// AddEventIDs adds the events edge to Event by ids.
+func (uu *UserUpdate) AddEventIDs(ids ...int) *UserUpdate {
+	if uu.events == nil {
+		uu.events = make(map[int]struct{})
+	}
+	for i := range ids {
+		uu.events[ids[i]] = struct{}{}
+	}
+	return uu
+}
+
+// AddEvents adds the events edges to Event.
+func (uu *UserUpdate) AddEvents(e ...*Event) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uu.AddEventIDs(ids...)
+}
+
+// RemoveJobIDs removes the jobs edge to Job by ids.
+func (uu *UserUpdate) RemoveJobIDs(ids ...int) *UserUpdate {
+	if uu.removedJobs == nil {
+		uu.removedJobs = make(map[int]struct{})
+	}
+	for i := range ids {
+		uu.removedJobs[ids[i]] = struct{}{}
+	}
+	return uu
+}
+
+// RemoveJobs removes jobs edges to Job.
+func (uu *UserUpdate) RemoveJobs(j ...*Job) *UserUpdate {
+	ids := make([]int, len(j))
+	for i := range j {
+		ids[i] = j[i].ID
+	}
+	return uu.RemoveJobIDs(ids...)
+}
+
+// RemoveEventIDs removes the events edge to Event by ids.
+func (uu *UserUpdate) RemoveEventIDs(ids ...int) *UserUpdate {
+	if uu.removedEvents == nil {
+		uu.removedEvents = make(map[int]struct{})
+	}
+	for i := range ids {
+		uu.removedEvents[ids[i]] = struct{}{}
+	}
+	return uu
+}
+
+// RemoveEvents removes events edges to Event.
+func (uu *UserUpdate) RemoveEvents(e ...*Event) *UserUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uu.RemoveEventIDs(ids...)
 }
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
@@ -176,6 +277,89 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldActivated,
 		})
 	}
+	if value := uu.IsAdmin; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: user.FieldIsAdmin,
+		})
+	}
+	if nodes := uu.removedJobs; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.jobs; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if nodes := uu.removedEvents; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.events; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -196,6 +380,11 @@ type UserUpdateOne struct {
 	SessionToken      *string
 	clearSessionToken bool
 	Activated         *bool
+	IsAdmin           *bool
+	jobs              map[int]struct{}
+	events            map[int]struct{}
+	removedJobs       map[int]struct{}
+	removedEvents     map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -249,6 +438,100 @@ func (uuo *UserUpdateOne) SetNillableActivated(b *bool) *UserUpdateOne {
 		uuo.SetActivated(*b)
 	}
 	return uuo
+}
+
+// SetIsAdmin sets the IsAdmin field.
+func (uuo *UserUpdateOne) SetIsAdmin(b bool) *UserUpdateOne {
+	uuo.IsAdmin = &b
+	return uuo
+}
+
+// SetNillableIsAdmin sets the IsAdmin field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsAdmin(b *bool) *UserUpdateOne {
+	if b != nil {
+		uuo.SetIsAdmin(*b)
+	}
+	return uuo
+}
+
+// AddJobIDs adds the jobs edge to Job by ids.
+func (uuo *UserUpdateOne) AddJobIDs(ids ...int) *UserUpdateOne {
+	if uuo.jobs == nil {
+		uuo.jobs = make(map[int]struct{})
+	}
+	for i := range ids {
+		uuo.jobs[ids[i]] = struct{}{}
+	}
+	return uuo
+}
+
+// AddJobs adds the jobs edges to Job.
+func (uuo *UserUpdateOne) AddJobs(j ...*Job) *UserUpdateOne {
+	ids := make([]int, len(j))
+	for i := range j {
+		ids[i] = j[i].ID
+	}
+	return uuo.AddJobIDs(ids...)
+}
+
+// AddEventIDs adds the events edge to Event by ids.
+func (uuo *UserUpdateOne) AddEventIDs(ids ...int) *UserUpdateOne {
+	if uuo.events == nil {
+		uuo.events = make(map[int]struct{})
+	}
+	for i := range ids {
+		uuo.events[ids[i]] = struct{}{}
+	}
+	return uuo
+}
+
+// AddEvents adds the events edges to Event.
+func (uuo *UserUpdateOne) AddEvents(e ...*Event) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uuo.AddEventIDs(ids...)
+}
+
+// RemoveJobIDs removes the jobs edge to Job by ids.
+func (uuo *UserUpdateOne) RemoveJobIDs(ids ...int) *UserUpdateOne {
+	if uuo.removedJobs == nil {
+		uuo.removedJobs = make(map[int]struct{})
+	}
+	for i := range ids {
+		uuo.removedJobs[ids[i]] = struct{}{}
+	}
+	return uuo
+}
+
+// RemoveJobs removes jobs edges to Job.
+func (uuo *UserUpdateOne) RemoveJobs(j ...*Job) *UserUpdateOne {
+	ids := make([]int, len(j))
+	for i := range j {
+		ids[i] = j[i].ID
+	}
+	return uuo.RemoveJobIDs(ids...)
+}
+
+// RemoveEventIDs removes the events edge to Event by ids.
+func (uuo *UserUpdateOne) RemoveEventIDs(ids ...int) *UserUpdateOne {
+	if uuo.removedEvents == nil {
+		uuo.removedEvents = make(map[int]struct{})
+	}
+	for i := range ids {
+		uuo.removedEvents[ids[i]] = struct{}{}
+	}
+	return uuo
+}
+
+// RemoveEvents removes events edges to Event.
+func (uuo *UserUpdateOne) RemoveEvents(e ...*Event) *UserUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uuo.RemoveEventIDs(ids...)
 }
 
 // Save executes the query and returns the updated entity.
@@ -335,6 +618,89 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 			Value:  *value,
 			Column: user.FieldActivated,
 		})
+	}
+	if value := uuo.IsAdmin; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: user.FieldIsAdmin,
+		})
+	}
+	if nodes := uuo.removedJobs; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.jobs; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if nodes := uuo.removedEvents; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.events; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	u = &User{config: uuo.config}
 	_spec.Assign = u.assignValues

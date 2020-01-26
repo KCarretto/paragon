@@ -41,5 +41,10 @@ func (Job) Edges() []ent.Edge {
 			Unique().
 			From("prev").
 			Unique(),
+		edge.From("owner", User.Type).
+			Ref("jobs").
+			Unique().
+			Required().
+			Comment("A Job must have an owner"),
 	}
 }
