@@ -2,11 +2,11 @@ import * as React from "react";
 import { FunctionComponent } from "react";
 import { Link } from "react-router-dom";
 import { Icon, Menu, Sidebar } from "semantic-ui-react";
-import { Route } from "../../config/routes";
+import { RouteConfig } from "../../config/routes";
 import "./index.css";
 
 type SidebarProps = {
-  routeMap: Route[];
+  routeMap: RouteConfig[];
 };
 
 const XSidebar: FunctionComponent<SidebarProps> = props => (
@@ -23,7 +23,7 @@ const XSidebar: FunctionComponent<SidebarProps> = props => (
       className="XSidebar"
     >
       {props.routeMap
-        ? props.routeMap.map((value: Route, index: number) => {
+        ? props.routeMap.map((value: RouteConfig, index: number) => {
             return (
               <Menu.Item as={Link} to={value.link} key={index}>
                 {value.icon}
