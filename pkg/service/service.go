@@ -1,15 +1,16 @@
 package service
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
+	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/pkg/auth"
 	"go.uber.org/zap"
 )
 
 type Authenticator interface {
-	Authenticate(*http.Request) (context.Context, error)
+	Authenticate(*http.Request) (*ent.User, error)
 }
 
 type Authorizer interface {
@@ -48,7 +49,7 @@ type Endpoint struct {
 
 func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
-	var ctx context.Context
+	var user *ent.User
 
 	logger := fn.logger(req)
 
@@ -61,11 +62,19 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer fn.stayCalm(w, logger)
 
 	// Authenticate the request
-	if ctx, err = fn.Authenticate(req); err != nil {
+	if user, err = fn.Authenticate(req); err != nil {
+		auth.ClearUserSession(w)
 		fn.PresentError(w, err)
 		return
 	}
-	req = req.WithContext(ctx)
+
+	// Setup a session for successfully authenticated users
+	req = auth.WithUserSession(w, req, user)
+
+	// Include userid in logs where available
+	if user != nil {
+		logger = logger.With(zap.Int("userid", user.ID))
+	}
 
 	// Authorize the request
 	if err = fn.Authorize(req); err != nil {
@@ -93,9 +102,9 @@ func (fn *Endpoint) PresentError(w http.ResponseWriter, err error) {
 	fn.ErrorPresenter.PresentError(w, err)
 }
 
-func (fn *Endpoint) Authenticate(req *http.Request) (context.Context, error) {
+func (fn *Endpoint) Authenticate(req *http.Request) (*ent.User, error) {
 	if fn.Authenticator == nil {
-		return req.Context(), nil
+		return nil, nil
 	}
 
 	return fn.Authenticator.Authenticate(req)
