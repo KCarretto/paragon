@@ -19,6 +19,7 @@ const XClipboard: FunctionComponent<ClipboardProps> = props => {
     <Popup
       hoverable
       wide
+      inverted
       closeOnTriggerClick={false}
       popperDependencies={[copySuccess]}
       size="mini"
