@@ -126,6 +126,7 @@ type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   target: Target
   task: Task
   user: User
+  event: Event
   likers(input: Filter): [User]
   owner: User
 }

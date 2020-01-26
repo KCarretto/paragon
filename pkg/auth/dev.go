@@ -32,6 +32,7 @@ func (auth DevAuthenticator) Authenticate(req *http.Request) (context.Context, e
 				SetOAuthID(string(NewSecret(512))).
 				SetPhotoURL("").
 				SetSessionToken(string(NewSecret(SessionTokenLength))).
+				SetIsAdmin(true).
 				SetActivated(true).
 				SaveX(req.Context())
 		}

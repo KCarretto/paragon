@@ -65,6 +65,7 @@ type ComplexityRoot struct {
 	Event struct {
 		CreationTime func(childComplexity int) int
 		Credential   func(childComplexity int) int
+		Event        func(childComplexity int) int
 		File         func(childComplexity int) int
 		ID           func(childComplexity int) int
 		Job          func(childComplexity int) int
@@ -219,6 +220,7 @@ type EventResolver interface {
 	Target(ctx context.Context, obj *ent.Event) (*ent.Target, error)
 	Task(ctx context.Context, obj *ent.Event) (*ent.Task, error)
 	User(ctx context.Context, obj *ent.Event) (*ent.User, error)
+	Event(ctx context.Context, obj *ent.Event) (*ent.Event, error)
 	Likers(ctx context.Context, obj *ent.Event, input *models.Filter) ([]*ent.User, error)
 	Owner(ctx context.Context, obj *ent.Event) (*ent.User, error)
 }
@@ -361,6 +363,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Event.Credential(childComplexity), true
+
+	case "Event.event":
+		if e.complexity.Event.Event == nil {
+			break
+		}
+
+		return e.complexity.Event.Event(childComplexity), true
 
 	case "Event.file":
 		if e.complexity.Event.File == nil {
@@ -1589,6 +1598,7 @@ type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   target: Target
   task: Task
   user: User
+  event: Event
   likers(input: Filter): [User]
   owner: User
 }
@@ -3098,6 +3108,40 @@ func (ec *executionContext) _Event_user(ctx context.Context, field graphql.Colle
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Event_event(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Event",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Event().Event(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Event)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOEvent2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐEvent(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Event_likers(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
@@ -8946,6 +8990,17 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Event_user(ctx, field, obj)
+				return res
+			})
+		case "event":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Event_event(ctx, field, obj)
 				return res
 			})
 		case "likers":
