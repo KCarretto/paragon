@@ -5,6 +5,7 @@ import { Container, Label, Loader, Menu } from "semantic-ui-react";
 import { XErrorMessage } from "../components/messages";
 import { XTagCreateModal } from "../components/tag";
 import { Tag } from "../graphql/models";
+import XClipboard from "./XClipboard";
 
 export const MULTI_TAG_QUERY = gql`
   {
@@ -34,7 +35,9 @@ const XMultiTagView = () => {
     return (
       <Label.Group tag size="big">
         {data.tags.map((tag, index) => (
-          <Label key={index}>{tag.name}</Label>
+          <XClipboard value={tag.name}>
+            <Label key={index}>{tag.name}</Label>
+          </XClipboard>
         ))}
       </Label.Group>
     );

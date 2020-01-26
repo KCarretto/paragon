@@ -335,6 +335,7 @@ export type Query = {
   task?: Maybe<Task>,
   tasks?: Maybe<Array<Maybe<Task>>>,
   user?: Maybe<User>,
+  me?: Maybe<User>,
   users?: Maybe<Array<Maybe<User>>>,
   event?: Maybe<Event>,
   events?: Maybe<Array<Maybe<Event>>>,
