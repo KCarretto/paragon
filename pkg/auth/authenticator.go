@@ -9,6 +9,12 @@ import (
 	"github.com/kcarretto/paragon/ent"
 )
 
+const (
+	SessionTokenLength = 256
+	SessionCookieName  = "pg-session"
+	UserCookieName     = "pg-userid"
+)
+
 type authKey string
 
 var userContextKey authKey = "user"
