@@ -1,0 +1,16 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Launch Teamserver",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/cmd/teamserver/main.go",
+      "buildFlags": "-tags=dev",
+      "env": {
+        "PG_HTTP_ADDR": "0.0.0.0:80"
+      }
+    }
+  ]
+}
