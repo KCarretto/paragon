@@ -123,7 +123,6 @@ func ExampleEvent() {
 	u7 := client.User.
 		Create().
 		SetName("string").
-		SetEmail("string").
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
@@ -140,7 +139,6 @@ func ExampleEvent() {
 	u9 := client.User.
 		Create().
 		SetName("string").
-		SetEmail("string").
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
@@ -543,7 +541,6 @@ func ExampleUser() {
 	u := client.User.
 		Create().
 		SetName("string").
-		SetEmail("string").
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").

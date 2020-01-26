@@ -19,9 +19,6 @@ func (User) Fields() []ent.Field {
 			MaxLen(25).
 			Unique().
 			Comment("The name displayed for the user"),
-		field.String("Email").
-			Unique().
-			Comment("The user email address"),
 		field.String("OAuthID").
 			Sensitive().
 			Unique().

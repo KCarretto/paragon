@@ -28,7 +28,6 @@ func (auth DevAuthenticator) Authenticate(req *http.Request) (context.Context, e
 
 			user = auth.Graph.User.Create().
 				SetName(string(NewSecret(10))).
-				SetEmail(string(NewSecret(20))).
 				SetOAuthID(string(NewSecret(512))).
 				SetPhotoURL("").
 				SetSessionToken(string(NewSecret(SessionTokenLength))).

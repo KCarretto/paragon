@@ -103,7 +103,6 @@ type Link @goModel(model: "github.com/kcarretto/paragon/ent.Link") {
 type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
   id: ID!
   name: String
-  email: String
   oAuthID: String
   photoURL: String
   sessionToken: String
