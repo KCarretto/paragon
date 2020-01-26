@@ -6,6 +6,7 @@ import (
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/ent/user"
 
 	"github.com/facebookincubator/ent/dialect/sql/schema"
 	"github.com/facebookincubator/ent/schema/field"
@@ -167,6 +168,23 @@ var (
 			},
 		},
 	}
+	// UsersColumns holds the columns for the "users" table.
+	UsersColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "name", Type: field.TypeString, Unique: true, Size: 25},
+		{Name: "email", Type: field.TypeString, Unique: true},
+		{Name: "o_auth_id", Type: field.TypeString, Unique: true},
+		{Name: "photo_url", Type: field.TypeString},
+		{Name: "session_token", Type: field.TypeString, Nullable: true},
+		{Name: "activated", Type: field.TypeBool, Default: user.DefaultActivated},
+	}
+	// UsersTable holds the schema information for the "users" table.
+	UsersTable = &schema.Table{
+		Name:        "users",
+		Columns:     UsersColumns,
+		PrimaryKey:  []*schema.Column{UsersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{},
+	}
 	// JobTagsColumns holds the columns for the "job_tags" table.
 	JobTagsColumns = []*schema.Column{
 		{Name: "job_id", Type: field.TypeInt},
@@ -257,6 +275,7 @@ var (
 		TagsTable,
 		TargetsTable,
 		TasksTable,
+		UsersTable,
 		JobTagsTable,
 		TargetTagsTable,
 		TaskTagsTable,

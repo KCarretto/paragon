@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -13,6 +12,8 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/pkg/auth"
+	"github.com/kcarretto/paragon/pkg/service"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
 )
@@ -27,24 +28,34 @@ type Service struct {
 
 // HTTP registers http handlers for the CDN.
 func (svc *Service) HTTP(router *http.ServeMux) {
-	router.HandleFunc("/cdn/upload", svc.HandleFileUpload)
-	router.Handle("/cdn/download/", http.StripPrefix("/cdn/download", http.HandlerFunc(svc.HandleFileDownload)))
-	router.Handle("/l/", http.StripPrefix("/l", http.HandlerFunc(svc.HandleLink)))
+	upload := &service.Endpoint{
+		Authenticator: auth.HTTPAuthenticator{Graph: svc.Graph},
+		Handler:       service.HandlerFn(svc.HandleFileUpload),
+	}
+	download := &service.Endpoint{
+		Authenticator: auth.HTTPAuthenticator{Graph: svc.Graph},
+		Handler:       service.HandlerFn(svc.HandleFileDownload),
+	}
+	links := &service.Endpoint{
+		Handler: service.HandlerFn(svc.HandleFileUpload),
+	}
+
+	router.Handle("/cdn/upload/", upload)
+	router.Handle("/cdn/download/", download)
+	router.Handle("/l/", http.StripPrefix("/l", links))
 }
 
 // HandleFileUpload is an http.HandlerFunc which parses multipart forms and upserts file objects.
-func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	if err := r.ParseMultipartForm(maxMemSize); err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse multipart form: %v", err), http.StatusBadRequest)
-		return
+		return fmt.Errorf("failed to parse multipart form: %w", err)
 	}
 
 	fileName := r.PostFormValue("fileName")
 	if fileName == "" {
-		http.Error(w, "must set valid value for 'fileName'", http.StatusBadRequest)
-		return
+		return fmt.Errorf("must set valid value for 'fileName'")
 	}
 
 	fileQuery := svc.Graph.File.Query().Where(file.Name(fileName))
@@ -52,15 +63,13 @@ func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 
 	f, _, err := r.FormFile("fileContent")
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to parse file: %v", err), http.StatusBadRequest)
-		return
+		return fmt.Errorf("failed to parse file: %w", err)
 	}
 	defer f.Close()
 
 	content, err := ioutil.ReadAll(f)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to read file: %v", err), http.StatusBadRequest)
-		return
+		return fmt.Errorf("failed to read file: %w", err)
 	}
 
 	var fileID int
@@ -88,57 +97,52 @@ func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Fprintf(w, `{"data":{"file": {"id": %d}}}`, fileID)
+	return nil
 }
 
 // HandleFileDownload is an http.HandlerFunc which loads a file by name and serves it's content.
-func (svc Service) HandleFileDownload(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleFileDownload(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	filename := filepath.Base(r.URL.Path)
 	if filename == "" || filename == "." || filename == "/" {
-		http.Error(w, "invalid filename provided in request URI", http.StatusBadRequest)
-		return
+		return fmt.Errorf("invalid filename provided in request URI")
 	}
 
 	fileQuery := svc.Graph.File.Query().Where(file.Name(filename))
 
 	if exists := fileQuery.ExistX(ctx); !exists {
-		http.Error(w, "file not found", http.StatusNotFound)
-		return
+		return fmt.Errorf("file not found")
 	}
 
 	file := fileQuery.OnlyX(ctx)
 	content := bytes.NewReader(file.Content)
 	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeContent(w, r, filename, file.LastModifiedTime, content)
+	return nil
 }
 
 // HandleLink is an http.HandlerFunc which loads a file by its link and serves it's content.
-func (svc Service) HandleLink(w http.ResponseWriter, r *http.Request) {
+func (svc Service) HandleLink(w http.ResponseWriter, r *http.Request) error {
 	ctx := r.Context()
 
 	alias := filepath.Base(r.URL.Path)
 	if alias == "" || alias == "." || alias == "/" {
-		http.Error(w, "invalid alias provided in request URI", http.StatusBadRequest)
-		return
+		return fmt.Errorf("invalid alias provided in request URI")
 	}
 
 	linkQuery := svc.Graph.Link.Query().Where(link.Alias(alias))
 
 	if exists := linkQuery.ExistX(ctx); !exists {
-		log.Printf("alias: %v", alias)
-		http.Error(w, "alias not found", http.StatusNotFound)
-		return
+		return fmt.Errorf("alias not found")
 	}
 
 	link := linkQuery.OnlyX(ctx)
 	if link.Clicks == 0 || (link.ExpirationTime.Before(time.Now()) && !link.ExpirationTime.IsZero()) {
 		svc.Graph.Link.DeleteOneID(link.ID).ExecX(ctx)
-		log.Printf("alias 2: %v", alias)
-		log.Printf("alias 2: %v", time.Now())
-		http.Error(w, "alias not found", http.StatusNotFound)
-		return
+		return fmt.Errorf("alias not found")
 	}
+
 	// a click has been used!
 	if link.Clicks > 0 {
 		link.Update().
@@ -152,4 +156,5 @@ func (svc Service) HandleLink(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Pragma", "no-cache")
 	w.Header().Set("Expires", "0")
 	http.ServeContent(w, r, file.Name, file.LastModifiedTime, content)
+	return nil
 }

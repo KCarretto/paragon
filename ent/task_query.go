@@ -341,9 +341,9 @@ func (tq *TaskQuery) Select(field string, fields ...string) *TaskSelect {
 
 func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 	var (
-		nodes   []*Task
-		withFKs = tq.withFKs
-		_spec   = tq.querySpec()
+		nodes   []*Task = []*Task{}
+		withFKs         = tq.withFKs
+		_spec           = tq.querySpec()
 	)
 	if tq.withJob != nil || tq.withTarget != nil {
 		withFKs = true
@@ -370,7 +370,6 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

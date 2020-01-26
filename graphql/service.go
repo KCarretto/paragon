@@ -7,7 +7,9 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/resolve"
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/event"
+	"github.com/kcarretto/paragon/pkg/service"
 
 	"go.uber.org/zap"
 )
@@ -20,7 +22,7 @@ type Service struct {
 }
 
 // HandleGraphQL initializes and returns a new GraphQL API handler.
-func (svc *Service) HandleGraphQL() http.Handler {
+func (svc *Service) HandleGraphQL() http.HandlerFunc {
 	resolver := &resolve.Resolver{
 		Log:    svc.Log.Named("resolver"),
 		Graph:  svc.Graph,
@@ -33,12 +35,19 @@ func (svc *Service) HandleGraphQL() http.Handler {
 }
 
 // HandlePlayground initializes and returns a new GraphQL Playground handler.
-func (svc *Service) HandlePlayground() http.Handler {
+func (svc *Service) HandlePlayground() http.HandlerFunc {
 	return handler.Playground("GraphQL", "/graphql")
 }
 
 // HTTP registers http handlers for a GraphQL API.
 func (svc *Service) HTTP(router *http.ServeMux) {
-	router.Handle("/graphql", svc.HandleGraphQL())
-	router.Handle("/graphiql", svc.HandlePlayground())
+	graphql := &service.Endpoint{
+		Authenticator: auth.HTTPAuthenticator{Graph: svc.Graph},
+		Handler:       service.HTTPHandler(svc.HandleGraphQL()),
+	}
+	graphiql := &service.Endpoint{
+		Handler: service.HTTPHandler(svc.HandlePlayground()),
+	}
+	router.Handle("/graphql", graphql)
+	router.Handle("/graphiql", graphiql)
 }

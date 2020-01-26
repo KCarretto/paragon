@@ -87,7 +87,7 @@ func convertTasks(models []*ent.Task) (tasks []*Task) {
 		tasks = append(tasks, &Task{
 			Id:      int64(task.ID),
 			Content: task.Content,
-		}) 
+		})
 	}
 
 	return tasks

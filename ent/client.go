@@ -16,6 +16,7 @@ import (
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 
 	"github.com/facebookincubator/ent/dialect"
 	"github.com/facebookincubator/ent/dialect/sql"
@@ -41,6 +42,8 @@ type Client struct {
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -57,6 +60,7 @@ func NewClient(opts ...Option) *Client {
 		Tag:        NewTagClient(c),
 		Target:     NewTargetClient(c),
 		Task:       NewTaskClient(c),
+		User:       NewUserClient(c),
 	}
 }
 
@@ -95,6 +99,7 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
 		Task:       NewTaskClient(cfg),
+		User:       NewUserClient(cfg),
 	}, nil
 }
 
@@ -120,6 +125,7 @@ func (c *Client) Debug() *Client {
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
 		Task:       NewTaskClient(cfg),
+		User:       NewUserClient(cfg),
 	}
 }
 
@@ -784,4 +790,68 @@ func (c *TaskClient) QueryTarget(t *Task) *TargetQuery {
 	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
+}
+
+// UserClient is a client for the User schema.
+type UserClient struct {
+	config
+}
+
+// NewUserClient returns a client for the User from the given config.
+func NewUserClient(c config) *UserClient {
+	return &UserClient{config: c}
+}
+
+// Create returns a create builder for User.
+func (c *UserClient) Create() *UserCreate {
+	return &UserCreate{config: c.config}
+}
+
+// Update returns an update builder for User.
+func (c *UserClient) Update() *UserUpdate {
+	return &UserUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
+	return c.UpdateOneID(u.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+	return &UserUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for User.
+func (c *UserClient) Delete() *UserDelete {
+	return &UserDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
+	return c.DeleteOneID(u.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+	return &UserDeleteOne{c.Delete().Where(user.ID(id))}
+}
+
+// Create returns a query builder for User.
+func (c *UserClient) Query() *UserQuery {
+	return &UserQuery{config: c.config}
+}
+
+// Get returns a User entity by its id.
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+	return c.Query().Where(user.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
+	u, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return u
 }

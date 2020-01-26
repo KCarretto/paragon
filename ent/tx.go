@@ -26,6 +26,8 @@ type Tx struct {
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 }
 
 // Commit commits the transaction.
@@ -50,6 +52,7 @@ func (tx *Tx) Client() *Client {
 		Tag:        NewTagClient(tx.config),
 		Target:     NewTargetClient(tx.config),
 		Task:       NewTaskClient(tx.config),
+		User:       NewUserClient(tx.config),
 	}
 }
 
