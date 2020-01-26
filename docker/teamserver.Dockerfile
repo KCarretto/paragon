@@ -13,13 +13,14 @@ COPY ./cmd /app/cmd
 COPY ./pkg /app/pkg
 COPY ./ent /app/ent
 COPY ./graphql /app/graphql
+COPY ./www/service.go /app/www/service.go
 COPY ./www/assets.gen.go /app/www/assets.gen.go
 
 # Dev
 FROM build-cache as dev
 CMD ["/app/build/teamserver"]
 EXPOSE 80 443 8080
-RUN go build -tags=debug,profile_cpu,nats -o /app/build/teamserver ./cmd/teamserver
+RUN go build -tags=dev,profile_cpu,nats -o /app/build/teamserver ./cmd/teamserver
 
 # Production Build
 FROM build-cache as prod-build
