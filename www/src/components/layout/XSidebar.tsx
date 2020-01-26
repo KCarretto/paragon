@@ -1,9 +1,11 @@
 import Cookies from "js-cookie";
 import * as React from "react";
 import { FunctionComponent } from "react";
+import { HotKeys } from "react-hotkeys";
 import { Link, Redirect } from "react-router-dom";
 import { Icon, Menu, Sidebar } from "semantic-ui-react";
 import { RouteConfig } from "../../config/routes";
+import { XJobQueueModal } from "../job";
 import "./index.css";
 
 type SidebarProps = {
@@ -12,9 +14,17 @@ type SidebarProps = {
 
 const XSidebar: FunctionComponent<SidebarProps> = props => {
   let userId = Cookies.get("pg-userid");
+  let modal = <span />;
+  const createJob = React.useCallback(() => {
+    modal = <XJobQueueModal openOnStart={true} />;
+  }, []);
   if (!userId) {
     return <Redirect to="/login" />;
   }
+
+  const handlers = {
+    CREATE_JOB: createJob
+  };
   return (
     <Sidebar.Pushable className="XLayout">
       <Sidebar
@@ -46,7 +56,12 @@ const XSidebar: FunctionComponent<SidebarProps> = props => {
           Bug
         </Menu.Item>
       </Sidebar>
-      <Sidebar.Pusher className="XContent">{props.children}</Sidebar.Pusher>
+      <Sidebar.Pusher className="XContent">
+        <HotKeys handlers={handlers}>
+          {props.children}
+          {modal}
+        </HotKeys>
+      </Sidebar.Pusher>
     </Sidebar.Pushable>
   );
 };

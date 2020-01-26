@@ -3,7 +3,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 
@@ -14,7 +13,7 @@ type DevAuthenticator struct {
 	Graph *ent.Client
 }
 
-func (auth DevAuthenticator) Authenticate(req *http.Request) (context.Context, error) {
+func (auth DevAuthenticator) Authenticate(req *http.Request) (*ent.User, error) {
 	var user *ent.User
 
 	if userID, err := parseUserID(req); err == nil {
@@ -37,5 +36,5 @@ func (auth DevAuthenticator) Authenticate(req *http.Request) (context.Context, e
 		}
 	}
 
-	return context.WithValue(req.Context(), userContextKey, user), nil
+	return user, nil
 }

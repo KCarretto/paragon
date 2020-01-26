@@ -5,7 +5,11 @@ import { Button, Form, Grid, Input, Message, Modal } from "semantic-ui-react";
 import { InputFile } from "semantic-ui-react-input-file";
 import { useModal } from "../form";
 
-const XFileUploadModal = () => {
+type FileUploadModalParams = {
+  openOnStart?: boolean;
+};
+
+const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
   const [openModal, closeModal, isOpen] = useModal();
   const [error, setError] = useState<ApolloError>(null);
 
@@ -25,6 +29,7 @@ const XFileUploadModal = () => {
     }).then(
       function(res) {
         if (res.ok) {
+          closeModal();
           alert("Perfect! ");
         } else if (res.status === 401) {
           alert("Oops! ");
@@ -35,6 +40,10 @@ const XFileUploadModal = () => {
       }
     );
   };
+
+  if (openOnStart) {
+    openModal();
+  }
 
   return (
     <Modal

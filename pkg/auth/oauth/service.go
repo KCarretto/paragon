@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/user"
@@ -117,26 +116,8 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 			SaveX(req.Context())
 	}
 
-	if usr.SessionToken == "" {
-		usr = usr.Update().
-			SetSessionToken(string(auth.NewSecret(auth.SessionTokenLength))).
-			SaveX(req.Context())
-	}
-
-	http.SetCookie(w, &http.Cookie{
-		Name:     auth.SessionCookieName,
-		Value:    usr.SessionToken,
-		Path:     "/",
-		HttpOnly: true,
-		Expires:  time.Now().AddDate(0, 0, 1),
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:    auth.UserCookieName,
-		Value:   fmt.Sprintf("%d", usr.ID),
-		Path:    "/",
-		Expires: time.Now().AddDate(0, 0, 1),
-	})
-	http.Redirect(w, req, "/index.html", http.StatusTemporaryRedirect)
+	req = auth.WithUserSession(w, req, usr)
+	http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 	return nil
 }
 
