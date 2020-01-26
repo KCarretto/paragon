@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -23,7 +22,7 @@ type HTTPAuthenticator struct {
 	Graph *ent.Client
 }
 
-func (auth HTTPAuthenticator) Authenticate(req *http.Request) (context.Context, error) {
+func (auth HTTPAuthenticator) Authenticate(req *http.Request) (*ent.User, error) {
 	userID, err := parseUserID(req)
 	if err != nil {
 		return nil, err
@@ -47,7 +46,7 @@ func (auth HTTPAuthenticator) Authenticate(req *http.Request) (context.Context, 
 		return nil, fmt.Errorf("user pending activation")
 	}
 
-	return context.WithValue(req.Context(), userContextKey, user), nil
+	return user, nil
 }
 
 func parseUserID(req *http.Request) (int, error) {
