@@ -96,31 +96,114 @@ func (r *eventResolver) Kind(ctx context.Context, obj *ent.Event) (*string, erro
 	return &kind, nil
 }
 func (r *eventResolver) Job(ctx context.Context, obj *ent.Event) (*ent.Job, error) {
-	return obj.QueryJob().Only(ctx)
+	q := obj.QueryJob()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) File(ctx context.Context, obj *ent.Event) (*ent.File, error) {
-	return obj.QueryFile().Only(ctx)
+	q := obj.QueryFile()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) Credential(ctx context.Context, obj *ent.Event) (*ent.Credential, error) {
-	return obj.QueryCredential().Only(ctx)
+	q := obj.QueryCredential()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) Link(ctx context.Context, obj *ent.Event) (*ent.Link, error) {
-	return obj.QueryLink().Only(ctx)
+	q := obj.QueryLink()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) Tag(ctx context.Context, obj *ent.Event) (*ent.Tag, error) {
-	return obj.QueryTag().Only(ctx)
+	q := obj.QueryTag()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) Target(ctx context.Context, obj *ent.Event) (*ent.Target, error) {
-	return obj.QueryTarget().Only(ctx)
+	q := obj.QueryTarget()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) Task(ctx context.Context, obj *ent.Event) (*ent.Task, error) {
-	return obj.QueryTask().Only(ctx)
+	q := obj.QueryTask()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) User(ctx context.Context, obj *ent.Event) (*ent.User, error) {
-	return obj.QueryUser().Only(ctx)
+	q := obj.QueryUser()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
+}
+func (r *eventResolver) Event(ctx context.Context, obj *ent.Event) (*ent.Event, error) {
+	q := obj.QueryEvent()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 func (r *eventResolver) Likers(ctx context.Context, obj *ent.Event, input *models.Filter) ([]*ent.User, error) {
-	return obj.QueryLikers().All(ctx)
+	q := obj.QueryLikers()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.All(ctx)
 }
 func (r *eventResolver) Owner(ctx context.Context, obj *ent.Event) (*ent.User, error) {
 	return obj.QueryOwner().Only(ctx)
@@ -198,8 +281,10 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 	return cred, err
 }
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
+	actor := auth.GetUser(ctx)
 	jobCreator := r.Graph.Job.Create().
 		SetName(input.Name).
+		SetOwner(actor).
 		SetContent(input.Content).
 		AddTagIDs(input.Tags...)
 	if input.Prev != nil {
@@ -299,7 +384,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		}
 	}
 	r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
+		SetOwner(actor).
 		SetJob(job).
 		SetKind(event.KindCREATEJOB).
 		SaveX(ctx)
@@ -312,11 +397,14 @@ func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTa
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTag(tag).
 		SetKind(event.KindCREATETAG).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return tag, nil
 }
 func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (*ent.Task, error) {
