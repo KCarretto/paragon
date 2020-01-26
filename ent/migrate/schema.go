@@ -41,7 +41,7 @@ var (
 	EventsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "creation_time", Type: field.TypeTime},
-		{Name: "kind", Type: field.TypeEnum, Enums: []string{"FAIL_CREDENTIAL", "CREATE_JOB", "CREATE_TAG", "APPLY_TAG_TO_TASK", "APPLY_TAG_TO_TARGET", "APPLY_TAG_TO_JOB", "REMOVE_TAG_FROM_TASK", "REMOVE_TAG_FROM_TARGET", "REMOVE_TAG_FROM_JOB", "CREATE_TARGET", "SET_TARGET_FIELDS", "DELETE_TARGET", "ADD_CREDENTIAL_FOR_TARGET", "CREATE_LINK", "SET_LINK_FIELDS", "ACTIVATE_USER", "MAKE_ADMIN", "REMOVE_ADMIN", "CHANGE_NAME", "LIKE_EVENT", "OTHER"}},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"CREATE_JOB", "CREATE_TAG", "APPLY_TAG_TO_TASK", "APPLY_TAG_TO_TARGET", "APPLY_TAG_TO_JOB", "REMOVE_TAG_FROM_TASK", "REMOVE_TAG_FROM_TARGET", "REMOVE_TAG_FROM_JOB", "CREATE_TARGET", "SET_TARGET_FIELDS", "DELETE_TARGET", "ADD_CREDENTIAL_FOR_TARGET", "UPLOAD_FILE", "CREATE_LINK", "SET_LINK_FIELDS", "ACTIVATE_USER", "MAKE_ADMIN", "REMOVE_ADMIN", "CHANGE_NAME", "LIKE_EVENT", "OTHER"}},
 		{Name: "event_job_id", Type: field.TypeInt, Nullable: true},
 		{Name: "event_file_id", Type: field.TypeInt, Nullable: true},
 		{Name: "event_credential_id", Type: field.TypeInt, Nullable: true},

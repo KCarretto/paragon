@@ -27,8 +27,6 @@ func newEventKind(value string) EventKind {
 
 // IF you update this you MUST regent the ent stuff
 var (
-	EventFailCredential EventKind = newEventKind("FAIL_CREDENTIAL")
-
 	EventCreateJob EventKind = newEventKind("CREATE_JOB")
 	EventCreateTag EventKind = newEventKind("CREATE_TAG")
 
@@ -44,6 +42,8 @@ var (
 	EventSetTargetFields        EventKind = newEventKind("SET_TARGET_FIELDS")
 	EventDeleteTarget           EventKind = newEventKind("DELETE_TARGET")
 	EventAddCredentialForTarget EventKind = newEventKind("ADD_CREDENTIAL_FOR_TARGET")
+
+	EventUploadFile EventKind = newEventKind("UPLOAD_FILE")
 
 	EventCreateLink    EventKind = newEventKind("CREATE_LINK")
 	EventSetLinkFields EventKind = newEventKind("SET_LINK_FIELDS")

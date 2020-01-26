@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/service"
 	"go.uber.org/zap"
 	"golang.org/x/crypto/sha3"
@@ -62,7 +64,7 @@ func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) erro
 	}
 
 	fileQuery := svc.Graph.File.Query().Where(file.Name(fileName))
-	exists := fileQuery.ExistX(ctx)
+	exists := fileQuery.Clone().ExistX(ctx)
 
 	f, _, err := r.FormFile("fileContent")
 	if err != nil {
@@ -98,7 +100,12 @@ func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) erro
 			SetLastModifiedTime(time.Now()).
 			SaveX(ctx).ID
 	}
-
+	// if we fail to create event, we don't wish to panic
+	svc.Graph.Event.Create().
+		SetOwner(auth.GetUser(ctx)).
+		SetFileID(fileID).
+		SetKind(event.KindUPLOADFILE).
+		Save(ctx)
 	fmt.Fprintf(w, `{"data":{"file": {"id": %d}}}`, fileID)
 	return nil
 }
