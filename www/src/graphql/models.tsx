@@ -92,6 +92,7 @@ export type Event = {
   target?: Maybe<Target>,
   task?: Maybe<Task>,
   user?: Maybe<User>,
+  event?: Maybe<Event>,
   likers?: Maybe<Array<Maybe<User>>>,
   owner?: Maybe<User>,
 };
@@ -538,7 +539,6 @@ export type User = {
    __typename?: 'User',
   id: Scalars['ID'],
   name?: Maybe<Scalars['String']>,
-  email?: Maybe<Scalars['String']>,
   oAuthID?: Maybe<Scalars['String']>,
   photoURL?: Maybe<Scalars['String']>,
   sessionToken?: Maybe<Scalars['String']>,

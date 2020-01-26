@@ -1,6 +1,7 @@
+import Cookies from "js-cookie";
 import * as React from "react";
 import { FunctionComponent } from "react";
-import { Link } from "react-router-dom";
+import { Link, Redirect } from "react-router-dom";
 import { Icon, Menu, Sidebar } from "semantic-ui-react";
 import { RouteConfig } from "../../config/routes";
 import "./index.css";
@@ -9,39 +10,44 @@ type SidebarProps = {
   routeMap: RouteConfig[];
 };
 
-const XSidebar: FunctionComponent<SidebarProps> = props => (
-  <Sidebar.Pushable className="XLayout">
-    <Sidebar
-      as={Menu}
-      icon="labeled"
-      animation="push"
-      direction="left"
-      visible
-      vertical
-      inverted
-      width="thin"
-      className="XSidebar"
-    >
-      {props.routeMap
-        ? props.routeMap.map((value: RouteConfig, index: number) => {
-            return (
-              <Menu.Item as={Link} to={value.link} key={index}>
-                {value.icon}
-                {value.title}
-              </Menu.Item>
-            );
-          })
-        : []}
-      <Menu.Item
-        href="https://github.com/kcarretto/paragon/issues/new"
-        target="_blank"
+const XSidebar: FunctionComponent<SidebarProps> = props => {
+  let userId = Cookies.get("pg-userid");
+  if (!userId) {
+    return <Redirect to="/login" />;
+  }
+  return (
+    <Sidebar.Pushable className="XLayout">
+      <Sidebar
+        as={Menu}
+        icon="labeled"
+        animation="push"
+        direction="left"
+        visible
+        vertical
+        inverted
+        width="thin"
+        className="XSidebar"
       >
-        <Icon name="bug" />
-        Bug
-      </Menu.Item>
-    </Sidebar>
-    <Sidebar.Pusher className="XContent">{props.children}</Sidebar.Pusher>
-  </Sidebar.Pushable>
-);
-
+        {props.routeMap
+          ? props.routeMap.map((value: RouteConfig, index: number) => {
+              return (
+                <Menu.Item as={Link} to={value.link} key={index}>
+                  {value.icon}
+                  {value.title}
+                </Menu.Item>
+              );
+            })
+          : []}
+        <Menu.Item
+          href="https://github.com/kcarretto/paragon/issues/new"
+          target="_blank"
+        >
+          <Icon name="bug" />
+          Bug
+        </Menu.Item>
+      </Sidebar>
+      <Sidebar.Pusher className="XContent">{props.children}</Sidebar.Pusher>
+    </Sidebar.Pushable>
+  );
+};
 export default XSidebar;
