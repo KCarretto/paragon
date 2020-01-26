@@ -147,6 +147,7 @@ type ComplexityRoot struct {
 		Jobs        func(childComplexity int, input *models.Filter) int
 		Link        func(childComplexity int, id int) int
 		Links       func(childComplexity int, input *models.Filter) int
+		Me          func(childComplexity int) int
 		Tag         func(childComplexity int, id int) int
 		Tags        func(childComplexity int, input *models.Filter) int
 		Target      func(childComplexity int, id int) int
@@ -277,6 +278,7 @@ type QueryResolver interface {
 	Task(ctx context.Context, id int) (*ent.Task, error)
 	Tasks(ctx context.Context, input *models.Filter) ([]*ent.Task, error)
 	User(ctx context.Context, id int) (*ent.User, error)
+	Me(ctx context.Context) (*ent.User, error)
 	Users(ctx context.Context, input *models.Filter) ([]*ent.User, error)
 	Event(ctx context.Context, id int) (*ent.Event, error)
 	Events(ctx context.Context, input *models.Filter) ([]*ent.Event, error)
@@ -1016,6 +1018,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Links(childComplexity, args["input"].(*models.Filter)), true
+
+	case "Query.me":
+		if e.complexity.Query.Me == nil {
+			break
+		}
+
+		return e.complexity.Query.Me(childComplexity), true
 
 	case "Query.tag":
 		if e.complexity.Query.Tag == nil {
@@ -1761,6 +1770,7 @@ type Query {
   tasks(input: Filter): [Task]
 
   user(id: ID!): User
+  me: User
   users(input: Filter): [User]
 
   event(id: ID!): Event
@@ -5595,6 +5605,40 @@ func (ec *executionContext) _Query_user(ctx context.Context, field graphql.Colle
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Query().User(rctx, args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_me(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Me(rctx)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9488,6 +9532,17 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_user(ctx, field)
+				return res
+			})
+		case "me":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_me(ctx, field)
 				return res
 			})
 		case "users":

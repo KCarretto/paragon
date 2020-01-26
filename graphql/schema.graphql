@@ -297,6 +297,7 @@ type Query {
   tasks(input: Filter): [Task]
 
   user(id: ID!): User
+  me: User
   users(input: Filter): [User]
 
   event(id: ID!): Event
