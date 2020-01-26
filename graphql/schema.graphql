@@ -1,12 +1,12 @@
-directive @goModel(model: String, models: [String!]) on OBJECT
-    | INPUT_OBJECT
-    | SCALAR
-    | ENUM
-    | INTERFACE
-    | UNION
+directive @goModel(
+  model: String
+  models: [String!]
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
 
-directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
-    | FIELD_DEFINITION
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 scalar Time
 
@@ -14,7 +14,6 @@ input Filter {
   offset: Int
   limit: Int
 }
-
 
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
@@ -31,7 +30,6 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   credentials(input: Filter): [Credential]
 }
 
-
 type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
   id: ID!
   name: String
@@ -40,7 +38,6 @@ type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
   targets(input: Filter): [Target]
   jobs(input: Filter): [Job]
 }
-
 
 type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   id: ID!
@@ -61,7 +58,6 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   target: Target
 }
 
-
 type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
   id: ID!
   name: String
@@ -72,8 +68,8 @@ type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
   tags(input: Filter): [Tag]
   next: Job
   prev: Job
+  owner: User
 }
-
 
 type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   id: ID!
@@ -104,6 +100,35 @@ type Link @goModel(model: "github.com/kcarretto/paragon/ent.Link") {
   file: File
 }
 
+type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
+  id: ID!
+  name: String
+  email: String
+  oAuthID: String
+  photoURL: String
+  sessionToken: String
+  activated: Boolean
+  isAdmin: Boolean
+
+  jobs(input: Filter): [Job]
+}
+
+type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
+  id: ID!
+  CreationTime: Time
+  Kind: String
+
+  job: Job
+  file: File
+  credential: Credential
+  link: Link
+  tag: Tag
+  target: Target
+  task: Task
+  user: User
+  likers(input: Filter): [User]
+  owner: User
+}
 
 input FailCredentialRequest {
   id: ID!
@@ -141,13 +166,13 @@ input CreateTargetRequest {
 }
 
 input SetTargetFieldsRequest {
-    id: ID!
-    name: String
-    machineUUID: String
-    primaryIP: String
-    publicIP: String
-    primaryMAC: String
-    hostname: String
+  id: ID!
+  name: String
+  machineUUID: String
+  primaryIP: String
+  publicIP: String
+  primaryMAC: String
+  hostname: String
 }
 
 input DeleteTargetRequest {
@@ -178,17 +203,34 @@ input SubmitTaskResultRequest {
 }
 
 input CreateLinkRequest {
-    alias: String!
-    expirationTime: Time
-    clicks: Int
-    file: ID!
+  alias: String!
+  expirationTime: Time
+  clicks: Int
+  file: ID!
 }
 
 input SetLinkFieldsRequest {
-    id: ID!
-    alias: String
-    ExpirationTime: Time
-    clicks: Int
+  id: ID!
+  alias: String
+  ExpirationTime: Time
+  clicks: Int
+}
+
+input ActivateUserRequest {
+  id: ID!
+}
+input MakeAdminRequest {
+  id: ID!
+}
+input RemoveAdminRequest {
+  id: ID!
+}
+input ChangeNameRequest {
+  name: String!
+}
+
+input LikeEventRequest {
+  id: ID!
 }
 
 type Mutation {
@@ -222,6 +264,14 @@ type Mutation {
   createLink(input: CreateLinkRequest): Link!
   setLinkFields(input: SetLinkFieldsRequest): Link!
 
+  # User Mutations
+  activateUser(input: ActivateUserRequest): User!
+  makeAdmin(input: MakeAdminRequest): User!
+  removeAdmin(input: RemoveAdminRequest): User!
+  changeName(input: ChangeNameRequest): User!
+
+  # Event Mutations
+  likeEvent(input: LikeEventRequest): Event!
 }
 
 type Query {
@@ -245,4 +295,10 @@ type Query {
 
   task(id: ID!): Task
   tasks(input: Filter): [Task]
+
+  user(id: ID!): User
+  users(input: Filter): [User]
+
+  event(id: ID!): Event
+  events(input: Filter): [Event]
 }

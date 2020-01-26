@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -11,6 +12,8 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/user"
 )
@@ -23,6 +26,10 @@ type UserQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.User
+	// eager-loading edges.
+	withJobs   *JobQuery
+	withEvents *EventQuery
+	withFKs    bool
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -49,6 +56,30 @@ func (uq *UserQuery) Offset(offset int) *UserQuery {
 func (uq *UserQuery) Order(o ...Order) *UserQuery {
 	uq.order = append(uq.order, o...)
 	return uq
+}
+
+// QueryJobs chains the current query on the jobs edge.
+func (uq *UserQuery) QueryJobs() *JobQuery {
+	query := &JobQuery{config: uq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(user.Table, user.FieldID, uq.sqlQuery()),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, user.JobsTable, user.JobsColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+	return query
+}
+
+// QueryEvents chains the current query on the events edge.
+func (uq *UserQuery) QueryEvents() *EventQuery {
+	query := &EventQuery{config: uq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(user.Table, user.FieldID, uq.sqlQuery()),
+		sqlgraph.To(event.Table, event.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, user.EventsTable, user.EventsColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(uq.driver.Dialect(), step)
+	return query
 }
 
 // First returns the first User entity in the query. Returns *ErrNotFound when no user was found.
@@ -220,6 +251,28 @@ func (uq *UserQuery) Clone() *UserQuery {
 	}
 }
 
+//  WithJobs tells the query-builder to eager-loads the nodes that are connected to
+// the "jobs" edge. The optional arguments used to configure the query builder of the edge.
+func (uq *UserQuery) WithJobs(opts ...func(*JobQuery)) *UserQuery {
+	query := &JobQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withJobs = query
+	return uq
+}
+
+//  WithEvents tells the query-builder to eager-loads the nodes that are connected to
+// the "events" edge. The optional arguments used to configure the query builder of the edge.
+func (uq *UserQuery) WithEvents(opts ...func(*EventQuery)) *UserQuery {
+	query := &EventQuery{config: uq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	uq.withEvents = query
+	return uq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -263,13 +316,20 @@ func (uq *UserQuery) Select(field string, fields ...string) *UserSelect {
 
 func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
-		nodes []*User = []*User{}
-		_spec         = uq.querySpec()
+		nodes   []*User = []*User{}
+		withFKs         = uq.withFKs
+		_spec           = uq.querySpec()
 	)
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, user.ForeignKeys...)
+	}
 	_spec.ScanValues = func() []interface{} {
 		node := &User{config: uq.config}
 		nodes = append(nodes, node)
 		values := node.scanValues()
+		if withFKs {
+			values = append(values, node.fkValues()...)
+		}
 		return values
 	}
 	_spec.Assign = func(values ...interface{}) error {
@@ -285,6 +345,63 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := uq.withJobs; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*User)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Job(func(s *sql.Selector) {
+			s.Where(sql.InValues(user.JobsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.owner_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "owner_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Jobs = append(node.Edges.Jobs, n)
+		}
+	}
+
+	if query := uq.withEvents; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*User)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Event(func(s *sql.Selector) {
+			s.Where(sql.InValues(user.EventsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.owner_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "owner_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Events = append(node.Edges.Events, n)
+		}
+	}
+
 	return nodes, nil
 }
 

@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type ActivateUserRequest struct {
+	ID int `json:"id"`
+}
+
 type AddCredentialForTargetRequest struct {
 	ID        int     `json:"id"`
 	Principal string  `json:"principal"`
@@ -16,6 +20,10 @@ type AddCredentialForTargetRequest struct {
 type ApplyTagRequest struct {
 	TagID int `json:"tagID"`
 	EntID int `json:"entID"`
+}
+
+type ChangeNameRequest struct {
+	Name string `json:"name"`
 }
 
 type ClaimTasksRequest struct {
@@ -63,6 +71,18 @@ type FailCredentialRequest struct {
 type Filter struct {
 	Offset *int `json:"offset"`
 	Limit  *int `json:"limit"`
+}
+
+type LikeEventRequest struct {
+	ID int `json:"id"`
+}
+
+type MakeAdminRequest struct {
+	ID int `json:"id"`
+}
+
+type RemoveAdminRequest struct {
+	ID int `json:"id"`
 }
 
 type RemoveTagRequest struct {

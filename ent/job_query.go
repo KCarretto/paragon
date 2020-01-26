@@ -16,6 +16,7 @@ import (
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // JobQuery is the builder for querying Job entities.
@@ -31,6 +32,7 @@ type JobQuery struct {
 	withTags  *TagQuery
 	withPrev  *JobQuery
 	withNext  *JobQuery
+	withOwner *UserQuery
 	withFKs   bool
 	// intermediate query.
 	sql *sql.Selector
@@ -103,6 +105,18 @@ func (jq *JobQuery) QueryNext() *JobQuery {
 		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
 		sqlgraph.To(job.Table, job.FieldID),
 		sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	return query
+}
+
+// QueryOwner chains the current query on the owner edge.
+func (jq *JobQuery) QueryOwner() *UserQuery {
+	query := &UserQuery{config: jq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
+		sqlgraph.To(user.Table, user.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, job.OwnerTable, job.OwnerColumn),
 	)
 	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
 	return query
@@ -321,6 +335,17 @@ func (jq *JobQuery) WithNext(opts ...func(*JobQuery)) *JobQuery {
 	return jq
 }
 
+//  WithOwner tells the query-builder to eager-loads the nodes that are connected to
+// the "owner" edge. The optional arguments used to configure the query builder of the edge.
+func (jq *JobQuery) WithOwner(opts ...func(*UserQuery)) *JobQuery {
+	query := &UserQuery{config: jq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	jq.withOwner = query
+	return jq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -368,7 +393,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		withFKs        = jq.withFKs
 		_spec          = jq.querySpec()
 	)
-	if jq.withPrev != nil {
+	if jq.withPrev != nil || jq.withOwner != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -538,6 +563,31 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Next = n
+		}
+	}
+
+	if query := jq.withOwner; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Job)
+		for i := range nodes {
+			if fk := nodes[i].owner_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Owner = n
+			}
 		}
 	}
 

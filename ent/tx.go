@@ -14,6 +14,8 @@ type Tx struct {
 	config
 	// Credential is the client for interacting with the Credential builders.
 	Credential *CredentialClient
+	// Event is the client for interacting with the Event builders.
+	Event *EventClient
 	// File is the client for interacting with the File builders.
 	File *FileClient
 	// Job is the client for interacting with the Job builders.
@@ -46,6 +48,7 @@ func (tx *Tx) Client() *Client {
 		config:     tx.config,
 		Schema:     migrate.NewSchema(tx.driver),
 		Credential: NewCredentialClient(tx.config),
+		Event:      NewEventClient(tx.config),
 		File:       NewFileClient(tx.config),
 		Job:        NewJobClient(tx.config),
 		Link:       NewLinkClient(tx.config),

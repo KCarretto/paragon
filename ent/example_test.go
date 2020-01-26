@@ -10,6 +10,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql"
 
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/event"
 )
 
 // dsn for the database. In order to run the tests locally, run the following command:
@@ -42,6 +43,190 @@ func ExampleCredential() {
 	log.Println("credential created:", c)
 
 	// query edges.
+
+	// Output:
+}
+func ExampleEvent() {
+	if dsn == "" {
+		return
+	}
+	ctx := context.Background()
+	drv, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("failed creating database client: %v", err)
+	}
+	defer drv.Close()
+	client := NewClient(Driver(drv))
+	// creating vertices for the event's edges.
+	j0 := client.Job.
+		Create().
+		SetName("string").
+		SetCreationTime(time.Now()).
+		SetContent("string").
+		SaveX(ctx)
+	log.Println("job created:", j0)
+	f1 := client.File.
+		Create().
+		SetName("string").
+		SetCreationTime(time.Now()).
+		SetLastModifiedTime(time.Now()).
+		SetSize(1).
+		SetContent(nil).
+		SetHash("string").
+		SetContentType("string").
+		SaveX(ctx)
+	log.Println("file created:", f1)
+	c2 := client.Credential.
+		Create().
+		SetPrincipal("string").
+		SetSecret("string").
+		SetKind(credential.KindPassword).
+		SetFails(1).
+		SaveX(ctx)
+	log.Println("credential created:", c2)
+	l3 := client.Link.
+		Create().
+		SetAlias("string").
+		SetExpirationTime(time.Now()).
+		SetClicks(1).
+		SaveX(ctx)
+	log.Println("link created:", l3)
+	t4 := client.Tag.
+		Create().
+		SetName("string").
+		SaveX(ctx)
+	log.Println("tag created:", t4)
+	t5 := client.Target.
+		Create().
+		SetName("string").
+		SetPrimaryIP("string").
+		SetMachineUUID("string").
+		SetPublicIP("string").
+		SetPrimaryMAC("string").
+		SetHostname("string").
+		SetLastSeen(time.Now()).
+		SaveX(ctx)
+	log.Println("target created:", t5)
+	t6 := client.Task.
+		Create().
+		SetQueueTime(time.Now()).
+		SetLastChangedTime(time.Now()).
+		SetClaimTime(time.Now()).
+		SetExecStartTime(time.Now()).
+		SetExecStopTime(time.Now()).
+		SetContent("string").
+		SetOutput("string").
+		SetError("string").
+		SetSessionID("string").
+		SaveX(ctx)
+	log.Println("task created:", t6)
+	u7 := client.User.
+		Create().
+		SetName("string").
+		SetEmail("string").
+		SetOAuthID("string").
+		SetPhotoURL("string").
+		SetSessionToken("string").
+		SetActivated(true).
+		SetIsAdmin(true).
+		SaveX(ctx)
+	log.Println("user created:", u7)
+	e8 := client.Event.
+		Create().
+		SetCreationTime(time.Now()).
+		SetKind(event.KindFAILCREDENTIAL).
+		SaveX(ctx)
+	log.Println("event created:", e8)
+	u9 := client.User.
+		Create().
+		SetName("string").
+		SetEmail("string").
+		SetOAuthID("string").
+		SetPhotoURL("string").
+		SetSessionToken("string").
+		SetActivated(true).
+		SetIsAdmin(true).
+		SaveX(ctx)
+	log.Println("user created:", u9)
+
+	// create event vertex with its edges.
+	e := client.Event.
+		Create().
+		SetCreationTime(time.Now()).
+		SetKind(event.KindFAILCREDENTIAL).
+		SetJob(j0).
+		SetFile(f1).
+		SetCredential(c2).
+		SetLink(l3).
+		SetTag(t4).
+		SetTarget(t5).
+		SetTask(t6).
+		SetUser(u7).
+		SetEvent(e8).
+		AddLikers(u9).
+		SaveX(ctx)
+	log.Println("event created:", e)
+
+	// query edges.
+	j0, err = e.QueryJob().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying job: %v", err)
+	}
+	log.Println("job found:", j0)
+
+	f1, err = e.QueryFile().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying file: %v", err)
+	}
+	log.Println("file found:", f1)
+
+	c2, err = e.QueryCredential().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying credential: %v", err)
+	}
+	log.Println("credential found:", c2)
+
+	l3, err = e.QueryLink().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying link: %v", err)
+	}
+	log.Println("link found:", l3)
+
+	t4, err = e.QueryTag().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying tag: %v", err)
+	}
+	log.Println("tag found:", t4)
+
+	t5, err = e.QueryTarget().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying target: %v", err)
+	}
+	log.Println("target found:", t5)
+
+	t6, err = e.QueryTask().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying task: %v", err)
+	}
+	log.Println("task found:", t6)
+
+	u7, err = e.QueryUser().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying user: %v", err)
+	}
+	log.Println("user found:", u7)
+
+	e8, err = e.QueryEvent().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying event: %v", err)
+	}
+	log.Println("event found:", e8)
+
+	u9, err = e.QueryLikers().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying likers: %v", err)
+	}
+	log.Println("likers found:", u9)
 
 	// Output:
 }
@@ -340,6 +525,19 @@ func ExampleUser() {
 	defer drv.Close()
 	client := NewClient(Driver(drv))
 	// creating vertices for the user's edges.
+	j0 := client.Job.
+		Create().
+		SetName("string").
+		SetCreationTime(time.Now()).
+		SetContent("string").
+		SaveX(ctx)
+	log.Println("job created:", j0)
+	e1 := client.Event.
+		Create().
+		SetCreationTime(time.Now()).
+		SetKind(event.KindFAILCREDENTIAL).
+		SaveX(ctx)
+	log.Println("event created:", e1)
 
 	// create user vertex with its edges.
 	u := client.User.
@@ -350,10 +548,24 @@ func ExampleUser() {
 		SetPhotoURL("string").
 		SetSessionToken("string").
 		SetActivated(true).
+		SetIsAdmin(true).
+		AddJobs(j0).
+		AddEvents(e1).
 		SaveX(ctx)
 	log.Println("user created:", u)
 
 	// query edges.
+	j0, err = u.QueryJobs().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying jobs: %v", err)
+	}
+	log.Println("jobs found:", j0)
+
+	e1, err = u.QueryEvents().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying events: %v", err)
+	}
+	log.Println("events found:", e1)
 
 	// Output:
 }

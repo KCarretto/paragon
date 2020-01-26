@@ -9,6 +9,9 @@ import (
 // Credential is the predicate function for credential builders.
 type Credential func(*sql.Selector)
 
+// Event is the predicate function for event builders.
+type Event func(*sql.Selector)
+
 // File is the predicate function for file builders.
 type File func(*sql.Selector)
 

@@ -12,6 +12,10 @@ export type Scalars = {
 
 
 
+export type ActivateUserRequest = {
+  id: Scalars['ID'],
+};
+
 export type AddCredentialForTargetRequest = {
   id: Scalars['ID'],
   principal: Scalars['String'],
@@ -22,6 +26,10 @@ export type AddCredentialForTargetRequest = {
 export type ApplyTagRequest = {
   tagID: Scalars['ID'],
   entID: Scalars['ID'],
+};
+
+export type ChangeNameRequest = {
+  name: Scalars['String'],
 };
 
 export type ClaimTasksRequest = {
@@ -71,6 +79,28 @@ export type DeleteTargetRequest = {
   id: Scalars['ID'],
 };
 
+export type Event = {
+   __typename?: 'Event',
+  id: Scalars['ID'],
+  CreationTime?: Maybe<Scalars['Time']>,
+  Kind?: Maybe<Scalars['String']>,
+  job?: Maybe<Job>,
+  file?: Maybe<File>,
+  credential?: Maybe<Credential>,
+  link?: Maybe<Link>,
+  tag?: Maybe<Tag>,
+  target?: Maybe<Target>,
+  task?: Maybe<Task>,
+  user?: Maybe<User>,
+  likers?: Maybe<Array<Maybe<User>>>,
+  owner?: Maybe<User>,
+};
+
+
+export type EventLikersArgs = {
+  input?: Maybe<Filter>
+};
+
 export type FailCredentialRequest = {
   id: Scalars['ID'],
 };
@@ -107,6 +137,7 @@ export type Job = {
   tags?: Maybe<Array<Maybe<Tag>>>,
   next?: Maybe<Job>,
   prev?: Maybe<Job>,
+  owner?: Maybe<User>,
 };
 
 
@@ -119,6 +150,10 @@ export type JobTagsArgs = {
   input?: Maybe<Filter>
 };
 
+export type LikeEventRequest = {
+  id: Scalars['ID'],
+};
+
 export type Link = {
    __typename?: 'Link',
   id: Scalars['ID'],
@@ -126,6 +161,10 @@ export type Link = {
   expirationTime?: Maybe<Scalars['Time']>,
   clicks?: Maybe<Scalars['Int']>,
   file?: Maybe<File>,
+};
+
+export type MakeAdminRequest = {
+  id: Scalars['ID'],
 };
 
 export type Mutation = {
@@ -154,6 +193,13 @@ export type Mutation = {
   /** Link Mutations */
   createLink: Link,
   setLinkFields: Link,
+  /** User Mutations */
+  activateUser: User,
+  makeAdmin: User,
+  removeAdmin: User,
+  changeName: User,
+  /** Event Mutations */
+  likeEvent: Event,
 };
 
 
@@ -246,6 +292,31 @@ export type MutationSetLinkFieldsArgs = {
   input?: Maybe<SetLinkFieldsRequest>
 };
 
+
+export type MutationActivateUserArgs = {
+  input?: Maybe<ActivateUserRequest>
+};
+
+
+export type MutationMakeAdminArgs = {
+  input?: Maybe<MakeAdminRequest>
+};
+
+
+export type MutationRemoveAdminArgs = {
+  input?: Maybe<RemoveAdminRequest>
+};
+
+
+export type MutationChangeNameArgs = {
+  input?: Maybe<ChangeNameRequest>
+};
+
+
+export type MutationLikeEventArgs = {
+  input?: Maybe<LikeEventRequest>
+};
+
 export type Query = {
    __typename?: 'Query',
   link?: Maybe<Link>,
@@ -262,6 +333,10 @@ export type Query = {
   targets?: Maybe<Array<Maybe<Target>>>,
   task?: Maybe<Task>,
   tasks?: Maybe<Array<Maybe<Task>>>,
+  user?: Maybe<User>,
+  users?: Maybe<Array<Maybe<User>>>,
+  event?: Maybe<Event>,
+  events?: Maybe<Array<Maybe<Event>>>,
 };
 
 
@@ -332,6 +407,30 @@ export type QueryTaskArgs = {
 
 export type QueryTasksArgs = {
   input?: Maybe<Filter>
+};
+
+
+export type QueryUserArgs = {
+  id: Scalars['ID']
+};
+
+
+export type QueryUsersArgs = {
+  input?: Maybe<Filter>
+};
+
+
+export type QueryEventArgs = {
+  id: Scalars['ID']
+};
+
+
+export type QueryEventsArgs = {
+  input?: Maybe<Filter>
+};
+
+export type RemoveAdminRequest = {
+  id: Scalars['ID'],
 };
 
 export type RemoveTagRequest = {
@@ -434,5 +533,23 @@ export type Task = {
   target?: Maybe<Target>,
 };
 
+
+export type User = {
+   __typename?: 'User',
+  id: Scalars['ID'],
+  name?: Maybe<Scalars['String']>,
+  email?: Maybe<Scalars['String']>,
+  oAuthID?: Maybe<Scalars['String']>,
+  photoURL?: Maybe<Scalars['String']>,
+  sessionToken?: Maybe<Scalars['String']>,
+  activated?: Maybe<Scalars['Boolean']>,
+  isAdmin?: Maybe<Scalars['Boolean']>,
+  jobs?: Maybe<Array<Maybe<Job>>>,
+};
+
+
+export type UserJobsArgs = {
+  input?: Maybe<Filter>
+};
 
 

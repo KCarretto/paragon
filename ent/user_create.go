@@ -9,6 +9,8 @@ import (
 
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/user"
 )
 
@@ -21,6 +23,9 @@ type UserCreate struct {
 	PhotoURL     *string
 	SessionToken *string
 	Activated    *bool
+	IsAdmin      *bool
+	jobs         map[int]struct{}
+	events       map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -75,6 +80,60 @@ func (uc *UserCreate) SetNillableActivated(b *bool) *UserCreate {
 	return uc
 }
 
+// SetIsAdmin sets the IsAdmin field.
+func (uc *UserCreate) SetIsAdmin(b bool) *UserCreate {
+	uc.IsAdmin = &b
+	return uc
+}
+
+// SetNillableIsAdmin sets the IsAdmin field if the given value is not nil.
+func (uc *UserCreate) SetNillableIsAdmin(b *bool) *UserCreate {
+	if b != nil {
+		uc.SetIsAdmin(*b)
+	}
+	return uc
+}
+
+// AddJobIDs adds the jobs edge to Job by ids.
+func (uc *UserCreate) AddJobIDs(ids ...int) *UserCreate {
+	if uc.jobs == nil {
+		uc.jobs = make(map[int]struct{})
+	}
+	for i := range ids {
+		uc.jobs[ids[i]] = struct{}{}
+	}
+	return uc
+}
+
+// AddJobs adds the jobs edges to Job.
+func (uc *UserCreate) AddJobs(j ...*Job) *UserCreate {
+	ids := make([]int, len(j))
+	for i := range j {
+		ids[i] = j[i].ID
+	}
+	return uc.AddJobIDs(ids...)
+}
+
+// AddEventIDs adds the events edge to Event by ids.
+func (uc *UserCreate) AddEventIDs(ids ...int) *UserCreate {
+	if uc.events == nil {
+		uc.events = make(map[int]struct{})
+	}
+	for i := range ids {
+		uc.events[ids[i]] = struct{}{}
+	}
+	return uc
+}
+
+// AddEvents adds the events edges to Event.
+func (uc *UserCreate) AddEvents(e ...*Event) *UserCreate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return uc.AddEventIDs(ids...)
+}
+
 // Save creates the User in the database.
 func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
 	if uc.Name == nil {
@@ -95,6 +154,10 @@ func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
 	if uc.Activated == nil {
 		v := user.DefaultActivated
 		uc.Activated = &v
+	}
+	if uc.IsAdmin == nil {
+		v := user.DefaultIsAdmin
+		uc.IsAdmin = &v
 	}
 	return uc.sqlSave(ctx)
 }
@@ -166,6 +229,52 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 			Column: user.FieldActivated,
 		})
 		u.Activated = *value
+	}
+	if value := uc.IsAdmin; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: user.FieldIsAdmin,
+		})
+		u.IsAdmin = *value
+	}
+	if nodes := uc.jobs; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := uc.events; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if err := sqlgraph.CreateNode(ctx, uc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
