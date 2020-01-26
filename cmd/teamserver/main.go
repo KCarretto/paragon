@@ -77,7 +77,10 @@ func main() {
 	graph := newGraph(ctx)
 	defer graph.Close()
 
+	authenticator := getAuthenticator(logger.Named("auth"), graph)
+
 	svc := &teamserver.Service{
+		Auth:   authenticator,
 		Log:    logger,
 		Graph:  graph,
 		Events: publisher,

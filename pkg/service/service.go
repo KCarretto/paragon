@@ -4,11 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-)
 
-type RequestLogger interface {
-	LogRequest(*http.Request, error)
-}
+	"go.uber.org/zap"
+)
 
 type Authenticator interface {
 	Authenticate(*http.Request) (context.Context, error)
@@ -42,7 +40,7 @@ func (h HandlerFn) Handle(w http.ResponseWriter, r *http.Request) error {
 type Endpoint struct {
 	Handler
 
-	RequestLogger
+	Log *zap.Logger
 	Authenticator
 	Authorizer
 	ErrorPresenter
@@ -52,11 +50,15 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
 	var ctx context.Context
 
+	logger := fn.logger(req)
+
 	// Log all requests, even those that error or panic
-	defer func() { fn.LogRequest(req, err) }()
+	defer func() {
+		logger.Info("Request Handled", zap.Error(err))
+	}()
 
 	// Handle panic
-	defer fn.stayCalm(w)
+	defer fn.stayCalm(w, logger)
 
 	// Authenticate the request
 	if ctx, err = fn.Authenticate(req); err != nil {
@@ -79,14 +81,6 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// TODO: Figure out per request logging
 	// TODO: Implement AARP
-}
-
-func (fn *Endpoint) LogRequest(r *http.Request, err error) {
-	if fn.RequestLogger == nil {
-		return
-	}
-
-	fn.RequestLogger.LogRequest(r, err)
 }
 
 func (fn *Endpoint) PresentError(w http.ResponseWriter, err error) {
@@ -115,8 +109,25 @@ func (fn *Endpoint) Authorize(req *http.Request) error {
 	return fn.Authorizer.Authorize(req)
 }
 
-func (fn *Endpoint) stayCalm(w http.ResponseWriter) {
+func (fn *Endpoint) logger(req *http.Request) *zap.Logger {
+	if fn.Log == nil {
+		fn.Log = zap.NewNop()
+	}
+
+	// TODO: Add request tracing info
+	return fn.Log.With(
+		zap.String("method", req.Method),
+		zap.String("uri", req.RequestURI),
+		zap.Int64("length", req.ContentLength),
+		zap.String("remote_addr", req.RemoteAddr),
+		zap.String("user_agent", req.UserAgent()),
+	)
+}
+
+func (fn *Endpoint) stayCalm(w http.ResponseWriter, logger *zap.Logger) {
 	if recovered := recover(); recovered != nil {
+		logger.Error("Request resulted in panic", zap.Any("error", recovered))
+
 		switch err := recovered.(type) {
 		case error:
 			fn.PresentError(w, err)

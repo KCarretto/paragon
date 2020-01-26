@@ -23,6 +23,7 @@ type Service struct {
 	Graph  *ent.Client
 	Events event.Publisher
 	OAuth  *oauth2.Config
+	Auth   service.Authenticator
 }
 
 // HandleStatus returns JSON status: OK if the teamserver is running without error.
@@ -45,15 +46,18 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 		Log:    svc.Log.Named("graphql"),
 		Graph:  svc.Graph,
 		Events: svc.Events,
+		Auth:   svc.Auth,
 	}
 	cdnSVC := &cdn.Service{
 		Log:   svc.Log.Named("cdn"),
 		Graph: svc.Graph,
+		Auth:  svc.Auth,
 	}
 	wwwSVC := &www.Service{
 		Log: svc.Log.Named("www"),
 	}
 	status := &service.Endpoint{
+		Log:     svc.Log.Named("status"),
 		Handler: service.HandlerFn(svc.HandleStatus),
 	}
 

@@ -32,9 +32,11 @@ func (svc Service) HandleIndex(w http.ResponseWriter, r *http.Request) error {
 // HTTP registers http handlers for the Teamserver UI.
 func (svc *Service) HTTP(router *http.ServeMux) {
 	app := &service.Endpoint{
+		Log: svc.Log.Named("app"),
 		Handler: service.HTTPHandler(http.FileServer(App)),
 	}
 	index := &service.Endpoint{
+		Log: svc.Log.Named("index"),
 		Handler: service.HandlerFn(svc.HandleIndex),
 	}
 	router.Handle("/app/", http.StripPrefix("/app", app))
