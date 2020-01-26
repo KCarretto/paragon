@@ -37,6 +37,100 @@ var (
 			},
 		},
 	}
+	// EventsColumns holds the columns for the "events" table.
+	EventsColumns = []*schema.Column{
+		{Name: "id", Type: field.TypeInt, Increment: true},
+		{Name: "creation_time", Type: field.TypeTime},
+		{Name: "kind", Type: field.TypeEnum, Enums: []string{"FAIL_CREDENTIAL", "CREATE_JOB", "CREATE_TAG", "APPLY_TAG_TO_TASK", "APPLY_TAG_TO_TARGET", "APPLY_TAG_TO_JOB", "REMOVE_TAG_FROM_TASK", "REMOVE_TAG_FROM_TARGET", "REMOVE_TAG_FROM_JOB", "CREATE_TARGET", "SET_TARGET_FIELDS", "DELETE_TARGET", "ADD_CREDENTIAL_FOR_TARGET", "CREATE_LINK", "SET_LINK_FIELDS", "ACTIVATE_USER", "MAKE_ADMIN", "REMOVE_ADMIN", "CHANGE_NAME", "LIKE_EVENT", "OTHER"}},
+		{Name: "event_job_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_file_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_credential_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_link_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_tag_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_target_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_task_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_user_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_event_id", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
+	}
+	// EventsTable holds the schema information for the "events" table.
+	EventsTable = &schema.Table{
+		Name:       "events",
+		Columns:    EventsColumns,
+		PrimaryKey: []*schema.Column{EventsColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:  "events_jobs_job",
+				Columns: []*schema.Column{EventsColumns[3]},
+
+				RefColumns: []*schema.Column{JobsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_files_file",
+				Columns: []*schema.Column{EventsColumns[4]},
+
+				RefColumns: []*schema.Column{FilesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_credentials_credential",
+				Columns: []*schema.Column{EventsColumns[5]},
+
+				RefColumns: []*schema.Column{CredentialsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_links_link",
+				Columns: []*schema.Column{EventsColumns[6]},
+
+				RefColumns: []*schema.Column{LinksColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_tags_tag",
+				Columns: []*schema.Column{EventsColumns[7]},
+
+				RefColumns: []*schema.Column{TagsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_targets_target",
+				Columns: []*schema.Column{EventsColumns[8]},
+
+				RefColumns: []*schema.Column{TargetsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_tasks_task",
+				Columns: []*schema.Column{EventsColumns[9]},
+
+				RefColumns: []*schema.Column{TasksColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_users_user",
+				Columns: []*schema.Column{EventsColumns[10]},
+
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_events_event",
+				Columns: []*schema.Column{EventsColumns[11]},
+
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_users_events",
+				Columns: []*schema.Column{EventsColumns[12]},
+
+				RefColumns: []*schema.Column{UsersColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
+	}
 	// FilesColumns holds the columns for the "files" table.
 	FilesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
@@ -62,6 +156,7 @@ var (
 		{Name: "creation_time", Type: field.TypeTime},
 		{Name: "content", Type: field.TypeString},
 		{Name: "prev_id", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
 	}
 	// JobsTable holds the schema information for the "jobs" table.
 	JobsTable = &schema.Table{
@@ -74,6 +169,13 @@ var (
 				Columns: []*schema.Column{JobsColumns[4]},
 
 				RefColumns: []*schema.Column{JobsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "jobs_users_jobs",
+				Columns: []*schema.Column{JobsColumns[5]},
+
+				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 		},
@@ -177,13 +279,23 @@ var (
 		{Name: "photo_url", Type: field.TypeString},
 		{Name: "session_token", Type: field.TypeString, Nullable: true},
 		{Name: "activated", Type: field.TypeBool, Default: user.DefaultActivated},
+		{Name: "is_admin", Type: field.TypeBool, Default: user.DefaultIsAdmin},
+		{Name: "event_liker_id", Type: field.TypeInt, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{
-		Name:        "users",
-		Columns:     UsersColumns,
-		PrimaryKey:  []*schema.Column{UsersColumns[0]},
-		ForeignKeys: []*schema.ForeignKey{},
+		Name:       "users",
+		Columns:    UsersColumns,
+		PrimaryKey: []*schema.Column{UsersColumns[0]},
+		ForeignKeys: []*schema.ForeignKey{
+			{
+				Symbol:  "users_events_likers",
+				Columns: []*schema.Column{UsersColumns[8]},
+
+				RefColumns: []*schema.Column{EventsColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+		},
 	}
 	// JobTagsColumns holds the columns for the "job_tags" table.
 	JobTagsColumns = []*schema.Column{
@@ -269,6 +381,7 @@ var (
 	// Tables holds all the tables in the schema.
 	Tables = []*schema.Table{
 		CredentialsTable,
+		EventsTable,
 		FilesTable,
 		JobsTable,
 		LinksTable,
@@ -284,10 +397,22 @@ var (
 
 func init() {
 	CredentialsTable.ForeignKeys[0].RefTable = TargetsTable
+	EventsTable.ForeignKeys[0].RefTable = JobsTable
+	EventsTable.ForeignKeys[1].RefTable = FilesTable
+	EventsTable.ForeignKeys[2].RefTable = CredentialsTable
+	EventsTable.ForeignKeys[3].RefTable = LinksTable
+	EventsTable.ForeignKeys[4].RefTable = TagsTable
+	EventsTable.ForeignKeys[5].RefTable = TargetsTable
+	EventsTable.ForeignKeys[6].RefTable = TasksTable
+	EventsTable.ForeignKeys[7].RefTable = UsersTable
+	EventsTable.ForeignKeys[8].RefTable = EventsTable
+	EventsTable.ForeignKeys[9].RefTable = UsersTable
 	JobsTable.ForeignKeys[0].RefTable = JobsTable
+	JobsTable.ForeignKeys[1].RefTable = UsersTable
 	LinksTable.ForeignKeys[0].RefTable = FilesTable
 	TasksTable.ForeignKeys[0].RefTable = JobsTable
 	TasksTable.ForeignKeys[1].RefTable = TargetsTable
+	UsersTable.ForeignKeys[0].RefTable = EventsTable
 	JobTagsTable.ForeignKeys[0].RefTable = JobsTable
 	JobTagsTable.ForeignKeys[1].RefTable = TagsTable
 	TargetTagsTable.ForeignKeys[0].RefTable = TargetsTable

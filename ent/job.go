@@ -33,8 +33,11 @@ type Job struct {
 		Prev *Job
 		// Next holds the value of the next edge.
 		Next *Job
+		// Owner holds the value of the owner edge.
+		Owner *User
 	} `json:"edges"`
-	prev_id *int
+	prev_id  *int
+	owner_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -51,6 +54,7 @@ func (*Job) scanValues() []interface{} {
 func (*Job) fkValues() []interface{} {
 	return []interface{}{
 		&sql.NullInt64{}, // prev_id
+		&sql.NullInt64{}, // owner_id
 	}
 }
 
@@ -89,6 +93,12 @@ func (j *Job) assignValues(values ...interface{}) error {
 			j.prev_id = new(int)
 			*j.prev_id = int(value.Int64)
 		}
+		if value, ok := values[1].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
+		} else if value.Valid {
+			j.owner_id = new(int)
+			*j.owner_id = int(value.Int64)
+		}
 	}
 	return nil
 }
@@ -111,6 +121,11 @@ func (j *Job) QueryPrev() *JobQuery {
 // QueryNext queries the next edge of the Job.
 func (j *Job) QueryNext() *JobQuery {
 	return (&JobClient{j.config}).QueryNext(j)
+}
+
+// QueryOwner queries the owner edge of the Job.
+func (j *Job) QueryOwner() *UserQuery {
+	return (&JobClient{j.config}).QueryOwner(j)
 }
 
 // Update returns a builder for updating this Job.

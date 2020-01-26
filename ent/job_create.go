@@ -13,6 +13,7 @@ import (
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // JobCreate is the builder for creating a Job entity.
@@ -25,6 +26,7 @@ type JobCreate struct {
 	tags         map[int]struct{}
 	prev         map[int]struct{}
 	next         map[int]struct{}
+	owner        map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -137,6 +139,20 @@ func (jc *JobCreate) SetNext(j *Job) *JobCreate {
 	return jc.SetNextID(j.ID)
 }
 
+// SetOwnerID sets the owner edge to User by id.
+func (jc *JobCreate) SetOwnerID(id int) *JobCreate {
+	if jc.owner == nil {
+		jc.owner = make(map[int]struct{})
+	}
+	jc.owner[id] = struct{}{}
+	return jc
+}
+
+// SetOwner sets the owner edge to User.
+func (jc *JobCreate) SetOwner(u *User) *JobCreate {
+	return jc.SetOwnerID(u.ID)
+}
+
 // Save creates the Job in the database.
 func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	if jc.Name == nil {
@@ -160,6 +176,12 @@ func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	}
 	if len(jc.next) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
+	}
+	if len(jc.owner) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
+	}
+	if jc.owner == nil {
+		return nil, errors.New("ent: missing required edge \"owner\"")
 	}
 	return jc.sqlSave(ctx)
 }
@@ -276,6 +298,25 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := jc.owner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
 				},
 			},
 		}

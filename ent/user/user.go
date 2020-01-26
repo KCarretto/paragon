@@ -23,9 +23,25 @@ const (
 	FieldSessionToken = "session_token"
 	// FieldActivated holds the string denoting the activated vertex property in the database.
 	FieldActivated = "activated"
+	// FieldIsAdmin holds the string denoting the isadmin vertex property in the database.
+	FieldIsAdmin = "is_admin"
 
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// JobsTable is the table the holds the jobs relation/edge.
+	JobsTable = "jobs"
+	// JobsInverseTable is the table name for the Job entity.
+	// It exists in this package in order to avoid circular dependency with the "job" package.
+	JobsInverseTable = "jobs"
+	// JobsColumn is the table column denoting the jobs relation/edge.
+	JobsColumn = "owner_id"
+	// EventsTable is the table the holds the events relation/edge.
+	EventsTable = "events"
+	// EventsInverseTable is the table name for the Event entity.
+	// It exists in this package in order to avoid circular dependency with the "event" package.
+	EventsInverseTable = "events"
+	// EventsColumn is the table column denoting the events relation/edge.
+	EventsColumn = "owner_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -37,6 +53,12 @@ var Columns = []string{
 	FieldPhotoURL,
 	FieldSessionToken,
 	FieldActivated,
+	FieldIsAdmin,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the User type.
+var ForeignKeys = []string{
+	"event_liker_id",
 }
 
 var (
@@ -65,4 +87,9 @@ var (
 	descActivated = fields[5].Descriptor()
 	// DefaultActivated holds the default value on creation for the Activated field.
 	DefaultActivated = descActivated.Default.(bool)
+
+	// descIsAdmin is the schema descriptor for IsAdmin field.
+	descIsAdmin = fields[6].Descriptor()
+	// DefaultIsAdmin holds the default value on creation for the IsAdmin field.
+	DefaultIsAdmin = descIsAdmin.Default.(bool)
 )

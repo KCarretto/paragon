@@ -27,6 +27,17 @@ type User struct {
 	SessionToken string `json:"-"`
 	// Activated holds the value of the "Activated" field.
 	Activated bool `json:"Activated,omitempty"`
+	// IsAdmin holds the value of the "IsAdmin" field.
+	IsAdmin bool `json:"IsAdmin,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the UserQuery when eager-loading is set.
+	Edges struct {
+		// Jobs holds the value of the jobs edge.
+		Jobs []*Job
+		// Events holds the value of the events edge.
+		Events []*Event
+	} `json:"edges"`
+	event_liker_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -39,6 +50,14 @@ func (*User) scanValues() []interface{} {
 		&sql.NullString{}, // PhotoURL
 		&sql.NullString{}, // SessionToken
 		&sql.NullBool{},   // Activated
+		&sql.NullBool{},   // IsAdmin
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*User) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // event_liker_id
 	}
 }
 
@@ -84,7 +103,31 @@ func (u *User) assignValues(values ...interface{}) error {
 	} else if value.Valid {
 		u.Activated = value.Bool
 	}
+	if value, ok := values[6].(*sql.NullBool); !ok {
+		return fmt.Errorf("unexpected type %T for field IsAdmin", values[6])
+	} else if value.Valid {
+		u.IsAdmin = value.Bool
+	}
+	values = values[7:]
+	if len(values) == len(user.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_liker_id", value)
+		} else if value.Valid {
+			u.event_liker_id = new(int)
+			*u.event_liker_id = int(value.Int64)
+		}
+	}
 	return nil
+}
+
+// QueryJobs queries the jobs edge of the User.
+func (u *User) QueryJobs() *JobQuery {
+	return (&UserClient{u.config}).QueryJobs(u)
+}
+
+// QueryEvents queries the events edge of the User.
+func (u *User) QueryEvents() *EventQuery {
+	return (&UserClient{u.config}).QueryEvents(u)
 }
 
 // Update returns a builder for updating this User.
@@ -120,6 +163,8 @@ func (u *User) String() string {
 	builder.WriteString(", SessionToken=<sensitive>")
 	builder.WriteString(", Activated=")
 	builder.WriteString(fmt.Sprintf("%v", u.Activated))
+	builder.WriteString(", IsAdmin=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsAdmin))
 	builder.WriteByte(')')
 	return builder.String()
 }
