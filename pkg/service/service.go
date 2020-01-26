@@ -1,10 +1,9 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
-
-	"github.com/kcarretto/paragon/pkg/auth"
 )
 
 type RequestLogger interface {
@@ -12,11 +11,11 @@ type RequestLogger interface {
 }
 
 type Authenticator interface {
-	Authenticate(*http.Request) (*auth.Context, error)
+	Authenticate(*http.Request) (context.Context, error)
 }
 
 type Authorizer interface {
-	Authorize(*auth.Context, *http.Request) error
+	Authorize(*http.Request) error
 }
 
 type ErrorPresenter interface {
@@ -51,7 +50,7 @@ type Endpoint struct {
 
 func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
-	var ctx *auth.Context
+	var ctx context.Context
 
 	// Log all requests, even those that error or panic
 	defer func() { fn.LogRequest(req, err) }()
@@ -64,9 +63,10 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		fn.PresentError(w, err)
 		return
 	}
+	req = req.WithContext(ctx)
 
 	// Authorize the request
-	if err = fn.Authorize(ctx, req); err != nil {
+	if err = fn.Authorize(req); err != nil {
 		fn.PresentError(w, err)
 		return
 	}
@@ -99,22 +99,20 @@ func (fn *Endpoint) PresentError(w http.ResponseWriter, err error) {
 	fn.ErrorPresenter.PresentError(w, err)
 }
 
-func (fn *Endpoint) Authenticate(req *http.Request) (*auth.Context, error) {
+func (fn *Endpoint) Authenticate(req *http.Request) (context.Context, error) {
 	if fn.Authenticator == nil {
-		return &auth.Context{
-			Context: req.Context(),
-		}, nil
+		return req.Context(), nil
 	}
 
 	return fn.Authenticator.Authenticate(req)
 }
 
-func (fn *Endpoint) Authorize(ctx *auth.Context, req *http.Request) error {
+func (fn *Endpoint) Authorize(req *http.Request) error {
 	if fn.Authorizer == nil {
 		return nil
 	}
 
-	return fn.Authorizer.Authorize(ctx, req)
+	return fn.Authorizer.Authorize(req)
 }
 
 func (fn *Endpoint) stayCalm(w http.ResponseWriter) {

@@ -9,11 +9,15 @@ import (
 	"github.com/kcarretto/paragon/ent"
 )
 
+type authKey string
+
+var userContextKey authKey = "user"
+
 type HTTPAuthenticator struct {
 	Graph *ent.Client
 }
 
-func (auth HTTPAuthenticator) Authenticate(req *http.Request) (*Context, error) {
+func (auth HTTPAuthenticator) Authenticate(req *http.Request) (context.Context, error) {
 	userID, err := parseUserID(req)
 	if err != nil {
 		return nil, err
@@ -27,7 +31,7 @@ func (auth HTTPAuthenticator) Authenticate(req *http.Request) (*Context, error) 
 	return auth.AuthenticateUser(req.Context(), userID, token)
 }
 
-func (auth HTTPAuthenticator) AuthenticateUser(ctx context.Context, userID int, token Secret) (*Context, error) {
+func (auth HTTPAuthenticator) AuthenticateUser(ctx context.Context, userID int, token Secret) (context.Context, error) {
 	user, err := auth.Graph.User.Get(ctx, userID)
 	if err != nil || user == nil {
 		return nil, fmt.Errorf("invalid user cookie: %w", err)
@@ -41,10 +45,18 @@ func (auth HTTPAuthenticator) AuthenticateUser(ctx context.Context, userID int, 
 		return nil, fmt.Errorf("invalid session cookie")
 	}
 
-	return &Context{
-		Context: ctx,
-		user:    user,
-	}, nil
+	return context.WithValue(ctx, userContextKey, user), nil
+}
+
+func GetUser(ctx context.Context) *ent.User {
+	if v := ctx.Value(userContextKey); v != nil {
+		if usr, ok := v.(*ent.User); ok {
+			return usr
+		}
+		panic(fmt.Errorf("Received non-user value for user context key: %v", v))
+	}
+
+	return nil
 }
 
 // func CreateUserSession(ctx context.Context, user *ent.User) *Context {
