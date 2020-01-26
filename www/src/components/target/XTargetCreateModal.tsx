@@ -23,7 +23,11 @@ export const CREATE_TARGET_MUTATION = gql`
   }
 `;
 
-const XTargetCreateModal = () => {
+type TargetCreateModalParams = {
+  openOnStart?: boolean;
+};
+
+const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
   const [openModal, closeModal, isOpen] = useModal();
   const [error, setError] = useState<ApolloError>(null);
 
@@ -63,6 +67,10 @@ const XTargetCreateModal = () => {
       })
       .catch(error => setError(error));
   };
+
+  if (openOnStart) {
+    openModal();
+  }
 
   return (
     <Modal

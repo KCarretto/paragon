@@ -39,9 +39,10 @@ export const QUEUE_JOB_MUTATION = gql`
 
 type JobQueueModalParams = {
   header?: string;
+  openOnStart?: boolean;
 };
 
-const XJobQueueModal = ({ header }: JobQueueModalParams) => {
+const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
   const [openModal, closeModal, isOpen] = useModal();
   const [error, setError] = useState<ApolloError>(null);
 
@@ -82,6 +83,10 @@ const XJobQueueModal = ({ header }: JobQueueModalParams) => {
       })
       .catch(err => setError(err));
   };
+
+  if (openOnStart) {
+    openModal();
+  }
 
   return (
     <Modal
