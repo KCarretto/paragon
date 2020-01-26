@@ -273,11 +273,6 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 		Update().
 		AddFails(1).
 		Save(ctx)
-	r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetCredential(cred).
-		SetKind(event.KindFAILCREDENTIAL).
-		SaveX(ctx)
 	return cred, err
 }
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
@@ -383,11 +378,14 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 			}
 		}
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(actor).
 		SetJob(job).
 		SetKind(event.KindCREATEJOB).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return job, err
+	}
 	return job, nil
 }
 func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error) {
@@ -403,7 +401,7 @@ func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTa
 		SetKind(event.KindCREATETAG).
 		Save(ctx)
 	if err != nil {
-		return nil, err
+		return tag, err
 	}
 	return tag, nil
 }
@@ -411,66 +409,84 @@ func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.App
 	task, err := r.Graph.Task.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTask(task).
 		SetKind(event.KindAPPLYTAGTOTASK).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return task, err
+	}
 	return task, err
 }
 func (r *mutationResolver) ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (*ent.Target, error) {
 	target, err := r.Graph.Target.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTarget(target).
 		SetKind(event.KindAPPLYTAGTOTARGET).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return target, err
+	}
 	return target, err
 }
 func (r *mutationResolver) ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (*ent.Job, error) {
 	job, err := r.Graph.Job.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetJob(job).
 		SetKind(event.KindAPPLYTAGTOJOB).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return job, err
+	}
 	return job, err
 }
 func (r *mutationResolver) RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (*ent.Task, error) {
 	task, err := r.Graph.Task.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTask(task).
 		SetKind(event.KindREMOVETAGFROMTASK).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return task, err
+	}
 	return task, err
 }
 func (r *mutationResolver) RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (*ent.Target, error) {
 	target, err := r.Graph.Target.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTarget(target).
 		SetKind(event.KindREMOVETAGFROMTARGET).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return target, err
+	}
 	return target, err
 }
 func (r *mutationResolver) RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (*ent.Job, error) {
 	job, err := r.Graph.Job.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetJob(job).
 		SetKind(event.KindREMOVETAGFROMJOB).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return job, err
+	}
 	return job, err
 }
 func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (*ent.Target, error) {
@@ -482,11 +498,14 @@ func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.Creat
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTarget(target).
 		SetKind(event.KindCREATETARGET).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return target, err
+	}
 	return target, nil
 }
 func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error) {
@@ -503,20 +522,26 @@ func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.Se
 		SetNillablePrimaryMAC(input.PrimaryMac).
 		SetNillablePublicIP(input.PublicIP).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetTarget(target).
 		SetKind(event.KindSETTARGETFIELDS).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return target, err
+	}
 	return target, err
 }
 func (r *mutationResolver) DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error) {
-	err := r.Graph.Target.DeleteOneID(input.ID).Exec(ctx)
-	r.Graph.Event.Create().
+	delErr := r.Graph.Target.DeleteOneID(input.ID).Exec(ctx)
+	_, err := r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetKind(event.KindDELETETARGET).
-		SaveX(ctx)
-	return err != nil, err
+		Save(ctx)
+	if err != nil {
+		return delErr != nil, err
+	}
+	return delErr != nil, err
 }
 func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error) {
 	kind := credential.KindPassword
@@ -534,12 +559,15 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	target, err := r.Graph.Target.UpdateOneID(input.ID).
 		AddCredentialIDs(credential.ID).
 		Save(ctx)
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetCredential(credential).
 		SetTarget(target).
 		SetKind(event.KindADDCREDENTIALFORTARGET).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return target, err
+	}
 	return target, err
 }
 func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error) {
@@ -683,11 +711,14 @@ func (r *mutationResolver) CreateLink(ctx context.Context, input *models.CreateL
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetLink(link).
 		SetKind(event.KindCREATELINK).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return link, err
+	}
 	return link, nil
 }
 func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetLinkFieldsRequest) (*ent.Link, error) {
@@ -705,11 +736,14 @@ func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetL
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetLink(link).
 		SetKind(event.KindSETLINKFIELDS).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return link, err
+	}
 	return link, nil
 }
 func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.ActivateUserRequest) (*ent.User, error) {
@@ -724,11 +758,14 @@ func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.Activ
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetUser(user).
 		SetKind(event.KindACTIVATEUSER).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return user, err
+	}
 	return user, nil
 }
 func (r *mutationResolver) MakeAdmin(ctx context.Context, input *models.MakeAdminRequest) (*ent.User, error) {
@@ -742,11 +779,14 @@ func (r *mutationResolver) MakeAdmin(ctx context.Context, input *models.MakeAdmi
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetUser(user).
 		SetKind(event.KindMAKEADMIN).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return user, err
+	}
 	return user, nil
 }
 func (r *mutationResolver) RemoveAdmin(ctx context.Context, input *models.RemoveAdminRequest) (*ent.User, error) {
@@ -760,11 +800,14 @@ func (r *mutationResolver) RemoveAdmin(ctx context.Context, input *models.Remove
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetUser(user).
 		SetKind(event.KindREMOVEADMIN).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return user, err
+	}
 	return user, nil
 }
 func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeNameRequest) (*ent.User, error) {
@@ -778,10 +821,13 @@ func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeN
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetKind(event.KindCHANGENAME).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return actor, err
+	}
 	return actor, nil
 }
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
@@ -792,11 +838,14 @@ func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEven
 	if err != nil {
 		return nil, err
 	}
-	r.Graph.Event.Create().
+	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetEvent(e).
 		SetKind(event.KindLIKEEVENT).
-		SaveX(ctx)
+		Save(ctx)
+	if err != nil {
+		return e, err
+	}
 	return e, nil
 }
 

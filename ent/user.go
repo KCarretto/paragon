@@ -17,8 +17,6 @@ type User struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
 	Name string `json:"Name,omitempty"`
-	// Email holds the value of the "Email" field.
-	Email string `json:"Email,omitempty"`
 	// OAuthID holds the value of the "OAuthID" field.
 	OAuthID string `json:"-"`
 	// PhotoURL holds the value of the "PhotoURL" field.
@@ -45,7 +43,6 @@ func (*User) scanValues() []interface{} {
 	return []interface{}{
 		&sql.NullInt64{},  // id
 		&sql.NullString{}, // Name
-		&sql.NullString{}, // Email
 		&sql.NullString{}, // OAuthID
 		&sql.NullString{}, // PhotoURL
 		&sql.NullString{}, // SessionToken
@@ -79,36 +76,31 @@ func (u *User) assignValues(values ...interface{}) error {
 		u.Name = value.String
 	}
 	if value, ok := values[1].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Email", values[1])
-	} else if value.Valid {
-		u.Email = value.String
-	}
-	if value, ok := values[2].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field OAuthID", values[2])
+		return fmt.Errorf("unexpected type %T for field OAuthID", values[1])
 	} else if value.Valid {
 		u.OAuthID = value.String
 	}
-	if value, ok := values[3].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PhotoURL", values[3])
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PhotoURL", values[2])
 	} else if value.Valid {
 		u.PhotoURL = value.String
 	}
-	if value, ok := values[4].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field SessionToken", values[4])
+	if value, ok := values[3].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field SessionToken", values[3])
 	} else if value.Valid {
 		u.SessionToken = value.String
 	}
-	if value, ok := values[5].(*sql.NullBool); !ok {
-		return fmt.Errorf("unexpected type %T for field Activated", values[5])
+	if value, ok := values[4].(*sql.NullBool); !ok {
+		return fmt.Errorf("unexpected type %T for field Activated", values[4])
 	} else if value.Valid {
 		u.Activated = value.Bool
 	}
-	if value, ok := values[6].(*sql.NullBool); !ok {
-		return fmt.Errorf("unexpected type %T for field IsAdmin", values[6])
+	if value, ok := values[5].(*sql.NullBool); !ok {
+		return fmt.Errorf("unexpected type %T for field IsAdmin", values[5])
 	} else if value.Valid {
 		u.IsAdmin = value.Bool
 	}
-	values = values[7:]
+	values = values[6:]
 	if len(values) == len(user.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
 			return fmt.Errorf("unexpected type %T for edge-field event_liker_id", value)
@@ -155,8 +147,6 @@ func (u *User) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", u.ID))
 	builder.WriteString(", Name=")
 	builder.WriteString(u.Name)
-	builder.WriteString(", Email=")
-	builder.WriteString(u.Email)
 	builder.WriteString(", OAuthID=<sensitive>")
 	builder.WriteString(", PhotoURL=")
 	builder.WriteString(u.PhotoURL)

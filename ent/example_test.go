@@ -123,7 +123,6 @@ func ExampleEvent() {
 	u7 := client.User.
 		Create().
 		SetName("string").
-		SetEmail("string").
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
@@ -134,13 +133,12 @@ func ExampleEvent() {
 	e8 := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindFAILCREDENTIAL).
+		SetKind(event.KindCREATEJOB).
 		SaveX(ctx)
 	log.Println("event created:", e8)
 	u9 := client.User.
 		Create().
 		SetName("string").
-		SetEmail("string").
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
@@ -153,7 +151,7 @@ func ExampleEvent() {
 	e := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindFAILCREDENTIAL).
+		SetKind(event.KindCREATEJOB).
 		SetJob(j0).
 		SetFile(f1).
 		SetCredential(c2).
@@ -535,7 +533,7 @@ func ExampleUser() {
 	e1 := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindFAILCREDENTIAL).
+		SetKind(event.KindCREATEJOB).
 		SaveX(ctx)
 	log.Println("event created:", e1)
 
@@ -543,7 +541,6 @@ func ExampleUser() {
 	u := client.User.
 		Create().
 		SetName("string").
-		SetEmail("string").
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").

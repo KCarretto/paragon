@@ -196,7 +196,6 @@ type ComplexityRoot struct {
 
 	User struct {
 		Activated    func(childComplexity int) int
-		Email        func(childComplexity int) int
 		ID           func(childComplexity int) int
 		IsAdmin      func(childComplexity int) int
 		Jobs         func(childComplexity int, input *models.Filter) int
@@ -1347,13 +1346,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.User.Activated(childComplexity), true
 
-	case "User.email":
-		if e.complexity.User.Email == nil {
-			break
-		}
-
-		return e.complexity.User.Email(childComplexity), true
-
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
@@ -1575,7 +1567,6 @@ type Link @goModel(model: "github.com/kcarretto/paragon/ent.Link") {
 type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
   id: ID!
   name: String
-  email: String
   oAuthID: String
   photoURL: String
   sessionToken: String
@@ -6887,40 +6878,6 @@ func (ec *executionContext) _User_name(ctx context.Context, field graphql.Collec
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_email(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Email, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
 func (ec *executionContext) _User_oAuthID(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -9799,8 +9756,6 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			}
 		case "name":
 			out.Values[i] = ec._User_name(ctx, field, obj)
-		case "email":
-			out.Values[i] = ec._User_email(ctx, field, obj)
 		case "oAuthID":
 			out.Values[i] = ec._User_oAuthID(ctx, field, obj)
 		case "photoURL":

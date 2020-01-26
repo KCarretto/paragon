@@ -18,8 +18,7 @@ import (
 // UserUpdate is the builder for updating User entities.
 type UserUpdate struct {
 	config
-	Name  *string
-	Email *string
+	Name *string
 
 	PhotoURL          *string
 	SessionToken      *string
@@ -42,12 +41,6 @@ func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
 // SetName sets the Name field.
 func (uu *UserUpdate) SetName(s string) *UserUpdate {
 	uu.Name = &s
-	return uu
-}
-
-// SetEmail sets the Email field.
-func (uu *UserUpdate) SetEmail(s string) *UserUpdate {
-	uu.Email = &s
 	return uu
 }
 
@@ -243,13 +236,6 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldName,
 		})
 	}
-	if value := uu.Email; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  *value,
-			Column: user.FieldEmail,
-		})
-	}
 	if value := uu.PhotoURL; value != nil {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
@@ -372,9 +358,8 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UserUpdateOne is the builder for updating a single User entity.
 type UserUpdateOne struct {
 	config
-	id    int
-	Name  *string
-	Email *string
+	id   int
+	Name *string
 
 	PhotoURL          *string
 	SessionToken      *string
@@ -390,12 +375,6 @@ type UserUpdateOne struct {
 // SetName sets the Name field.
 func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
 	uuo.Name = &s
-	return uuo
-}
-
-// SetEmail sets the Email field.
-func (uuo *UserUpdateOne) SetEmail(s string) *UserUpdateOne {
-	uuo.Email = &s
 	return uuo
 }
 
@@ -583,13 +562,6 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldName,
-		})
-	}
-	if value := uuo.Email; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  *value,
-			Column: user.FieldEmail,
 		})
 	}
 	if value := uuo.PhotoURL; value != nil {

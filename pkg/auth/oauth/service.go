@@ -111,7 +111,6 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 			SetOAuthID(profile.OAuthID).
 			SetSessionToken(string(auth.NewSecret(auth.SessionTokenLength))).
 			SetName(profile.Name).
-			SetEmail(profile.Email).
 			SetPhotoURL(profile.PhotoURL).
 			SetIsAdmin(num == 0).
 			SetActivated(num == 0).

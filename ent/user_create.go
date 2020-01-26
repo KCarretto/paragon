@@ -18,7 +18,6 @@ import (
 type UserCreate struct {
 	config
 	Name         *string
-	Email        *string
 	OAuthID      *string
 	PhotoURL     *string
 	SessionToken *string
@@ -31,12 +30,6 @@ type UserCreate struct {
 // SetName sets the Name field.
 func (uc *UserCreate) SetName(s string) *UserCreate {
 	uc.Name = &s
-	return uc
-}
-
-// SetEmail sets the Email field.
-func (uc *UserCreate) SetEmail(s string) *UserCreate {
-	uc.Email = &s
 	return uc
 }
 
@@ -142,9 +135,6 @@ func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
 	if err := user.NameValidator(*uc.Name); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 	}
-	if uc.Email == nil {
-		return nil, errors.New("ent: missing required field \"Email\"")
-	}
 	if uc.OAuthID == nil {
 		return nil, errors.New("ent: missing required field \"OAuthID\"")
 	}
@@ -189,14 +179,6 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 			Column: user.FieldName,
 		})
 		u.Name = *value
-	}
-	if value := uc.Email; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
-			Type:   field.TypeString,
-			Value:  *value,
-			Column: user.FieldEmail,
-		})
-		u.Email = *value
 	}
 	if value := uc.OAuthID; value != nil {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
