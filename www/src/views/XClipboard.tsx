@@ -2,15 +2,15 @@ import * as React from "react";
 import { FunctionComponent, useState } from "react";
 import { Popup } from "semantic-ui-react";
 
-type SidebarProps = {
+type ClipboardProps = {
   value: string;
 };
 
-const XClipboard: FunctionComponent<SidebarProps> = props => {
+const XClipboard: FunctionComponent<ClipboardProps> = props => {
   const [copySuccess, setCopySuccess] = useState<string>("Copy to clipboard!");
   let copy = (_: React.MouseEvent<HTMLSpanElement, MouseEvent>) => {
     navigator.clipboard.writeText(props.value);
-    setCopySuccess("Successfully copied '" + props.value + "' to clipboard!");
+    setCopySuccess("Successfully copied to clipboard!");
     setTimeout(function() {
       setCopySuccess("Copy to clipboard!");
     }, 1500);
