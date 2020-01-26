@@ -43,6 +43,10 @@ func (auth HTTPAuthenticator) Authenticate(req *http.Request) (context.Context, 
 		return nil, fmt.Errorf("invalid session cookie")
 	}
 
+	if !user.Activated && !user.IsAdmin {
+		return nil, fmt.Errorf("user pending activation")
+	}
+
 	return context.WithValue(req.Context(), userContextKey, user), nil
 }
 

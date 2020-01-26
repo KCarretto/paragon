@@ -105,8 +105,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 	if exists {
 		usr = userQuery.OnlyX(req.Context())
 	} else {
-		// TODO: Setup TOFU for admin
-		// num := svc.Graph.User.Query().CountX(req.Context())
+		num := svc.Graph.User.Query().CountX(req.Context())
 
 		usr = svc.Graph.User.Create().
 			SetOAuthID(profile.OAuthID).
@@ -114,6 +113,8 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 			SetName(profile.Name).
 			SetEmail(profile.Email).
 			SetPhotoURL(profile.PhotoURL).
+			SetIsAdmin(num == 0).
+			SetActivated(num == 0).
 			SaveX(req.Context())
 	}
 
