@@ -1,4 +1,3 @@
-import Cookies from "js-cookie";
 import * as React from "react";
 import { FunctionComponent } from "react";
 import { HotKeys } from "react-hotkeys";
@@ -10,16 +9,23 @@ import "./index.css";
 
 type SidebarProps = {
   routeMap: RouteConfig[];
+  userID?: string;
+  isActivated: boolean;
+  isAdmin: boolean;
 };
 
 const XSidebar: FunctionComponent<SidebarProps> = props => {
-  let userId = Cookies.get("pg-userid");
+  // let userId = Cookies.get("pg-userid");
   let modal = <span />;
   const createJob = React.useCallback(() => {
     modal = <XJobQueueModal openOnStart={true} />;
   }, []);
-  if (!userId) {
+
+  if (!props.userID) {
     return <Redirect to="/login" />;
+  }
+  if (!props.isActivated) {
+    return <Redirect to="/login/pending" />;
   }
 
   const handlers = {
