@@ -62,8 +62,8 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer fn.stayCalm(w, logger)
 
 	// Authenticate the request
-	if user, err = fn.Authenticate(req); err != nil {
-		auth.ClearUserSession(w)
+	user, err = fn.Authenticate(req)
+	if err != nil {
 		fn.PresentError(w, err)
 		return
 	}
@@ -77,13 +77,15 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// Authorize the request
-	if err = fn.Authorize(req); err != nil {
+	err = fn.Authorize(req)
+	if err != nil {
 		fn.PresentError(w, err)
 		return
 	}
 
 	// Handle request
-	if err = fn.Handle(w, req); err != nil {
+	err = fn.Handle(w, req)
+	if err != nil {
 		fn.PresentError(w, err)
 		return
 	}

@@ -6,7 +6,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import { RouteConfig } from "../../config/routes";
 import { User } from "../../graphql/models";
 import XLogin from "../../views/XLogin";
-import { XLoadingMessage } from "./components/messages";
+import { XLoadingMessage } from "../messages";
 import XSidebar from "./XSidebar";
 
 const WHOAMI_QUERY = gql`
