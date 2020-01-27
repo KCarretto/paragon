@@ -67,7 +67,7 @@ const XFileCard = (f: File) => {
                       <List.Header>{link.alias}</List.Header>
                       <Feed.Date>
                         {link.expirationTime
-                          ? "Expires in " + moment().to(link.expirationTime)
+                          ? "Expires " + moment().to(link.expirationTime)
                           : "Never expires"}
                       </Feed.Date>
                     </Feed.Summary>

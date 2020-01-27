@@ -49,6 +49,7 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
   const [alias, setAlias] = useState<string>("");
   const [expirationTime, setExpirationTime] = useState<string>(null);
   const [clicks, setClicks] = useState<number>(null);
+  const [dropdownTime, setDropdownTime] = useState<string>("Never");
 
   const [createLink, { called, loading }] = useMutation(CREATE_LINK_MUTATION, {
     refetchQueries: [{ query: MULTI_FILE_QUERY }]
@@ -135,6 +136,21 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
     }
   ];
 
+  const getDropdown = () => (
+    <Dropdown
+      label="Link Expiration Time"
+      placeholder="Never"
+      fluid
+      selection
+      value={expirationTime}
+      options={expiryOptions}
+      onChange={(e, selection) => {
+        setExpirationTime(String(selection.value));
+        // setDropdownTime(selection.text);
+      }}
+    />
+  );
+
   return (
     <Modal
       open={isOpen}
@@ -153,7 +169,8 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
           <Grid.Column>
             <Input
               fluid
-              placeholder="Enter link alias(what will be after '/l/' in the URL)"
+              label="Alias"
+              placeholder="/l/${alias}"
               name="alias"
               value={alias}
               onChange={(e, { value }) => setAlias(value)}
@@ -161,22 +178,13 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
           </Grid.Column>
 
           <Grid.Column>
-            <Dropdown
-              label="Link Expiration Time"
-              placeholder="Never"
-              value={expirationTime === null ? null : expirationTime.toString()}
-              fluid
-              selection
-              options={expiryOptions}
-              onChange={(e, selection) =>
-                setExpirationTime(selection.value.toString())
-              }
-            />
+            <Input fluid label="Expiration" input={getDropdown()} />
           </Grid.Column>
 
           <Grid.Column>
             <Input
               fluid
+              label="Clicks"
               placeholder="Unlimited Clicks"
               name="clicks"
               value={clicks}
