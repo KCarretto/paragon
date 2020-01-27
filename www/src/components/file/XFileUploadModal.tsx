@@ -22,7 +22,7 @@ const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
     data.append("fileName", name);
     data.append("fileContent", content);
 
-    fetch(window.location.origin + "/cdn/upload", {
+    fetch(window.location.origin + "/cdn/upload/", {
       mode: "no-cors",
       method: "POST",
       body: data
