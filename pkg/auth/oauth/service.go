@@ -94,7 +94,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 	}
 
 	userQuery := svc.Graph.User.Query().Where(user.OAuthID(profile.OAuthID))
-	exists, err := userQuery.Exist(req.Context())
+	exists, err := userQuery.Clone().Exist(req.Context())
 	if err != nil {
 		return fmt.Errorf("failed to retrieve user info: %w", err)
 	}

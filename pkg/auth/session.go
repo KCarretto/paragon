@@ -58,21 +58,3 @@ func WithUserSession(w http.ResponseWriter, req *http.Request, user *ent.User) *
 	// Add user to request context
 	return req.WithContext(context.WithValue(req.Context(), userContextKey, user))
 }
-
-// ClearUserSession removes any session cookies for an HTTP request.
-func ClearUserSession(w http.ResponseWriter) {
-	// Expire session cookies
-	http.SetCookie(w, &http.Cookie{
-		Name:     SessionCookieName,
-		Value:    "",
-		Path:     "/",
-		HttpOnly: true,
-		Expires:  time.Unix(0, 0),
-	})
-	http.SetCookie(w, &http.Cookie{
-		Name:    UserCookieName,
-		Value:   "",
-		Path:    "/",
-		Expires: time.Unix(0, 0),
-	})
-}
