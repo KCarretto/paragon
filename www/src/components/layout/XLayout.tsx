@@ -61,13 +61,12 @@ const XLayout: FunctionComponent<LayoutProps> = props => {
   return (
     <Router>
       <Switch>
-        <Route path="/login">
-          <XLogin userID={userID} isActivated={activated} isAdmin={admin} />
-        </Route>
         <Route path="/login/pending">
           <XPendingActivation isActivated={activated} isAdmin={admin} />
         </Route>
-
+        <Route path="/login">
+          <XLogin userID={userID} isActivated={activated} isAdmin={admin} />
+        </Route>
         <Route path="/">
           <XSidebar
             routeMap={props.routeMap}

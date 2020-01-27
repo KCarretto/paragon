@@ -1,3 +1,4 @@
+import Cookies from "js-cookie";
 import * as React from "react";
 import { Redirect } from "react-router-dom";
 import {
@@ -17,7 +18,9 @@ export type XLoginParams = {
 };
 
 const XLogin = (props: XLoginParams) => {
-  if (props.userID) {
+  let userIDCookie = Cookies.get("pg-userid");
+
+  if (props.userID || userIDCookie) {
     if (props.isActivated || props.isAdmin) {
       return <Redirect to="/" />;
     }
