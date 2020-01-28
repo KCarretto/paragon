@@ -10,6 +10,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/target"
 )
 
 // CredentialCreate is the builder for creating a Credential entity.
@@ -19,6 +20,7 @@ type CredentialCreate struct {
 	secret    *string
 	kind      *credential.Kind
 	fails     *int
+	target    map[int]struct{}
 }
 
 // SetPrincipal sets the principal field.
@@ -53,6 +55,28 @@ func (cc *CredentialCreate) SetNillableFails(i *int) *CredentialCreate {
 	return cc
 }
 
+// SetTargetID sets the target edge to Target by id.
+func (cc *CredentialCreate) SetTargetID(id int) *CredentialCreate {
+	if cc.target == nil {
+		cc.target = make(map[int]struct{})
+	}
+	cc.target[id] = struct{}{}
+	return cc
+}
+
+// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+func (cc *CredentialCreate) SetNillableTargetID(id *int) *CredentialCreate {
+	if id != nil {
+		cc = cc.SetTargetID(*id)
+	}
+	return cc
+}
+
+// SetTarget sets the target edge to Target.
+func (cc *CredentialCreate) SetTarget(t *Target) *CredentialCreate {
+	return cc.SetTargetID(t.ID)
+}
+
 // Save creates the Credential in the database.
 func (cc *CredentialCreate) Save(ctx context.Context) (*Credential, error) {
 	if cc.principal == nil {
@@ -73,6 +97,9 @@ func (cc *CredentialCreate) Save(ctx context.Context) (*Credential, error) {
 	}
 	if err := credential.FailsValidator(*cc.fails); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
+	}
+	if len(cc.target) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
 	}
 	return cc.sqlSave(ctx)
 }
@@ -128,6 +155,25 @@ func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
 			Column: credential.FieldFails,
 		})
 		c.Fails = *value
+	}
+	if nodes := cc.target; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   credential.TargetTable,
+			Columns: []string{credential.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {

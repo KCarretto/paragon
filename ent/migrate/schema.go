@@ -20,7 +20,7 @@ var (
 		{Name: "secret", Type: field.TypeString},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"password", "key", "certificate"}},
 		{Name: "fails", Type: field.TypeInt, Default: credential.DefaultFails},
-		{Name: "target_credential_id", Type: field.TypeInt, Nullable: true},
+		{Name: "target_id", Type: field.TypeInt, Nullable: true},
 	}
 	// CredentialsTable holds the schema information for the "credentials" table.
 	CredentialsTable = &schema.Table{

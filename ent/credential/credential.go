@@ -24,6 +24,13 @@ const (
 
 	// Table holds the table name of the credential in the database.
 	Table = "credentials"
+	// TargetTable is the table the holds the target relation/edge.
+	TargetTable = "credentials"
+	// TargetInverseTable is the table name for the Target entity.
+	// It exists in this package in order to avoid circular dependency with the "target" package.
+	TargetInverseTable = "targets"
+	// TargetColumn is the table column denoting the target relation/edge.
+	TargetColumn = "target_id"
 )
 
 // Columns holds all SQL columns for credential fields.
@@ -37,7 +44,7 @@ var Columns = []string{
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the Credential type.
 var ForeignKeys = []string{
-	"target_credential_id",
+	"target_id",
 }
 
 var (

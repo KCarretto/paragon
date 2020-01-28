@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/facebookincubator/ent/dialect/sql"
@@ -11,17 +12,20 @@ import (
 	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/target"
 )
 
 // CredentialUpdate is the builder for updating Credential entities.
 type CredentialUpdate struct {
 	config
-	principal  *string
-	secret     *string
-	kind       *credential.Kind
-	fails      *int
-	addfails   *int
-	predicates []predicate.Credential
+	principal     *string
+	secret        *string
+	kind          *credential.Kind
+	fails         *int
+	addfails      *int
+	target        map[int]struct{}
+	clearedTarget bool
+	predicates    []predicate.Credential
 }
 
 // Where adds a new predicate for the builder.
@@ -73,6 +77,34 @@ func (cu *CredentialUpdate) AddFails(i int) *CredentialUpdate {
 	return cu
 }
 
+// SetTargetID sets the target edge to Target by id.
+func (cu *CredentialUpdate) SetTargetID(id int) *CredentialUpdate {
+	if cu.target == nil {
+		cu.target = make(map[int]struct{})
+	}
+	cu.target[id] = struct{}{}
+	return cu
+}
+
+// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+func (cu *CredentialUpdate) SetNillableTargetID(id *int) *CredentialUpdate {
+	if id != nil {
+		cu = cu.SetTargetID(*id)
+	}
+	return cu
+}
+
+// SetTarget sets the target edge to Target.
+func (cu *CredentialUpdate) SetTarget(t *Target) *CredentialUpdate {
+	return cu.SetTargetID(t.ID)
+}
+
+// ClearTarget clears the target edge to Target.
+func (cu *CredentialUpdate) ClearTarget() *CredentialUpdate {
+	cu.clearedTarget = true
+	return cu
+}
+
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (cu *CredentialUpdate) Save(ctx context.Context) (int, error) {
 	if cu.kind != nil {
@@ -84,6 +116,9 @@ func (cu *CredentialUpdate) Save(ctx context.Context) (int, error) {
 		if err := credential.FailsValidator(*cu.fails); err != nil {
 			return 0, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
 		}
+	}
+	if len(cu.target) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
 	}
 	return cu.sqlSave(ctx)
 }
@@ -163,6 +198,41 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: credential.FieldFails,
 		})
 	}
+	if cu.clearedTarget {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   credential.TargetTable,
+			Columns: []string{credential.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cu.target; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   credential.TargetTable,
+			Columns: []string{credential.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -175,12 +245,14 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // CredentialUpdateOne is the builder for updating a single Credential entity.
 type CredentialUpdateOne struct {
 	config
-	id        int
-	principal *string
-	secret    *string
-	kind      *credential.Kind
-	fails     *int
-	addfails  *int
+	id            int
+	principal     *string
+	secret        *string
+	kind          *credential.Kind
+	fails         *int
+	addfails      *int
+	target        map[int]struct{}
+	clearedTarget bool
 }
 
 // SetPrincipal sets the principal field.
@@ -226,6 +298,34 @@ func (cuo *CredentialUpdateOne) AddFails(i int) *CredentialUpdateOne {
 	return cuo
 }
 
+// SetTargetID sets the target edge to Target by id.
+func (cuo *CredentialUpdateOne) SetTargetID(id int) *CredentialUpdateOne {
+	if cuo.target == nil {
+		cuo.target = make(map[int]struct{})
+	}
+	cuo.target[id] = struct{}{}
+	return cuo
+}
+
+// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+func (cuo *CredentialUpdateOne) SetNillableTargetID(id *int) *CredentialUpdateOne {
+	if id != nil {
+		cuo = cuo.SetTargetID(*id)
+	}
+	return cuo
+}
+
+// SetTarget sets the target edge to Target.
+func (cuo *CredentialUpdateOne) SetTarget(t *Target) *CredentialUpdateOne {
+	return cuo.SetTargetID(t.ID)
+}
+
+// ClearTarget clears the target edge to Target.
+func (cuo *CredentialUpdateOne) ClearTarget() *CredentialUpdateOne {
+	cuo.clearedTarget = true
+	return cuo
+}
+
 // Save executes the query and returns the updated entity.
 func (cuo *CredentialUpdateOne) Save(ctx context.Context) (*Credential, error) {
 	if cuo.kind != nil {
@@ -237,6 +337,9 @@ func (cuo *CredentialUpdateOne) Save(ctx context.Context) (*Credential, error) {
 		if err := credential.FailsValidator(*cuo.fails); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
 		}
+	}
+	if len(cuo.target) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
 	}
 	return cuo.sqlSave(ctx)
 }
@@ -309,6 +412,41 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 			Value:  *value,
 			Column: credential.FieldFails,
 		})
+	}
+	if cuo.clearedTarget {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   credential.TargetTable,
+			Columns: []string{credential.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := cuo.target; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   credential.TargetTable,
+			Columns: []string{credential.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	c = &Credential{config: cuo.config}
 	_spec.Assign = c.assignValues

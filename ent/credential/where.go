@@ -4,6 +4,7 @@ package credential
 
 import (
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
 
@@ -504,6 +505,36 @@ func FailsLT(v int) predicate.Credential {
 func FailsLTE(v int) predicate.Credential {
 	return predicate.Credential(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldFails), v))
+	},
+	)
+}
+
+// HasTarget applies the HasEdge predicate on the "target" edge.
+func HasTarget() predicate.Credential {
+	return predicate.Credential(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TargetTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TargetTable, TargetColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	},
+	)
+}
+
+// HasTargetWith applies the HasEdge predicate on the "target" edge with a given conditions (other predicates).
+func HasTargetWith(preds ...predicate.Target) predicate.Credential {
+	return predicate.Credential(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(TargetInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, TargetTable, TargetColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
 	},
 	)
 }

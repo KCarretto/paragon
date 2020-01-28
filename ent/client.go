@@ -204,6 +204,20 @@ func (c *CredentialClient) GetX(ctx context.Context, id int) *Credential {
 	return cr
 }
 
+// QueryTarget queries the target edge of a Credential.
+func (c *CredentialClient) QueryTarget(cr *Credential) *TargetQuery {
+	query := &TargetQuery{config: c.config}
+	id := cr.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(credential.Table, credential.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, credential.TargetTable, credential.TargetColumn),
+	)
+	query.sql = sqlgraph.Neighbors(cr.driver.Dialect(), step)
+
+	return query
+}
+
 // EventClient is a client for the Event schema.
 type EventClient struct {
 	config

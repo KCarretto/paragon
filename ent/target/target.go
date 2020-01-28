@@ -42,7 +42,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "credential" package.
 	CredentialsInverseTable = "credentials"
 	// CredentialsColumn is the table column denoting the credentials relation/edge.
-	CredentialsColumn = "target_credential_id"
+	CredentialsColumn = "target_id"
 )
 
 // Columns holds all SQL columns for target fields.
