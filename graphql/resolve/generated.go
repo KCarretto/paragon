@@ -589,15 +589,14 @@ func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *m
 			AddCredentialIDs(credential.ID).
 			Save(ctx)
 		targets = append(targets, target)
-		_, err = r.Graph.Event.Create().
+
+		// if this errors its better to ignore and keep trying to add targets.
+		r.Graph.Event.Create().
 			SetOwner(auth.GetUser(ctx)).
 			SetCredential(credential).
 			SetTarget(target).
 			SetKind(event.KindADDCREDENTIALFORTARGET).
 			Save(ctx)
-		if err != nil {
-			return targets, err
-		}
 	}
 
 	return targets, nil
