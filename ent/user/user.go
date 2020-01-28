@@ -19,8 +19,8 @@ const (
 	FieldPhotoURL = "photo_url"
 	// FieldSessionToken holds the string denoting the sessiontoken vertex property in the database.
 	FieldSessionToken = "session_token"
-	// FieldActivated holds the string denoting the activated vertex property in the database.
-	FieldActivated = "activated"
+	// FieldIsActivated holds the string denoting the isactivated vertex property in the database.
+	FieldIsActivated = "is_activated"
 	// FieldIsAdmin holds the string denoting the isadmin vertex property in the database.
 	FieldIsAdmin = "is_admin"
 
@@ -49,7 +49,7 @@ var Columns = []string{
 	FieldOAuthID,
 	FieldPhotoURL,
 	FieldSessionToken,
-	FieldActivated,
+	FieldIsActivated,
 	FieldIsAdmin,
 }
 
@@ -80,10 +80,10 @@ var (
 		}
 	}()
 
-	// descActivated is the schema descriptor for Activated field.
-	descActivated = fields[4].Descriptor()
-	// DefaultActivated holds the default value on creation for the Activated field.
-	DefaultActivated = descActivated.Default.(bool)
+	// descIsActivated is the schema descriptor for IsActivated field.
+	descIsActivated = fields[4].Descriptor()
+	// DefaultIsActivated holds the default value on creation for the IsActivated field.
+	DefaultIsActivated = descIsActivated.Default.(bool)
 
 	// descIsAdmin is the schema descriptor for IsAdmin field.
 	descIsAdmin = fields[5].Descriptor()

@@ -23,6 +23,13 @@ export type AddCredentialForTargetRequest = {
   kind?: Maybe<Scalars['String']>,
 };
 
+export type AddCredentialForTargetsRequest = {
+  ids?: Maybe<Array<Scalars['ID']>>,
+  principal: Scalars['String'],
+  secret: Scalars['String'],
+  kind?: Maybe<Scalars['String']>,
+};
+
 export type ApplyTagRequest = {
   tagID: Scalars['ID'],
   entID: Scalars['ID'],
@@ -187,6 +194,7 @@ export type Mutation = {
   setTargetFields: Target,
   deleteTarget: Scalars['Boolean'],
   addCredentialForTarget: Target,
+  addCredentialForTargets?: Maybe<Array<Target>>,
   /** Task Mutations */
   claimTasks?: Maybe<Array<Task>>,
   claimTask?: Maybe<Task>,
@@ -266,6 +274,11 @@ export type MutationDeleteTargetArgs = {
 
 export type MutationAddCredentialForTargetArgs = {
   input?: Maybe<AddCredentialForTargetRequest>
+};
+
+
+export type MutationAddCredentialForTargetsArgs = {
+  input?: Maybe<AddCredentialForTargetsRequest>
 };
 
 
@@ -542,8 +555,7 @@ export type User = {
   name?: Maybe<Scalars['String']>,
   oAuthID?: Maybe<Scalars['String']>,
   photoURL?: Maybe<Scalars['String']>,
-  sessionToken?: Maybe<Scalars['String']>,
-  activated?: Maybe<Scalars['Boolean']>,
+  isActivated?: Maybe<Scalars['Boolean']>,
   isAdmin?: Maybe<Scalars['Boolean']>,
   jobs?: Maybe<Array<Maybe<Job>>>,
 };

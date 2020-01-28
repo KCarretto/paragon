@@ -133,10 +133,10 @@ func SessionToken(v string) predicate.User {
 	)
 }
 
-// Activated applies equality check predicate on the "Activated" field. It's identical to ActivatedEQ.
-func Activated(v bool) predicate.User {
+// IsActivated applies equality check predicate on the "IsActivated" field. It's identical to IsActivatedEQ.
+func IsActivated(v bool) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldActivated), v))
+		s.Where(sql.EQ(s.C(FieldIsActivated), v))
 	},
 	)
 }
@@ -661,18 +661,18 @@ func SessionTokenContainsFold(v string) predicate.User {
 	)
 }
 
-// ActivatedEQ applies the EQ predicate on the "Activated" field.
-func ActivatedEQ(v bool) predicate.User {
+// IsActivatedEQ applies the EQ predicate on the "IsActivated" field.
+func IsActivatedEQ(v bool) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldActivated), v))
+		s.Where(sql.EQ(s.C(FieldIsActivated), v))
 	},
 	)
 }
 
-// ActivatedNEQ applies the NEQ predicate on the "Activated" field.
-func ActivatedNEQ(v bool) predicate.User {
+// IsActivatedNEQ applies the NEQ predicate on the "IsActivated" field.
+func IsActivatedNEQ(v bool) predicate.User {
 	return predicate.User(func(s *sql.Selector) {
-		s.Where(sql.NEQ(s.C(FieldActivated), v))
+		s.Where(sql.NEQ(s.C(FieldIsActivated), v))
 	},
 	)
 }

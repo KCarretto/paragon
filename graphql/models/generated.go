@@ -17,6 +17,13 @@ type AddCredentialForTargetRequest struct {
 	Kind      *string `json:"kind"`
 }
 
+type AddCredentialForTargetsRequest struct {
+	Ids       []int   `json:"ids"`
+	Principal string  `json:"principal"`
+	Secret    string  `json:"secret"`
+	Kind      *string `json:"kind"`
+}
+
 type ApplyTagRequest struct {
 	TagID int `json:"tagID"`
 	EntID int `json:"entID"`

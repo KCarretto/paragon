@@ -21,7 +21,7 @@ type UserCreate struct {
 	OAuthID      *string
 	PhotoURL     *string
 	SessionToken *string
-	Activated    *bool
+	IsActivated  *bool
 	IsAdmin      *bool
 	jobs         map[int]struct{}
 	events       map[int]struct{}
@@ -59,16 +59,16 @@ func (uc *UserCreate) SetNillableSessionToken(s *string) *UserCreate {
 	return uc
 }
 
-// SetActivated sets the Activated field.
-func (uc *UserCreate) SetActivated(b bool) *UserCreate {
-	uc.Activated = &b
+// SetIsActivated sets the IsActivated field.
+func (uc *UserCreate) SetIsActivated(b bool) *UserCreate {
+	uc.IsActivated = &b
 	return uc
 }
 
-// SetNillableActivated sets the Activated field if the given value is not nil.
-func (uc *UserCreate) SetNillableActivated(b *bool) *UserCreate {
+// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+func (uc *UserCreate) SetNillableIsActivated(b *bool) *UserCreate {
 	if b != nil {
-		uc.SetActivated(*b)
+		uc.SetIsActivated(*b)
 	}
 	return uc
 }
@@ -141,9 +141,9 @@ func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
 	if uc.PhotoURL == nil {
 		return nil, errors.New("ent: missing required field \"PhotoURL\"")
 	}
-	if uc.Activated == nil {
-		v := user.DefaultActivated
-		uc.Activated = &v
+	if uc.IsActivated == nil {
+		v := user.DefaultIsActivated
+		uc.IsActivated = &v
 	}
 	if uc.IsAdmin == nil {
 		v := user.DefaultIsAdmin
@@ -204,13 +204,13 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		})
 		u.SessionToken = *value
 	}
-	if value := uc.Activated; value != nil {
+	if value := uc.IsActivated; value != nil {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
-			Column: user.FieldActivated,
+			Column: user.FieldIsActivated,
 		})
-		u.Activated = *value
+		u.IsActivated = *value
 	}
 	if value := uc.IsAdmin; value != nil {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

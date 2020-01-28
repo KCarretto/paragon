@@ -105,8 +105,7 @@ type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
   name: String
   oAuthID: String
   photoURL: String
-  sessionToken: String
-  activated: Boolean
+  isActivated: Boolean
   isAdmin: Boolean
 
   jobs(input: Filter): [Job]
@@ -186,6 +185,13 @@ input AddCredentialForTargetRequest {
   kind: String
 }
 
+input AddCredentialForTargetsRequest {
+  ids: [ID!]
+  principal: String!
+  secret: String!
+  kind: String
+}
+
 input ClaimTasksRequest {
   machineUUID: String
   primaryIP: String
@@ -254,6 +260,7 @@ type Mutation {
   setTargetFields(input: SetTargetFieldsRequest): Target!
   deleteTarget(input: DeleteTargetRequest): Boolean!
   addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
+  addCredentialForTargets(input: AddCredentialForTargetsRequest): [Target!]
 
   # Task Mutations
   claimTasks(input: ClaimTasksRequest): [Task!]

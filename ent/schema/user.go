@@ -29,7 +29,7 @@ func (User) Fields() []ent.Field {
 			Optional().
 			Sensitive().
 			Comment("The session token currently authenticating the user"),
-		field.Bool("Activated").
+		field.Bool("IsActivated").
 			Default(false).
 			Comment("True iff the user is active and able to authenticate"),
 		field.Bool("IsAdmin").

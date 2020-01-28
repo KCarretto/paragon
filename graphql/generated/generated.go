@@ -111,29 +111,30 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
-		ActivateUser           func(childComplexity int, input *models.ActivateUserRequest) int
-		AddCredentialForTarget func(childComplexity int, input *models.AddCredentialForTargetRequest) int
-		ApplyTagToJob          func(childComplexity int, input *models.ApplyTagRequest) int
-		ApplyTagToTarget       func(childComplexity int, input *models.ApplyTagRequest) int
-		ApplyTagToTask         func(childComplexity int, input *models.ApplyTagRequest) int
-		ChangeName             func(childComplexity int, input *models.ChangeNameRequest) int
-		ClaimTask              func(childComplexity int, id int) int
-		ClaimTasks             func(childComplexity int, input *models.ClaimTasksRequest) int
-		CreateJob              func(childComplexity int, input *models.CreateJobRequest) int
-		CreateLink             func(childComplexity int, input *models.CreateLinkRequest) int
-		CreateTag              func(childComplexity int, input *models.CreateTagRequest) int
-		CreateTarget           func(childComplexity int, input *models.CreateTargetRequest) int
-		DeleteTarget           func(childComplexity int, input *models.DeleteTargetRequest) int
-		FailCredential         func(childComplexity int, input *models.FailCredentialRequest) int
-		LikeEvent              func(childComplexity int, input *models.LikeEventRequest) int
-		MakeAdmin              func(childComplexity int, input *models.MakeAdminRequest) int
-		RemoveAdmin            func(childComplexity int, input *models.RemoveAdminRequest) int
-		RemoveTagFromJob       func(childComplexity int, input *models.RemoveTagRequest) int
-		RemoveTagFromTarget    func(childComplexity int, input *models.RemoveTagRequest) int
-		RemoveTagFromTask      func(childComplexity int, input *models.RemoveTagRequest) int
-		SetLinkFields          func(childComplexity int, input *models.SetLinkFieldsRequest) int
-		SetTargetFields        func(childComplexity int, input *models.SetTargetFieldsRequest) int
-		SubmitTaskResult       func(childComplexity int, input *models.SubmitTaskResultRequest) int
+		ActivateUser            func(childComplexity int, input *models.ActivateUserRequest) int
+		AddCredentialForTarget  func(childComplexity int, input *models.AddCredentialForTargetRequest) int
+		AddCredentialForTargets func(childComplexity int, input *models.AddCredentialForTargetsRequest) int
+		ApplyTagToJob           func(childComplexity int, input *models.ApplyTagRequest) int
+		ApplyTagToTarget        func(childComplexity int, input *models.ApplyTagRequest) int
+		ApplyTagToTask          func(childComplexity int, input *models.ApplyTagRequest) int
+		ChangeName              func(childComplexity int, input *models.ChangeNameRequest) int
+		ClaimTask               func(childComplexity int, id int) int
+		ClaimTasks              func(childComplexity int, input *models.ClaimTasksRequest) int
+		CreateJob               func(childComplexity int, input *models.CreateJobRequest) int
+		CreateLink              func(childComplexity int, input *models.CreateLinkRequest) int
+		CreateTag               func(childComplexity int, input *models.CreateTagRequest) int
+		CreateTarget            func(childComplexity int, input *models.CreateTargetRequest) int
+		DeleteTarget            func(childComplexity int, input *models.DeleteTargetRequest) int
+		FailCredential          func(childComplexity int, input *models.FailCredentialRequest) int
+		LikeEvent               func(childComplexity int, input *models.LikeEventRequest) int
+		MakeAdmin               func(childComplexity int, input *models.MakeAdminRequest) int
+		RemoveAdmin             func(childComplexity int, input *models.RemoveAdminRequest) int
+		RemoveTagFromJob        func(childComplexity int, input *models.RemoveTagRequest) int
+		RemoveTagFromTarget     func(childComplexity int, input *models.RemoveTagRequest) int
+		RemoveTagFromTask       func(childComplexity int, input *models.RemoveTagRequest) int
+		SetLinkFields           func(childComplexity int, input *models.SetLinkFieldsRequest) int
+		SetTargetFields         func(childComplexity int, input *models.SetTargetFieldsRequest) int
+		SubmitTaskResult        func(childComplexity int, input *models.SubmitTaskResultRequest) int
 	}
 
 	Query struct {
@@ -196,14 +197,13 @@ type ComplexityRoot struct {
 	}
 
 	User struct {
-		Activated    func(childComplexity int) int
-		ID           func(childComplexity int) int
-		IsAdmin      func(childComplexity int) int
-		Jobs         func(childComplexity int, input *models.Filter) int
-		Name         func(childComplexity int) int
-		OAuthID      func(childComplexity int) int
-		PhotoURL     func(childComplexity int) int
-		SessionToken func(childComplexity int) int
+		ID          func(childComplexity int) int
+		IsActivated func(childComplexity int) int
+		IsAdmin     func(childComplexity int) int
+		Jobs        func(childComplexity int, input *models.Filter) int
+		Name        func(childComplexity int) int
+		OAuthID     func(childComplexity int) int
+		PhotoURL    func(childComplexity int) int
 	}
 }
 
@@ -251,6 +251,7 @@ type MutationResolver interface {
 	SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error)
 	DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error)
 	AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error)
+	AddCredentialForTargets(ctx context.Context, input *models.AddCredentialForTargetsRequest) ([]*ent.Target, error)
 	ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error)
 	ClaimTask(ctx context.Context, id int) (*ent.Task, error)
 	SubmitTaskResult(ctx context.Context, input *models.SubmitTaskResultRequest) (*ent.Task, error)
@@ -646,6 +647,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.AddCredentialForTarget(childComplexity, args["input"].(*models.AddCredentialForTargetRequest)), true
+
+	case "Mutation.addCredentialForTargets":
+		if e.complexity.Mutation.AddCredentialForTargets == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_addCredentialForTargets_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.AddCredentialForTargets(childComplexity, args["input"].(*models.AddCredentialForTargetsRequest)), true
 
 	case "Mutation.applyTagToJob":
 		if e.complexity.Mutation.ApplyTagToJob == nil {
@@ -1348,19 +1361,19 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Task.Target(childComplexity), true
 
-	case "User.activated":
-		if e.complexity.User.Activated == nil {
-			break
-		}
-
-		return e.complexity.User.Activated(childComplexity), true
-
 	case "User.id":
 		if e.complexity.User.ID == nil {
 			break
 		}
 
 		return e.complexity.User.ID(childComplexity), true
+
+	case "User.isActivated":
+		if e.complexity.User.IsActivated == nil {
+			break
+		}
+
+		return e.complexity.User.IsActivated(childComplexity), true
 
 	case "User.isAdmin":
 		if e.complexity.User.IsAdmin == nil {
@@ -1401,13 +1414,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.User.PhotoURL(childComplexity), true
-
-	case "User.sessionToken":
-		if e.complexity.User.SessionToken == nil {
-			break
-		}
-
-		return e.complexity.User.SessionToken(childComplexity), true
 
 	}
 	return 0, false
@@ -1578,8 +1584,7 @@ type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
   name: String
   oAuthID: String
   photoURL: String
-  sessionToken: String
-  activated: Boolean
+  isActivated: Boolean
   isAdmin: Boolean
 
   jobs(input: Filter): [Job]
@@ -1659,6 +1664,13 @@ input AddCredentialForTargetRequest {
   kind: String
 }
 
+input AddCredentialForTargetsRequest {
+  ids: [ID!]
+  principal: String!
+  secret: String!
+  kind: String
+}
+
 input ClaimTasksRequest {
   machineUUID: String
   primaryIP: String
@@ -1727,6 +1739,7 @@ type Mutation {
   setTargetFields(input: SetTargetFieldsRequest): Target!
   deleteTarget(input: DeleteTargetRequest): Boolean!
   addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
+  addCredentialForTargets(input: AddCredentialForTargetsRequest): [Target!]
 
   # Task Mutations
   claimTasks(input: ClaimTasksRequest): [Task!]
@@ -1859,6 +1872,20 @@ func (ec *executionContext) field_Mutation_addCredentialForTarget_args(ctx conte
 	var arg0 *models.AddCredentialForTargetRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOAddCredentialForTargetRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐAddCredentialForTargetRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_addCredentialForTargets_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.AddCredentialForTargetsRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOAddCredentialForTargetsRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐAddCredentialForTargetsRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4570,6 +4597,47 @@ func (ec *executionContext) _Mutation_addCredentialForTarget(ctx context.Context
 	return ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_addCredentialForTargets(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_addCredentialForTargets_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().AddCredentialForTargets(rctx, args["input"].(*models.AddCredentialForTargetsRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.Target)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTargetᚄ(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_claimTasks(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -6990,7 +7058,7 @@ func (ec *executionContext) _User_photoURL(ctx context.Context, field graphql.Co
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _User_sessionToken(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
+func (ec *executionContext) _User_isActivated(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -7009,41 +7077,7 @@ func (ec *executionContext) _User_sessionToken(ctx context.Context, field graphq
 	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.SessionToken, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(string)
-	rctx.Result = res
-	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOString2string(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) _User_activated(ctx context.Context, field graphql.CollectedField, obj *ent.User) (ret graphql.Marshaler) {
-	ctx = ec.Tracer.StartFieldExecution(ctx, field)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-		ec.Tracer.EndFieldExecution(ctx)
-	}()
-	rctx := &graphql.ResolverContext{
-		Object:   "User",
-		Field:    field,
-		Args:     nil,
-		IsMethod: false,
-	}
-	ctx = graphql.WithResolverContext(ctx, rctx)
-	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Activated, nil
+		return obj.IsActivated, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -8338,6 +8372,42 @@ func (ec *executionContext) unmarshalInputAddCredentialForTargetRequest(ctx cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputAddCredentialForTargetsRequest(ctx context.Context, obj interface{}) (models.AddCredentialForTargetsRequest, error) {
+	var it models.AddCredentialForTargetsRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "ids":
+			var err error
+			it.Ids, err = ec.unmarshalOID2ᚕintᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "principal":
+			var err error
+			it.Principal, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "secret":
+			var err error
+			it.Secret, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "kind":
+			var err error
+			it.Kind, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputApplyTagRequest(ctx context.Context, obj interface{}) (models.ApplyTagRequest, error) {
 	var it models.ApplyTagRequest
 	var asMap = obj.(map[string]interface{})
@@ -9299,6 +9369,8 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "addCredentialForTargets":
+			out.Values[i] = ec._Mutation_addCredentialForTargets(ctx, field)
 		case "claimTasks":
 			out.Values[i] = ec._Mutation_claimTasks(ctx, field)
 		case "claimTask":
@@ -9815,10 +9887,8 @@ func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj
 			out.Values[i] = ec._User_oAuthID(ctx, field, obj)
 		case "photoURL":
 			out.Values[i] = ec._User_photoURL(ctx, field, obj)
-		case "sessionToken":
-			out.Values[i] = ec._User_sessionToken(ctx, field, obj)
-		case "activated":
-			out.Values[i] = ec._User_activated(ctx, field, obj)
+		case "isActivated":
+			out.Values[i] = ec._User_isActivated(ctx, field, obj)
 		case "isAdmin":
 			out.Values[i] = ec._User_isAdmin(ctx, field, obj)
 		case "jobs":
@@ -10489,6 +10559,18 @@ func (ec *executionContext) unmarshalOAddCredentialForTargetRequest2ᚖgithubᚗ
 		return nil, nil
 	}
 	res, err := ec.unmarshalOAddCredentialForTargetRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐAddCredentialForTargetRequest(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalOAddCredentialForTargetsRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐAddCredentialForTargetsRequest(ctx context.Context, v interface{}) (models.AddCredentialForTargetsRequest, error) {
+	return ec.unmarshalInputAddCredentialForTargetsRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOAddCredentialForTargetsRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐAddCredentialForTargetsRequest(ctx context.Context, v interface{}) (*models.AddCredentialForTargetsRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOAddCredentialForTargetsRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐAddCredentialForTargetsRequest(ctx, v)
 	return &res, err
 }
 
@@ -11190,6 +11272,46 @@ func (ec *executionContext) marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋpara
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOTarget2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTargetᚄ(ctx context.Context, sel ast.SelectionSet, v []*ent.Target) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
