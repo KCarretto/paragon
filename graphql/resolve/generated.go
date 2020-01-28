@@ -1074,7 +1074,15 @@ func (r *taskResolver) Job(ctx context.Context, obj *ent.Task) (*ent.Job, error)
 	return obj.QueryJob().Only(ctx)
 }
 func (r *taskResolver) Target(ctx context.Context, obj *ent.Task) (*ent.Target, error) {
-	return obj.QueryTarget().Only(ctx)
+	q := obj.QueryTarget()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 
 type userResolver struct{ *Resolver }

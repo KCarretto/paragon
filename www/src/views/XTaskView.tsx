@@ -3,7 +3,7 @@ import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import { Button, Container, Icon, Label } from "semantic-ui-react";
 import { XJobHeader } from "../components/job";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
@@ -120,23 +120,24 @@ const XTaskView = () => {
 
   return (
     <Container fluid style={{ padding: "20px" }}>
-      <a href={"/jobs/" + jobID}>
+      <Link to={"/jobs/" + jobID}>
         <XJobHeader
           name={name}
           tags={tags}
           icon={React.createElement(Icon, { size: "large", ...status })}
         />
-      </a>
+      </Link>
       {!target || !target.id ? (
         <span />
       ) : (
         <Button
           basic
           animated
-          href={"/targets/" + target.id}
           color="blue"
           size="small"
           style={{ margin: "15px" }}
+          as={Link}
+          to={"/targets/" + target.id}
         >
           <Button.Content visible>
             {target.name || "View Target"}

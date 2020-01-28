@@ -6,7 +6,6 @@ import * as React from "react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, Container, Label } from "semantic-ui-react";
-import { XCredentialSummary } from "../components/credential";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XTargetHeader } from "../components/target";
 import { XTaskSummary } from "../components/task";
@@ -143,7 +142,7 @@ const XTargetView = () => {
           </Card.Meta>
           <Card.Description>
             <XTaskSummary tasks={tasks} limit={tasks.length} />
-            <XCredentialSummary {...creds} />
+            {/* <XCredentialSummary {...creds} /> */}
           </Card.Description>
         </Card.Content>
         {primaryMAC || publicIP || machineUUID ? (

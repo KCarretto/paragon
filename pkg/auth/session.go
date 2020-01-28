@@ -9,20 +9,9 @@ import (
 	"github.com/kcarretto/paragon/ent"
 )
 
-func GetUser(ctx context.Context) *ent.User {
-	if v := ctx.Value(userContextKey); v != nil {
-		if usr, ok := v.(*ent.User); ok {
-			return usr
-		}
-		panic(fmt.Errorf("Received non-user value for user context key: %v", v))
-	}
-
-	return nil
-}
-
-// WithUserSession manages a user session for a request. It adds the authenticated user to the
+// CreateUserSession creates a new user session for a request. It adds the authenticated user to the
 // request context and ensures session cookies are set. If user is nil, this is a no-op.
-func WithUserSession(w http.ResponseWriter, req *http.Request, user *ent.User) *http.Request {
+func CreateUserSession(w http.ResponseWriter, req *http.Request, user *ent.User) *http.Request {
 	if user == nil {
 		return req
 	}

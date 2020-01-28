@@ -116,7 +116,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 			SaveX(req.Context())
 	}
 
-	req = auth.WithUserSession(w, req, usr)
+	req = auth.CreateUserSession(w, req, usr)
 	http.Redirect(w, req, "/", http.StatusTemporaryRedirect)
 	return nil
 }

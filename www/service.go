@@ -11,7 +11,8 @@ import (
 
 // Service provides HTTP handlers for serving the Teamserver UI.
 type Service struct {
-	Log *zap.Logger
+	Log  *zap.Logger
+	Auth service.Authenticator
 }
 
 func (svc Service) HandleIndex(w http.ResponseWriter, r *http.Request) error {
@@ -32,12 +33,14 @@ func (svc Service) HandleIndex(w http.ResponseWriter, r *http.Request) error {
 // HTTP registers http handlers for the Teamserver UI.
 func (svc *Service) HTTP(router *http.ServeMux) {
 	app := &service.Endpoint{
-		Log: svc.Log.Named("app"),
-		Handler: service.HTTPHandler(http.FileServer(App)),
+		Log:           svc.Log.Named("app"),
+		Authenticator: svc.Auth,
+		Handler:       service.HTTPHandler(http.FileServer(App)),
 	}
 	index := &service.Endpoint{
-		Log: svc.Log.Named("index"),
-		Handler: service.HandlerFn(svc.HandleIndex),
+		Log:           svc.Log.Named("index"),
+		Authenticator: svc.Auth,
+		Handler:       service.HandlerFn(svc.HandleIndex),
 	}
 	router.Handle("/app/", http.StripPrefix("/app", app))
 	router.Handle("/", index)
