@@ -112,7 +112,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 			SetName(profile.Name).
 			SetPhotoURL(profile.PhotoURL).
 			SetIsAdmin(num == 0).
-			SetActivated(num == 0).
+			SetIsActivated(num == 0).
 			SaveX(req.Context())
 	}
 
@@ -233,7 +233,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 // session := srv.sessionToken()
 // usr := srv.Graph.User.UpdateOneID(id).
 // 	SetSessionToken(string(session)).
-// 	SetActivated(true).
+// 	SetIsActivated(true).
 // 	SaveX(req.Context())
 
 // http.SetCookie(w, &http.Cookie{

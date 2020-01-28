@@ -570,6 +570,38 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	}
 	return target, err
 }
+func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *models.AddCredentialForTargetsRequest) ([]*ent.Target, error) {
+	kind := credential.KindPassword
+	if input.Kind != nil {
+		kind = credential.Kind(*input.Kind)
+	}
+	var targets []*ent.Target
+	for id := range input.Ids {
+		credential, err := r.Graph.Credential.Create().
+			SetPrincipal(input.Principal).
+			SetSecret(input.Secret).
+			SetKind(kind).
+			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+		target, err := r.Graph.Target.UpdateOneID(id).
+			AddCredentialIDs(credential.ID).
+			Save(ctx)
+		targets = append(targets, target)
+		_, err = r.Graph.Event.Create().
+			SetOwner(auth.GetUser(ctx)).
+			SetCredential(credential).
+			SetTarget(target).
+			SetKind(event.KindADDCREDENTIALFORTARGET).
+			Save(ctx)
+		if err != nil {
+			return targets, err
+		}
+	}
+
+	return targets, nil
+}
 func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTasksRequest) ([]*ent.Task, error) {
 	var targetEnt *ent.Target
 	var err error
@@ -747,13 +779,16 @@ func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetL
 	return link, nil
 }
 func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.ActivateUserRequest) (*ent.User, error) {
-	actor := auth.GetUser(ctx)
-	if !actor.IsAdmin {
-		return nil, fmt.Errorf("to use this mutation you must be an admin")
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return nil, err
 	}
 
 	user, err := r.Graph.User.UpdateOneID(input.ID).
-		SetActivated(true).
+		SetIsActivated(true).
 		Save(ctx)
 	if err != nil {
 		return nil, err
@@ -769,11 +804,15 @@ func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.Activ
 	return user, nil
 }
 func (r *mutationResolver) MakeAdmin(ctx context.Context, input *models.MakeAdminRequest) (*ent.User, error) {
-	actor := auth.GetUser(ctx)
-	if !actor.IsAdmin {
-		return nil, fmt.Errorf("to use this mutation you must be an admin")
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return nil, err
 	}
 	user, err := r.Graph.User.UpdateOneID(input.ID).
+		SetIsActivated(true).
 		SetIsAdmin(true).
 		Save(ctx)
 	if err != nil {
@@ -790,9 +829,12 @@ func (r *mutationResolver) MakeAdmin(ctx context.Context, input *models.MakeAdmi
 	return user, nil
 }
 func (r *mutationResolver) RemoveAdmin(ctx context.Context, input *models.RemoveAdminRequest) (*ent.User, error) {
-	actor := auth.GetUser(ctx)
-	if !actor.IsAdmin {
-		return nil, fmt.Errorf("to use this mutation you must be an admin")
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return nil, err
 	}
 	user, err := r.Graph.User.UpdateOneID(input.ID).
 		SetIsAdmin(false).

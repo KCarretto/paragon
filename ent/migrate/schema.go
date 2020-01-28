@@ -277,7 +277,7 @@ var (
 		{Name: "o_auth_id", Type: field.TypeString, Unique: true},
 		{Name: "photo_url", Type: field.TypeString},
 		{Name: "session_token", Type: field.TypeString, Nullable: true},
-		{Name: "activated", Type: field.TypeBool, Default: user.DefaultActivated},
+		{Name: "is_activated", Type: field.TypeBool, Default: user.DefaultIsActivated},
 		{Name: "is_admin", Type: field.TypeBool, Default: user.DefaultIsAdmin},
 		{Name: "event_liker_id", Type: field.TypeInt, Nullable: true},
 	}

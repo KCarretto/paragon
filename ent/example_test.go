@@ -126,7 +126,7 @@ func ExampleEvent() {
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
-		SetActivated(true).
+		SetIsActivated(true).
 		SetIsAdmin(true).
 		SaveX(ctx)
 	log.Println("user created:", u7)
@@ -142,7 +142,7 @@ func ExampleEvent() {
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
-		SetActivated(true).
+		SetIsActivated(true).
 		SetIsAdmin(true).
 		SaveX(ctx)
 	log.Println("user created:", u9)
@@ -544,7 +544,7 @@ func ExampleUser() {
 		SetOAuthID("string").
 		SetPhotoURL("string").
 		SetSessionToken("string").
-		SetActivated(true).
+		SetIsActivated(true).
 		SetIsAdmin(true).
 		AddJobs(j0).
 		AddEvents(e1).

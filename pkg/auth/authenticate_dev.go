@@ -38,7 +38,7 @@ func (auth DevAuthenticator) Authenticate(w http.ResponseWriter, req *http.Reque
 		SetPhotoURL("").
 		SetSessionToken(string(NewSecret(SessionTokenLength))).
 		SetIsAdmin(true).
-		SetActivated(true).
+		SetIsActivated(true).
 		SaveX(req.Context())
 	return CreateUserSession(w, req, user), nil
 }
