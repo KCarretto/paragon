@@ -55,10 +55,50 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
     refetchQueries: [{ query: MULTI_FILE_QUERY }]
   });
 
+  const timeMap = new Map([
+    ["Never", null],
+    [
+      "5 minutes",
+      moment()
+        .add(5, "minutes")
+        .format("YYYY-MM-DDTHH:mm:ssZ")
+    ],
+    [
+      "10 minutes",
+      moment()
+        .add(10, "minutes")
+        .format("YYYY-MM-DDTHH:mm:ssZ")
+    ],
+    [
+      "15 minutes",
+      moment()
+        .add(15, "minutes")
+        .format("YYYY-MM-DDTHH:mm:ssZ")
+    ],
+    [
+      "30 minutes",
+      moment()
+        .add(30, "minutes")
+        .format("YYYY-MM-DDTHH:mm:ssZ")
+    ],
+    [
+      "1 hour",
+      moment()
+        .add(1, "hour")
+        .format("YYYY-MM-DDTHH:mm:ssZ")
+    ],
+    [
+      "2 hours",
+      moment()
+        .add(2, "hours")
+        .format("YYYY-MM-DDTHH:mm:ssZ")
+    ]
+  ]);
+
   const handleSubmit = () => {
     let vars = {
       alias: alias,
-      expirationTime: expirationTime,
+      expirationTime: timeMap.get(expirationTime),
       clicks: clicks,
       file: file
     };
@@ -85,56 +125,14 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
     openModal();
   }
 
-  const expiryOptions = [
-    {
-      key: null,
-      text: "Never",
-      value: null
-    },
-    {
-      key: "5 minutes",
-      text: "5 minutes",
-      value: moment()
-        .add(5, "minutes")
-        .format("YYYY-MM-DDTHH:mm:ssZ")
-    },
-    {
-      key: "10 minutes",
-      text: "10 minutes",
-      value: moment()
-        .add(10, "minutes")
-        .toString()
-    },
-    {
-      key: "15 minutes",
-      text: "15 minutes",
-      value: moment()
-        .utc()
-        .add(15, "minutes")
-        .format("YYYY-MM-DDTHH:mm:ssZ")
-    },
-    {
-      key: "30 minutes",
-      text: "30 minutes",
-      value: moment()
-        .add(30, "minutes")
-        .format("YYYY-MM-DDTHH:mm:ssZ")
-    },
-    {
-      key: "1 hour",
-      text: "1 hour",
-      value: moment()
-        .add(1, "hour")
-        .format("YYYY-MM-DDTHH:mm:ssZ")
-    },
-    {
-      key: "2 hours",
-      text: "2 hours",
-      value: moment()
-        .add(2, "hour")
-        .format("YYYY-MM-DDTHH:mm:ssZ")
-    }
-  ];
+  let expiryOptions = [];
+  timeMap.forEach((value: string, key: string) => {
+    expiryOptions.push({
+      key: key,
+      text: key,
+      value: key
+    });
+  });
 
   const getDropdown = () => (
     <Dropdown
@@ -146,11 +144,9 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
       options={expiryOptions}
       onChange={(e, selection) => {
         setExpirationTime(String(selection.value));
-        // setDropdownTime(selection.text);
       }}
     />
   );
-
   return (
     <Modal
       open={isOpen}
@@ -159,6 +155,13 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
       size="large"
       // Form properties
       as={Form}
+      onOpen={() => {
+        setAlias(
+          Math.random()
+            .toString(36)
+            .substring(8)
+        );
+      }}
       onSubmit={handleSubmit}
       error={called && error}
       loading={called && loading}
@@ -169,7 +172,7 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
           <Grid.Column>
             <Input
               fluid
-              label="Alias"
+              label="/l/"
               placeholder="/l/${alias}"
               name="alias"
               value={alias}
@@ -190,13 +193,6 @@ const XCreateLinkModal = ({ openOnStart, file }: CreateLinkModalParams) => {
               value={clicks}
               onChange={(e, { value }) => setClicks(Number(value))}
             />
-          </Grid.Column>
-
-          <Grid.Column>
-            {/* <XTargetTypeahead
-              labeled
-              onChange={(e, { value }) => setTargets(value)}
-            /> */}
           </Grid.Column>
         </Grid>
 
