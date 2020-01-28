@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { Card, Container, Loader, Menu } from "semantic-ui-react";
-import { XJobCard, XJobQueueModal } from "../components/job";
+import { XJobCard, XJobQueueModal, XNoJobsFound } from "../components/job";
 import { XErrorMessage } from "../components/messages";
 
 export const MULTI_JOB_QUERY = gql`
@@ -40,10 +40,7 @@ const XMultiJobView = () => {
 
   const showCards = () => {
     if (!data || !data.jobs || data.jobs.length < 1) {
-      return (
-        // TODO: Better styling
-        <h1>No jobs found!</h1>
-      );
+      return <XNoJobsFound />;
     }
     return (
       <Card.Group centered itemsPerRow={4}>
