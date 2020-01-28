@@ -1,20 +1,19 @@
 package service
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 
-	"github.com/kcarretto/paragon/ent"
-	"github.com/kcarretto/paragon/pkg/auth"
 	"go.uber.org/zap"
 )
 
 type Authenticator interface {
-	Authenticate(*http.Request) (*ent.User, error)
+	Authenticate(http.ResponseWriter, *http.Request) (*http.Request, error)
 }
 
 type Authorizer interface {
-	Authorize(*http.Request) error
+	Authorize(context.Context) error
 }
 
 type ErrorPresenter interface {
@@ -49,7 +48,6 @@ type Endpoint struct {
 
 func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	var err error
-	var user *ent.User
 
 	logger := fn.logger(req)
 
@@ -62,22 +60,14 @@ func (fn *Endpoint) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	defer fn.stayCalm(w, logger)
 
 	// Authenticate the request
-	user, err = fn.Authenticate(req)
+	req, err = fn.Authenticate(w, req)
 	if err != nil {
 		fn.PresentError(w, err)
 		return
 	}
 
-	// Setup a session for successfully authenticated users
-	req = auth.WithUserSession(w, req, user)
-
-	// Include userid in logs where available
-	if user != nil {
-		logger = logger.With(zap.Int("userid", user.ID))
-	}
-
 	// Authorize the request
-	err = fn.Authorize(req)
+	err = fn.Authorize(req.Context())
 	if err != nil {
 		fn.PresentError(w, err)
 		return
@@ -104,20 +94,20 @@ func (fn *Endpoint) PresentError(w http.ResponseWriter, err error) {
 	fn.ErrorPresenter.PresentError(w, err)
 }
 
-func (fn *Endpoint) Authenticate(req *http.Request) (*ent.User, error) {
+func (fn *Endpoint) Authenticate(w http.ResponseWriter, req *http.Request) (*http.Request, error) {
 	if fn.Authenticator == nil {
-		return nil, nil
+		return req, nil
 	}
 
-	return fn.Authenticator.Authenticate(req)
+	return fn.Authenticator.Authenticate(w, req)
 }
 
-func (fn *Endpoint) Authorize(req *http.Request) error {
+func (fn *Endpoint) Authorize(ctx context.Context) error {
 	if fn.Authorizer == nil {
 		return nil
 	}
 
-	return fn.Authorizer.Authorize(req)
+	return fn.Authorizer.Authorize(ctx)
 }
 
 func (fn *Endpoint) logger(req *http.Request) *zap.Logger {

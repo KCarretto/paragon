@@ -7,6 +7,7 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/resolve"
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/service"
 
@@ -44,11 +45,14 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 	api := &service.Endpoint{
 		Log:           svc.Log.Named("api"),
 		Authenticator: svc.Auth,
+		Authorizer:    auth.NewAuthorizer().IsActivated(),
 		Handler:       service.HTTPHandler(svc.HandleGraphQL()),
 	}
 	graphiql := &service.Endpoint{
-		Log:     svc.Log.Named("graphiql"),
-		Handler: service.HTTPHandler(svc.HandlePlayground()),
+		Log:           svc.Log.Named("graphiql"),
+		Authenticator: svc.Auth,
+		Authorizer:    auth.NewAuthorizer().IsActivated(),
+		Handler:       service.HTTPHandler(svc.HandlePlayground()),
 	}
 	router.Handle("/graphql", api)
 	router.Handle("/graphiql", graphiql)

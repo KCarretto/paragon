@@ -33,16 +33,19 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 	upload := &service.Endpoint{
 		Log:           svc.Log.Named("upload"),
 		Authenticator: svc.Auth,
+		Authorizer:    auth.NewAuthorizer().IsActivated(),
 		Handler:       service.HandlerFn(svc.HandleFileUpload),
 	}
 	download := &service.Endpoint{
 		Log:           svc.Log.Named("download"),
 		Authenticator: svc.Auth,
+		Authorizer:    auth.NewAuthorizer().IsActivated(),
 		Handler:       service.HandlerFn(svc.HandleFileDownload),
 	}
 	links := &service.Endpoint{
-		Log:     svc.Log.Named("links"),
-		Handler: service.HandlerFn(svc.HandleFileUpload),
+		Log:           svc.Log.Named("links"),
+		Authenticator: svc.Auth,
+		Handler:       service.HandlerFn(svc.HandleFileUpload),
 	}
 
 	router.Handle("/cdn/upload/", upload)
