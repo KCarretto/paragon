@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { Card, Container, Loader, Menu } from "semantic-ui-react";
-import { XFileCard, XFileUploadModal } from "../components/file";
+import { XFileCard, XFileUploadModal, XNoFilesFound } from "../components/file";
 import { XErrorMessage } from "../components/messages";
 import { File } from "../graphql/models";
 
@@ -40,10 +40,7 @@ const XMultiFileView = () => {
 
   const showCards = () => {
     if (!data || !data.files || data.files.length < 1) {
-      return (
-        // TODO: Better styling
-        <h1>No files found!</h1>
-      );
+      return <XNoFilesFound />;
     }
     return (
       <Card.Group centered itemsPerRow={4}>

@@ -3,7 +3,7 @@ import gql from "graphql-tag";
 import * as React from "react";
 import { Container, Label, Loader, Menu } from "semantic-ui-react";
 import { XErrorMessage } from "../components/messages";
-import { XTagCreateModal } from "../components/tag";
+import { XNoTagsFound, XTagCreateModal } from "../components/tag";
 import { Tag } from "../graphql/models";
 import XClipboard from "./XClipboard";
 
@@ -27,10 +27,7 @@ const XMultiTagView = () => {
 
   const showList = () => {
     if (!data || !data.tags || data.tags.length < 1) {
-      return (
-        // TODO: Better styling
-        <h1>No tags found!</h1>
-      );
+      return <XNoTagsFound />;
     }
     return (
       <Label.Group tag size="big">

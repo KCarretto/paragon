@@ -3,7 +3,7 @@ import gql from "graphql-tag";
 import * as React from "react";
 import { Card, Container, Loader, Menu } from "semantic-ui-react";
 import { XErrorMessage } from "../components/messages";
-import { XTargetCreateModal } from "../components/target";
+import { XNoTargetsFound, XTargetCreateModal } from "../components/target";
 import XTargetCard from "../components/target/XTargetCard";
 import { Target } from "../graphql/models";
 
@@ -52,10 +52,7 @@ const XMultiTargetView = () => {
 
   const showCards = () => {
     if (!data || !data.targets || data.targets.length < 1) {
-      return (
-        // TODO: Better styling
-        <h1>No targets found!</h1>
-      );
+      return <XNoTargetsFound />;
     }
     return (
       <Card.Group centered itemsPerRow={4}>
