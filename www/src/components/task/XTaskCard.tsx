@@ -1,16 +1,16 @@
 import moment from "moment";
 import * as React from "react";
+import { Link } from "react-router-dom";
 import { Button, Card, Icon } from "semantic-ui-react";
 import { XTaskStatus } from ".";
 import { Task } from "../../graphql/models";
 
 const XTaskCard = (task: Task) => {
   const target = task.target || { id: 0, name: "Untitled Target" };
-
   return (
     <Card>
       <Card.Content>
-        <Card.Header href={"/targets/" + target.id}>
+        <Card.Header as={Link} to={"/targets/" + target.id}>
           <Icon
             floated="right"
             size="large"
@@ -23,10 +23,11 @@ const XTaskCard = (task: Task) => {
           <Button
             basic
             animated
-            href={"/tasks/" + task.id}
             color="blue"
             size="small"
             floated="right"
+            as={Link}
+            to={"/tasks/" + task.id}
           >
             <Button.Content visible>View Task</Button.Content>
             <Button.Content hidden>

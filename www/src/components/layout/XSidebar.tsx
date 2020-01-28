@@ -1,7 +1,7 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
 import { HotKeys } from "react-hotkeys";
-import { Link, Redirect } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Icon, Menu, Sidebar } from "semantic-ui-react";
 import { RouteConfig } from "../../config/routes";
 import { XJobQueueModal } from "../job";
@@ -10,7 +10,6 @@ import "./index.css";
 type SidebarProps = {
   routeMap: RouteConfig[];
   userID?: string;
-  isActivated: boolean;
   isAdmin: boolean;
 };
 
@@ -20,13 +19,6 @@ const XSidebar: FunctionComponent<SidebarProps> = props => {
   const createJob = React.useCallback(() => {
     modal = <XJobQueueModal openOnStart={true} />;
   }, []);
-
-  if (!props.userID) {
-    return <Redirect to="/login" />;
-  }
-  if (!props.isActivated) {
-    return <Redirect to="/login/pending" />;
-  }
 
   const handlers = {
     CREATE_JOB: createJob

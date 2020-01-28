@@ -1,8 +1,8 @@
 package teamserver
 
 import (
+	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/kcarretto/paragon/ent"
@@ -10,6 +10,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 
+	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/auth/oauth"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
@@ -28,7 +29,26 @@ type Service struct {
 
 // HandleStatus returns JSON status: OK if the teamserver is running without error.
 func (svc *Service) HandleStatus(w http.ResponseWriter, r *http.Request) error {
-	if _, err := io.WriteString(w, `{"status":"OK"}`); err != nil {
+	type Response struct {
+		Available       bool `json:"available"`
+		UserID          int  `json:"userid,omitempty"`
+		IsAuthenticated bool `json:"is_authenticated"`
+		IsActivated     bool `json:"is_activated"`
+		IsAdmin         bool `json:"is_admin"`
+	}
+	dst := json.NewEncoder(w)
+
+	resp := Response{
+		Available: true,
+	}
+	if user := auth.GetUser(r.Context()); user != nil {
+		resp.UserID = user.ID
+		resp.IsAuthenticated = true
+		resp.IsActivated = user.Activated
+		resp.IsAdmin = user.IsAdmin
+	}
+
+	if err := dst.Encode(resp); err != nil {
 		return fmt.Errorf("failed to write response data: %w", err)
 	}
 	w.Header().Set("Content-Type", "application/json")
@@ -54,11 +74,13 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 		Auth:  svc.Auth,
 	}
 	wwwSVC := &www.Service{
-		Log: svc.Log.Named("www"),
+		Log:  svc.Log.Named("www"),
+		Auth: svc.Auth,
 	}
 	status := &service.Endpoint{
-		Log:     svc.Log.Named("status"),
-		Handler: service.HandlerFn(svc.HandleStatus),
+		Log:           svc.Log.Named("status"),
+		Authenticator: svc.Auth,
+		Handler:       service.HandlerFn(svc.HandleStatus),
 	}
 
 	graphqlSVC.HTTP(router)
