@@ -2,10 +2,10 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { Container, Label, Loader, Menu } from "semantic-ui-react";
+import XClipboard from "../components/form/XClipboard";
 import { XErrorMessage } from "../components/messages";
 import { XNoTagsFound, XTagCreateModal } from "../components/tag";
 import { Tag } from "../graphql/models";
-import XClipboard from "./XClipboard";
 
 export const MULTI_TAG_QUERY = gql`
   {

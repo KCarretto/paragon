@@ -1,14 +1,9 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
-import {
-  BrowserRouter as Router,
-  Redirect,
-  Route,
-  Switch
-} from "react-router-dom";
+import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
-import { XLayout, XUnimplemented } from "./components/layout";
+import { XLayout, XPrivateRoute, XUnimplemented } from "./components/layout";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
@@ -61,45 +56,81 @@ const App = () => {
 
   useEffect(fetchUserInfo, []);
 
-  let showLogin = !authenticated || (!activated && !admin);
+  let authz = authenticated && (activated || admin);
 
   return (
     <XGraphProvider>
       <Router>
         <Switch>
-          <Route
-            path="/login"
-            render={routeProps =>
-              showLogin ? (
-                <XLogin pending={authenticated} />
-              ) : (
-                <Redirect to="/" />
-              )
-            }
-          />
-          {showLogin ? (
-            <Redirect to="/login" />
-          ) : (
-            <XLayout
-              routeMap={Routes}
-              userID={userID}
-              isAdmin={admin}
-              className="App"
-            >
-              <Route exact path="/" component={XUnimplemented} />
-              <Route exact path="/news_feed" component={XUnimplemented} />
-              <Route exact path="/profile" component={XUnimplemented} />
+          <Route path="/login">
+            <XLogin authorized={authz} pending={authenticated} />
+          </Route>
+          <XLayout
+            routeMap={Routes}
+            userID={userID}
+            isAdmin={admin}
+            className="App"
+          >
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/"
+              component={XUnimplemented}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/news_feed"
+              component={XUnimplemented}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/profile"
+              component={XUnimplemented}
+            />
 
-              <Route exact path="/targets" component={XMultiTargetView} />
-              <Route exact path="/jobs" component={XMultiJobView} />
-              <Route exact path="/tags" component={XMultiTagView} />
-              <Route exact path="/files" component={XMultiFileView} />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/targets"
+              component={XMultiTargetView}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/jobs"
+              component={XMultiJobView}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/tags"
+              component={XMultiTagView}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/files"
+              component={XMultiFileView}
+            />
 
-              <Route path="/targets/:id" component={XTargetView} />
-              <Route path="/tasks/:id" component={XTaskView} />
-              <Route path="/jobs/:id" component={XJobView} />
-            </XLayout>
-          )}
+            <XPrivateRoute
+              authorized={authz}
+              path="/targets/:id"
+              component={XTargetView}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              path="/tasks/:id"
+              component={XTaskView}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              path="/jobs/:id"
+              component={XJobView}
+            />
+          </XLayout>
         </Switch>
       </Router>
     </XGraphProvider>
