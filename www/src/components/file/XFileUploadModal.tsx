@@ -3,6 +3,7 @@ import * as React from "react";
 import { useState } from "react";
 import { Button, Form, Grid, Input, Message, Modal } from "semantic-ui-react";
 import { InputFile } from "semantic-ui-react-input-file";
+import { HTTP_URL } from "../../config";
 import { useModal } from "../form";
 
 type FileUploadModalParams = {
@@ -22,7 +23,7 @@ const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
     data.append("fileName", name);
     data.append("fileContent", content);
 
-    fetch(window.location.origin + "/cdn/upload", {
+    fetch(HTTP_URL + "/cdn/upload/", {
       mode: "no-cors",
       method: "POST",
       body: data
@@ -104,15 +105,3 @@ const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
 };
 
 export default XFileUploadModal;
-
-// return (
-//     <form
-//         enctype="multipart/form-data"
-//         action={window.location.origin + '/cdn/upload'}
-//         method="post"
-//     >
-//         <input type="text" name="fileName" />
-//         <input type="file" name="fileContent" />
-//         <input type="submit" value="upload" />
-//     </form>
-// );

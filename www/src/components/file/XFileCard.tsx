@@ -9,6 +9,7 @@ import {
   List,
   SemanticCOLORS
 } from "semantic-ui-react";
+import { HTTP_URL } from "../../config";
 import { File } from "../../graphql/models";
 
 const XFileCard = (f: File) => {
@@ -33,7 +34,7 @@ const XFileCard = (f: File) => {
             basic
             color="blue"
             icon="cloud download"
-            href={"/cdn/download/" + f.name}
+            href={HTTP_URL + "/cdn/download/" + f.name}
           />
         </Button.Group>
         <Card.Header>{f.name}</Card.Header>

@@ -3,9 +3,10 @@ import { ApolloClient } from "apollo-client";
 import { createHttpLink } from "apollo-link-http";
 import * as React from "react";
 import { ApolloProvider } from "react-apollo";
+import { HTTP_URL } from "../config";
 
 const httpLink = createHttpLink({
-  uri: window.location.origin + "/graphql"
+  uri: HTTP_URL + "/graphql"
 });
 
 const client = new ApolloClient({

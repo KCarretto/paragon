@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Button, Grid, Header, Icon, Image } from "semantic-ui-react";
 import { XLoadingMessage } from "../components/messages";
+import { HTTP_URL } from "../config";
 
 export type XLoginParams = {
   pending: boolean;
@@ -20,7 +21,7 @@ const XLogin = (props: XLoginParams) => (
         />
       ) : (
         <Button
-          href="/oauth/login"
+          href={HTTP_URL + "/oauth/login"}
           icon
           basic
           labelPosition="right"

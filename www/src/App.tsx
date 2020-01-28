@@ -9,6 +9,7 @@ import {
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
 import { XLayout, XUnimplemented } from "./components/layout";
+import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
 import {
@@ -43,7 +44,7 @@ const App = () => {
   const [admin, setAdmin] = useState(false);
 
   const fetchUserInfo = () => {
-    fetch(window.location.origin + "/status").then(
+    fetch(HTTP_URL + "/status").then(
       resp =>
         resp.json().then(
           (data: StatusResult) => {

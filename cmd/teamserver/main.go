@@ -60,7 +60,7 @@ func ServeHTTP(logger *zap.Logger, addr string, svc *teamserver.Service) error {
 		zap.Duration("start_latency", time.Since(start)),
 	)
 
-	return http.ListenAndServe(addr, router)
+	return serve(addr, router)
 }
 
 func main() {
