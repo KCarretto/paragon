@@ -23,7 +23,7 @@ type UserUpdate struct {
 	PhotoURL          *string
 	SessionToken      *string
 	clearSessionToken bool
-	Activated         *bool
+	IsActivated       *bool
 	IsAdmin           *bool
 	jobs              map[int]struct{}
 	events            map[int]struct{}
@@ -71,16 +71,16 @@ func (uu *UserUpdate) ClearSessionToken() *UserUpdate {
 	return uu
 }
 
-// SetActivated sets the Activated field.
-func (uu *UserUpdate) SetActivated(b bool) *UserUpdate {
-	uu.Activated = &b
+// SetIsActivated sets the IsActivated field.
+func (uu *UserUpdate) SetIsActivated(b bool) *UserUpdate {
+	uu.IsActivated = &b
 	return uu
 }
 
-// SetNillableActivated sets the Activated field if the given value is not nil.
-func (uu *UserUpdate) SetNillableActivated(b *bool) *UserUpdate {
+// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+func (uu *UserUpdate) SetNillableIsActivated(b *bool) *UserUpdate {
 	if b != nil {
-		uu.SetActivated(*b)
+		uu.SetIsActivated(*b)
 	}
 	return uu
 }
@@ -256,11 +256,11 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: user.FieldSessionToken,
 		})
 	}
-	if value := uu.Activated; value != nil {
+	if value := uu.IsActivated; value != nil {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
-			Column: user.FieldActivated,
+			Column: user.FieldIsActivated,
 		})
 	}
 	if value := uu.IsAdmin; value != nil {
@@ -364,7 +364,7 @@ type UserUpdateOne struct {
 	PhotoURL          *string
 	SessionToken      *string
 	clearSessionToken bool
-	Activated         *bool
+	IsActivated       *bool
 	IsAdmin           *bool
 	jobs              map[int]struct{}
 	events            map[int]struct{}
@@ -405,16 +405,16 @@ func (uuo *UserUpdateOne) ClearSessionToken() *UserUpdateOne {
 	return uuo
 }
 
-// SetActivated sets the Activated field.
-func (uuo *UserUpdateOne) SetActivated(b bool) *UserUpdateOne {
-	uuo.Activated = &b
+// SetIsActivated sets the IsActivated field.
+func (uuo *UserUpdateOne) SetIsActivated(b bool) *UserUpdateOne {
+	uuo.IsActivated = &b
 	return uuo
 }
 
-// SetNillableActivated sets the Activated field if the given value is not nil.
-func (uuo *UserUpdateOne) SetNillableActivated(b *bool) *UserUpdateOne {
+// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+func (uuo *UserUpdateOne) SetNillableIsActivated(b *bool) *UserUpdateOne {
 	if b != nil {
-		uuo.SetActivated(*b)
+		uuo.SetIsActivated(*b)
 	}
 	return uuo
 }
@@ -584,11 +584,11 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 			Column: user.FieldSessionToken,
 		})
 	}
-	if value := uuo.Activated; value != nil {
+	if value := uuo.IsActivated; value != nil {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
-			Column: user.FieldActivated,
+			Column: user.FieldIsActivated,
 		})
 	}
 	if value := uuo.IsAdmin; value != nil {

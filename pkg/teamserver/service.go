@@ -44,7 +44,7 @@ func (svc *Service) HandleStatus(w http.ResponseWriter, r *http.Request) error {
 	if user := auth.GetUser(r.Context()); user != nil {
 		resp.UserID = user.ID
 		resp.IsAuthenticated = true
-		resp.IsActivated = user.Activated
+		resp.IsActivated = user.IsActivated
 		resp.IsAdmin = user.IsAdmin
 	}
 

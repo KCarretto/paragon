@@ -34,11 +34,11 @@ func (authz *Authorizer) Authorize(ctx context.Context) error {
 		return ErrNotAuthenticated
 	}
 
-	if authz.requireActivated && !user.Activated {
+	if authz.requireActivated && !user.IsActivated {
 		return ErrUnauthorized
 	}
 
-	if authz.requireAdmin && !user.Activated {
+	if authz.requireAdmin && !user.IsActivated {
 		return ErrUnauthorized
 	}
 

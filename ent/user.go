@@ -23,8 +23,8 @@ type User struct {
 	PhotoURL string `json:"PhotoURL,omitempty"`
 	// SessionToken holds the value of the "SessionToken" field.
 	SessionToken string `json:"-"`
-	// Activated holds the value of the "Activated" field.
-	Activated bool `json:"Activated,omitempty"`
+	// IsActivated holds the value of the "IsActivated" field.
+	IsActivated bool `json:"IsActivated,omitempty"`
 	// IsAdmin holds the value of the "IsAdmin" field.
 	IsAdmin bool `json:"IsAdmin,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -46,7 +46,7 @@ func (*User) scanValues() []interface{} {
 		&sql.NullString{}, // OAuthID
 		&sql.NullString{}, // PhotoURL
 		&sql.NullString{}, // SessionToken
-		&sql.NullBool{},   // Activated
+		&sql.NullBool{},   // IsActivated
 		&sql.NullBool{},   // IsAdmin
 	}
 }
@@ -91,9 +91,9 @@ func (u *User) assignValues(values ...interface{}) error {
 		u.SessionToken = value.String
 	}
 	if value, ok := values[4].(*sql.NullBool); !ok {
-		return fmt.Errorf("unexpected type %T for field Activated", values[4])
+		return fmt.Errorf("unexpected type %T for field IsActivated", values[4])
 	} else if value.Valid {
-		u.Activated = value.Bool
+		u.IsActivated = value.Bool
 	}
 	if value, ok := values[5].(*sql.NullBool); !ok {
 		return fmt.Errorf("unexpected type %T for field IsAdmin", values[5])
@@ -151,8 +151,8 @@ func (u *User) String() string {
 	builder.WriteString(", PhotoURL=")
 	builder.WriteString(u.PhotoURL)
 	builder.WriteString(", SessionToken=<sensitive>")
-	builder.WriteString(", Activated=")
-	builder.WriteString(fmt.Sprintf("%v", u.Activated))
+	builder.WriteString(", IsActivated=")
+	builder.WriteString(fmt.Sprintf("%v", u.IsActivated))
 	builder.WriteString(", IsAdmin=")
 	builder.WriteString(fmt.Sprintf("%v", u.IsAdmin))
 	builder.WriteByte(')')
