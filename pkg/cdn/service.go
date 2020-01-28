@@ -45,7 +45,7 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 	links := &service.Endpoint{
 		Log:           svc.Log.Named("links"),
 		Authenticator: svc.Auth,
-		Handler:       service.HandlerFn(svc.HandleFileUpload),
+		Handler:       service.HandlerFn(svc.HandleLink),
 	}
 
 	router.Handle("/cdn/upload/", upload)

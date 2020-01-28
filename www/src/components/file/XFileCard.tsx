@@ -11,6 +11,7 @@ import {
 } from "semantic-ui-react";
 import { HTTP_URL } from "../../config";
 import { File } from "../../graphql/models";
+import XCreateLinkModal from "../link/XLinkCreateModal";
 
 const XFileCard = (f: File) => {
   let colors: SemanticCOLORS[] = [
@@ -27,7 +28,7 @@ const XFileCard = (f: File) => {
     <Card fluid>
       <Card.Content>
         <Button.Group floated="right">
-          <Button basic color="blue" icon="linkify" /> {/* TODO: Implement */}
+          <XCreateLinkModal file={f.id} />
           <Button basic color="blue" icon="cloud upload" />{" "}
           {/* TODO: Implement */}
           <Button
@@ -67,7 +68,7 @@ const XFileCard = (f: File) => {
                       <List.Header>{link.alias}</List.Header>
                       <Feed.Date>
                         {link.expirationTime
-                          ? "Expires in " + moment().to(link.expirationTime)
+                          ? "Expires " + moment().to(link.expirationTime)
                           : "Never expires"}
                       </Feed.Date>
                     </Feed.Summary>
