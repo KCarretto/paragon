@@ -86,6 +86,14 @@ export type Credential = {
   fails?: Maybe<Scalars['Int']>,
 };
 
+export type DeactivateServiceRequest = {
+  id: Scalars['ID'],
+};
+
+export type DeactivateUserRequest = {
+  id: Scalars['ID'],
+};
+
 export type DeleteTargetRequest = {
   id: Scalars['ID'],
 };
@@ -210,11 +218,13 @@ export type Mutation = {
   setLinkFields: Link,
   /** User Mutations */
   activateUser: User,
+  deactivateUser: User,
   makeAdmin: User,
   removeAdmin: User,
   changeName: User,
   /** Service Mutations */
   activateService: Service,
+  deactivateService: Service,
   /** Event Mutations */
   likeEvent: Event,
 };
@@ -320,6 +330,11 @@ export type MutationActivateUserArgs = {
 };
 
 
+export type MutationDeactivateUserArgs = {
+  input?: Maybe<DeactivateUserRequest>
+};
+
+
 export type MutationMakeAdminArgs = {
   input?: Maybe<MakeAdminRequest>
 };
@@ -337,6 +352,11 @@ export type MutationChangeNameArgs = {
 
 export type MutationActivateServiceArgs = {
   input?: Maybe<ActivateServiceRequest>
+};
+
+
+export type MutationDeactivateServiceArgs = {
+  input?: Maybe<DeactivateServiceRequest>
 };
 
 

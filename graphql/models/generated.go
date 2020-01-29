@@ -71,6 +71,14 @@ type CreateTargetRequest struct {
 	Tags      []int  `json:"tags"`
 }
 
+type DeactivateServiceRequest struct {
+	ID int `json:"id"`
+}
+
+type DeactivateUserRequest struct {
+	ID int `json:"id"`
+}
+
 type DeleteTargetRequest struct {
 	ID int `json:"id"`
 }

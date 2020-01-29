@@ -46,6 +46,14 @@ const XSidebar: FunctionComponent<SidebarProps> = props => {
               );
             })
           : []}
+        {props.isAdmin ? (
+          <Menu.Item as={Link} to="/admin">
+            <Icon name="chess rook" />
+            Admin
+          </Menu.Item>
+        ) : (
+          <span />
+        )}
         <Menu.Item
           href="https://github.com/kcarretto/paragon/issues/new"
           target="_blank"
