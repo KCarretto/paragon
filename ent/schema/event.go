@@ -114,7 +114,10 @@ func (Event) Edges() []ent.Edge {
 		edge.From("owner", User.Type).
 			Ref("events").
 			Unique().
-			Required().
-			Comment("An Job must have an owner"),
+			Comment("An event can have a user owner"),
+		edge.From("svcOwner", Service.Type).
+			Ref("events").
+			Unique().
+			Comment("An event can have a service owner"),
 	}
 }

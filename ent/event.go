@@ -47,6 +47,8 @@ type Event struct {
 		Likers []*User
 		// Owner holds the value of the owner edge.
 		Owner *User
+		// SvcOwner holds the value of the svcOwner edge.
+		SvcOwner *Service
 	} `json:"edges"`
 	event_job_id        *int
 	event_file_id       *int
@@ -58,6 +60,7 @@ type Event struct {
 	event_user_id       *int
 	event_event_id      *int
 	event_service_id    *int
+	svc_owner_id        *int
 	owner_id            *int
 }
 
@@ -83,6 +86,7 @@ func (*Event) fkValues() []interface{} {
 		&sql.NullInt64{}, // event_user_id
 		&sql.NullInt64{}, // event_event_id
 		&sql.NullInt64{}, // event_service_id
+		&sql.NullInt64{}, // svc_owner_id
 		&sql.NullInt64{}, // owner_id
 	}
 }
@@ -172,6 +176,12 @@ func (e *Event) assignValues(values ...interface{}) error {
 			*e.event_service_id = int(value.Int64)
 		}
 		if value, ok := values[10].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field svc_owner_id", value)
+		} else if value.Valid {
+			e.svc_owner_id = new(int)
+			*e.svc_owner_id = int(value.Int64)
+		}
+		if value, ok := values[11].(*sql.NullInt64); !ok {
 			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
 		} else if value.Valid {
 			e.owner_id = new(int)
@@ -239,6 +249,11 @@ func (e *Event) QueryLikers() *UserQuery {
 // QueryOwner queries the owner edge of the Event.
 func (e *Event) QueryOwner() *UserQuery {
 	return (&EventClient{e.config}).QueryOwner(e)
+}
+
+// QuerySvcOwner queries the svcOwner edge of the Event.
+func (e *Event) QuerySvcOwner() *ServiceQuery {
+	return (&EventClient{e.config}).QuerySvcOwner(e)
 }
 
 // Update returns a builder for updating this Event.

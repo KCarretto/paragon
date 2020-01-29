@@ -53,6 +53,7 @@ var (
 		{Name: "event_user_id", Type: field.TypeInt, Nullable: true},
 		{Name: "event_event_id", Type: field.TypeInt, Unique: true, Nullable: true},
 		{Name: "event_service_id", Type: field.TypeInt, Nullable: true},
+		{Name: "svc_owner_id", Type: field.TypeInt, Nullable: true},
 		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
 	}
 	// EventsTable holds the schema information for the "events" table.
@@ -132,8 +133,15 @@ var (
 				OnDelete:   schema.SetNull,
 			},
 			{
-				Symbol:  "events_users_events",
+				Symbol:  "events_services_events",
 				Columns: []*schema.Column{EventsColumns[13]},
+
+				RefColumns: []*schema.Column{ServicesColumns[0]},
+				OnDelete:   schema.SetNull,
+			},
+			{
+				Symbol:  "events_users_events",
+				Columns: []*schema.Column{EventsColumns[14]},
 
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
@@ -439,7 +447,8 @@ func init() {
 	EventsTable.ForeignKeys[7].RefTable = UsersTable
 	EventsTable.ForeignKeys[8].RefTable = EventsTable
 	EventsTable.ForeignKeys[9].RefTable = ServicesTable
-	EventsTable.ForeignKeys[10].RefTable = UsersTable
+	EventsTable.ForeignKeys[10].RefTable = ServicesTable
+	EventsTable.ForeignKeys[11].RefTable = UsersTable
 	JobsTable.ForeignKeys[0].RefTable = JobsTable
 	JobsTable.ForeignKeys[1].RefTable = UsersTable
 	LinksTable.ForeignKeys[0].RefTable = FilesTable

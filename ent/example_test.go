@@ -399,6 +399,12 @@ func ExampleService() {
 		SetName("string").
 		SaveX(ctx)
 	log.Println("tag created:", t0)
+	e1 := client.Event.
+		Create().
+		SetCreationTime(time.Now()).
+		SetKind(event.KindCREATEJOB).
+		SaveX(ctx)
+	log.Println("event created:", e1)
 
 	// create service vertex with its edges.
 	s := client.Service.
@@ -407,6 +413,7 @@ func ExampleService() {
 		SetPubKey("string").
 		SetIsActivated(true).
 		SetTag(t0).
+		AddEvents(e1).
 		SaveX(ctx)
 	log.Println("service created:", s)
 
@@ -416,6 +423,12 @@ func ExampleService() {
 		log.Fatalf("failed querying tag: %v", err)
 	}
 	log.Println("tag found:", t0)
+
+	e1, err = s.QueryEvents().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying events: %v", err)
+	}
+	log.Println("events found:", e1)
 
 	// Output:
 }

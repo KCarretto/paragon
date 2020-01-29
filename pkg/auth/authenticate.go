@@ -2,11 +2,16 @@ package auth
 
 import (
 	"context"
+	"crypto/ed25519"
+	"encoding/base64"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/service"
+	"github.com/kcarretto/paragon/ent/tag"
 )
 
 const (
@@ -16,6 +21,8 @@ const (
 type authKey string
 
 var userContextKey authKey = "user"
+var serviceContextKey authKey = "service"
+var svcTagPrefix string = "svc-"
 
 // GetUser from the context, returns nil for non-user contexts.
 func GetUser(ctx context.Context) *ent.User {
@@ -24,6 +31,18 @@ func GetUser(ctx context.Context) *ent.User {
 			return usr
 		}
 		panic(fmt.Errorf("Received non-user value for user context key: %v", v))
+	}
+
+	return nil
+}
+
+// GetService from the context, returns nil for non-service contexts.
+func GetService(ctx context.Context) *ent.Service {
+	if v := ctx.Value(serviceContextKey); v != nil {
+		if svc, ok := v.(*ent.Service); ok {
+			return svc
+		}
+		panic(fmt.Errorf("Received non-service value for service context key: %v", v))
 	}
 
 	return nil
@@ -58,14 +77,89 @@ type ServiceAuthenticator struct {
 // upsert new (unactivated) service identities if the public key is not already registered. Returns
 // an error if invalid credentials are provided.
 func (auth ServiceAuthenticator) Authenticate(w http.ResponseWriter, req *http.Request) (*http.Request, error) {
-	// TODO: @Nick
-	return req, nil
-	// svcName := req.Header.Get(HeaderService)
-	// pubKeyB64 := req.Header.Get(HeaderIdentity)
-	// sig := req.Header.Get(HeaderSignature)
-	// epoch := req.Header.Get(HeaderEpoch)
+	svcName := req.Header.Get(HeaderService)
+	pubKeyB64 := req.Header.Get(HeaderIdentity)
+	sigB64 := req.Header.Get(HeaderSignature)
+	epoch := req.Header.Get(HeaderEpoch)
+	if svcName == "" {
+		return req, nil
+	}
 
-	// pubKey := ed25519.PublicKey([]byte(b64_decoded_pubkey))
+	if pubKeyB64 == "" || sigB64 == "" || epoch == "" {
+		return nil, ErrMissingHeaders
+	}
+
+	svcQuery := auth.Graph.Service.Query().Where(service.PubKey(pubKeyB64))
+
+	exists, err := svcQuery.Clone().Exist(req.Context())
+	if err != nil {
+		return nil, err
+	}
+
+	// if the service exists
+	if exists {
+		svc, err := svcQuery.Only(req.Context())
+		if err != nil {
+			return nil, err
+		}
+		pubKey, err := base64.StdEncoding.DecodeString(pubKeyB64)
+		if err != nil {
+			return nil, err
+		}
+		sig, err := base64.StdEncoding.DecodeString(sigB64)
+		if err != nil {
+			return nil, err
+		}
+		valid := ed25519.Verify(pubKey, []byte(epoch), sig)
+		if valid {
+			return req.WithContext(context.WithValue(req.Context(), serviceContextKey, svc)), nil
+		}
+		return nil, ErrInvalidSignature
+	}
+
+	// now we know the service doesnt exist, but what about the tag?
+	tagQuery := auth.Graph.Tag.Query().Where(tag.Name(svcTagPrefix + svcName))
+
+	exists, err = tagQuery.Clone().Exist(req.Context())
+	if err != nil {
+		return nil, err
+	}
+
+	var tag *ent.Tag
+
+	// if a tag exists
+	if exists {
+		tag, err = tagQuery.Only(req.Context())
+		if err != nil {
+			return nil, err
+		}
+		// if not make one
+	} else {
+		tag, err = auth.Graph.Tag.Create().
+			SetName(svcTagPrefix + svcName).
+			Save(req.Context())
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	svc, err := auth.Graph.Service.Create().
+		SetName(svcName).
+		SetPubKey(pubKeyB64).
+		SetTag(tag).
+		Save(req.Context())
+	if err != nil {
+		return nil, err
+	}
+
+	// silent failure is best failure :3
+	auth.Graph.Event.Create().
+		SetSvcOwner(svc).
+		SetKind(event.KindCREATESERVICE).
+		SetService(svc).
+		Save(req.Context())
+
+	return req.WithContext(context.WithValue(req.Context(), serviceContextKey, svc)), nil
 }
 
 // UserAuthenticator parses http requests for session cookies and adds user context to the request

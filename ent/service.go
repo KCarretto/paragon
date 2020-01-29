@@ -26,6 +26,8 @@ type Service struct {
 	Edges struct {
 		// Tag holds the value of the tag edge.
 		Tag *Tag
+		// Events holds the value of the events edge.
+		Events []*Event
 	} `json:"edges"`
 	service_tag_id *int
 }
@@ -89,6 +91,11 @@ func (s *Service) assignValues(values ...interface{}) error {
 // QueryTag queries the tag edge of the Service.
 func (s *Service) QueryTag() *TagQuery {
 	return (&ServiceClient{s.config}).QueryTag(s)
+}
+
+// QueryEvents queries the events edge of the Service.
+func (s *Service) QueryEvents() *EventQuery {
+	return (&ServiceClient{s.config}).QueryEvents(s)
 }
 
 // Update returns a builder for updating this Service.

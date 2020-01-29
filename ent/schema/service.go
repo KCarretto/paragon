@@ -31,6 +31,9 @@ func (Service) Edges() []ent.Edge {
 	return []ent.Edge{
 		edge.To("tag", Tag.Type).
 			Unique().
+			Required().
 			Comment("A Service has a single tag"),
+		edge.To("events", Event.Type).
+			Comment("A Service can have many events"),
 	}
 }

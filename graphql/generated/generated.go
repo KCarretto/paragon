@@ -74,6 +74,8 @@ type ComplexityRoot struct {
 		Likers       func(childComplexity int, input *models.Filter) int
 		Link         func(childComplexity int) int
 		Owner        func(childComplexity int) int
+		Service      func(childComplexity int) int
+		SvcOwner     func(childComplexity int) int
 		Tag          func(childComplexity int) int
 		Target       func(childComplexity int) int
 		Task         func(childComplexity int) int
@@ -112,6 +114,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		ActivateService         func(childComplexity int, input *models.ActivateServiceRequest) int
 		ActivateUser            func(childComplexity int, input *models.ActivateUserRequest) int
 		AddCredentialForTarget  func(childComplexity int, input *models.AddCredentialForTargetRequest) int
 		AddCredentialForTargets func(childComplexity int, input *models.AddCredentialForTargetsRequest) int
@@ -231,9 +234,11 @@ type EventResolver interface {
 	Target(ctx context.Context, obj *ent.Event) (*ent.Target, error)
 	Task(ctx context.Context, obj *ent.Event) (*ent.Task, error)
 	User(ctx context.Context, obj *ent.Event) (*ent.User, error)
+	Service(ctx context.Context, obj *ent.Event) (*ent.Service, error)
 	Event(ctx context.Context, obj *ent.Event) (*ent.Event, error)
 	Likers(ctx context.Context, obj *ent.Event, input *models.Filter) ([]*ent.User, error)
 	Owner(ctx context.Context, obj *ent.Event) (*ent.User, error)
+	SvcOwner(ctx context.Context, obj *ent.Event) (*ent.Service, error)
 }
 type FileResolver interface {
 	Links(ctx context.Context, obj *ent.File, input *models.Filter) ([]*ent.Link, error)
@@ -272,6 +277,7 @@ type MutationResolver interface {
 	MakeAdmin(ctx context.Context, input *models.MakeAdminRequest) (*ent.User, error)
 	RemoveAdmin(ctx context.Context, input *models.RemoveAdminRequest) (*ent.User, error)
 	ChangeName(ctx context.Context, input *models.ChangeNameRequest) (*ent.User, error)
+	ActivateService(ctx context.Context, input *models.ActivateServiceRequest) (*ent.Service, error)
 	LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error)
 }
 type QueryResolver interface {
@@ -442,6 +448,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Event.Owner(childComplexity), true
+
+	case "Event.service":
+		if e.complexity.Event.Service == nil {
+			break
+		}
+
+		return e.complexity.Event.Service(childComplexity), true
+
+	case "Event.svcOwner":
+		if e.complexity.Event.SvcOwner == nil {
+			break
+		}
+
+		return e.complexity.Event.SvcOwner(childComplexity), true
 
 	case "Event.tag":
 		if e.complexity.Event.Tag == nil {
@@ -639,6 +659,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Link.ID(childComplexity), true
+
+	case "Mutation.activateService":
+		if e.complexity.Mutation.ActivateService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_activateService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ActivateService(childComplexity, args["input"].(*models.ActivateServiceRequest)), true
 
 	case "Mutation.activateUser":
 		if e.complexity.Mutation.ActivateUser == nil {
@@ -1687,9 +1719,11 @@ type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   target: Target
   task: Task
   user: User
+  service: Service
   event: Event
   likers(input: Filter): [User]
   owner: User
+  svcOwner: Service
 }
 
 input FailCredentialRequest {
@@ -1845,7 +1879,7 @@ type Mutation {
   changeName(input: ChangeNameRequest): User!
 
   # Service Mutations
-  # activateService(input: ActivateServiceRequest): Service!
+  activateService(input: ActivateServiceRequest): Service!
 
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
@@ -1938,6 +1972,20 @@ func (ec *executionContext) field_Job_tasks_args(ctx context.Context, rawArgs ma
 	var arg0 *models.Filter
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOFilter2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_activateService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.ActivateServiceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOActivateServiceRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐActivateServiceRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3260,6 +3308,40 @@ func (ec *executionContext) _Event_user(ctx context.Context, field graphql.Colle
 	return ec.marshalOUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Event_service(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Event",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Event().Service(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Event_event(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -3367,6 +3449,40 @@ func (ec *executionContext) _Event_owner(ctx context.Context, field graphql.Coll
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Event_svcOwner(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Event",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Event().SvcOwner(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _File_id(ctx context.Context, field graphql.CollectedField, obj *ent.File) (ret graphql.Marshaler) {
@@ -5148,6 +5264,50 @@ func (ec *executionContext) _Mutation_changeName(ctx context.Context, field grap
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_activateService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_activateService_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ActivateService(rctx, args["input"].(*models.ActivateServiceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_likeEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9461,6 +9621,17 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 				res = ec._Event_user(ctx, field, obj)
 				return res
 			})
+		case "service":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Event_service(ctx, field, obj)
+				return res
+			})
 		case "event":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -9492,6 +9663,17 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 					}
 				}()
 				res = ec._Event_owner(ctx, field, obj)
+				return res
+			})
+		case "svcOwner":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Event_svcOwner(ctx, field, obj)
 				return res
 			})
 		default:
@@ -9805,6 +9987,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "changeName":
 			out.Values[i] = ec._Mutation_changeName(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "activateService":
+			out.Values[i] = ec._Mutation_activateService(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -10709,6 +10896,20 @@ func (ec *executionContext) marshalNLink2ᚖgithubᚗcomᚋkcarrettoᚋparagon�
 	return ec._Link(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNService2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx context.Context, sel ast.SelectionSet, v ent.Service) graphql.Marshaler {
+	return ec._Service(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx context.Context, sel ast.SelectionSet, v *ent.Service) graphql.Marshaler {
+	if v == nil {
+		if !ec.HasError(graphql.GetResolverContext(ctx)) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	return ec._Service(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNString2string(ctx context.Context, v interface{}) (string, error) {
 	return graphql.UnmarshalString(v)
 }
@@ -11003,6 +11204,18 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalOActivateServiceRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐActivateServiceRequest(ctx context.Context, v interface{}) (models.ActivateServiceRequest, error) {
+	return ec.unmarshalInputActivateServiceRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOActivateServiceRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐActivateServiceRequest(ctx context.Context, v interface{}) (*models.ActivateServiceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOActivateServiceRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐActivateServiceRequest(ctx, v)
+	return &res, err
 }
 
 func (ec *executionContext) unmarshalOActivateUserRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐActivateUserRequest(ctx context.Context, v interface{}) (models.ActivateUserRequest, error) {

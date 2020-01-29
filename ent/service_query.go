@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -11,6 +12,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -25,8 +27,9 @@ type ServiceQuery struct {
 	unique     []string
 	predicates []predicate.Service
 	// eager-loading edges.
-	withTag *TagQuery
-	withFKs bool
+	withTag    *TagQuery
+	withEvents *EventQuery
+	withFKs    bool
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -62,6 +65,18 @@ func (sq *ServiceQuery) QueryTag() *TagQuery {
 		sqlgraph.From(service.Table, service.FieldID, sq.sqlQuery()),
 		sqlgraph.To(tag.Table, tag.FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, service.TagTable, service.TagColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+	return query
+}
+
+// QueryEvents chains the current query on the events edge.
+func (sq *ServiceQuery) QueryEvents() *EventQuery {
+	query := &EventQuery{config: sq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(service.Table, service.FieldID, sq.sqlQuery()),
+		sqlgraph.To(event.Table, event.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, service.EventsTable, service.EventsColumn),
 	)
 	query.sql = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
 	return query
@@ -247,6 +262,17 @@ func (sq *ServiceQuery) WithTag(opts ...func(*TagQuery)) *ServiceQuery {
 	return sq
 }
 
+//  WithEvents tells the query-builder to eager-loads the nodes that are connected to
+// the "events" edge. The optional arguments used to configure the query builder of the edge.
+func (sq *ServiceQuery) WithEvents(opts ...func(*EventQuery)) *ServiceQuery {
+	query := &EventQuery{config: sq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	sq.withEvents = query
+	return sq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -345,6 +371,34 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 			for i := range nodes {
 				nodes[i].Edges.Tag = n
 			}
+		}
+	}
+
+	if query := sq.withEvents; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Service)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Event(func(s *sql.Selector) {
+			s.Where(sql.InValues(service.EventsColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.svc_owner_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "svc_owner_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "svc_owner_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Events = append(node.Edges.Events, n)
 		}
 	}
 

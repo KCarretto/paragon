@@ -456,6 +456,20 @@ func (c *EventClient) QueryOwner(e *Event) *UserQuery {
 	return query
 }
 
+// QuerySvcOwner queries the svcOwner edge of a Event.
+func (c *EventClient) QuerySvcOwner(e *Event) *ServiceQuery {
+	query := &ServiceQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(service.Table, service.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, event.SvcOwnerTable, event.SvcOwnerColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
 // FileClient is a client for the File schema.
 type FileClient struct {
 	config
@@ -818,6 +832,20 @@ func (c *ServiceClient) QueryTag(s *Service) *TagQuery {
 		sqlgraph.From(service.Table, service.FieldID, id),
 		sqlgraph.To(tag.Table, tag.FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, false, service.TagTable, service.TagColumn),
+	)
+	query.sql = sqlgraph.Neighbors(s.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryEvents queries the events edge of a Service.
+func (c *ServiceClient) QueryEvents(s *Service) *EventQuery {
+	query := &EventQuery{config: c.config}
+	id := s.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(service.Table, service.FieldID, id),
+		sqlgraph.To(event.Table, event.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, service.EventsTable, service.EventsColumn),
 	)
 	query.sql = sqlgraph.Neighbors(s.driver.Dialect(), step)
 
