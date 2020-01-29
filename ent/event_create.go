@@ -15,6 +15,7 @@ import (
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
@@ -35,6 +36,7 @@ type EventCreate struct {
 	task         map[int]struct{}
 	user         map[int]struct{}
 	event        map[int]struct{}
+	service      map[int]struct{}
 	likers       map[int]struct{}
 	owner        map[int]struct{}
 }
@@ -257,6 +259,28 @@ func (ec *EventCreate) SetEvent(e *Event) *EventCreate {
 	return ec.SetEventID(e.ID)
 }
 
+// SetServiceID sets the service edge to Service by id.
+func (ec *EventCreate) SetServiceID(id int) *EventCreate {
+	if ec.service == nil {
+		ec.service = make(map[int]struct{})
+	}
+	ec.service[id] = struct{}{}
+	return ec
+}
+
+// SetNillableServiceID sets the service edge to Service by id if the given value is not nil.
+func (ec *EventCreate) SetNillableServiceID(id *int) *EventCreate {
+	if id != nil {
+		ec = ec.SetServiceID(*id)
+	}
+	return ec
+}
+
+// SetService sets the service edge to Service.
+func (ec *EventCreate) SetService(s *Service) *EventCreate {
+	return ec.SetServiceID(s.ID)
+}
+
 // AddLikerIDs adds the likers edge to User by ids.
 func (ec *EventCreate) AddLikerIDs(ids ...int) *EventCreate {
 	if ec.likers == nil {
@@ -329,6 +353,9 @@ func (ec *EventCreate) Save(ctx context.Context) (*Event, error) {
 	}
 	if len(ec.event) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"event\"")
+	}
+	if len(ec.service) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"service\"")
 	}
 	if len(ec.owner) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
@@ -538,6 +565,25 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.service; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   event.ServiceTable,
+			Columns: []string{event.ServiceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
 				},
 			},
 		}

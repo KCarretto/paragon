@@ -62,6 +62,11 @@ func (r *Resolver) Query() generated.QueryResolver {
 	return &queryResolver{r}
 }
 
+// Service is the Resolver for the User Ent
+func (r *Resolver) Service() generated.ServiceResolver {
+	return &serviceResolver{r}
+}
+
 // Tag is the Resolver for the Tag Ent
 func (r *Resolver) Tag() generated.TagResolver {
 	return &tagResolver{r}
@@ -882,6 +887,7 @@ func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeN
 	}
 	return actor, nil
 }
+
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
 	actor := auth.GetUser(ctx)
 	e, err := r.Graph.Event.UpdateOneID(input.ID).
@@ -1026,6 +1032,21 @@ func (r *queryResolver) Users(ctx context.Context, input *models.Filter) ([]*ent
 	}
 	return q.All(ctx)
 }
+func (r *queryResolver) Service(ctx context.Context, id int) (*ent.Service, error) {
+	return r.Graph.Service.Get(ctx, id)
+}
+func (r *queryResolver) Services(ctx context.Context, input *models.Filter) ([]*ent.Service, error) {
+	q := r.Graph.Service.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
+}
 func (r *queryResolver) Event(ctx context.Context, id int) (*ent.Event, error) {
 	return r.Graph.Event.Get(ctx, id)
 }
@@ -1040,6 +1061,12 @@ func (r *queryResolver) Events(ctx context.Context, input *models.Filter) ([]*en
 		}
 	}
 	return q.Order(ent.Desc(event.FieldCreationTime)).All(ctx)
+}
+
+type serviceResolver struct{ *Resolver }
+
+func (r *serviceResolver) Tag(ctx context.Context, obj *ent.Service) (*ent.Tag, error) {
+	return obj.QueryTag().Only(ctx)
 }
 
 type tagResolver struct{ *Resolver }

@@ -41,6 +41,8 @@ type Event struct {
 		User *User
 		// Event holds the value of the event edge.
 		Event *Event
+		// Service holds the value of the service edge.
+		Service *Service
 		// Likers holds the value of the likers edge.
 		Likers []*User
 		// Owner holds the value of the owner edge.
@@ -55,6 +57,7 @@ type Event struct {
 	event_task_id       *int
 	event_user_id       *int
 	event_event_id      *int
+	event_service_id    *int
 	owner_id            *int
 }
 
@@ -79,6 +82,7 @@ func (*Event) fkValues() []interface{} {
 		&sql.NullInt64{}, // event_task_id
 		&sql.NullInt64{}, // event_user_id
 		&sql.NullInt64{}, // event_event_id
+		&sql.NullInt64{}, // event_service_id
 		&sql.NullInt64{}, // owner_id
 	}
 }
@@ -162,6 +166,12 @@ func (e *Event) assignValues(values ...interface{}) error {
 			*e.event_event_id = int(value.Int64)
 		}
 		if value, ok := values[9].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_service_id", value)
+		} else if value.Valid {
+			e.event_service_id = new(int)
+			*e.event_service_id = int(value.Int64)
+		}
+		if value, ok := values[10].(*sql.NullInt64); !ok {
 			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
 		} else if value.Valid {
 			e.owner_id = new(int)
@@ -214,6 +224,11 @@ func (e *Event) QueryUser() *UserQuery {
 // QueryEvent queries the event edge of the Event.
 func (e *Event) QueryEvent() *EventQuery {
 	return (&EventClient{e.config}).QueryEvent(e)
+}
+
+// QueryService queries the service edge of the Event.
+func (e *Event) QueryService() *ServiceQuery {
+	return (&EventClient{e.config}).QueryService(e)
 }
 
 // QueryLikers queries the likers edge of the Event.

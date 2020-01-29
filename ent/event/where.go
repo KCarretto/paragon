@@ -517,6 +517,36 @@ func HasEventWith(preds ...predicate.Event) predicate.Event {
 	)
 }
 
+// HasService applies the HasEdge predicate on the "service" edge.
+func HasService() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ServiceTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ServiceTable, ServiceColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	},
+	)
+}
+
+// HasServiceWith applies the HasEdge predicate on the "service" edge with a given conditions (other predicates).
+func HasServiceWith(preds ...predicate.Service) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(ServiceInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, ServiceTable, ServiceColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	},
+	)
+}
+
 // HasLikers applies the HasEdge predicate on the "likers" edge.
 func HasLikers() predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
