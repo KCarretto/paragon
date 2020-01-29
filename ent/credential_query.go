@@ -13,6 +13,7 @@ import (
 	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/target"
 )
 
 // CredentialQuery is the builder for querying Credential entities.
@@ -23,6 +24,8 @@ type CredentialQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.Credential
+	// eager-loading edges.
+	withTarget *TargetQuery
 	withFKs    bool
 	// intermediate query.
 	sql *sql.Selector
@@ -50,6 +53,18 @@ func (cq *CredentialQuery) Offset(offset int) *CredentialQuery {
 func (cq *CredentialQuery) Order(o ...Order) *CredentialQuery {
 	cq.order = append(cq.order, o...)
 	return cq
+}
+
+// QueryTarget chains the current query on the target edge.
+func (cq *CredentialQuery) QueryTarget() *TargetQuery {
+	query := &TargetQuery{config: cq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(credential.Table, credential.FieldID, cq.sqlQuery()),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, credential.TargetTable, credential.TargetColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+	return query
 }
 
 // First returns the first Credential entity in the query. Returns *ErrNotFound when no credential was found.
@@ -221,6 +236,17 @@ func (cq *CredentialQuery) Clone() *CredentialQuery {
 	}
 }
 
+//  WithTarget tells the query-builder to eager-loads the nodes that are connected to
+// the "target" edge. The optional arguments used to configure the query builder of the edge.
+func (cq *CredentialQuery) WithTarget(opts ...func(*TargetQuery)) *CredentialQuery {
+	query := &TargetQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withTarget = query
+	return cq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -268,6 +294,9 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 		withFKs               = cq.withFKs
 		_spec                 = cq.querySpec()
 	)
+	if cq.withTarget != nil {
+		withFKs = true
+	}
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, credential.ForeignKeys...)
 	}
@@ -293,6 +322,32 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
+
+	if query := cq.withTarget; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Credential)
+		for i := range nodes {
+			if fk := nodes[i].target_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(target.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Target = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 

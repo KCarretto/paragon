@@ -548,7 +548,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	if input.Kind != nil {
 		kind = credential.Kind(*input.Kind)
 	}
-	credential, err := r.Graph.Credential.Create().
+	c, err := r.Graph.Credential.Create().
 		SetPrincipal(input.Principal).
 		SetSecret(input.Secret).
 		SetKind(kind).
@@ -556,19 +556,23 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	if err != nil {
 		return nil, err
 	}
-	target, err := r.Graph.Target.UpdateOneID(input.ID).
-		AddCredentialIDs(credential.ID).
-		Save(ctx)
+	t, err := r.Graph.Target.Get(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+	err = t.Update().
+		AddCredentialIDs(c.ID).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
-		SetCredential(credential).
-		SetTarget(target).
+		SetCredential(c).
+		SetTarget(t).
 		SetKind(event.KindADDCREDENTIALFORTARGET).
 		Save(ctx)
-	if err != nil {
-		return target, err
-	}
-	return target, err
+	return t, err
 }
 func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *models.AddCredentialForTargetsRequest) ([]*ent.Target, error) {
 	kind := credential.KindPassword
@@ -576,8 +580,8 @@ func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *m
 		kind = credential.Kind(*input.Kind)
 	}
 	var targets []*ent.Target
-	for id := range input.Ids {
-		credential, err := r.Graph.Credential.Create().
+	for _, id := range input.Ids {
+		c, err := r.Graph.Credential.Create().
 			SetPrincipal(input.Principal).
 			SetSecret(input.Secret).
 			SetKind(kind).
@@ -585,16 +589,23 @@ func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *m
 		if err != nil {
 			return nil, err
 		}
-		target, err := r.Graph.Target.UpdateOneID(id).
-			AddCredentialIDs(credential.ID).
-			Save(ctx)
-		targets = append(targets, target)
+		t, err := r.Graph.Target.Get(ctx, id)
+		if err != nil {
+			return targets, err
+		}
+		err = t.Update().
+			AddCredentialIDs(c.ID).
+			Exec(ctx)
+		if err != nil {
+			return targets, err
+		}
+		targets = append(targets, t)
 
 		// if this errors its better to ignore and keep trying to add targets.
 		r.Graph.Event.Create().
 			SetOwner(auth.GetUser(ctx)).
-			SetCredential(credential).
-			SetTarget(target).
+			SetCredential(c).
+			SetTarget(t).
 			SetKind(event.KindADDCREDENTIALFORTARGET).
 			Save(ctx)
 	}

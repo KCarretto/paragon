@@ -470,13 +470,13 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.target_credential_id
+			fk := n.target_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "target_credential_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "target_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_credential_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Credentials = append(node.Edges.Credentials, n)
 		}
