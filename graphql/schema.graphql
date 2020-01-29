@@ -122,8 +122,8 @@ type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
 
 type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   id: ID!
-  CreationTime: Time
-  Kind: String
+  creationTime: Time
+  kind: String
 
   job: Job
   file: File
