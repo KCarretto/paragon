@@ -103,9 +103,11 @@ export type Event = {
   target?: Maybe<Target>,
   task?: Maybe<Task>,
   user?: Maybe<User>,
+  service?: Maybe<Service>,
   event?: Maybe<Event>,
   likers?: Maybe<Array<Maybe<User>>>,
   owner?: Maybe<User>,
+  svcOwner?: Maybe<Service>,
 };
 
 
@@ -211,6 +213,8 @@ export type Mutation = {
   makeAdmin: User,
   removeAdmin: User,
   changeName: User,
+  /** Service Mutations */
+  activateService: Service,
   /** Event Mutations */
   likeEvent: Event,
 };
@@ -328,6 +332,11 @@ export type MutationRemoveAdminArgs = {
 
 export type MutationChangeNameArgs = {
   input?: Maybe<ChangeNameRequest>
+};
+
+
+export type MutationActivateServiceArgs = {
+  input?: Maybe<ActivateServiceRequest>
 };
 
 
