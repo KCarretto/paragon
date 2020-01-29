@@ -62,6 +62,11 @@ func (r *Resolver) Query() generated.QueryResolver {
 	return &queryResolver{r}
 }
 
+// Service is the Resolver for the User Ent
+func (r *Resolver) Service() generated.ServiceResolver {
+	return &serviceResolver{r}
+}
+
 // Tag is the Resolver for the Tag Ent
 func (r *Resolver) Tag() generated.TagResolver {
 	return &tagResolver{r}
@@ -548,7 +553,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	if input.Kind != nil {
 		kind = credential.Kind(*input.Kind)
 	}
-	credential, err := r.Graph.Credential.Create().
+	c, err := r.Graph.Credential.Create().
 		SetPrincipal(input.Principal).
 		SetSecret(input.Secret).
 		SetKind(kind).
@@ -556,19 +561,23 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	if err != nil {
 		return nil, err
 	}
-	target, err := r.Graph.Target.UpdateOneID(input.ID).
-		AddCredentialIDs(credential.ID).
-		Save(ctx)
+	t, err := r.Graph.Target.Get(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+	err = t.Update().
+		AddCredentialIDs(c.ID).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
 	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
-		SetCredential(credential).
-		SetTarget(target).
+		SetCredential(c).
+		SetTarget(t).
 		SetKind(event.KindADDCREDENTIALFORTARGET).
 		Save(ctx)
-	if err != nil {
-		return target, err
-	}
-	return target, err
+	return t, err
 }
 func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *models.AddCredentialForTargetsRequest) ([]*ent.Target, error) {
 	kind := credential.KindPassword
@@ -576,8 +585,8 @@ func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *m
 		kind = credential.Kind(*input.Kind)
 	}
 	var targets []*ent.Target
-	for id := range input.Ids {
-		credential, err := r.Graph.Credential.Create().
+	for _, id := range input.Ids {
+		c, err := r.Graph.Credential.Create().
 			SetPrincipal(input.Principal).
 			SetSecret(input.Secret).
 			SetKind(kind).
@@ -585,16 +594,23 @@ func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *m
 		if err != nil {
 			return nil, err
 		}
-		target, err := r.Graph.Target.UpdateOneID(id).
-			AddCredentialIDs(credential.ID).
-			Save(ctx)
-		targets = append(targets, target)
+		t, err := r.Graph.Target.Get(ctx, id)
+		if err != nil {
+			return targets, err
+		}
+		err = t.Update().
+			AddCredentialIDs(c.ID).
+			Exec(ctx)
+		if err != nil {
+			return targets, err
+		}
+		targets = append(targets, t)
 
 		// if this errors its better to ignore and keep trying to add targets.
 		r.Graph.Event.Create().
 			SetOwner(auth.GetUser(ctx)).
-			SetCredential(credential).
-			SetTarget(target).
+			SetCredential(c).
+			SetTarget(t).
 			SetKind(event.KindADDCREDENTIALFORTARGET).
 			Save(ctx)
 	}
@@ -871,6 +887,7 @@ func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeN
 	}
 	return actor, nil
 }
+
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
 	actor := auth.GetUser(ctx)
 	e, err := r.Graph.Event.UpdateOneID(input.ID).
@@ -1015,6 +1032,21 @@ func (r *queryResolver) Users(ctx context.Context, input *models.Filter) ([]*ent
 	}
 	return q.All(ctx)
 }
+func (r *queryResolver) Service(ctx context.Context, id int) (*ent.Service, error) {
+	return r.Graph.Service.Get(ctx, id)
+}
+func (r *queryResolver) Services(ctx context.Context, input *models.Filter) ([]*ent.Service, error) {
+	q := r.Graph.Service.Query()
+	if input != nil {
+		if input.Offset != nil {
+			q.Offset(*input.Offset)
+		}
+		if input.Limit != nil {
+			q.Limit(*input.Limit)
+		}
+	}
+	return q.All(ctx)
+}
 func (r *queryResolver) Event(ctx context.Context, id int) (*ent.Event, error) {
 	return r.Graph.Event.Get(ctx, id)
 }
@@ -1029,6 +1061,12 @@ func (r *queryResolver) Events(ctx context.Context, input *models.Filter) ([]*en
 		}
 	}
 	return q.Order(ent.Desc(event.FieldCreationTime)).All(ctx)
+}
+
+type serviceResolver struct{ *Resolver }
+
+func (r *serviceResolver) Tag(ctx context.Context, obj *ent.Service) (*ent.Tag, error) {
+	return obj.QueryTag().Only(ctx)
 }
 
 type tagResolver struct{ *Resolver }

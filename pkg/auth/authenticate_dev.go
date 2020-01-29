@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/ent/event"
 )
 
 // DevAuthenticator is only available when run in developer mode. It inserts users into the request
@@ -40,5 +41,12 @@ func (auth DevAuthenticator) Authenticate(w http.ResponseWriter, req *http.Reque
 		SetIsAdmin(true).
 		SetIsActivated(true).
 		SaveX(req.Context())
+
+	// we silent fail because as cool as they are, events are less important than functionality
+	auth.Graph.Event.Create().
+		SetOwner(user).
+		SetUser(user).
+		SetKind(event.KindCREATEUSER).
+		Save(req.Context())
 	return CreateUserSession(w, req, user), nil
 }

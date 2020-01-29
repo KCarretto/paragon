@@ -81,6 +81,13 @@ const (
 	EventTable = "events"
 	// EventColumn is the table column denoting the event relation/edge.
 	EventColumn = "event_event_id"
+	// ServiceTable is the table the holds the service relation/edge.
+	ServiceTable = "events"
+	// ServiceInverseTable is the table name for the Service entity.
+	// It exists in this package in order to avoid circular dependency with the "service" package.
+	ServiceInverseTable = "services"
+	// ServiceColumn is the table column denoting the service relation/edge.
+	ServiceColumn = "event_service_id"
 	// LikersTable is the table the holds the likers relation/edge.
 	LikersTable = "users"
 	// LikersInverseTable is the table name for the User entity.
@@ -115,6 +122,7 @@ var ForeignKeys = []string{
 	"event_task_id",
 	"event_user_id",
 	"event_event_id",
+	"event_service_id",
 	"owner_id",
 }
 
@@ -148,9 +156,12 @@ const (
 	KindCREATELINK             Kind = "CREATE_LINK"
 	KindSETLINKFIELDS          Kind = "SET_LINK_FIELDS"
 	KindACTIVATEUSER           Kind = "ACTIVATE_USER"
+	KindCREATEUSER             Kind = "CREATE_USER"
 	KindMAKEADMIN              Kind = "MAKE_ADMIN"
 	KindREMOVEADMIN            Kind = "REMOVE_ADMIN"
 	KindCHANGENAME             Kind = "CHANGE_NAME"
+	KindACTIVATESERVICE        Kind = "ACTIVATE_SERVICE"
+	KindCREATESERVICE          Kind = "CREATE_SERVICE"
 	KindLIKEEVENT              Kind = "LIKE_EVENT"
 	KindOTHER                  Kind = "OTHER"
 )
@@ -162,7 +173,7 @@ func (s Kind) String() string {
 // KindValidator is a validator for the "k" field enum values. It is called by the builders before save.
 func KindValidator(k Kind) error {
 	switch k {
-	case KindCREATEJOB, KindCREATETAG, KindAPPLYTAGTOTASK, KindAPPLYTAGTOTARGET, KindAPPLYTAGTOJOB, KindREMOVETAGFROMTASK, KindREMOVETAGFROMTARGET, KindREMOVETAGFROMJOB, KindCREATETARGET, KindSETTARGETFIELDS, KindDELETETARGET, KindADDCREDENTIALFORTARGET, KindUPLOADFILE, KindCREATELINK, KindSETLINKFIELDS, KindACTIVATEUSER, KindMAKEADMIN, KindREMOVEADMIN, KindCHANGENAME, KindLIKEEVENT, KindOTHER:
+	case KindCREATEJOB, KindCREATETAG, KindAPPLYTAGTOTASK, KindAPPLYTAGTOTARGET, KindAPPLYTAGTOJOB, KindREMOVETAGFROMTASK, KindREMOVETAGFROMTARGET, KindREMOVETAGFROMJOB, KindCREATETARGET, KindSETTARGETFIELDS, KindDELETETARGET, KindADDCREDENTIALFORTARGET, KindUPLOADFILE, KindCREATELINK, KindSETLINKFIELDS, KindACTIVATEUSER, KindCREATEUSER, KindMAKEADMIN, KindREMOVEADMIN, KindCHANGENAME, KindACTIVATESERVICE, KindCREATESERVICE, KindLIKEEVENT, KindOTHER:
 		return nil
 	default:
 		return fmt.Errorf("event: invalid enum value for Kind field: %q", k)

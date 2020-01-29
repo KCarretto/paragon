@@ -22,8 +22,14 @@ type Credential struct {
 	// Kind holds the value of the "kind" field.
 	Kind credential.Kind `json:"kind,omitempty"`
 	// Fails holds the value of the "fails" field.
-	Fails                int `json:"fails,omitempty"`
-	target_credential_id *int
+	Fails int `json:"fails,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the CredentialQuery when eager-loading is set.
+	Edges struct {
+		// Target holds the value of the target edge.
+		Target *Target
+	} `json:"edges"`
+	target_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -40,7 +46,7 @@ func (*Credential) scanValues() []interface{} {
 // fkValues returns the types for scanning foreign-keys values from sql.Rows.
 func (*Credential) fkValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{}, // target_credential_id
+		&sql.NullInt64{}, // target_id
 	}
 }
 
@@ -79,13 +85,18 @@ func (c *Credential) assignValues(values ...interface{}) error {
 	values = values[4:]
 	if len(values) == len(credential.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field target_credential_id", value)
+			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
 		} else if value.Valid {
-			c.target_credential_id = new(int)
-			*c.target_credential_id = int(value.Int64)
+			c.target_id = new(int)
+			*c.target_id = int(value.Int64)
 		}
 	}
 	return nil
+}
+
+// QueryTarget queries the target edge of the Credential.
+func (c *Credential) QueryTarget() *TargetQuery {
+	return (&CredentialClient{c.config}).QueryTarget(c)
 }
 
 // Update returns a builder for updating this Credential.

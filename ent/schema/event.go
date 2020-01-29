@@ -49,9 +49,13 @@ var (
 	EventSetLinkFields EventKind = newEventKind("SET_LINK_FIELDS")
 
 	EventActivateUser EventKind = newEventKind("ACTIVATE_USER")
+	EventCreateUser   EventKind = newEventKind("CREATE_USER")
 	EventMakeAdmin    EventKind = newEventKind("MAKE_ADMIN")
 	EventRemoveAdmin  EventKind = newEventKind("REMOVE_ADMIN")
 	EventChangeName   EventKind = newEventKind("CHANGE_NAME")
+
+	EventActivateService EventKind = newEventKind("ACTIVATE_SERVICE")
+	EventCreateService   EventKind = newEventKind("CREATE_SERVICE")
 
 	EventLikeEvent EventKind = newEventKind("LIKE_EVENT")
 
@@ -102,6 +106,9 @@ func (Event) Edges() []ent.Edge {
 		edge.To("event", Event.Type).
 			Unique().
 			Comment("An Event can have an event"),
+		edge.To("service", Service.Type).
+			Unique().
+			Comment("An Event can have a service"),
 		edge.To("likers", User.Type).
 			Comment("An Event can have a few likers"),
 		edge.From("owner", User.Type).
