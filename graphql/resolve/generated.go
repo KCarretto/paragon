@@ -848,6 +848,23 @@ func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.Activ
 	}
 	return user, nil
 }
+func (r *mutationResolver) DeactivateUser(ctx context.Context, input *models.DeactivateUserRequest) (*ent.User, error) {
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := r.Graph.User.UpdateOneID(input.ID).
+		SetIsActivated(false).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
 func (r *mutationResolver) MakeAdmin(ctx context.Context, input *models.MakeAdminRequest) (*ent.User, error) {
 	err := auth.NewAuthorizer().
 		IsActivated().
@@ -940,6 +957,24 @@ func (r *mutationResolver) ActivateService(ctx context.Context, input *models.Ac
 	if err != nil {
 		return svc, err
 	}
+	return svc, nil
+}
+func (r *mutationResolver) DeactivateService(ctx context.Context, input *models.DeactivateServiceRequest) (*ent.Service, error) {
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	svc, err := r.Graph.Service.UpdateOneID(input.ID).
+		SetIsActivated(false).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	return svc, nil
 }
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {

@@ -236,6 +236,9 @@ input SetLinkFieldsRequest {
 input ActivateUserRequest {
   id: ID!
 }
+input DeactivateUserRequest {
+  id: ID!
+}
 input MakeAdminRequest {
   id: ID!
 }
@@ -247,6 +250,9 @@ input ChangeNameRequest {
 }
 
 input ActivateServiceRequest {
+  id: ID!
+}
+input DeactivateServiceRequest {
   id: ID!
 }
 
@@ -288,12 +294,14 @@ type Mutation {
 
   # User Mutations
   activateUser(input: ActivateUserRequest): User!
+  deactivateUser(input: DeactivateUserRequest): User!
   makeAdmin(input: MakeAdminRequest): User!
   removeAdmin(input: RemoveAdminRequest): User!
   changeName(input: ChangeNameRequest): User!
 
   # Service Mutations
   activateService(input: ActivateServiceRequest): Service!
+  deactivateService(input: DeactivateServiceRequest): Service!
 
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
