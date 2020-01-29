@@ -8,6 +8,7 @@ import { Card, Container, Header, Icon } from "semantic-ui-react";
 import { XJobHeader } from "../components/job";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XTaskCard, XTaskContent } from "../components/task";
+import { XTaskCardDisplayType } from "../components/task/XTaskCard";
 import { Job, Tag, Task } from "../graphql/models";
 
 export const JOB_QUERY = gql`
@@ -88,7 +89,11 @@ const XJobView = () => {
     return (
       <Card.Group centered itemsPerRow={4}>
         {tasks.map(task => (
-          <XTaskCard key={task.id} {...task} />
+          <XTaskCard
+            key={task.id}
+            display={XTaskCardDisplayType.TARGET}
+            task={task}
+          />
         ))}
       </Card.Group>
     );
