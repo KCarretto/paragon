@@ -102,6 +102,13 @@ const (
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
 	OwnerColumn = "owner_id"
+	// SvcOwnerTable is the table the holds the svcOwner relation/edge.
+	SvcOwnerTable = "events"
+	// SvcOwnerInverseTable is the table name for the Service entity.
+	// It exists in this package in order to avoid circular dependency with the "service" package.
+	SvcOwnerInverseTable = "services"
+	// SvcOwnerColumn is the table column denoting the svcOwner relation/edge.
+	SvcOwnerColumn = "svc_owner_id"
 )
 
 // Columns holds all SQL columns for event fields.
@@ -123,6 +130,7 @@ var ForeignKeys = []string{
 	"event_user_id",
 	"event_event_id",
 	"event_service_id",
+	"svc_owner_id",
 	"owner_id",
 }
 
