@@ -111,6 +111,15 @@ type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
   jobs(input: Filter): [Job]
 }
 
+type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
+  id: ID!
+  name: String
+  pubKey: String
+  isActivated: Boolean
+
+  tag: Tag!
+}
+
 type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   id: ID!
   CreationTime: Time
@@ -235,6 +244,10 @@ input ChangeNameRequest {
   name: String!
 }
 
+input ActivateServiceRequest {
+  id: ID!
+}
+
 input LikeEventRequest {
   id: ID!
 }
@@ -277,6 +290,9 @@ type Mutation {
   removeAdmin(input: RemoveAdminRequest): User!
   changeName(input: ChangeNameRequest): User!
 
+  # Service Mutations
+  # activateService(input: ActivateServiceRequest): Service!
+
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
 }
@@ -306,6 +322,9 @@ type Query {
   user(id: ID!): User
   me: User
   users(input: Filter): [User]
+
+  service(id: ID!): Service
+  services(input: Filter): [Service]
 
   event(id: ID!): Event
   events(input: Filter): [Event]

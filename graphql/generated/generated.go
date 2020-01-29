@@ -44,6 +44,7 @@ type ResolverRoot interface {
 	Link() LinkResolver
 	Mutation() MutationResolver
 	Query() QueryResolver
+	Service() ServiceResolver
 	Tag() TagResolver
 	Target() TargetResolver
 	Task() TaskResolver
@@ -149,6 +150,8 @@ type ComplexityRoot struct {
 		Link        func(childComplexity int, id int) int
 		Links       func(childComplexity int, input *models.Filter) int
 		Me          func(childComplexity int) int
+		Service     func(childComplexity int, id int) int
+		Services    func(childComplexity int, input *models.Filter) int
 		Tag         func(childComplexity int, id int) int
 		Tags        func(childComplexity int, input *models.Filter) int
 		Target      func(childComplexity int, id int) int
@@ -157,6 +160,14 @@ type ComplexityRoot struct {
 		Tasks       func(childComplexity int, input *models.Filter) int
 		User        func(childComplexity int, id int) int
 		Users       func(childComplexity int, input *models.Filter) int
+	}
+
+	Service struct {
+		ID          func(childComplexity int) int
+		IsActivated func(childComplexity int) int
+		Name        func(childComplexity int) int
+		PubKey      func(childComplexity int) int
+		Tag         func(childComplexity int) int
 	}
 
 	Tag struct {
@@ -281,8 +292,13 @@ type QueryResolver interface {
 	User(ctx context.Context, id int) (*ent.User, error)
 	Me(ctx context.Context) (*ent.User, error)
 	Users(ctx context.Context, input *models.Filter) ([]*ent.User, error)
+	Service(ctx context.Context, id int) (*ent.Service, error)
+	Services(ctx context.Context, input *models.Filter) ([]*ent.Service, error)
 	Event(ctx context.Context, id int) (*ent.Event, error)
 	Events(ctx context.Context, input *models.Filter) ([]*ent.Event, error)
+}
+type ServiceResolver interface {
+	Tag(ctx context.Context, obj *ent.Service) (*ent.Tag, error)
 }
 type TagResolver interface {
 	Tasks(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Task, error)
@@ -1039,6 +1055,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Me(childComplexity), true
 
+	case "Query.service":
+		if e.complexity.Query.Service == nil {
+			break
+		}
+
+		args, err := ec.field_Query_service_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Service(childComplexity, args["id"].(int)), true
+
+	case "Query.services":
+		if e.complexity.Query.Services == nil {
+			break
+		}
+
+		args, err := ec.field_Query_services_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Services(childComplexity, args["input"].(*models.Filter)), true
+
 	case "Query.tag":
 		if e.complexity.Query.Tag == nil {
 			break
@@ -1134,6 +1174,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Users(childComplexity, args["input"].(*models.Filter)), true
+
+	case "Service.id":
+		if e.complexity.Service.ID == nil {
+			break
+		}
+
+		return e.complexity.Service.ID(childComplexity), true
+
+	case "Service.isActivated":
+		if e.complexity.Service.IsActivated == nil {
+			break
+		}
+
+		return e.complexity.Service.IsActivated(childComplexity), true
+
+	case "Service.name":
+		if e.complexity.Service.Name == nil {
+			break
+		}
+
+		return e.complexity.Service.Name(childComplexity), true
+
+	case "Service.pubKey":
+		if e.complexity.Service.PubKey == nil {
+			break
+		}
+
+		return e.complexity.Service.PubKey(childComplexity), true
+
+	case "Service.tag":
+		if e.complexity.Service.Tag == nil {
+			break
+		}
+
+		return e.complexity.Service.Tag(childComplexity), true
 
 	case "Tag.id":
 		if e.complexity.Tag.ID == nil {
@@ -1590,6 +1665,15 @@ type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
   jobs(input: Filter): [Job]
 }
 
+type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
+  id: ID!
+  name: String
+  pubKey: String
+  isActivated: Boolean
+
+  tag: Tag!
+}
+
 type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   id: ID!
   CreationTime: Time
@@ -1714,6 +1798,10 @@ input ChangeNameRequest {
   name: String!
 }
 
+input ActivateServiceRequest {
+  id: ID!
+}
+
 input LikeEventRequest {
   id: ID!
 }
@@ -1756,6 +1844,9 @@ type Mutation {
   removeAdmin(input: RemoveAdminRequest): User!
   changeName(input: ChangeNameRequest): User!
 
+  # Service Mutations
+  # activateService(input: ActivateServiceRequest): Service!
+
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
 }
@@ -1785,6 +1876,9 @@ type Query {
   user(id: ID!): User
   me: User
   users(input: Filter): [User]
+
+  service(id: ID!): Service
+  services(input: Filter): [Service]
 
   event(id: ID!): Event
   events(input: Filter): [Event]
@@ -2329,6 +2423,34 @@ func (ec *executionContext) field_Query_link_args(ctx context.Context, rawArgs m
 }
 
 func (ec *executionContext) field_Query_links_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.Filter
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOFilter2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_service_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 int
+	if tmp, ok := rawArgs["id"]; ok {
+		arg0, err = ec.unmarshalNID2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["id"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_services_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
 	var arg0 *models.Filter
@@ -5762,6 +5884,88 @@ func (ec *executionContext) _Query_users(ctx context.Context, field graphql.Coll
 	return ec.marshalOUser2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Query_service(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_service_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Service(rctx, args["id"].(int))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Query_services(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Query",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Query_services_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Services(rctx, args["input"].(*models.Filter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOService2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Query_event(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5917,6 +6121,182 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalO__Schema2ᚖgithubᚗcomᚋ99designsᚋgqlgenᚋgraphqlᚋintrospectionᚐSchema(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_id(ctx context.Context, field graphql.CollectedField, obj *ent.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNID2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_name(ctx context.Context, field graphql.CollectedField, obj *ent.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_pubKey(ctx context.Context, field graphql.CollectedField, obj *ent.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PubKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_isActivated(ctx context.Context, field graphql.CollectedField, obj *ent.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.IsActivated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_tag(ctx context.Context, field graphql.CollectedField, obj *ent.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Service().Tag(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Tag)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNTag2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTag(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Tag_id(ctx context.Context, field graphql.CollectedField, obj *ent.Tag) (ret graphql.Marshaler) {
@@ -8318,6 +8698,24 @@ func (ec *executionContext) ___Type_ofType(ctx context.Context, field graphql.Co
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputActivateServiceRequest(ctx context.Context, obj interface{}) (models.ActivateServiceRequest, error) {
+	var it models.ActivateServiceRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputActivateUserRequest(ctx context.Context, obj interface{}) (models.ActivateUserRequest, error) {
 	var it models.ActivateUserRequest
 	var asMap = obj.(map[string]interface{})
@@ -9628,6 +10026,28 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 				res = ec._Query_users(ctx, field)
 				return res
 			})
+		case "service":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_service(ctx, field)
+				return res
+			})
+		case "services":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_services(ctx, field)
+				return res
+			})
 		case "event":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -9654,6 +10074,53 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec._Query___type(ctx, field)
 		case "__schema":
 			out.Values[i] = ec._Query___schema(ctx, field)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var serviceImplementors = []string{"Service"}
+
+func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, obj *ent.Service) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.RequestContext, sel, serviceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Service")
+		case "id":
+			out.Values[i] = ec._Service_id(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "name":
+			out.Values[i] = ec._Service_name(ctx, field, obj)
+		case "pubKey":
+			out.Values[i] = ec._Service_pubKey(ctx, field, obj)
+		case "isActivated":
+			out.Values[i] = ec._Service_isActivated(ctx, field, obj)
+		case "tag":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Service_tag(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11096,6 +11563,57 @@ func (ec *executionContext) unmarshalORemoveTagRequest2ᚖgithubᚗcomᚋkcarret
 	}
 	res, err := ec.unmarshalORemoveTagRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐRemoveTagRequest(ctx, v)
 	return &res, err
+}
+
+func (ec *executionContext) marshalOService2githubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx context.Context, sel ast.SelectionSet, v ent.Service) graphql.Marshaler {
+	return ec._Service(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalOService2ᚕᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx context.Context, sel ast.SelectionSet, v []*ent.Service) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		rctx := &graphql.ResolverContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalOService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+	return ret
+}
+
+func (ec *executionContext) marshalOService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx context.Context, sel ast.SelectionSet, v *ent.Service) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Service(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOSetLinkFieldsRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetLinkFieldsRequest(ctx context.Context, v interface{}) (models.SetLinkFieldsRequest, error) {

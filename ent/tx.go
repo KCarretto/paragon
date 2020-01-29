@@ -22,6 +22,8 @@ type Tx struct {
 	Job *JobClient
 	// Link is the client for interacting with the Link builders.
 	Link *LinkClient
+	// Service is the client for interacting with the Service builders.
+	Service *ServiceClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
@@ -52,6 +54,7 @@ func (tx *Tx) Client() *Client {
 		File:       NewFileClient(tx.config),
 		Job:        NewJobClient(tx.config),
 		Link:       NewLinkClient(tx.config),
+		Service:    NewServiceClient(tx.config),
 		Tag:        NewTagClient(tx.config),
 		Target:     NewTargetClient(tx.config),
 		Task:       NewTaskClient(tx.config),

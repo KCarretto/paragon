@@ -136,7 +136,14 @@ func ExampleEvent() {
 		SetKind(event.KindCREATEJOB).
 		SaveX(ctx)
 	log.Println("event created:", e8)
-	u9 := client.User.
+	s9 := client.Service.
+		Create().
+		SetName("string").
+		SetPubKey("string").
+		SetIsActivated(true).
+		SaveX(ctx)
+	log.Println("service created:", s9)
+	u10 := client.User.
 		Create().
 		SetName("string").
 		SetOAuthID("string").
@@ -145,7 +152,7 @@ func ExampleEvent() {
 		SetIsActivated(true).
 		SetIsAdmin(true).
 		SaveX(ctx)
-	log.Println("user created:", u9)
+	log.Println("user created:", u10)
 
 	// create event vertex with its edges.
 	e := client.Event.
@@ -161,7 +168,8 @@ func ExampleEvent() {
 		SetTask(t6).
 		SetUser(u7).
 		SetEvent(e8).
-		AddLikers(u9).
+		SetService(s9).
+		AddLikers(u10).
 		SaveX(ctx)
 	log.Println("event created:", e)
 
@@ -220,11 +228,17 @@ func ExampleEvent() {
 	}
 	log.Println("event found:", e8)
 
-	u9, err = e.QueryLikers().First(ctx)
+	s9, err = e.QueryService().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying service: %v", err)
+	}
+	log.Println("service found:", s9)
+
+	u10, err = e.QueryLikers().First(ctx)
 	if err != nil {
 		log.Fatalf("failed querying likers: %v", err)
 	}
-	log.Println("likers found:", u9)
+	log.Println("likers found:", u10)
 
 	// Output:
 }
@@ -365,6 +379,43 @@ func ExampleLink() {
 	log.Println("link created:", l)
 
 	// query edges.
+
+	// Output:
+}
+func ExampleService() {
+	if dsn == "" {
+		return
+	}
+	ctx := context.Background()
+	drv, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("failed creating database client: %v", err)
+	}
+	defer drv.Close()
+	client := NewClient(Driver(drv))
+	// creating vertices for the service's edges.
+	t0 := client.Tag.
+		Create().
+		SetName("string").
+		SaveX(ctx)
+	log.Println("tag created:", t0)
+
+	// create service vertex with its edges.
+	s := client.Service.
+		Create().
+		SetName("string").
+		SetPubKey("string").
+		SetIsActivated(true).
+		SetTag(t0).
+		SaveX(ctx)
+	log.Println("service created:", s)
+
+	// query edges.
+	t0, err = s.QueryTag().First(ctx)
+	if err != nil {
+		log.Fatalf("failed querying tag: %v", err)
+	}
+	log.Println("tag found:", t0)
 
 	// Output:
 }

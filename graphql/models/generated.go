@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type ActivateServiceRequest struct {
+	ID int `json:"id"`
+}
+
 type ActivateUserRequest struct {
 	ID int `json:"id"`
 }

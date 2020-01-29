@@ -17,6 +17,7 @@ import (
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
@@ -37,6 +38,7 @@ type EventUpdate struct {
 	task              map[int]struct{}
 	user              map[int]struct{}
 	event             map[int]struct{}
+	service           map[int]struct{}
 	likers            map[int]struct{}
 	owner             map[int]struct{}
 	clearedJob        bool
@@ -48,6 +50,7 @@ type EventUpdate struct {
 	clearedTask       bool
 	clearedUser       bool
 	clearedEvent      bool
+	clearedService    bool
 	removedLikers     map[int]struct{}
 	clearedOwner      bool
 	predicates        []predicate.Event
@@ -277,6 +280,28 @@ func (eu *EventUpdate) SetEvent(e *Event) *EventUpdate {
 	return eu.SetEventID(e.ID)
 }
 
+// SetServiceID sets the service edge to Service by id.
+func (eu *EventUpdate) SetServiceID(id int) *EventUpdate {
+	if eu.service == nil {
+		eu.service = make(map[int]struct{})
+	}
+	eu.service[id] = struct{}{}
+	return eu
+}
+
+// SetNillableServiceID sets the service edge to Service by id if the given value is not nil.
+func (eu *EventUpdate) SetNillableServiceID(id *int) *EventUpdate {
+	if id != nil {
+		eu = eu.SetServiceID(*id)
+	}
+	return eu
+}
+
+// SetService sets the service edge to Service.
+func (eu *EventUpdate) SetService(s *Service) *EventUpdate {
+	return eu.SetServiceID(s.ID)
+}
+
 // AddLikerIDs adds the likers edge to User by ids.
 func (eu *EventUpdate) AddLikerIDs(ids ...int) *EventUpdate {
 	if eu.likers == nil {
@@ -365,6 +390,12 @@ func (eu *EventUpdate) ClearEvent() *EventUpdate {
 	return eu
 }
 
+// ClearService clears the service edge to Service.
+func (eu *EventUpdate) ClearService() *EventUpdate {
+	eu.clearedService = true
+	return eu
+}
+
 // RemoveLikerIDs removes the likers edge to User by ids.
 func (eu *EventUpdate) RemoveLikerIDs(ids ...int) *EventUpdate {
 	if eu.removedLikers == nil {
@@ -424,6 +455,9 @@ func (eu *EventUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if len(eu.event) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"event\"")
+	}
+	if len(eu.service) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"service\"")
 	}
 	if len(eu.owner) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"owner\"")
@@ -803,6 +837,41 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if eu.clearedService {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   event.ServiceTable,
+			Columns: []string{event.ServiceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.service; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   event.ServiceTable,
+			Columns: []string{event.ServiceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if nodes := eu.removedLikers; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -900,6 +969,7 @@ type EventUpdateOne struct {
 	task              map[int]struct{}
 	user              map[int]struct{}
 	event             map[int]struct{}
+	service           map[int]struct{}
 	likers            map[int]struct{}
 	owner             map[int]struct{}
 	clearedJob        bool
@@ -911,6 +981,7 @@ type EventUpdateOne struct {
 	clearedTask       bool
 	clearedUser       bool
 	clearedEvent      bool
+	clearedService    bool
 	removedLikers     map[int]struct{}
 	clearedOwner      bool
 }
@@ -1133,6 +1204,28 @@ func (euo *EventUpdateOne) SetEvent(e *Event) *EventUpdateOne {
 	return euo.SetEventID(e.ID)
 }
 
+// SetServiceID sets the service edge to Service by id.
+func (euo *EventUpdateOne) SetServiceID(id int) *EventUpdateOne {
+	if euo.service == nil {
+		euo.service = make(map[int]struct{})
+	}
+	euo.service[id] = struct{}{}
+	return euo
+}
+
+// SetNillableServiceID sets the service edge to Service by id if the given value is not nil.
+func (euo *EventUpdateOne) SetNillableServiceID(id *int) *EventUpdateOne {
+	if id != nil {
+		euo = euo.SetServiceID(*id)
+	}
+	return euo
+}
+
+// SetService sets the service edge to Service.
+func (euo *EventUpdateOne) SetService(s *Service) *EventUpdateOne {
+	return euo.SetServiceID(s.ID)
+}
+
 // AddLikerIDs adds the likers edge to User by ids.
 func (euo *EventUpdateOne) AddLikerIDs(ids ...int) *EventUpdateOne {
 	if euo.likers == nil {
@@ -1221,6 +1314,12 @@ func (euo *EventUpdateOne) ClearEvent() *EventUpdateOne {
 	return euo
 }
 
+// ClearService clears the service edge to Service.
+func (euo *EventUpdateOne) ClearService() *EventUpdateOne {
+	euo.clearedService = true
+	return euo
+}
+
 // RemoveLikerIDs removes the likers edge to User by ids.
 func (euo *EventUpdateOne) RemoveLikerIDs(ids ...int) *EventUpdateOne {
 	if euo.removedLikers == nil {
@@ -1280,6 +1379,9 @@ func (euo *EventUpdateOne) Save(ctx context.Context) (*Event, error) {
 	}
 	if len(euo.event) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"event\"")
+	}
+	if len(euo.service) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"service\"")
 	}
 	if len(euo.owner) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
@@ -1645,6 +1747,41 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if euo.clearedService {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   event.ServiceTable,
+			Columns: []string{event.ServiceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.service; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: false,
+			Table:   event.ServiceTable,
+			Columns: []string{event.ServiceColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
 				},
 			},
 		}
