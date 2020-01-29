@@ -41,6 +41,7 @@ type EventUpdate struct {
 	service           map[int]struct{}
 	likers            map[int]struct{}
 	owner             map[int]struct{}
+	svcOwner          map[int]struct{}
 	clearedJob        bool
 	clearedFile       bool
 	clearedCredential bool
@@ -53,6 +54,7 @@ type EventUpdate struct {
 	clearedService    bool
 	removedLikers     map[int]struct{}
 	clearedOwner      bool
+	clearedSvcOwner   bool
 	predicates        []predicate.Event
 }
 
@@ -331,9 +333,39 @@ func (eu *EventUpdate) SetOwnerID(id int) *EventUpdate {
 	return eu
 }
 
+// SetNillableOwnerID sets the owner edge to User by id if the given value is not nil.
+func (eu *EventUpdate) SetNillableOwnerID(id *int) *EventUpdate {
+	if id != nil {
+		eu = eu.SetOwnerID(*id)
+	}
+	return eu
+}
+
 // SetOwner sets the owner edge to User.
 func (eu *EventUpdate) SetOwner(u *User) *EventUpdate {
 	return eu.SetOwnerID(u.ID)
+}
+
+// SetSvcOwnerID sets the svcOwner edge to Service by id.
+func (eu *EventUpdate) SetSvcOwnerID(id int) *EventUpdate {
+	if eu.svcOwner == nil {
+		eu.svcOwner = make(map[int]struct{})
+	}
+	eu.svcOwner[id] = struct{}{}
+	return eu
+}
+
+// SetNillableSvcOwnerID sets the svcOwner edge to Service by id if the given value is not nil.
+func (eu *EventUpdate) SetNillableSvcOwnerID(id *int) *EventUpdate {
+	if id != nil {
+		eu = eu.SetSvcOwnerID(*id)
+	}
+	return eu
+}
+
+// SetSvcOwner sets the svcOwner edge to Service.
+func (eu *EventUpdate) SetSvcOwner(s *Service) *EventUpdate {
+	return eu.SetSvcOwnerID(s.ID)
 }
 
 // ClearJob clears the job edge to Job.
@@ -422,6 +454,12 @@ func (eu *EventUpdate) ClearOwner() *EventUpdate {
 	return eu
 }
 
+// ClearSvcOwner clears the svcOwner edge to Service.
+func (eu *EventUpdate) ClearSvcOwner() *EventUpdate {
+	eu.clearedSvcOwner = true
+	return eu
+}
+
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (eu *EventUpdate) Save(ctx context.Context) (int, error) {
 	if eu.Kind != nil {
@@ -462,8 +500,8 @@ func (eu *EventUpdate) Save(ctx context.Context) (int, error) {
 	if len(eu.owner) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"owner\"")
 	}
-	if eu.clearedOwner && eu.owner == nil {
-		return 0, errors.New("ent: clearing a unique edge \"owner\"")
+	if len(eu.svcOwner) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"svcOwner\"")
 	}
 	return eu.sqlSave(ctx)
 }
@@ -945,6 +983,41 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if eu.clearedSvcOwner {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.SvcOwnerTable,
+			Columns: []string{event.SvcOwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.svcOwner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.SvcOwnerTable,
+			Columns: []string{event.SvcOwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -972,6 +1045,7 @@ type EventUpdateOne struct {
 	service           map[int]struct{}
 	likers            map[int]struct{}
 	owner             map[int]struct{}
+	svcOwner          map[int]struct{}
 	clearedJob        bool
 	clearedFile       bool
 	clearedCredential bool
@@ -984,6 +1058,7 @@ type EventUpdateOne struct {
 	clearedService    bool
 	removedLikers     map[int]struct{}
 	clearedOwner      bool
+	clearedSvcOwner   bool
 }
 
 // SetCreationTime sets the CreationTime field.
@@ -1255,9 +1330,39 @@ func (euo *EventUpdateOne) SetOwnerID(id int) *EventUpdateOne {
 	return euo
 }
 
+// SetNillableOwnerID sets the owner edge to User by id if the given value is not nil.
+func (euo *EventUpdateOne) SetNillableOwnerID(id *int) *EventUpdateOne {
+	if id != nil {
+		euo = euo.SetOwnerID(*id)
+	}
+	return euo
+}
+
 // SetOwner sets the owner edge to User.
 func (euo *EventUpdateOne) SetOwner(u *User) *EventUpdateOne {
 	return euo.SetOwnerID(u.ID)
+}
+
+// SetSvcOwnerID sets the svcOwner edge to Service by id.
+func (euo *EventUpdateOne) SetSvcOwnerID(id int) *EventUpdateOne {
+	if euo.svcOwner == nil {
+		euo.svcOwner = make(map[int]struct{})
+	}
+	euo.svcOwner[id] = struct{}{}
+	return euo
+}
+
+// SetNillableSvcOwnerID sets the svcOwner edge to Service by id if the given value is not nil.
+func (euo *EventUpdateOne) SetNillableSvcOwnerID(id *int) *EventUpdateOne {
+	if id != nil {
+		euo = euo.SetSvcOwnerID(*id)
+	}
+	return euo
+}
+
+// SetSvcOwner sets the svcOwner edge to Service.
+func (euo *EventUpdateOne) SetSvcOwner(s *Service) *EventUpdateOne {
+	return euo.SetSvcOwnerID(s.ID)
 }
 
 // ClearJob clears the job edge to Job.
@@ -1346,6 +1451,12 @@ func (euo *EventUpdateOne) ClearOwner() *EventUpdateOne {
 	return euo
 }
 
+// ClearSvcOwner clears the svcOwner edge to Service.
+func (euo *EventUpdateOne) ClearSvcOwner() *EventUpdateOne {
+	euo.clearedSvcOwner = true
+	return euo
+}
+
 // Save executes the query and returns the updated entity.
 func (euo *EventUpdateOne) Save(ctx context.Context) (*Event, error) {
 	if euo.Kind != nil {
@@ -1386,8 +1497,8 @@ func (euo *EventUpdateOne) Save(ctx context.Context) (*Event, error) {
 	if len(euo.owner) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
 	}
-	if euo.clearedOwner && euo.owner == nil {
-		return nil, errors.New("ent: clearing a unique edge \"owner\"")
+	if len(euo.svcOwner) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"svcOwner\"")
 	}
 	return euo.sqlSave(ctx)
 }
@@ -1855,6 +1966,41 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if euo.clearedSvcOwner {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.SvcOwnerTable,
+			Columns: []string{event.SvcOwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.svcOwner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.SvcOwnerTable,
+			Columns: []string{event.SvcOwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
 				},
 			},
 		}

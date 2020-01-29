@@ -46,6 +46,7 @@ type EventQuery struct {
 	withService    *ServiceQuery
 	withLikers     *UserQuery
 	withOwner      *UserQuery
+	withSvcOwner   *ServiceQuery
 	withFKs        bool
 	// intermediate query.
 	sql *sql.Selector
@@ -214,6 +215,18 @@ func (eq *EventQuery) QueryOwner() *UserQuery {
 		sqlgraph.From(event.Table, event.FieldID, eq.sqlQuery()),
 		sqlgraph.To(user.Table, user.FieldID),
 		sqlgraph.Edge(sqlgraph.M2O, true, event.OwnerTable, event.OwnerColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
+	return query
+}
+
+// QuerySvcOwner chains the current query on the svcOwner edge.
+func (eq *EventQuery) QuerySvcOwner() *ServiceQuery {
+	query := &ServiceQuery{config: eq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, eq.sqlQuery()),
+		sqlgraph.To(service.Table, service.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, event.SvcOwnerTable, event.SvcOwnerColumn),
 	)
 	query.sql = sqlgraph.SetNeighbors(eq.driver.Dialect(), step)
 	return query
@@ -520,6 +533,17 @@ func (eq *EventQuery) WithOwner(opts ...func(*UserQuery)) *EventQuery {
 	return eq
 }
 
+//  WithSvcOwner tells the query-builder to eager-loads the nodes that are connected to
+// the "svcOwner" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithSvcOwner(opts ...func(*ServiceQuery)) *EventQuery {
+	query := &ServiceQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withSvcOwner = query
+	return eq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -567,7 +591,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		withFKs          = eq.withFKs
 		_spec            = eq.querySpec()
 	)
-	if eq.withJob != nil || eq.withFile != nil || eq.withCredential != nil || eq.withLink != nil || eq.withTag != nil || eq.withTarget != nil || eq.withTask != nil || eq.withUser != nil || eq.withEvent != nil || eq.withService != nil || eq.withOwner != nil {
+	if eq.withJob != nil || eq.withFile != nil || eq.withCredential != nil || eq.withLink != nil || eq.withTag != nil || eq.withTarget != nil || eq.withTask != nil || eq.withUser != nil || eq.withEvent != nil || eq.withService != nil || eq.withOwner != nil || eq.withSvcOwner != nil {
 		withFKs = true
 	}
 	if withFKs {
@@ -895,6 +919,31 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 			}
 			for i := range nodes {
 				nodes[i].Edges.Owner = n
+			}
+		}
+	}
+
+	if query := eq.withSvcOwner; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].svc_owner_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(service.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "svc_owner_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.SvcOwner = n
 			}
 		}
 	}

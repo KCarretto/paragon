@@ -39,6 +39,7 @@ type EventCreate struct {
 	service      map[int]struct{}
 	likers       map[int]struct{}
 	owner        map[int]struct{}
+	svcOwner     map[int]struct{}
 }
 
 // SetCreationTime sets the CreationTime field.
@@ -310,9 +311,39 @@ func (ec *EventCreate) SetOwnerID(id int) *EventCreate {
 	return ec
 }
 
+// SetNillableOwnerID sets the owner edge to User by id if the given value is not nil.
+func (ec *EventCreate) SetNillableOwnerID(id *int) *EventCreate {
+	if id != nil {
+		ec = ec.SetOwnerID(*id)
+	}
+	return ec
+}
+
 // SetOwner sets the owner edge to User.
 func (ec *EventCreate) SetOwner(u *User) *EventCreate {
 	return ec.SetOwnerID(u.ID)
+}
+
+// SetSvcOwnerID sets the svcOwner edge to Service by id.
+func (ec *EventCreate) SetSvcOwnerID(id int) *EventCreate {
+	if ec.svcOwner == nil {
+		ec.svcOwner = make(map[int]struct{})
+	}
+	ec.svcOwner[id] = struct{}{}
+	return ec
+}
+
+// SetNillableSvcOwnerID sets the svcOwner edge to Service by id if the given value is not nil.
+func (ec *EventCreate) SetNillableSvcOwnerID(id *int) *EventCreate {
+	if id != nil {
+		ec = ec.SetSvcOwnerID(*id)
+	}
+	return ec
+}
+
+// SetSvcOwner sets the svcOwner edge to Service.
+func (ec *EventCreate) SetSvcOwner(s *Service) *EventCreate {
+	return ec.SetSvcOwnerID(s.ID)
 }
 
 // Save creates the Event in the database.
@@ -360,8 +391,8 @@ func (ec *EventCreate) Save(ctx context.Context) (*Event, error) {
 	if len(ec.owner) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
 	}
-	if ec.owner == nil {
-		return nil, errors.New("ent: missing required edge \"owner\"")
+	if len(ec.svcOwner) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"svcOwner\"")
 	}
 	return ec.sqlSave(ctx)
 }
@@ -622,6 +653,25 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: user.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := ec.svcOwner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   event.SvcOwnerTable,
+			Columns: []string{event.SvcOwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: service.FieldID,
 				},
 			},
 		}

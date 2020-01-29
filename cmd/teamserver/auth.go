@@ -10,5 +10,8 @@ import (
 )
 
 func getAuthenticator(_ *zap.Logger, graph *ent.Client) service.Authenticator {
-	return auth.UserAuthenticator{Graph: graph}
+	return auth.MultiAuthenticator{
+		UserAuth:    auth.UserAuthenticator{Graph: graph},
+		ServiceAuth: auth.ServiceAuthenticator{Graph: graph},
+	}
 }

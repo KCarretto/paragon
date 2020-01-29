@@ -10,6 +10,7 @@ import (
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -18,12 +19,14 @@ import (
 // ServiceUpdate is the builder for updating Service entities.
 type ServiceUpdate struct {
 	config
-	Name        *string
-	PubKey      *string
-	IsActivated *bool
-	tag         map[int]struct{}
-	clearedTag  bool
-	predicates  []predicate.Service
+	Name          *string
+	PubKey        *string
+	IsActivated   *bool
+	tag           map[int]struct{}
+	events        map[int]struct{}
+	clearedTag    bool
+	removedEvents map[int]struct{}
+	predicates    []predicate.Service
 }
 
 // Where adds a new predicate for the builder.
@@ -67,23 +70,55 @@ func (su *ServiceUpdate) SetTagID(id int) *ServiceUpdate {
 	return su
 }
 
-// SetNillableTagID sets the tag edge to Tag by id if the given value is not nil.
-func (su *ServiceUpdate) SetNillableTagID(id *int) *ServiceUpdate {
-	if id != nil {
-		su = su.SetTagID(*id)
+// SetTag sets the tag edge to Tag.
+func (su *ServiceUpdate) SetTag(t *Tag) *ServiceUpdate {
+	return su.SetTagID(t.ID)
+}
+
+// AddEventIDs adds the events edge to Event by ids.
+func (su *ServiceUpdate) AddEventIDs(ids ...int) *ServiceUpdate {
+	if su.events == nil {
+		su.events = make(map[int]struct{})
+	}
+	for i := range ids {
+		su.events[ids[i]] = struct{}{}
 	}
 	return su
 }
 
-// SetTag sets the tag edge to Tag.
-func (su *ServiceUpdate) SetTag(t *Tag) *ServiceUpdate {
-	return su.SetTagID(t.ID)
+// AddEvents adds the events edges to Event.
+func (su *ServiceUpdate) AddEvents(e ...*Event) *ServiceUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return su.AddEventIDs(ids...)
 }
 
 // ClearTag clears the tag edge to Tag.
 func (su *ServiceUpdate) ClearTag() *ServiceUpdate {
 	su.clearedTag = true
 	return su
+}
+
+// RemoveEventIDs removes the events edge to Event by ids.
+func (su *ServiceUpdate) RemoveEventIDs(ids ...int) *ServiceUpdate {
+	if su.removedEvents == nil {
+		su.removedEvents = make(map[int]struct{})
+	}
+	for i := range ids {
+		su.removedEvents[ids[i]] = struct{}{}
+	}
+	return su
+}
+
+// RemoveEvents removes events edges to Event.
+func (su *ServiceUpdate) RemoveEvents(e ...*Event) *ServiceUpdate {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return su.RemoveEventIDs(ids...)
 }
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
@@ -95,6 +130,9 @@ func (su *ServiceUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if len(su.tag) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"tag\"")
+	}
+	if su.clearedTag && su.tag == nil {
+		return 0, errors.New("ent: clearing a unique edge \"tag\"")
 	}
 	return su.sqlSave(ctx)
 }
@@ -195,6 +233,44 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
+	if nodes := su.removedEvents; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.EventsTable,
+			Columns: []string{service.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.events; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.EventsTable,
+			Columns: []string{service.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
@@ -207,12 +283,14 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // ServiceUpdateOne is the builder for updating a single Service entity.
 type ServiceUpdateOne struct {
 	config
-	id          int
-	Name        *string
-	PubKey      *string
-	IsActivated *bool
-	tag         map[int]struct{}
-	clearedTag  bool
+	id            int
+	Name          *string
+	PubKey        *string
+	IsActivated   *bool
+	tag           map[int]struct{}
+	events        map[int]struct{}
+	clearedTag    bool
+	removedEvents map[int]struct{}
 }
 
 // SetName sets the Name field.
@@ -250,23 +328,55 @@ func (suo *ServiceUpdateOne) SetTagID(id int) *ServiceUpdateOne {
 	return suo
 }
 
-// SetNillableTagID sets the tag edge to Tag by id if the given value is not nil.
-func (suo *ServiceUpdateOne) SetNillableTagID(id *int) *ServiceUpdateOne {
-	if id != nil {
-		suo = suo.SetTagID(*id)
+// SetTag sets the tag edge to Tag.
+func (suo *ServiceUpdateOne) SetTag(t *Tag) *ServiceUpdateOne {
+	return suo.SetTagID(t.ID)
+}
+
+// AddEventIDs adds the events edge to Event by ids.
+func (suo *ServiceUpdateOne) AddEventIDs(ids ...int) *ServiceUpdateOne {
+	if suo.events == nil {
+		suo.events = make(map[int]struct{})
+	}
+	for i := range ids {
+		suo.events[ids[i]] = struct{}{}
 	}
 	return suo
 }
 
-// SetTag sets the tag edge to Tag.
-func (suo *ServiceUpdateOne) SetTag(t *Tag) *ServiceUpdateOne {
-	return suo.SetTagID(t.ID)
+// AddEvents adds the events edges to Event.
+func (suo *ServiceUpdateOne) AddEvents(e ...*Event) *ServiceUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return suo.AddEventIDs(ids...)
 }
 
 // ClearTag clears the tag edge to Tag.
 func (suo *ServiceUpdateOne) ClearTag() *ServiceUpdateOne {
 	suo.clearedTag = true
 	return suo
+}
+
+// RemoveEventIDs removes the events edge to Event by ids.
+func (suo *ServiceUpdateOne) RemoveEventIDs(ids ...int) *ServiceUpdateOne {
+	if suo.removedEvents == nil {
+		suo.removedEvents = make(map[int]struct{})
+	}
+	for i := range ids {
+		suo.removedEvents[ids[i]] = struct{}{}
+	}
+	return suo
+}
+
+// RemoveEvents removes events edges to Event.
+func (suo *ServiceUpdateOne) RemoveEvents(e ...*Event) *ServiceUpdateOne {
+	ids := make([]int, len(e))
+	for i := range e {
+		ids[i] = e[i].ID
+	}
+	return suo.RemoveEventIDs(ids...)
 }
 
 // Save executes the query and returns the updated entity.
@@ -278,6 +388,9 @@ func (suo *ServiceUpdateOne) Save(ctx context.Context) (*Service, error) {
 	}
 	if len(suo.tag) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"tag\"")
+	}
+	if suo.clearedTag && suo.tag == nil {
+		return nil, errors.New("ent: clearing a unique edge \"tag\"")
 	}
 	return suo.sqlSave(ctx)
 }
@@ -364,6 +477,44 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 				IDSpec: &sqlgraph.FieldSpec{
 					Type:   field.TypeInt,
 					Column: tag.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if nodes := suo.removedEvents; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.EventsTable,
+			Columns: []string{service.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.events; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.EventsTable,
+			Columns: []string{service.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
 				},
 			},
 		}

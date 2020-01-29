@@ -22,7 +22,8 @@ func main() {
 		teamserverURL = url
 	}
 	graph := graphql.Client{
-		URL: fmt.Sprintf("%s/%s", teamserverURL, "graphql"),
+		URL:     fmt.Sprintf("%s/%s", teamserverURL, "graphql"),
+		Service: "pg-worker",
 	}
 
 	cdnURL := teamserverURL

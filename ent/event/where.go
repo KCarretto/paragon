@@ -607,6 +607,36 @@ func HasOwnerWith(preds ...predicate.User) predicate.Event {
 	)
 }
 
+// HasSvcOwner applies the HasEdge predicate on the "svcOwner" edge.
+func HasSvcOwner() predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(SvcOwnerTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SvcOwnerTable, SvcOwnerColumn),
+		)
+		sqlgraph.HasNeighbors(s, step)
+	},
+	)
+}
+
+// HasSvcOwnerWith applies the HasEdge predicate on the "svcOwner" edge with a given conditions (other predicates).
+func HasSvcOwnerWith(preds ...predicate.Service) predicate.Event {
+	return predicate.Event(func(s *sql.Selector) {
+		step := sqlgraph.NewStep(
+			sqlgraph.From(Table, FieldID),
+			sqlgraph.To(SvcOwnerInverseTable, FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, SvcOwnerTable, SvcOwnerColumn),
+		)
+		sqlgraph.HasNeighborsWith(s, step, func(s *sql.Selector) {
+			for _, p := range preds {
+				p(s)
+			}
+		})
+	},
+	)
+}
+
 // And groups list of predicates with the AND operator between them.
 func And(predicates ...predicate.Event) predicate.Event {
 	return predicate.Event(

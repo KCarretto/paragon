@@ -188,6 +188,17 @@ func (r *eventResolver) User(ctx context.Context, obj *ent.Event) (*ent.User, er
 	}
 	return q.Only(ctx)
 }
+func (r *eventResolver) Service(ctx context.Context, obj *ent.Event) (*ent.Service, error) {
+	q := obj.QueryService()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
+}
 func (r *eventResolver) Event(ctx context.Context, obj *ent.Event) (*ent.Event, error) {
 	q := obj.QueryEvent()
 	exists, err := q.Clone().Exist(ctx)
@@ -211,7 +222,26 @@ func (r *eventResolver) Likers(ctx context.Context, obj *ent.Event, input *model
 	return q.All(ctx)
 }
 func (r *eventResolver) Owner(ctx context.Context, obj *ent.Event) (*ent.User, error) {
-	return obj.QueryOwner().Only(ctx)
+	q := obj.QueryOwner()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
+}
+func (r *eventResolver) SvcOwner(ctx context.Context, obj *ent.Event) (*ent.Service, error) {
+	q := obj.QuerySvcOwner()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
 }
 
 type fileResolver struct{ *Resolver }
@@ -887,7 +917,31 @@ func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeN
 	}
 	return actor, nil
 }
+func (r *mutationResolver) ActivateService(ctx context.Context, input *models.ActivateServiceRequest) (*ent.Service, error) {
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return nil, err
+	}
 
+	svc, err := r.Graph.Service.UpdateOneID(input.ID).
+		SetIsActivated(true).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	_, err = r.Graph.Event.Create().
+		SetOwner(auth.GetUser(ctx)).
+		SetService(svc).
+		SetKind(event.KindACTIVATESERVICE).
+		Save(ctx)
+	if err != nil {
+		return svc, err
+	}
+	return svc, nil
+}
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
 	actor := auth.GetUser(ctx)
 	e, err := r.Graph.Event.UpdateOneID(input.ID).
