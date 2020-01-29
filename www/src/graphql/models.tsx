@@ -12,6 +12,10 @@ export type Scalars = {
 
 
 
+export type ActivateServiceRequest = {
+  id: Scalars['ID'],
+};
+
 export type ActivateUserRequest = {
   id: Scalars['ID'],
 };
@@ -89,8 +93,8 @@ export type DeleteTargetRequest = {
 export type Event = {
    __typename?: 'Event',
   id: Scalars['ID'],
-  CreationTime?: Maybe<Scalars['Time']>,
-  Kind?: Maybe<Scalars['String']>,
+  creationTime?: Maybe<Scalars['Time']>,
+  kind?: Maybe<Scalars['String']>,
   job?: Maybe<Job>,
   file?: Maybe<File>,
   credential?: Maybe<Credential>,
@@ -350,6 +354,8 @@ export type Query = {
   user?: Maybe<User>,
   me?: Maybe<User>,
   users?: Maybe<Array<Maybe<User>>>,
+  service?: Maybe<Service>,
+  services?: Maybe<Array<Maybe<Service>>>,
   event?: Maybe<Event>,
   events?: Maybe<Array<Maybe<Event>>>,
 };
@@ -435,6 +441,16 @@ export type QueryUsersArgs = {
 };
 
 
+export type QueryServiceArgs = {
+  id: Scalars['ID']
+};
+
+
+export type QueryServicesArgs = {
+  input?: Maybe<Filter>
+};
+
+
 export type QueryEventArgs = {
   id: Scalars['ID']
 };
@@ -451,6 +467,15 @@ export type RemoveAdminRequest = {
 export type RemoveTagRequest = {
   tagID: Scalars['ID'],
   entID: Scalars['ID'],
+};
+
+export type Service = {
+   __typename?: 'Service',
+  id: Scalars['ID'],
+  name?: Maybe<Scalars['String']>,
+  pubKey?: Maybe<Scalars['String']>,
+  isActivated?: Maybe<Scalars['Boolean']>,
+  tag: Tag,
 };
 
 export type SetLinkFieldsRequest = {

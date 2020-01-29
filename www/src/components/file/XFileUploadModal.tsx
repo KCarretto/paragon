@@ -1,22 +1,24 @@
 import { ApolloError } from "apollo-client/errors/ApolloError";
 import * as React from "react";
 import { useState } from "react";
-import { Button, Form, Grid, Input, Message, Modal } from "semantic-ui-react";
-import { InputFile } from "semantic-ui-react-input-file";
+import { Button, ButtonProps, Form, Grid, Input, Modal } from "semantic-ui-react";
 import { HTTP_URL } from "../../config";
-import { useModal } from "../form";
+import { useModal, XFileInput } from "../form";
+import { XErrorMessage } from "../messages";
 
 type FileUploadModalParams = {
+  fileName?: string;
+  button?: ButtonProps;
   openOnStart?: boolean;
 };
 
-const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
+const XFileUploadModal = ({ openOnStart, button, fileName }: FileUploadModalParams) => {
   const [openModal, closeModal, isOpen] = useModal();
-  const [error, setError] = useState<ApolloError>(null);
+  const [error, setError] = useState<ApolloError | null>(null);
 
   // Form params
-  const [name, setName] = useState<string>("");
-  const [content, setContent] = useState<string>(null);
+  const [name, setName] = useState<string>(fileName || "");
+  const [content, setContent] = useState<File>(null);
 
   const handleSubmit = () => {
     var data = new FormData();
@@ -27,19 +29,17 @@ const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
       mode: "no-cors",
       method: "POST",
       body: data
-    }).then(
-      function(res) {
-        if (res.ok) {
-          closeModal();
-          alert("Perfect! ");
-        } else if (res.status === 401) {
-          alert("Oops! ");
-        }
-      },
-      function(e) {
-        alert("Error submitting form!");
-      }
-    );
+    })
+      .then(resp => {
+        setError(null);
+        setName(null);
+        setContent(null);
+        closeModal();
+      })
+      .catch(err => {
+        let e = new ApolloError({ errorMessage: String(err) });
+        setError(e);
+      });
   };
 
   if (openOnStart) {
@@ -50,7 +50,8 @@ const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
     <Modal
       open={isOpen}
       onClose={closeModal}
-      trigger={<Button positive circular icon="plus" onClick={openModal} />}
+      trigger={<Button onClick={openModal} {...button} />}
+      // trigger={React.createElement(trigger, {onClick={openModal}}) || <Button positive circular icon="plus" onClick={openModal} />}
       size="large"
       // Form properties
       as={Form}
@@ -71,33 +72,18 @@ const XFileUploadModal = ({ openOnStart }: FileUploadModalParams) => {
             />
           </Grid.Column>
           <Grid.Column>
-            <InputFile
-              input={{
-                id: "upload_fileContent",
-                onChange: e => {
-                  e.preventDefault();
-                  console.log("FILE UPLOAD EVENT", e);
-                  console.log("FILE UPLOAD EVENT TARGET", e.target);
-                  console.log("FILE UPLOAD EVENT TARGET VALUE", e.target.value);
-                  console.log("FILE UPLOAD EVENT TARGET FILES", e.target.files);
-                  setContent(e.target.files[0]);
-                }
-              }}
+            <XFileInput
+              id="upload_fileContent"
+              setFile={f => setContent(f)}
+              file={content}
             />
           </Grid.Column>
         </Grid>
-
-        <Message
-          error
-          icon="warning"
-          header={"Failed to Upload File"}
-          onDismiss={(e, data) => setError(null)}
-          content={error ? error.message : "Unknown Error"}
-        />
+        <XErrorMessage title="Failed to upload file" err={error} />
       </Modal.Content>
       <Modal.Actions>
         <Form.Button style={{ marginBottom: "10px" }} positive floated="right">
-          Queue
+          Upload
         </Form.Button>
       </Modal.Actions>
     </Modal>

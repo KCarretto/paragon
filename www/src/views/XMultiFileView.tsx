@@ -55,7 +55,9 @@ const XMultiFileView = () => {
     <Container style={{ padding: "10px" }}>
       <Menu secondary>
         <Menu.Item position="right">
-          <XFileUploadModal />
+          <XFileUploadModal
+            button={{ positive: true, circular: true, icon: "plus" }}
+          />
         </Menu.Item>
       </Menu>
       <Container fluid style={{ padding: "20px" }}>

@@ -12,6 +12,7 @@ import {
 import { HTTP_URL } from "../../config";
 import { File } from "../../graphql/models";
 import XCreateLinkModal from "../link/XLinkCreateModal";
+import XFileUploadModal from "./XFileUploadModal";
 
 const XFileCard = (f: File) => {
   let colors: SemanticCOLORS[] = [
@@ -29,8 +30,10 @@ const XFileCard = (f: File) => {
       <Card.Content>
         <Button.Group floated="right">
           <XCreateLinkModal file={f.id} />
-          <Button basic color="blue" icon="cloud upload" />{" "}
-          {/* TODO: Implement */}
+          <XFileUploadModal
+            fileName={f.name}
+            button={{ basic: true, color: "blue", icon: "cloud upload" }}
+          />{" "}
           <Button
             basic
             color="blue"
