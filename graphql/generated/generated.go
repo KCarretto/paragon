@@ -368,7 +368,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Credential.Secret(childComplexity), true
 
-	case "Event.CreationTime":
+	case "Event.creationTime":
 		if e.complexity.Event.CreationTime == nil {
 			break
 		}
@@ -410,7 +410,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Event.Job(childComplexity), true
 
-	case "Event.Kind":
+	case "Event.kind":
 		if e.complexity.Event.Kind == nil {
 			break
 		}
@@ -1676,8 +1676,8 @@ type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
 
 type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
   id: ID!
-  CreationTime: Time
-  Kind: String
+  creationTime: Time
+  kind: String
 
   job: Job
   file: File
@@ -2920,7 +2920,7 @@ func (ec *executionContext) _Event_id(ctx context.Context, field graphql.Collect
 	return ec.marshalNID2int(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Event_CreationTime(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_creationTime(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -2954,7 +2954,7 @@ func (ec *executionContext) _Event_CreationTime(ctx context.Context, field graph
 	return ec.marshalOTime2timeᚐTime(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) _Event_Kind(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
+func (ec *executionContext) _Event_kind(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
 		if r := recover(); r != nil {
@@ -9360,9 +9360,9 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&invalids, 1)
 			}
-		case "CreationTime":
-			out.Values[i] = ec._Event_CreationTime(ctx, field, obj)
-		case "Kind":
+		case "creationTime":
+			out.Values[i] = ec._Event_creationTime(ctx, field, obj)
+		case "kind":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
 				defer func() {
@@ -9370,7 +9370,7 @@ func (ec *executionContext) _Event(ctx context.Context, sel ast.SelectionSet, ob
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Event_Kind(ctx, field, obj)
+				res = ec._Event_kind(ctx, field, obj)
 				return res
 			})
 		case "job":
