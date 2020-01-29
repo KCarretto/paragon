@@ -1,98 +1,71 @@
 import { useMutation } from "@apollo/react-hooks";
-import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import {
-  Button,
-  Form,
-  Grid,
-  Header,
-  Icon,
-  Input,
-  Message,
-  Modal
-} from "semantic-ui-react";
-import { Tag, Target } from "../../graphql/models";
+import { Button, Form, Grid, Input, Modal } from "semantic-ui-react";
+import { Target } from "../../graphql/models";
 import { MULTI_TARGET_QUERY } from "../../views";
-import {
-  useModal,
-  XScriptEditor,
-  XTagTypeahead,
-  XTargetTypeahead
-} from "../form";
+import { useModal, XTargetTypeahead } from "../form";
+import { XErrorMessage } from "../messages";
 
-export const QUEUE_JOB_MUTATION = gql`
-  mutation QueueJob(
-    $name: String!
-    $content: String!
-    $tags: [ID!]
+export const BULK_ADD_CREDS_MUTATION = gql`
+  mutation AddCredentialForTargets(
+    $principal: String!
+    $secret: String!
     $targets: [ID!]
+    $kind: String
   ) {
-    createJob(
-      input: { name: $name, content: $content, tags: $tags, targets: $targets }
+    addCredentialForTargets(
+      input: {
+        ids: $targets
+        principal: $principal
+        secret: $secret
+        kind: $kind
+      }
     ) {
       id
+      credentials {
+        id
+        principal
+        secret
+      }
     }
   }
 `;
 
-type JobQueueModalParams = {
-  header?: string;
-  openOnStart?: boolean;
-};
-
-const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
+const XBulkAddCredentialsModal = () => {
   const [openModal, closeModal, isOpen] = useModal();
-  const [error, setError] = useState<ApolloError>(null);
+  // const [error, setError] = useState<ApolloError>(null);
 
   // Form params
-  const [name, setName] = useState<string>("");
-  const [content, setContent] = useState<string>(
-    '\n# Enter your script here!\ndef main():\n\tprint("Hello World")'
-  );
-  const [tags, setTags] = useState<Tag[]>([]);
+  const [principal, setPrincipal] = useState<string>("");
+  const [secret, setSecret] = useState<string>("");
   const [targets, setTargets] = useState<Target[]>([]);
 
-  const [queueJob, { called, loading }] = useMutation(QUEUE_JOB_MUTATION, {
-    refetchQueries: [{ query: MULTI_TARGET_QUERY }]
-  });
+  const [addCredentials, { called, loading, error }] = useMutation(
+    BULK_ADD_CREDS_MUTATION,
+    {
+      refetchQueries: [{ query: MULTI_TARGET_QUERY }]
+    }
+  );
 
   const handleSubmit = () => {
     let vars = {
-      name: name,
-      content: content,
-      tags: tags,
+      principal: principal,
+      secret: secret,
       targets: targets
     };
 
-    queueJob({
+    addCredentials({
       variables: vars
-    })
-      .then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setError(e);
-          return;
-        }
-        closeModal();
-      })
-      .catch(err => setError(err));
+    }).then(closeModal);
   };
-
-  if (openOnStart) {
-    openModal();
-  }
 
   return (
     <Modal
       open={isOpen}
       onClose={closeModal}
-      trigger={<Button positive circular icon="plus" onClick={openModal} />}
+      trigger={<Button positive circular icon="key" onClick={openModal} />}
       size="large"
       // Form properties
       as={Form}
@@ -100,28 +73,31 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
       error={called && error}
       loading={called && loading}
     >
-      <Modal.Header>{header ? header : "Queue a Job"}</Modal.Header>
+      <Modal.Header>{"Add Credentials for Targets"}</Modal.Header>
       <Modal.Content>
         <Grid verticalAlign="middle" stackable container columns={"equal"}>
           <Grid.Column>
             <Input
-              label="Job Name"
-              icon="cube"
+              label="Principal"
+              icon="user"
               fluid
-              placeholder="Enter job name"
-              name="name"
-              value={name}
-              onChange={(e, { value }) => setName(value)}
+              placeholder="Enter principal (i.e. username)"
+              name="principal"
+              value={principal}
+              onChange={(e, { value }) => setPrincipal(value)}
             />
           </Grid.Column>
-
           <Grid.Column>
-            <XTagTypeahead
-              labeled
-              onChange={(e, { value }) => setTags(value)}
+            <Input
+              label="Secret"
+              icon="key"
+              fluid
+              placeholder="Enter secret (i.e. password)"
+              name="secret"
+              value={secret}
+              onChange={(e, { value }) => setSecret(value)}
             />
           </Grid.Column>
-
           <Grid.Column>
             <XTargetTypeahead
               labeled
@@ -130,30 +106,15 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
           </Grid.Column>
         </Grid>
 
-        <Header inverted attached="top" size="large">
-          <Icon name="code" />
-          {name ? name : "Script"}
-        </Header>
-        <Form.Field
-          control={XScriptEditor}
-          content={content}
-          onChange={(e, { value }) => setContent(value)}
-        />
-        <Message
-          error
-          icon="warning"
-          header={"Failed to Queue Job"}
-          onDismiss={(e, data) => setError(null)}
-          content={error ? error.message : "Unknown Error"}
-        />
+        <XErrorMessage title="Failed to Add Credentials" err={error} />
       </Modal.Content>
       <Modal.Actions>
         <Form.Button style={{ marginBottom: "10px" }} positive floated="right">
-          Queue
+          Add
         </Form.Button>
       </Modal.Actions>
     </Modal>
   );
 };
 
-export default XJobQueueModal;
+export default XBulkAddCredentialsModal;

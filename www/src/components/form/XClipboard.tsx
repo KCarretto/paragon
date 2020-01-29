@@ -12,7 +12,7 @@ const XClipboard: FunctionComponent<ClipboardProps> = props => {
     navigator.clipboard.writeText(props.value);
     setCopySuccess("Successfully copied to clipboard!");
     setTimeout(function() {
-      setCopySuccess("Copy to clipboard!");
+      setCopySuccess("Copy to clipboard");
     }, 1500);
   };
   return (

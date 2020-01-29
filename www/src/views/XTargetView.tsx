@@ -5,7 +5,9 @@ import moment from "moment";
 import * as React from "react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Container, Header, Icon, Label } from "semantic-ui-react";
+import { Card, Container, Header, Icon, Table } from "semantic-ui-react";
+import { XCredentialSummary } from "../components/credential";
+import { XClipboard } from "../components/form";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XTargetHeader } from "../components/target";
 import { XTaskCard, XTaskCardDisplayType } from "../components/task";
@@ -76,34 +78,12 @@ const XTargetView = () => {
     credentials: []
   });
 
-  // const [name, setName] = useState<string>(null);
-  // const [primaryIP, setPrimaryIP] = useState<string>(null);
-  // const [publicIP, setPublicIP] = useState<string>(null);
-  // const [machineUUID, setMachineUUID] = useState<string>(null);
-  // const [primaryMAC, setPrimaryMAC] = useState<string>(null);
-  // const [hostname, setHostname] = useState<string>(null);
-  // const [lastSeen, setLastSeen] = useState<any>(null);
-  // const [tasks, setTasks] = useState<Task[]>([]);
-  // const [tags, setTags] = useState<Tag[]>([]);
-  // const [creds, setCreds] = useState<Credential[]>([]);
-
   const { called, loading } = useQuery(TARGET_QUERY, {
     variables: { id },
     pollInterval: 5000,
     onCompleted: (data: TargetQueryResponse) => {
       setError(null);
       setTarget(data.target);
-
-      // setName(data.target.name);
-      // setPrimaryIP(data.target.primaryIP);
-      // setPublicIP(data.target.publicIP);
-      // setPrimaryMAC(data.target.primaryMAC);
-      // setMachineUUID(data.target.machineUUID);
-      // setHostname(data.target.hostname);
-      // setLastSeen(data.target.lastSeen);
-      // setTasks(data.target.tasks || []);
-      // setTags(data.target.tags || []);
-      // setCreds(data.target.credentials || []);
     },
     onError: err => setError(err)
   });
@@ -118,88 +98,98 @@ const XTargetView = () => {
         msg="Fetching target information..."
         hidden={called && !loading}
       />
-      <Card fluid centered>
-        <Card.Content>
-          {!lastSeen ||
-          moment(lastSeen).isBefore(moment().subtract(5, "minutes")) ? (
-            <Label
-              corner="right"
-              size="large"
-              icon="times circle"
-              color="red"
-            />
-          ) : (
-            <Label
-              corner="right"
-              size="large"
-              icon="check circle"
-              color="green"
-            />
-          )}
-          <Card.Meta>
-            <a>
-              <i aria-hidden="true" className="clock icon"></i>
-              Last Seen: {lastSeen ? moment(lastSeen).fromNow() : "Never"}
-              <br />
-            </a>
-            {primaryIP ? (
-              <a>
-                <i aria-hidden="true" className="user icon"></i>
-                Primary IP: {primaryIP}
-                <br />
-              </a>
-            ) : (
-              <div></div>
-            )}
+      <Header size="large" block inverted>
+        <Header.Content>Metadata</Header.Content>
+      </Header>
+
+      <Table>
+        <Table.Row>
+          <Table.HeaderCell collapsing>
+            <Icon name="desktop" style={{ marginLeft: "10px" }} />
+            Hostname
+          </Table.HeaderCell>
+          <Table.Cell>
             {hostname ? (
               <a>
-                <i aria-hidden="true" className="user icon"></i>
-                Hostname: {hostname}
-                <br />
+                <XClipboard value={hostname}>{hostname}</XClipboard>
               </a>
             ) : (
-              <div></div>
+              "Unknown"
             )}
-          </Card.Meta>
-          {/* <Card.Description> */}
-          {/* <XTaskSummary tasks={tasks} limit={tasks.length} /> */}
-          {/* <XCredentialSummary {...creds} /> */}
-          {/* </Card.Description> */}
-        </Card.Content>
-        {primaryMAC || publicIP || machineUUID ? (
-          <Card.Content extra>
+          </Table.Cell>
+        </Table.Row>
+        <Table.Row>
+          <Table.HeaderCell collapsing>
+            <Icon name="time" style={{ marginLeft: "10px" }} />
+            Last Seen
+          </Table.HeaderCell>
+          <Table.Cell>
+            {lastSeen ? (
+              <a>
+                <XClipboard value={lastSeen}>
+                  {moment(lastSeen).fromNow()}
+                </XClipboard>
+              </a>
+            ) : (
+              "Never"
+            )}
+          </Table.Cell>
+        </Table.Row>
+        <Table.Row>
+          <Table.HeaderCell collapsing>
+            <Icon name="wifi" style={{ marginLeft: "10px" }} />
+            Primary IP
+          </Table.HeaderCell>
+          <Table.Cell>
+            {primaryIP ? (
+              <a>
+                <XClipboard value={primaryIP}>{primaryIP}</XClipboard>
+              </a>
+            ) : (
+              "Unknown"
+            )}
+          </Table.Cell>
+        </Table.Row>
+        <Table.Row>
+          <Table.HeaderCell collapsing>
+            <Icon name="microchip" style={{ marginLeft: "10px" }} />
+            Primary MAC
+          </Table.HeaderCell>
+          <Table.Cell>
             {primaryMAC ? (
               <a>
-                <i aria-hidden="true" className="user icon"></i>
-                Primary MAC: {primaryMAC}
-                <br />
+                <XClipboard value={primaryMAC}>{primaryMAC}</XClipboard>
               </a>
             ) : (
-              <div></div>
+              "Unknown"
             )}
-            {publicIP ? (
-              <a>
-                <i aria-hidden="true" className="user icon"></i>
-                Public IP: {publicIP}
-                <br />
-              </a>
-            ) : (
-              <div></div>
-            )}
+          </Table.Cell>
+        </Table.Row>
+        <Table.Row>
+          <Table.HeaderCell collapsing>
+            <Icon name="id card outline" style={{ marginLeft: "10px" }} />
+            MachineUUID
+          </Table.HeaderCell>
+          <Table.Cell>
             {machineUUID ? (
               <a>
-                <i aria-hidden="true" className="user icon"></i>
-                MachineUUID: {machineUUID}
-                <br />
+                <XClipboard value={machineUUID}>{machineUUID}</XClipboard>
               </a>
             ) : (
-              <div></div>
+              "Unknown"
             )}
-          </Card.Content>
-        ) : (
-          <div></div>
-        )}
-      </Card>
+          </Table.Cell>
+        </Table.Row>
+        <Table.Row>
+          <Table.HeaderCell collapsing>
+            <Icon name="key" style={{ marginLeft: "10px" }} />
+            Credentials
+          </Table.HeaderCell>
+          <Table.Cell>
+            <XCredentialSummary credentials={credentials} />
+          </Table.Cell>
+        </Table.Row>
+      </Table>
 
       <Header size="large" block inverted>
         <Icon name="tasks" />
