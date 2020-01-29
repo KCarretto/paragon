@@ -11,8 +11,6 @@ import (
 
 const (
 	SessionTokenLength = 256
-	SessionCookieName  = "pg-session"
-	UserCookieName     = "pg-userid"
 )
 
 type authKey string
@@ -29,6 +27,45 @@ func GetUser(ctx context.Context) *ent.User {
 	}
 
 	return nil
+}
+
+type MultiAuthenticator struct {
+	ServiceAuth ServiceAuthenticator
+	UserAuth    UserAuthenticator
+}
+
+func (auth MultiAuthenticator) Authenticate(w http.ResponseWriter, req *http.Request) (*http.Request, error) {
+	req, err := auth.UserAuth.Authenticate(w, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed user authentication: %w", err)
+	}
+
+	req, err = auth.ServiceAuth.Authenticate(w, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed service authentication: %w", err)
+	}
+
+	return req, nil
+}
+
+// ServiceAuthenticator parses http requests for service headers and adds service context to the
+// request where possible.
+type ServiceAuthenticator struct {
+	Graph *ent.Client
+}
+
+// Authenticate a request by wrapping it's context with the authenticated service identity. It will
+// upsert new (unactivated) service identities if the public key is not already registered. Returns
+// an error if invalid credentials are provided.
+func (auth ServiceAuthenticator) Authenticate(w http.ResponseWriter, req *http.Request) (*http.Request, error) {
+	// TODO: @Nick
+	return req, nil
+	// svcName := req.Header.Get(HeaderService)
+	// pubKeyB64 := req.Header.Get(HeaderIdentity)
+	// sig := req.Header.Get(HeaderSignature)
+	// epoch := req.Header.Get(HeaderEpoch)
+
+	// pubKey := ed25519.PublicKey([]byte(b64_decoded_pubkey))
 }
 
 // UserAuthenticator parses http requests for session cookies and adds user context to the request

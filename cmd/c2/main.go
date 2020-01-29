@@ -52,7 +52,7 @@ func main() {
 
 	// Initialize Server
 	srv := &c2.Server{
-		Teamserver: graphql.Client{
+		Teamserver: &graphql.Client{
 			URL: teamserverURL,
 		},
 	}
