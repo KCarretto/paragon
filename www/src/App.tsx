@@ -17,6 +17,7 @@ import {
   XTargetView,
   XTaskView
 } from "./views";
+import XEventFeedView from "./views/XEventFeedView";
 
 type StatusResult = {
   activated: boolean;
@@ -81,7 +82,7 @@ const App = () => {
               authorized={authz}
               exact
               path="/news_feed"
-              component={XUnimplemented}
+              component={XEventFeedView}
             />
             <XPrivateRoute
               authorized={authz}
