@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/graphql"
+	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script/workerlib/ssh"
@@ -93,5 +94,9 @@ func main() {
 
 	for {
 		time.Sleep(time.Second)
+		_, err := graph.ClaimTasks(context.Background(), models.ClaimTasksRequest{
+			PrimaryIP: nil,
+		})
+		fmt.Printf("error: %v\n", err)
 	}
 }

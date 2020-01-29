@@ -8,6 +8,7 @@ import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
 import {
+  XAdminView,
   XJobView,
   XLogin,
   XMultiFileView,
@@ -81,7 +82,7 @@ const App = () => {
             <XPrivateRoute
               authorized={authz}
               exact
-              path="/news_feed"
+              path="/event_feed"
               component={XEventFeedView}
             />
             <XPrivateRoute
@@ -89,6 +90,12 @@ const App = () => {
               exact
               path="/profile"
               component={XUnimplemented}
+            />
+            <XPrivateRoute
+              authorized={authz && admin}
+              exact
+              path="/admin"
+              component={XAdminView}
             />
 
             <XPrivateRoute

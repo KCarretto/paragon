@@ -1,3 +1,4 @@
+export { default as XAdminView } from './XAdminView';
 export { default as XJobView } from './XJobView';
 export { default as XLogin } from './XLogin';
 export { default as XMultiFileView } from './XMultiFileView';

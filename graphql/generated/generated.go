@@ -128,6 +128,8 @@ type ComplexityRoot struct {
 		CreateLink              func(childComplexity int, input *models.CreateLinkRequest) int
 		CreateTag               func(childComplexity int, input *models.CreateTagRequest) int
 		CreateTarget            func(childComplexity int, input *models.CreateTargetRequest) int
+		DeactivateService       func(childComplexity int, input *models.DeactivateServiceRequest) int
+		DeactivateUser          func(childComplexity int, input *models.DeactivateUserRequest) int
 		DeleteTarget            func(childComplexity int, input *models.DeleteTargetRequest) int
 		FailCredential          func(childComplexity int, input *models.FailCredentialRequest) int
 		LikeEvent               func(childComplexity int, input *models.LikeEventRequest) int
@@ -274,10 +276,12 @@ type MutationResolver interface {
 	CreateLink(ctx context.Context, input *models.CreateLinkRequest) (*ent.Link, error)
 	SetLinkFields(ctx context.Context, input *models.SetLinkFieldsRequest) (*ent.Link, error)
 	ActivateUser(ctx context.Context, input *models.ActivateUserRequest) (*ent.User, error)
+	DeactivateUser(ctx context.Context, input *models.DeactivateUserRequest) (*ent.User, error)
 	MakeAdmin(ctx context.Context, input *models.MakeAdminRequest) (*ent.User, error)
 	RemoveAdmin(ctx context.Context, input *models.RemoveAdminRequest) (*ent.User, error)
 	ChangeName(ctx context.Context, input *models.ChangeNameRequest) (*ent.User, error)
 	ActivateService(ctx context.Context, input *models.ActivateServiceRequest) (*ent.Service, error)
+	DeactivateService(ctx context.Context, input *models.DeactivateServiceRequest) (*ent.Service, error)
 	LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error)
 }
 type QueryResolver interface {
@@ -827,6 +831,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateTarget(childComplexity, args["input"].(*models.CreateTargetRequest)), true
+
+	case "Mutation.deactivateService":
+		if e.complexity.Mutation.DeactivateService == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deactivateService_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeactivateService(childComplexity, args["input"].(*models.DeactivateServiceRequest)), true
+
+	case "Mutation.deactivateUser":
+		if e.complexity.Mutation.DeactivateUser == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deactivateUser_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeactivateUser(childComplexity, args["input"].(*models.DeactivateUserRequest)), true
 
 	case "Mutation.deleteTarget":
 		if e.complexity.Mutation.DeleteTarget == nil {
@@ -1822,6 +1850,9 @@ input SetLinkFieldsRequest {
 input ActivateUserRequest {
   id: ID!
 }
+input DeactivateUserRequest {
+  id: ID!
+}
 input MakeAdminRequest {
   id: ID!
 }
@@ -1833,6 +1864,9 @@ input ChangeNameRequest {
 }
 
 input ActivateServiceRequest {
+  id: ID!
+}
+input DeactivateServiceRequest {
   id: ID!
 }
 
@@ -1874,12 +1908,14 @@ type Mutation {
 
   # User Mutations
   activateUser(input: ActivateUserRequest): User!
+  deactivateUser(input: DeactivateUserRequest): User!
   makeAdmin(input: MakeAdminRequest): User!
   removeAdmin(input: RemoveAdminRequest): User!
   changeName(input: ChangeNameRequest): User!
 
   # Service Mutations
   activateService(input: ActivateServiceRequest): Service!
+  deactivateService(input: DeactivateServiceRequest): Service!
 
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
@@ -2168,6 +2204,34 @@ func (ec *executionContext) field_Mutation_createTarget_args(ctx context.Context
 	var arg0 *models.CreateTargetRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOCreateTargetRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCreateTargetRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deactivateService_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.DeactivateServiceRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalODeactivateServiceRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateServiceRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deactivateUser_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.DeactivateUserRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalODeactivateUserRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateUserRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5134,6 +5198,50 @@ func (ec *executionContext) _Mutation_activateUser(ctx context.Context, field gr
 	return ec.marshalNUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_deactivateUser(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deactivateUser_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeactivateUser(rctx, args["input"].(*models.DeactivateUserRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.User)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_makeAdmin(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -5293,6 +5401,50 @@ func (ec *executionContext) _Mutation_activateService(ctx context.Context, field
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().ActivateService(rctx, args["input"].(*models.ActivateServiceRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deactivateService(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deactivateService_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeactivateService(rctx, args["input"].(*models.DeactivateServiceRequest))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9182,6 +9334,42 @@ func (ec *executionContext) unmarshalInputCreateTargetRequest(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeactivateServiceRequest(ctx context.Context, obj interface{}) (models.DeactivateServiceRequest, error) {
+	var it models.DeactivateServiceRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputDeactivateUserRequest(ctx context.Context, obj interface{}) (models.DeactivateUserRequest, error) {
+	var it models.DeactivateUserRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteTargetRequest(ctx context.Context, obj interface{}) (models.DeleteTargetRequest, error) {
 	var it models.DeleteTargetRequest
 	var asMap = obj.(map[string]interface{})
@@ -9975,6 +10163,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "deactivateUser":
+			out.Values[i] = ec._Mutation_deactivateUser(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "makeAdmin":
 			out.Values[i] = ec._Mutation_makeAdmin(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -9992,6 +10185,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "activateService":
 			out.Values[i] = ec._Mutation_activateService(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deactivateService":
+			out.Values[i] = ec._Mutation_deactivateService(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11410,6 +11608,30 @@ func (ec *executionContext) marshalOCredential2ᚖgithubᚗcomᚋkcarrettoᚋpar
 		return graphql.Null
 	}
 	return ec._Credential(ctx, sel, v)
+}
+
+func (ec *executionContext) unmarshalODeactivateServiceRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateServiceRequest(ctx context.Context, v interface{}) (models.DeactivateServiceRequest, error) {
+	return ec.unmarshalInputDeactivateServiceRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalODeactivateServiceRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateServiceRequest(ctx context.Context, v interface{}) (*models.DeactivateServiceRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalODeactivateServiceRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateServiceRequest(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalODeactivateUserRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateUserRequest(ctx context.Context, v interface{}) (models.DeactivateUserRequest, error) {
+	return ec.unmarshalInputDeactivateUserRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalODeactivateUserRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateUserRequest(ctx context.Context, v interface{}) (*models.DeactivateUserRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalODeactivateUserRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateUserRequest(ctx, v)
+	return &res, err
 }
 
 func (ec *executionContext) unmarshalODeleteTargetRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteTargetRequest(ctx context.Context, v interface{}) (models.DeleteTargetRequest, error) {
