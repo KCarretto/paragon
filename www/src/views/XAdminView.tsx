@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@apollo/react-hooks";
+import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
@@ -114,11 +115,28 @@ export type ServicesResponse = {
   services: Service[];
 };
 const XAdminView = () => {
-  const usersQuery = useQuery<UsersResponse>(ADMIN_USERS_QUERY);
-  const servicesQuery = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY);
+  const usersQuery = useQuery<UsersResponse>(ADMIN_USERS_QUERY, {
+    pollInterval: 3000,
+    onCompleted: (data: UsersResponse) => {
+      setError(null);
+      setUsers(data.users);
+    },
+    onError: err => setError(err)
+  });
+  const servicesQuery = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY, {
+    pollInterval: 3000,
+    onCompleted: (data: ServicesResponse) => {
+      setError(null);
+      setServices(data.services);
+    },
+    onError: err => setError(err)
+  });
 
+  const [users, setUsers] = useState<User[]>([]);
+  const [services, setServices] = useState<Service[]>([]);
   const [openUsers, setOpenUsers] = useState<boolean>(false);
   const [openServices, setOpenServices] = useState<boolean>(false);
+  const [error, setError] = useState<ApolloError>(null);
 
   const [activateUser] = useMutation(ACTIVATE_USER_MUTATION, {
     refetchQueries: [{ query: ADMIN_USERS_QUERY }]
@@ -153,16 +171,28 @@ const XAdminView = () => {
       activateUser({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
         }
       });
     } else {
       deactivateUser({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
         }
       });
     }
@@ -171,14 +201,26 @@ const XAdminView = () => {
   const handleUserAdmin = (e, p) => {
     if (p.checked) {
       makeAdmin({ variables: { id: p.value } }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
         }
       });
     } else {
       removeAdmin({ variables: { id: p.value } }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
         }
       });
     }
@@ -189,29 +231,34 @@ const XAdminView = () => {
       activateService({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
         }
       });
     } else {
       deactivateService({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
         }
       });
     }
   };
 
   const showUsers = () => {
-    if (
-      !usersQuery.data ||
-      !usersQuery.data.users ||
-      usersQuery.data.users.length < 1
-    ) {
-      return "nope";
-    }
     return (
       <React.Fragment>
         <Loader disabled={!usersQuery.called || !usersQuery.loading} />
@@ -227,56 +274,57 @@ const XAdminView = () => {
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openUsers}>
-          <Card.Group centered itemsPerRow={4}>
-            {usersQuery.data.users.map(u => {
-              return (
-                <Card key={u.id}>
-                  {u.photoURL !== "" ? (
-                    <Image src={u.photoURL} wrapped ui={false} />
-                  ) : (
-                    <Image src="/app/default_profile.gif" wrapped ui={false} />
-                  )}
-                  <Card.Content>
-                    <Card.Header>{u.name}</Card.Header>
-                    <Card.Description>
-                      <Radio
-                        label={"Activated"}
-                        value={u.id}
-                        onClick={handleUserActivate}
-                        checked={u.isActivated}
-                        toggle
-                        type="radio"
+          {users.length < 1 ? (
+            <span />
+          ) : (
+            <Card.Group centered itemsPerRow={4}>
+              {users.map(u => {
+                return (
+                  <Card key={u.id}>
+                    {u.photoURL !== "" ? (
+                      <Image src={u.photoURL} wrapped ui={false} />
+                    ) : (
+                      <Image
+                        src="/app/default_profile.gif"
+                        wrapped
+                        ui={false}
                       />
-                      <br />
-                      <Radio
-                        label={"Is Admin"}
-                        toggle
-                        value={u.id}
-                        onClick={handleUserAdmin}
-                        checked={u.isAdmin}
-                        type="radio"
-                      />
-                    </Card.Description>
-                  </Card.Content>
-                </Card>
-              );
-            })}
-          </Card.Group>
+                    )}
+                    <Card.Content>
+                      <Card.Header>{u.name}</Card.Header>
+                      <Card.Description>
+                        <Radio
+                          label={"Activated"}
+                          value={u.id}
+                          onClick={handleUserActivate}
+                          checked={u.isActivated}
+                          toggle
+                          type="radio"
+                        />
+                        <br />
+                        <Radio
+                          label={"Is Admin"}
+                          toggle
+                          value={u.id}
+                          onClick={handleUserAdmin}
+                          checked={u.isAdmin}
+                          type="radio"
+                        />
+                      </Card.Description>
+                    </Card.Content>
+                  </Card>
+                );
+              })}
+            </Card.Group>
+          )}
         </Accordion.Content>
-        <XErrorMessage title="Error Loading Users" err={usersQuery.error} />
+        <XErrorMessage title="Error Loading Users" err={error} />
         <Divider />
       </React.Fragment>
     );
   };
 
   const showServices = () => {
-    if (
-      !servicesQuery.data ||
-      !servicesQuery.data.services ||
-      servicesQuery.data.services.length < 1
-    ) {
-      return "nope";
-    }
     return (
       <React.Fragment>
         <Loader disabled={!servicesQuery.called || !servicesQuery.loading} />
@@ -292,38 +340,42 @@ const XAdminView = () => {
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openServices}>
-          <Card.Group centered itemsPerRow={4}>
-            {servicesQuery.data.services.map(s => {
-              return (
-                <Card key={s.id}>
-                  <Image src="/app/default_profile.gif" wrapped ui={false} />
-                  <Card.Content>
-                    <Card.Header>{s.name}</Card.Header>
-                    <Card.Description>
-                      <Radio
-                        label={"Activated"}
-                        value={s.id}
-                        onClick={handleServiceActivate}
-                        checked={s.isActivated}
-                        toggle
-                        type="radio"
-                      />
-                    </Card.Description>
-                  </Card.Content>
-                  <Card.Content extra>
-                    <a>
-                      <Icon name="key" />
-                      <XClipboard value={s.pubKey}>
-                        Public Key: {s.pubKey.slice(0, 15)}...
-                      </XClipboard>
-                    </a>
-                  </Card.Content>
-                </Card>
-              );
-            })}
-          </Card.Group>
+          {services.length < 1 ? (
+            <span />
+          ) : (
+            <Card.Group centered itemsPerRow={4}>
+              {services.map(s => {
+                return (
+                  <Card key={s.id}>
+                    <Image src="/app/default_profile.gif" wrapped ui={false} />
+                    <Card.Content>
+                      <Card.Header>{s.name}</Card.Header>
+                      <Card.Description>
+                        <Radio
+                          label={"Activated"}
+                          value={s.id}
+                          onClick={handleServiceActivate}
+                          checked={s.isActivated}
+                          toggle
+                          type="radio"
+                        />
+                      </Card.Description>
+                    </Card.Content>
+                    <Card.Content extra>
+                      <a>
+                        <Icon name="key" />
+                        <XClipboard value={s.pubKey}>
+                          Public Key: {s.pubKey.slice(0, 15)}...
+                        </XClipboard>
+                      </a>
+                    </Card.Content>
+                  </Card>
+                );
+              })}
+            </Card.Group>
+          )}
         </Accordion.Content>
-        <XErrorMessage title="Error Loading Users" err={usersQuery.error} />
+        <XErrorMessage title="Error Loading Users" err={error} />
         <Divider />
       </React.Fragment>
     );
