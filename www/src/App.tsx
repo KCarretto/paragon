@@ -7,17 +7,7 @@ import { XLayout, XPrivateRoute, XUnimplemented } from "./components/layout";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
-import {
-  XAdminView,
-  XJobView,
-  XLogin,
-  XMultiFileView,
-  XMultiJobView,
-  XMultiTagView,
-  XMultiTargetView,
-  XTargetView,
-  XTaskView
-} from "./views";
+import { XAdminView, XJobView, XLogin, XMultiFileView, XMultiJobView, XMultiTagView, XMultiTargetView, XProfileView, XTargetView, XTaskView } from "./views";
 
 type StatusResult = {
   activated: boolean;
@@ -88,7 +78,7 @@ const App = () => {
               authorized={authz}
               exact
               path="/profile"
-              component={XUnimplemented}
+              component={XProfileView}
             />
             <XPrivateRoute
               authorized={authz && admin}

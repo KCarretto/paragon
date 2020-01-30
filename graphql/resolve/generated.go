@@ -916,7 +916,7 @@ func (r *mutationResolver) RemoveAdmin(ctx context.Context, input *models.Remove
 }
 func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeNameRequest) (*ent.User, error) {
 	actor := auth.GetUser(ctx)
-	if actor != nil {
+	if actor == nil {
 		return nil, fmt.Errorf("to use this mutation you must be authenticated")
 	}
 	actor, err := actor.Update().
