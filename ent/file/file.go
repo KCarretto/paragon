@@ -84,4 +84,9 @@ var (
 	DefaultSize = descSize.Default.(int)
 	// SizeValidator is a validator for the "Size" field. It is called by the builders before save.
 	SizeValidator = descSize.Validators[0].(func(int) error)
+
+	// descHash is the schema descriptor for Hash field.
+	descHash = fields[5].Descriptor()
+	// HashValidator is a validator for the "Hash" field. It is called by the builders before save.
+	HashValidator = descHash.Validators[0].(func(string) error)
 )

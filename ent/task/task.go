@@ -92,5 +92,29 @@ var (
 	// descContent is the schema descriptor for Content field.
 	descContent = fields[5].Descriptor()
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
-	ContentValidator = descContent.Validators[0].(func(string) error)
+	ContentValidator = func() func(string) error {
+		validators := descContent.Validators
+		fns := [...]func(string) error{
+			validators[0].(func(string) error),
+			validators[1].(func(string) error),
+		}
+		return func(Content string) error {
+			for _, fn := range fns {
+				if err := fn(Content); err != nil {
+					return err
+				}
+			}
+			return nil
+		}
+	}()
+
+	// descOutput is the schema descriptor for Output field.
+	descOutput = fields[6].Descriptor()
+	// OutputValidator is a validator for the "Output" field. It is called by the builders before save.
+	OutputValidator = descOutput.Validators[0].(func(string) error)
+
+	// descSessionID is the schema descriptor for SessionID field.
+	descSessionID = fields[8].Descriptor()
+	// SessionIDValidator is a validator for the "SessionID" field. It is called by the builders before save.
+	SessionIDValidator = descSessionID.Validators[0].(func(string) error)
 )

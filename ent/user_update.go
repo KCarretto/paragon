@@ -186,6 +186,11 @@ func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 		}
 	}
+	if uu.SessionToken != nil {
+		if err := user.SessionTokenValidator(*uu.SessionToken); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"SessionToken\": %v", err)
+		}
+	}
 	return uu.sqlSave(ctx)
 }
 
@@ -518,6 +523,11 @@ func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
 	if uuo.Name != nil {
 		if err := user.NameValidator(*uuo.Name); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+		}
+	}
+	if uuo.SessionToken != nil {
+		if err := user.SessionTokenValidator(*uuo.SessionToken); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"SessionToken\": %v", err)
 		}
 	}
 	return uuo.sqlSave(ctx)

@@ -85,6 +85,9 @@ func (cc *CredentialCreate) Save(ctx context.Context) (*Credential, error) {
 	if cc.secret == nil {
 		return nil, errors.New("ent: missing required field \"secret\"")
 	}
+	if err := credential.SecretValidator(*cc.secret); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"secret\": %v", err)
+	}
 	if cc.kind == nil {
 		return nil, errors.New("ent: missing required field \"kind\"")
 	}

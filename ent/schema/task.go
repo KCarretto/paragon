@@ -8,6 +8,9 @@ import (
 	"github.com/facebookincubator/ent/schema/field"
 )
 
+const MaxTaskContentSize = 5
+const MaxTaskOutputSize = 5
+
 // Task holds the schema definition for the Task entity.
 type Task struct {
 	ent.Schema
@@ -33,15 +36,18 @@ func (Task) Fields() []ent.Field {
 			Optional().
 			Comment("The timestamp for when the Task's execution ended"),
 		field.String("Content").
+			MaxLen(MaxTaskContentSize).
 			NotEmpty().
 			Comment("The content of the task (usually a Renegade Script)"),
 		field.String("Output").
+			MaxLen(MaxTaskOutputSize).
 			Optional().
 			Comment("The output from executing the task"),
 		field.String("Error").
 			Optional().
 			Comment("The error, if any, produced while executing the Task"),
 		field.String("SessionID").
+			MaxLen(250).
 			Optional(),
 	}
 }

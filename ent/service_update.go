@@ -128,6 +128,11 @@ func (su *ServiceUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
 		}
 	}
+	if su.PubKey != nil {
+		if err := service.PubKeyValidator(*su.PubKey); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
+		}
+	}
 	if len(su.tag) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"tag\"")
 	}
@@ -384,6 +389,11 @@ func (suo *ServiceUpdateOne) Save(ctx context.Context) (*Service, error) {
 	if suo.Name != nil {
 		if err := service.NameValidator(*suo.Name); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+		}
+	}
+	if suo.PubKey != nil {
+		if err := service.PubKeyValidator(*suo.PubKey); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
 		}
 	}
 	if len(suo.tag) > 1 {
