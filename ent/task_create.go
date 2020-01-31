@@ -214,11 +214,6 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 	if err := task.ContentValidator(*tc.Content); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
-	if tc.Output != nil {
-		if err := task.OutputValidator(*tc.Output); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Output\": %v", err)
-		}
-	}
 	if tc.SessionID != nil {
 		if err := task.SessionIDValidator(*tc.SessionID); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"SessionID\": %v", err)

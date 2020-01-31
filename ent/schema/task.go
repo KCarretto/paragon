@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"math"
 	"time"
 
 	"github.com/facebookincubator/ent"
@@ -9,7 +10,7 @@ import (
 )
 
 const MaxTaskContentSize = 65535
-const MaxTaskOutputSize = 65535
+const MaxTaskOutputSize = math.MaxUint32
 
 // Task holds the schema definition for the Task entity.
 type Task struct {
@@ -18,6 +19,12 @@ type Task struct {
 
 // Fields of the Task.
 func (Task) Fields() []ent.Field {
+	content := field.String("Content")
+	content.Descriptor().Size = MaxTaskContentSize
+
+	output := field.String("Output")
+	output.Descriptor().Size = MaxTaskOutputSize
+
 	return []ent.Field{
 		field.Time("QueueTime").
 			Default(func() time.Time {
@@ -35,12 +42,10 @@ func (Task) Fields() []ent.Field {
 		field.Time("ExecStopTime").
 			Optional().
 			Comment("The timestamp for when the Task's execution ended"),
-		field.String("Content").
-			MaxLen(MaxTaskContentSize).
+		content.
 			NotEmpty().
 			Comment("The content of the task (usually a Renegade Script)"),
-		field.String("Output").
-			MaxLen(MaxTaskOutputSize).
+		output.
 			Optional().
 			Comment("The output from executing the task"),
 		field.String("Error").

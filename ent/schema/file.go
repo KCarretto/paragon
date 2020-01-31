@@ -9,8 +9,6 @@ import (
 	"github.com/facebookincubator/ent/schema/field"
 )
 
-const MaxFileContentSize = 65535
-
 // File holds file content and metadata.
 type File struct {
 	ent.Schema
