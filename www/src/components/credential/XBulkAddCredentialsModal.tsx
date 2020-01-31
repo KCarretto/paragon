@@ -65,7 +65,7 @@ const XBulkAddCredentialsModal = () => {
     <Modal
       open={isOpen}
       onClose={closeModal}
-      trigger={<Button positive circular icon="key" onClick={openModal} />}
+      trigger={<Button positive icon="key" onClick={openModal} />}
       size="large"
       // Form properties
       as={Form}

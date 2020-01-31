@@ -92,7 +92,7 @@ const App = () => {
               component={XUnimplemented}
             />
             <XPrivateRoute
-              authorized={authz && admin}
+              authorized={authz}
               exact
               path="/admin"
               component={XAdminView}

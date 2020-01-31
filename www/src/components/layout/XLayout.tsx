@@ -1,7 +1,13 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
+import { Button, Container, Menu } from "semantic-ui-react";
 import { XSidebar } from ".";
 import { RouteConfig } from "../../config/routes";
+import { XBulkAddCredentialsModal } from "../credential";
+import { XFileUploadModal } from "../file";
+import { XJobQueueModal } from "../job";
+import { XTagCreateModal } from "../tag";
+import { XTargetCreateModal } from "../target";
 
 type LayoutProps = {
   routeMap: RouteConfig[];
@@ -16,41 +22,22 @@ const XLayout: FunctionComponent<LayoutProps> = props => (
     userID={props.userID}
     isAdmin={props.isAdmin}
   >
-    {props.children}
+    <Menu secondary compact fixed="top">
+      <Menu.Item position="right">
+        <Button.Group icon color="green">
+          <XJobQueueModal trigger={<Button icon="cube" color="green" />} />
+          <XFileUploadModal button={{ color: "green", icon: "cloud upload" }} />
+          <XTagCreateModal />
+          <XBulkAddCredentialsModal />
+          <XTargetCreateModal />
+        </Button.Group>
+      </Menu.Item>
+    </Menu>
+
+    <Container fluid style={{ marginTop: "30px" }}>
+      {props.children}
+    </Container>
   </XSidebar>
 );
-// <Router>
-//   <Switch>
-//     <Route
-//       path="/login"
-//       render={routeProps =>
-//         !authenticated || (!activated && !admin) ? (
-//           <XLogin pending={authenticated} />
-//         ) : (
-//           <Redirect to="/" />
-//         )
-//       }
-//     />
-//     <Route
-//       path="/"
-//       render={routeProps =>
-//         authenticated && (activated || admin) ? (
-//           <XSidebar
-//             routeMap={props.routeMap}
-//             userID={userID}
-//             isActivated={activated}
-//             isAdmin={admin}
-//           >
-//             {props.children}
-//           </XSidebar>
-//         ) : (
-//           <Redirect to="/login" />
-//         )
-//       }
-//     />
-//   </Switch>
-// </Router>
-//   );
-// };
 
 export default XLayout;

@@ -1,10 +1,9 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader, Menu } from "semantic-ui-react";
-import { XBulkAddCredentialsModal } from "../components/credential";
+import { Card, Container, Loader } from "semantic-ui-react";
 import { XErrorMessage } from "../components/messages";
-import { XNoTargetsFound, XTargetCreateModal } from "../components/target";
+import { XNoTargetsFound } from "../components/target";
 import XTargetCard from "../components/target/XTargetCard";
 import { Target } from "../graphql/models";
 
@@ -65,19 +64,10 @@ const XMultiTargetView = () => {
   };
 
   return (
-    <Container style={{ padding: "10px" }}>
-      <Menu secondary>
-        <Menu.Item position="right">
-          <XTargetCreateModal />
-          <XBulkAddCredentialsModal />
-        </Menu.Item>
-      </Menu>
-      <Container fluid style={{ padding: "20px" }}>
-        <Loader disabled={!called || !loading} />
-        <XErrorMessage title="Error Loading Targets" err={error} />
-
-        {showCards()}
-      </Container>
+    <Container fluid style={{ padding: "20px" }}>
+      <Loader disabled={!called || !loading} />
+      <XErrorMessage title="Error Loading Targets" err={error} />
+      {showCards()}
     </Container>
   );
 };

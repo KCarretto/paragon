@@ -1,8 +1,8 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader, Menu } from "semantic-ui-react";
-import { XFileCard, XFileUploadModal, XNoFilesFound } from "../components/file";
+import { Card, Container, Loader } from "semantic-ui-react";
+import { XFileCard, XNoFilesFound } from "../components/file";
 import { XErrorMessage } from "../components/messages";
 import { File } from "../graphql/models";
 
@@ -52,19 +52,10 @@ const XMultiFileView = () => {
   };
 
   return (
-    <Container style={{ padding: "10px" }}>
-      <Menu secondary>
-        <Menu.Item position="right">
-          <XFileUploadModal
-            button={{ positive: true, circular: true, icon: "plus" }}
-          />
-        </Menu.Item>
-      </Menu>
-      <Container fluid style={{ padding: "20px" }}>
-        <Loader disabled={!called || !loading} />
-        <XErrorMessage title="Error Loading Files" err={error} />
-        {showCards()}
-      </Container>
+    <Container fluid style={{ padding: "20px" }}>
+      <Loader disabled={!called || !loading} />
+      <XErrorMessage title="Error Loading Files" err={error} />
+      {showCards()}
     </Container>
   );
 };

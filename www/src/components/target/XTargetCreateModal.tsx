@@ -76,7 +76,7 @@ const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
     <Modal
       open={isOpen}
       onClose={closeModal}
-      trigger={<Button positive circular icon="plus" onClick={openModal} />}
+      trigger={<Button positive icon="desktop" onClick={openModal} />}
       size="small"
       // Form properties
       as={Form}
