@@ -19,12 +19,6 @@ type Task struct {
 
 // Fields of the Task.
 func (Task) Fields() []ent.Field {
-	content := field.String("Content")
-	content.Descriptor().Size = MaxTaskContentSize
-
-	output := field.String("Output")
-	output.Descriptor().Size = MaxTaskOutputSize
-
 	return []ent.Field{
 		field.Time("QueueTime").
 			Default(func() time.Time {
@@ -42,10 +36,10 @@ func (Task) Fields() []ent.Field {
 		field.Time("ExecStopTime").
 			Optional().
 			Comment("The timestamp for when the Task's execution ended"),
-		content.
+		field.Text("Content").
 			NotEmpty().
 			Comment("The content of the task (usually a Renegade Script)"),
-		output.
+		field.Text("Output").
 			Optional().
 			Comment("The output from executing the task"),
 		field.String("Error").
