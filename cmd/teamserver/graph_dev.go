@@ -7,7 +7,9 @@ import (
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/migrate"
+
 	_ "github.com/mattn/go-sqlite3"
+	"go.uber.org/zap"
 )
 
 func newGraph(ctx context.Context, logger *zap.Logger) *ent.Client {
