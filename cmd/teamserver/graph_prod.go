@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"os"
 	"time"
@@ -13,17 +14,29 @@ import (
 	"github.com/kcarretto/paragon/ent/migrate"
 
 	_ "github.com/go-sql-driver/mysql"
+	"go.uber.org/zap"
 	"gocloud.dev/mysql"
 	_ "gocloud.dev/mysql/gcpmysql"
 )
 
-func newGraph(ctx context.Context) *ent.Client {
+func connect(ctx context.Context, logger *zap.Logger, dsn string) (db *sql.DB, err error) {
+	for i := 2; i >= 0; i-- {
+		db, err = mysql.Open(ctx, dsn)
+		if err != nil {
+			logger.Error("failed to connect to mysql", zap.Error(err), zap.Int("attempts_remaining", i))
+			time.Sleep(15 * time.Second)
+		}
+	}
+	return
+}
+
+func newGraph(ctx context.Context, logger *zap.Logger) *ent.Client {
 	var mysqlDSN string
 	if mysqlDSN = os.Getenv("PG_MYSQL_DSN"); mysqlDSN == "" {
 		panic(fmt.Errorf("failed to connect to mysql: missing PG_MYSQL_DSN"))
 	}
 
-	db, err := mysql.Open(ctx, mysqlDSN)
+	db, err := connect(ctx, logger, mysqlDSN)
 	if err != nil {
 		panic(fmt.Errorf("failed to connect to mysql: %w", err))
 	}

@@ -74,7 +74,7 @@ func main() {
 	}
 	publisher := newPublisher(ctx, topic)
 
-	graph := newGraph(ctx)
+	graph := newGraph(ctx, logger.Named("db"))
 	defer graph.Close()
 
 	authenticator := getAuthenticator(logger.Named("auth"), graph)
