@@ -14,7 +14,7 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	"gocloud.dev/mysql"
-	// _ "gocloud.dev/mysql/gcpmysql"
+	_ "gocloud.dev/mysql/gcpmysql"
 )
 
 func newGraph(ctx context.Context) *ent.Client {
