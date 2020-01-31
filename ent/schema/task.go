@@ -8,8 +8,8 @@ import (
 	"github.com/facebookincubator/ent/schema/field"
 )
 
-const MaxTaskContentSize = 5
-const MaxTaskOutputSize = 5
+const MaxTaskContentSize = 65535
+const MaxTaskOutputSize = 65535
 
 // Task holds the schema definition for the Task entity.
 type Task struct {
