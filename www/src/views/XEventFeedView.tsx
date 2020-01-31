@@ -102,10 +102,10 @@ const XEventFeedView = () => {
       <Loader disabled={!called || !loading} />
       <Segment raised>
         <Feed size="large">
-          {data.events.map(e => {
+          {data.events.map((e, index) => {
             console.log(e.kind);
             console.log(EventKind[e.kind]);
-            return <XEvent event={e} kind={EventKind[e.kind]} />;
+            return <XEvent key={index} event={e} kind={EventKind[e.kind]} />;
           })}
         </Feed>
       </Segment>

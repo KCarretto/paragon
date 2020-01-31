@@ -34,7 +34,10 @@ const XLayout: FunctionComponent<LayoutProps> = props => (
       </Menu.Item>
     </Menu>
 
-    <Container fluid style={{ marginTop: "30px" }}>
+    <Container
+      fluid
+      style={{ padding: "10px", paddingTop: "50px", height: "100vh" }}
+    >
       {props.children}
     </Container>
   </XSidebar>
