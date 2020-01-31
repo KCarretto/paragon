@@ -1,4 +1,4 @@
-// +build !dev,prod
+// +build !dev
 
 package main
 
