@@ -114,8 +114,10 @@ const XEvent: FunctionComponent<XEventProps> = ({ kind, event }) => {
 
   return (
     <Feed.Event>
+      <Feed.Label>
+        <img src={actor.imgURL} />
+      </Feed.Label>
       <Feed.Content>
-        <Feed.Label image={actor.imgURL} />
         <XEventSummary kind={kind} event={event} actor={actor} />
         <XEventDetails kind={kind} event={event} actor={actor} />
 

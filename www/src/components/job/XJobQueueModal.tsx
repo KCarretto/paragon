@@ -2,8 +2,9 @@ import { useMutation } from "@apollo/react-hooks";
 import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
-import { ReactElement, useState } from "react";
+import { useState } from "react";
 import {
+  Button,
   Form,
   Grid,
   Header,
@@ -39,14 +40,9 @@ export const QUEUE_JOB_MUTATION = gql`
 type JobQueueModalParams = {
   header?: string;
   openOnStart?: boolean;
-  trigger?: ReactElement;
 };
 
-const XJobQueueModal = ({
-  header,
-  openOnStart,
-  trigger
-}: JobQueueModalParams) => {
+const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
   const [openModal, closeModal, isOpen] = useModal();
   const [error, setError] = useState<ApolloError>(null);
 
@@ -96,7 +92,7 @@ const XJobQueueModal = ({
     <Modal
       open={isOpen}
       onClose={closeModal}
-      trigger={trigger ?? <Icon name="cube" />}
+      trigger={<Button icon="cube" color="green" onClick={openModal} />}
       size="large"
       // Form properties
       as={Form}

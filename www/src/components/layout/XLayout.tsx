@@ -25,7 +25,7 @@ const XLayout: FunctionComponent<LayoutProps> = props => (
     <Menu secondary compact fixed="top">
       <Menu.Item position="right">
         <Button.Group icon color="green">
-          <XJobQueueModal trigger={<Button icon="cube" color="green" />} />
+          <XJobQueueModal />
           <XFileUploadModal button={{ color: "green", icon: "cloud upload" }} />
           <XTagCreateModal />
           <XBulkAddCredentialsModal />
