@@ -36,7 +36,12 @@ const XLayout: FunctionComponent<LayoutProps> = props => (
 
     <Container
       fluid
-      style={{ padding: "10px", paddingTop: "50px", height: "100vh" }}
+      style={{
+        padding: "10px",
+        paddingTop: "50px",
+        height: "100vh",
+        overflowY: "auto"
+      }}
     >
       {props.children}
     </Container>
