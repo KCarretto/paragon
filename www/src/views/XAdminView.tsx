@@ -253,7 +253,7 @@ const XAdminView = () => {
       !usersQuery.data.users ||
       usersQuery.data.users.length < 1
     ) {
-      return "nope";
+      return <span />;
     }
     return (
       <React.Fragment>
@@ -318,7 +318,7 @@ const XAdminView = () => {
       !servicesQuery.data.services ||
       servicesQuery.data.services.length < 1
     ) {
-      return "nope";
+      return <span />;
     }
     return (
       <React.Fragment>
