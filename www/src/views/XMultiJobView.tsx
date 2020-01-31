@@ -24,6 +24,11 @@ export const MULTI_JOB_QUERY = gql`
         execStartTime
         execStopTime
 
+        target {
+          id
+          name
+        }
+
         job {
           id
           name

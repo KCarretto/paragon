@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { Card, Label } from "semantic-ui-react";
 import { Target } from "../../graphql/models";
 import { XTags } from "../tag";
-import { XTaskSummary } from "../task";
+import { XTaskSummary, XTaskSummaryDisplayType } from "../task";
 
 const XTargetCard = (t: Target) => (
   <Card fluid>
@@ -21,7 +21,7 @@ const XTargetCard = (t: Target) => (
       <Card.Meta>
         {t.lastSeen ? moment(t.lastSeen).fromNow() : "Never"}
       </Card.Meta>
-      <XTaskSummary tasks={t.tasks} />
+      <XTaskSummary tasks={t.tasks} display={XTaskSummaryDisplayType.JOB} />
     </Card.Content>
     <Card.Content extra>
       <XTags tags={t.tags} defaultText="None" />

@@ -90,7 +90,7 @@ const XTargetView = () => {
 
   return (
     <Container fluid style={{ padding: "20px" }}>
-      <XTargetHeader name={name} tags={tags} />
+      <XTargetHeader name={name} tags={tags} lastSeen={lastSeen} />
 
       <XErrorMessage title="Error Loading Target" err={error} />
       <XLoadingMessage

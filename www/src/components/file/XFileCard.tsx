@@ -11,6 +11,7 @@ import {
 } from "semantic-ui-react";
 import { HTTP_URL } from "../../config";
 import { File } from "../../graphql/models";
+import { XClipboard } from "../form";
 import XCreateLinkModal from "../link/XLinkCreateModal";
 import XFileUploadModal from "./XFileUploadModal";
 
@@ -68,7 +69,11 @@ const XFileCard = (f: File) => {
                   </Feed.Label>
                   <Feed.Content>
                     <Feed.Summary>
-                      <List.Header>{link.alias}</List.Header>
+                      <List.Header>
+                        <XClipboard value={"/l/" + link.alias}>
+                          {"/l/" + link.alias}
+                        </XClipboard>
+                      </List.Header>
                       <Feed.Date>
                         {link.expirationTime
                           ? "Expires " + moment().to(link.expirationTime)

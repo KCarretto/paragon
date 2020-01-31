@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Card } from "semantic-ui-react";
 import { Job } from "../../graphql/models";
 import { XTags } from "../tag";
-import { XTaskSummary } from "../task";
+import { XTaskSummary, XTaskSummaryDisplayType } from "../task";
 
 const XJobCard = (j: Job) => (
   <Card fluid>
@@ -12,7 +12,11 @@ const XJobCard = (j: Job) => (
         {j.name}
       </Card.Header>
 
-      <XTaskSummary tasks={j.tasks} />
+      <XTaskSummary
+        tasks={j.tasks}
+        limit={5}
+        display={XTaskSummaryDisplayType.TARGET}
+      />
     </Card.Content>
     <Card.Content extra>
       <XTags tags={j.tags} defaultText="None" />

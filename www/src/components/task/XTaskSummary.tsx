@@ -5,12 +5,26 @@ import { Divider, Feed, Header, Icon, List } from "semantic-ui-react";
 import { XTaskStatus } from ".";
 import { Task } from "../../graphql/models";
 
+export enum XTaskSummaryDisplayType {
+  JOB = 1,
+  TARGET = 2
+}
 type TaskSummaryParams = {
   tasks: Task[];
   limit?: number;
+  display: XTaskSummaryDisplayType;
 };
 
-const XTaskSummary = ({ tasks, limit }: TaskSummaryParams) => {
+const getName = (task: Task, display: XTaskSummaryDisplayType) => {
+  switch (display) {
+    case XTaskSummaryDisplayType.JOB:
+      return task.job.name;
+    case XTaskSummaryDisplayType.TARGET:
+      return task.target.name;
+  }
+};
+
+const XTaskSummary = ({ tasks, limit, display }: TaskSummaryParams) => {
   if (tasks === null) {
     tasks = [];
   }
@@ -45,7 +59,7 @@ const XTaskSummary = ({ tasks, limit }: TaskSummaryParams) => {
                 </Feed.Date>
                 <Feed.Summary>
                   <Link to={"/tasks/" + task.id}>
-                    <List.Header>{task.job.name}</List.Header>
+                    <List.Header>{getName(task, display)}</List.Header>
                   </Link>
                 </Feed.Summary>
                 <Divider />

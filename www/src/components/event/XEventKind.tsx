@@ -8,10 +8,13 @@ import { Event } from "../../graphql/models";
 export enum EventKind {
   JobCreated = "CREATE_JOB",
   JobCompleted = "COMPLETE_JOB",
+  CredentialsAdded = "ADD_CREDENTIAL_FOR_TARGET",
   ServiceActivated = "ACTIVATE_SERVICE",
   UserActivated = "CREATE_USER",
   FileUploaded = "UPLOAD_FILE",
-  LinkCreated = "CREATE_LINK"
+  LinkCreated = "CREATE_LINK",
+  UserCreated = "CREATE_USER",
+  ServiceCreated = "CREATE_SERVICE"
 }
 
 interface EventProps extends XEventProps {
@@ -67,6 +70,12 @@ const XEventDescription: FunctionComponent<EventProps> = ({
 }) => {
   switch (kind) {
     case EventKind.JobCreated:
+      return (
+        <span>
+          {" "}
+          created job <Link to={"/jobs/" + event.job.id}>{event.job.name}</Link>
+        </span>
+      );
     case EventKind.JobCompleted:
       return (
         <span>
@@ -75,14 +84,44 @@ const XEventDescription: FunctionComponent<EventProps> = ({
           <Link to={"/jobs/" + event.job.id}>{event.job.name}</Link>
         </span>
       );
+    case EventKind.CredentialsAdded:
+      return (
+        <span>
+          {" "}
+          added credentials for{" "}
+          <Link to={"/targets/" + event.target.id}>
+            {event.credential.principal}:{event.credential.secret}@
+            {event.target.name}{" "}
+          </Link>
+        </span>
+      );
     case EventKind.ServiceActivated:
-      return <XEventNounService />;
+      return (
+        <span>
+          {" "}
+          activated service <Link to={"/admin"}>{event.service.name}</Link>
+        </span>
+      );
     case EventKind.FileUploaded:
-      return <XEventNounJob />;
+      return (
+        <span>
+          {" "}
+          uploaded file <Link to={"/files"}>{event.file.name}</Link>
+        </span>
+      );
     case EventKind.LinkCreated:
-      return <XEventNounLink />;
+      return (
+        <span>
+          {" "}
+          created link <Link to={"/files"}>{event.link.alias}</Link>
+        </span>
+      );
+    case EventKind.UserCreated:
+      return <span> requested to join</span>;
+    case EventKind.ServiceCreated:
+      return <span> service requested registration</span>;
     default:
-      return <span> Caused an invalid event to occur! ({kind})</span>;
+      return <span> Caused an unhandled event to occur! ({kind})</span>;
   }
   return <span />;
 };
