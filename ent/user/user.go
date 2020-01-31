@@ -80,6 +80,11 @@ var (
 		}
 	}()
 
+	// descSessionToken is the schema descriptor for SessionToken field.
+	descSessionToken = fields[3].Descriptor()
+	// SessionTokenValidator is a validator for the "SessionToken" field. It is called by the builders before save.
+	SessionTokenValidator = descSessionToken.Validators[0].(func(string) error)
+
 	// descIsActivated is the schema descriptor for IsActivated field.
 	descIsActivated = fields[4].Descriptor()
 	// DefaultIsActivated holds the default value on creation for the IsActivated field.

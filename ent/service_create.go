@@ -95,6 +95,9 @@ func (sc *ServiceCreate) Save(ctx context.Context) (*Service, error) {
 	if sc.PubKey == nil {
 		return nil, errors.New("ent: missing required field \"PubKey\"")
 	}
+	if err := service.PubKeyValidator(*sc.PubKey); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
+	}
 	if sc.IsActivated == nil {
 		v := service.DefaultIsActivated
 		sc.IsActivated = &v

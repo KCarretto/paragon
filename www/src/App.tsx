@@ -15,6 +15,7 @@ import {
   XMultiJobView,
   XMultiTagView,
   XMultiTargetView,
+  XProfileView,
   XTargetView,
   XTaskView
 } from "./views";
@@ -89,7 +90,7 @@ const App = () => {
               authorized={authz}
               exact
               path="/profile"
-              component={XUnimplemented}
+              component={XProfileView}
             />
             <XPrivateRoute
               authorized={authz}

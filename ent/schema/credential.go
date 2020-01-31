@@ -17,6 +17,7 @@ func (Credential) Fields() []ent.Field {
 		field.String("principal").
 			Comment("The principal for the Credential"),
 		field.String("secret").
+			MaxLen(500).
 			Comment("The secret for the Credential"),
 		field.Enum("kind").
 			Values("password", "key", "certificate").

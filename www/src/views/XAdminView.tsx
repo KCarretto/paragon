@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@apollo/react-hooks";
+import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
@@ -114,11 +115,17 @@ export type ServicesResponse = {
   services: Service[];
 };
 const XAdminView = () => {
-  const usersQuery = useQuery<UsersResponse>(ADMIN_USERS_QUERY);
-  const servicesQuery = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY);
-
   const [openUsers, setOpenUsers] = useState<boolean>(false);
   const [openServices, setOpenServices] = useState<boolean>(false);
+  const [servicesError, setServicesError] = useState<ApolloError>(null);
+  const [usersError, setUsersError] = useState<ApolloError>(null);
+
+  const usersQuery = useQuery<UsersResponse>(ADMIN_USERS_QUERY, {
+    onError: err => setUsersError(err)
+  });
+  const servicesQuery = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY, {
+    onError: err => setServicesError(err)
+  });
 
   const [activateUser] = useMutation(ACTIVATE_USER_MUTATION, {
     refetchQueries: [{ query: ADMIN_USERS_QUERY }]
@@ -127,10 +134,10 @@ const XAdminView = () => {
     refetchQueries: [{ query: ADMIN_USERS_QUERY }]
   });
   const [activateService] = useMutation(ACTIVATE_SERVICE_MUTATION, {
-    refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+    refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
   });
   const [deactivateService] = useMutation(DEACTIVATE_SERVICE_MUTATION, {
-    refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+    refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
   });
   const [makeAdmin] = useMutation(MAKE_ADMIN_MUTATION, {
     refetchQueries: [{ query: ADMIN_USERS_QUERY }]
@@ -153,16 +160,28 @@ const XAdminView = () => {
       activateUser({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setUsersError(e);
+          return;
         }
       });
     } else {
       deactivateUser({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setUsersError(e);
+          return;
         }
       });
     }
@@ -171,14 +190,26 @@ const XAdminView = () => {
   const handleUserAdmin = (e, p) => {
     if (p.checked) {
       makeAdmin({ variables: { id: p.value } }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setUsersError(e);
+          return;
         }
       });
     } else {
       removeAdmin({ variables: { id: p.value } }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setUsersError(e);
+          return;
         }
       });
     }
@@ -189,16 +220,28 @@ const XAdminView = () => {
       activateService({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setServicesError(e);
+          return;
         }
       });
     } else {
       deactivateService({
         variables: { id: p.value }
       }).then(({ data, errors }) => {
-        if (errors) {
-          console.log(errors);
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setServicesError(e);
+          return;
         }
       });
     }
@@ -210,7 +253,7 @@ const XAdminView = () => {
       !usersQuery.data.users ||
       usersQuery.data.users.length < 1
     ) {
-      return "nope";
+      return <span />;
     }
     return (
       <React.Fragment>
@@ -263,7 +306,7 @@ const XAdminView = () => {
             })}
           </Card.Group>
         </Accordion.Content>
-        <XErrorMessage title="Error Loading Users" err={usersQuery.error} />
+        <XErrorMessage title="Error Loading Users" err={usersError} />
         <Divider />
       </React.Fragment>
     );
@@ -275,7 +318,7 @@ const XAdminView = () => {
       !servicesQuery.data.services ||
       servicesQuery.data.services.length < 1
     ) {
-      return "nope";
+      return <span />;
     }
     return (
       <React.Fragment>
@@ -323,7 +366,7 @@ const XAdminView = () => {
             })}
           </Card.Group>
         </Accordion.Content>
-        <XErrorMessage title="Error Loading Users" err={usersQuery.error} />
+        <XErrorMessage title="Error Loading Users" err={servicesError} />
         <Divider />
       </React.Fragment>
     );

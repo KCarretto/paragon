@@ -133,6 +133,9 @@ func (fc *FileCreate) Save(ctx context.Context) (*File, error) {
 	if fc.Hash == nil {
 		return nil, errors.New("ent: missing required field \"Hash\"")
 	}
+	if err := file.HashValidator(*fc.Hash); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"Hash\": %v", err)
+	}
 	if fc.ContentType == nil {
 		return nil, errors.New("ent: missing required field \"ContentType\"")
 	}

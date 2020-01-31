@@ -107,6 +107,11 @@ func (cu *CredentialUpdate) ClearTarget() *CredentialUpdate {
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (cu *CredentialUpdate) Save(ctx context.Context) (int, error) {
+	if cu.secret != nil {
+		if err := credential.SecretValidator(*cu.secret); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"secret\": %v", err)
+		}
+	}
 	if cu.kind != nil {
 		if err := credential.KindValidator(*cu.kind); err != nil {
 			return 0, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
@@ -328,6 +333,11 @@ func (cuo *CredentialUpdateOne) ClearTarget() *CredentialUpdateOne {
 
 // Save executes the query and returns the updated entity.
 func (cuo *CredentialUpdateOne) Save(ctx context.Context) (*Credential, error) {
+	if cuo.secret != nil {
+		if err := credential.SecretValidator(*cuo.secret); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"secret\": %v", err)
+		}
+	}
 	if cuo.kind != nil {
 		if err := credential.KindValidator(*cuo.kind); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)

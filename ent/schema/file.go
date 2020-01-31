@@ -1,12 +1,15 @@
 package schema
 
 import (
+	"math"
 	"time"
 
 	"github.com/facebookincubator/ent"
 	"github.com/facebookincubator/ent/schema/edge"
 	"github.com/facebookincubator/ent/schema/field"
 )
+
+const MaxFileContentSize = 65535
 
 // File holds file content and metadata.
 type File struct {
@@ -15,6 +18,9 @@ type File struct {
 
 // Fields of the File.
 func (File) Fields() []ent.Field {
+	content := field.Bytes("Content")
+	content.Descriptor().Size = math.MaxUint32
+
 	return []ent.Field{
 		field.String("Name").
 			NotEmpty().
@@ -32,9 +38,10 @@ func (File) Fields() []ent.Field {
 			Default(0).
 			Min(0).
 			Comment("The size of the file in bytes"),
-		field.Bytes("Content").
+		content.
 			Comment("The content of the file"),
 		field.String("Hash").
+			MaxLen(100).
 			Comment("A SHA3 digest of the content field"),
 		field.String("ContentType").
 			Comment("The content type of content"),

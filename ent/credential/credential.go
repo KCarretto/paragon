@@ -50,6 +50,11 @@ var ForeignKeys = []string{
 var (
 	fields = schema.Credential{}.Fields()
 
+	// descSecret is the schema descriptor for secret field.
+	descSecret = fields[1].Descriptor()
+	// SecretValidator is a validator for the "secret" field. It is called by the builders before save.
+	SecretValidator = descSecret.Validators[0].(func(string) error)
+
 	// descFails is the schema descriptor for fails field.
 	descFails = fields[3].Descriptor()
 	// DefaultFails holds the default value on creation for the fails field.

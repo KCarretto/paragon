@@ -57,6 +57,11 @@ var (
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
 	NameValidator = descName.Validators[0].(func(string) error)
 
+	// descPubKey is the schema descriptor for PubKey field.
+	descPubKey = fields[1].Descriptor()
+	// PubKeyValidator is a validator for the "PubKey" field. It is called by the builders before save.
+	PubKeyValidator = descPubKey.Validators[0].(func(string) error)
+
 	// descIsActivated is the schema descriptor for IsActivated field.
 	descIsActivated = fields[2].Descriptor()
 	// DefaultIsActivated holds the default value on creation for the IsActivated field.

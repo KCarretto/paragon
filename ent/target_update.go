@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
@@ -285,6 +286,11 @@ func (tu *TargetUpdate) RemoveCredentials(c ...*Credential) *TargetUpdate {
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (tu *TargetUpdate) Save(ctx context.Context) (int, error) {
+	if tu.MachineUUID != nil {
+		if err := target.MachineUUIDValidator(*tu.MachineUUID); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
+		}
+	}
 	return tu.sqlSave(ctx)
 }
 
@@ -793,6 +799,11 @@ func (tuo *TargetUpdateOne) RemoveCredentials(c ...*Credential) *TargetUpdateOne
 
 // Save executes the query and returns the updated entity.
 func (tuo *TargetUpdateOne) Save(ctx context.Context) (*Target, error) {
+	if tuo.MachineUUID != nil {
+		if err := target.MachineUUIDValidator(*tuo.MachineUUID); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
+		}
+	}
 	return tuo.sqlSave(ctx)
 }
 

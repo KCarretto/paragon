@@ -18,7 +18,7 @@ var (
 	CredentialsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "principal", Type: field.TypeString},
-		{Name: "secret", Type: field.TypeString},
+		{Name: "secret", Type: field.TypeString, Size: 500},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"password", "key", "certificate"}},
 		{Name: "fails", Type: field.TypeInt, Default: credential.DefaultFails},
 		{Name: "target_id", Type: field.TypeInt, Nullable: true},
@@ -155,8 +155,8 @@ var (
 		{Name: "creation_time", Type: field.TypeTime},
 		{Name: "last_modified_time", Type: field.TypeTime},
 		{Name: "size", Type: field.TypeInt, Default: file.DefaultSize},
-		{Name: "content", Type: field.TypeBytes},
-		{Name: "hash", Type: field.TypeString},
+		{Name: "content", Type: field.TypeBytes, Size: 4294967295},
+		{Name: "hash", Type: field.TypeString, Size: 100},
 		{Name: "content_type", Type: field.TypeString},
 	}
 	// FilesTable holds the schema information for the "files" table.
@@ -224,7 +224,7 @@ var (
 	ServicesColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
-		{Name: "pub_key", Type: field.TypeString, Unique: true},
+		{Name: "pub_key", Type: field.TypeString, Unique: true, Size: 250},
 		{Name: "is_activated", Type: field.TypeBool, Default: service.DefaultIsActivated},
 		{Name: "service_tag_id", Type: field.TypeInt, Nullable: true},
 	}
@@ -260,7 +260,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "primary_ip", Type: field.TypeString},
-		{Name: "machine_uuid", Type: field.TypeString, Unique: true, Nullable: true},
+		{Name: "machine_uuid", Type: field.TypeString, Unique: true, Nullable: true, Size: 250},
 		{Name: "public_ip", Type: field.TypeString, Nullable: true},
 		{Name: "primary_mac", Type: field.TypeString, Nullable: true},
 		{Name: "hostname", Type: field.TypeString, Nullable: true},
@@ -281,10 +281,10 @@ var (
 		{Name: "claim_time", Type: field.TypeTime, Nullable: true},
 		{Name: "exec_start_time", Type: field.TypeTime, Nullable: true},
 		{Name: "exec_stop_time", Type: field.TypeTime, Nullable: true},
-		{Name: "content", Type: field.TypeString},
-		{Name: "output", Type: field.TypeString, Nullable: true},
+		{Name: "content", Type: field.TypeString, Size: 5},
+		{Name: "output", Type: field.TypeString, Nullable: true, Size: 5},
 		{Name: "error", Type: field.TypeString, Nullable: true},
-		{Name: "session_id", Type: field.TypeString, Nullable: true},
+		{Name: "session_id", Type: field.TypeString, Nullable: true, Size: 250},
 		{Name: "job_id", Type: field.TypeInt, Nullable: true},
 		{Name: "target_id", Type: field.TypeInt, Nullable: true},
 	}
@@ -316,7 +316,7 @@ var (
 		{Name: "name", Type: field.TypeString, Size: 25},
 		{Name: "o_auth_id", Type: field.TypeString, Unique: true},
 		{Name: "photo_url", Type: field.TypeString},
-		{Name: "session_token", Type: field.TypeString, Nullable: true},
+		{Name: "session_token", Type: field.TypeString, Nullable: true, Size: 1000},
 		{Name: "is_activated", Type: field.TypeBool, Default: user.DefaultIsActivated},
 		{Name: "is_admin", Type: field.TypeBool, Default: user.DefaultIsAdmin},
 		{Name: "event_liker_id", Type: field.TypeInt, Nullable: true},

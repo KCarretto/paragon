@@ -298,6 +298,16 @@ func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 		}
 	}
+	if tu.Output != nil {
+		if err := task.OutputValidator(*tu.Output); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"Output\": %v", err)
+		}
+	}
+	if tu.SessionID != nil {
+		if err := task.SessionIDValidator(*tu.SessionID); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"SessionID\": %v", err)
+		}
+	}
 	if len(tu.job) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}
@@ -838,6 +848,16 @@ func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
 	if tuo.Content != nil {
 		if err := task.ContentValidator(*tuo.Content); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+		}
+	}
+	if tuo.Output != nil {
+		if err := task.OutputValidator(*tuo.Output); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"Output\": %v", err)
+		}
+	}
+	if tuo.SessionID != nil {
+		if err := task.SessionIDValidator(*tuo.SessionID); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"SessionID\": %v", err)
 		}
 	}
 	if len(tuo.job) > 1 {

@@ -2,6 +2,10 @@
 
 package target
 
+import (
+	"github.com/kcarretto/paragon/ent/schema"
+)
+
 const (
 	// Label holds the string label denoting the target type in the database.
 	Label = "target"
@@ -61,4 +65,13 @@ var (
 	// TagsPrimaryKey and TagsColumn2 are the table columns denoting the
 	// primary key for the tags relation (M2M).
 	TagsPrimaryKey = []string{"target_id", "tag_id"}
+)
+
+var (
+	fields = schema.Target{}.Fields()
+
+	// descMachineUUID is the schema descriptor for MachineUUID field.
+	descMachineUUID = fields[2].Descriptor()
+	// MachineUUIDValidator is a validator for the "MachineUUID" field. It is called by the builders before save.
+	MachineUUIDValidator = descMachineUUID.Validators[0].(func(string) error)
 )

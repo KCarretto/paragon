@@ -19,6 +19,7 @@ func (Service) Fields() []ent.Field {
 			Comment("The name displayed for the service"),
 		field.String("PubKey").
 			Unique().
+			MaxLen(250).
 			Comment("The ed25519 public key for the service (stored in Base64 of DER format)"),
 		field.Bool("IsActivated").
 			Default(false).

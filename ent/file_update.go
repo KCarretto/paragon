@@ -158,6 +158,11 @@ func (fu *FileUpdate) Save(ctx context.Context) (int, error) {
 			return 0, fmt.Errorf("ent: validator failed for field \"Size\": %v", err)
 		}
 	}
+	if fu.Hash != nil {
+		if err := file.HashValidator(*fu.Hash); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"Hash\": %v", err)
+		}
+	}
 	return fu.sqlSave(ctx)
 }
 
@@ -439,6 +444,11 @@ func (fuo *FileUpdateOne) Save(ctx context.Context) (*File, error) {
 	if fuo.Size != nil {
 		if err := file.SizeValidator(*fuo.Size); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"Size\": %v", err)
+		}
+	}
+	if fuo.Hash != nil {
+		if err := file.HashValidator(*fuo.Hash); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"Hash\": %v", err)
 		}
 	}
 	return fuo.sqlSave(ctx)

@@ -141,6 +141,11 @@ func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
 	if uc.PhotoURL == nil {
 		return nil, errors.New("ent: missing required field \"PhotoURL\"")
 	}
+	if uc.SessionToken != nil {
+		if err := user.SessionTokenValidator(*uc.SessionToken); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"SessionToken\": %v", err)
+		}
+	}
 	if uc.IsActivated == nil {
 		v := user.DefaultIsActivated
 		uc.IsActivated = &v

@@ -5,6 +5,7 @@ package ent
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
@@ -179,6 +180,11 @@ func (tc *TargetCreate) Save(ctx context.Context) (*Target, error) {
 	}
 	if tc.PrimaryIP == nil {
 		return nil, errors.New("ent: missing required field \"PrimaryIP\"")
+	}
+	if tc.MachineUUID != nil {
+		if err := target.MachineUUIDValidator(*tc.MachineUUID); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
+		}
 	}
 	return tc.sqlSave(ctx)
 }
