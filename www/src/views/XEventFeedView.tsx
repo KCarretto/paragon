@@ -2,14 +2,13 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { Container, Feed, Loader, Segment } from "semantic-ui-react";
-import { default as XEvent, EventKind } from "../components/event/XEventKind";
-import XNoEventsFound from "../components/event/XNoEventsFound";
+import { EventKind, XEvent, XNoEventsFound } from "../components/event";
 import { XErrorMessage } from "../components/messages";
 import { Event } from "../graphql/models";
 
 export const EVENT_FEED_QUERY = gql`
   {
-    events {
+    events(input: { limit: 10 }) {
       id
       creationTime
       kind
@@ -88,7 +87,10 @@ export type EvnetFeedResponse = {
 
 const XEventFeedView = () => {
   const { called, loading, error, data } = useQuery<EvnetFeedResponse>(
-    EVENT_FEED_QUERY
+    EVENT_FEED_QUERY,
+    {
+      pollInterval: 3000
+    }
   );
 
   if (!data || !data.events || data.events.length < 1) {

@@ -6,15 +6,15 @@ import { Divider, Feed, Icon } from "semantic-ui-react";
 import { Event } from "../../graphql/models";
 
 export enum EventKind {
-  JobCreated = "CREATE_JOB",
-  JobCompleted = "COMPLETE_JOB",
-  CredentialsAdded = "ADD_CREDENTIAL_FOR_TARGET",
-  ServiceActivated = "ACTIVATE_SERVICE",
-  UserActivated = "CREATE_USER",
-  FileUploaded = "UPLOAD_FILE",
-  LinkCreated = "CREATE_LINK",
-  UserCreated = "CREATE_USER",
-  ServiceCreated = "CREATE_SERVICE"
+  CREATE_JOB = "CREATE_JOB",
+  COMPLETE_JOB = "COMPLETE_JOB",
+  ADD_CREDENTIAL_FOR_TARGET = "ADD_CREDENTIAL_FOR_TARGET",
+  ACTIVATE_SERVICE = "ACTIVATE_SERVICE",
+  ACTIVATE_USER = "ACTIVATE_USER",
+  UPLOAD_FILE = "UPLOAD_FILE",
+  CREATE_LINK = "CREATE_LINK",
+  CREATE_USER = "CREATE_USER",
+  CREATE_SERVICE = "CREATE_SERVICE"
 }
 
 interface EventProps extends XEventProps {
@@ -69,14 +69,14 @@ const XEventDescription: FunctionComponent<EventProps> = ({
   actor
 }) => {
   switch (kind) {
-    case EventKind.JobCreated:
+    case EventKind.CREATE_JOB:
       return (
         <span>
           {" "}
           created job <Link to={"/jobs/" + event.job.id}>{event.job.name}</Link>
         </span>
       );
-    case EventKind.JobCompleted:
+    case EventKind.COMPLETE_JOB:
       return (
         <span>
           {" "}
@@ -84,7 +84,7 @@ const XEventDescription: FunctionComponent<EventProps> = ({
           <Link to={"/jobs/" + event.job.id}>{event.job.name}</Link>
         </span>
       );
-    case EventKind.CredentialsAdded:
+    case EventKind.ADD_CREDENTIAL_FOR_TARGET:
       return (
         <span>
           {" "}
@@ -95,30 +95,32 @@ const XEventDescription: FunctionComponent<EventProps> = ({
           </Link>
         </span>
       );
-    case EventKind.ServiceActivated:
+    case EventKind.ACTIVATE_SERVICE:
       return (
         <span>
           {" "}
           activated service <Link to={"/admin"}>{event.service.name}</Link>
         </span>
       );
-    case EventKind.FileUploaded:
+    case EventKind.UPLOAD_FILE:
       return (
         <span>
           {" "}
           uploaded file <Link to={"/files"}>{event.file.name}</Link>
         </span>
       );
-    case EventKind.LinkCreated:
+    case EventKind.CREATE_LINK:
       return (
         <span>
           {" "}
           created link <Link to={"/files"}>{event.link.alias}</Link>
         </span>
       );
-    case EventKind.UserCreated:
+    case EventKind.CREATE_USER:
       return <span> requested to join</span>;
-    case EventKind.ServiceCreated:
+    case EventKind.ACTIVATE_USER:
+      return <span> joined!</span>;
+    case EventKind.CREATE_SERVICE:
       return <span> service requested registration</span>;
     default:
       return <span> Caused an unhandled event to occur! ({kind})</span>;
@@ -148,8 +150,12 @@ const XEventSummary: FunctionComponent<EventProps> = ({
 
 // return <Feed.Label image='/images/avatar/small/elliot.jpg' />
 
-const XEvent: FunctionComponent<XEventProps> = ({ kind, event }) => {
+const XEvent: FunctionComponent<XEventProps> = ({ event }) => {
   let actor = GetEventActor(event);
+  let kind: EventKind = EventKind[event.kind];
+  if (!kind) {
+    return <span />;
+  }
 
   return (
     <Feed.Event>
