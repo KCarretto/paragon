@@ -1,7 +1,14 @@
 import { ApolloError } from "apollo-client/errors/ApolloError";
 import * as React from "react";
 import { useState } from "react";
-import { Button, ButtonProps, Form, Grid, Input, Modal } from "semantic-ui-react";
+import {
+  Button,
+  ButtonProps,
+  Form,
+  Grid,
+  Input,
+  Modal
+} from "semantic-ui-react";
 import { HTTP_URL } from "../../config";
 import { useModal, XFileInput } from "../form";
 import { XErrorMessage } from "../messages";
@@ -12,7 +19,11 @@ type FileUploadModalParams = {
   openOnStart?: boolean;
 };
 
-const XFileUploadModal = ({ openOnStart, button, fileName }: FileUploadModalParams) => {
+const XFileUploadModal = ({
+  openOnStart,
+  button,
+  fileName
+}: FileUploadModalParams) => {
   const [openModal, closeModal, isOpen] = useModal();
   const [error, setError] = useState<ApolloError | null>(null);
 

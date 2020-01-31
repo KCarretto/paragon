@@ -7,7 +7,19 @@ import { XLayout, XPrivateRoute, XUnimplemented } from "./components/layout";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
-import { XAdminView, XJobView, XLogin, XMultiFileView, XMultiJobView, XMultiTagView, XMultiTargetView, XProfileView, XTargetView, XTaskView } from "./views";
+import {
+  XAdminView,
+  XJobView,
+  XLogin,
+  XMultiFileView,
+  XMultiJobView,
+  XMultiTagView,
+  XMultiTargetView,
+  XProfileView,
+  XTargetView,
+  XTaskView
+} from "./views";
+import XEventFeedView from "./views/XEventFeedView";
 
 type StatusResult = {
   activated: boolean;
@@ -71,8 +83,8 @@ const App = () => {
             <XPrivateRoute
               authorized={authz}
               exact
-              path="/news_feed"
-              component={XUnimplemented}
+              path="/event_feed"
+              component={XEventFeedView}
             />
             <XPrivateRoute
               authorized={authz}
@@ -81,7 +93,7 @@ const App = () => {
               component={XProfileView}
             />
             <XPrivateRoute
-              authorized={authz && admin}
+              authorized={authz}
               exact
               path="/admin"
               component={XAdminView}

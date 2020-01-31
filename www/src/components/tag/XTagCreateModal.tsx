@@ -70,7 +70,7 @@ const XTagCreateModal = ({ openOnStart }: TagCreateModalParams) => {
     <Modal
       open={isOpen}
       onClose={closeModal}
-      trigger={<Button positive circular icon="plus" onClick={openModal} />}
+      trigger={<Button positive icon="tag" onClick={openModal} />}
       size="large"
       // Form properties
       as={Form}
