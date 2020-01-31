@@ -414,6 +414,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		}
 	}
 	_, err = r.Graph.Event.Create().
+		SetCreationTime(currentTime).
 		SetOwner(actor).
 		SetJob(job).
 		SetKind(event.KindCREATEJOB).
