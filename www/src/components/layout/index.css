@@ -1,29 +1,43 @@
 .XLayout {
-    min-height: 100vh;
+  min-height: 100vh;
 }
 
 .XSidebar {
-    max-width: 160px;
-    height: 100vh;
+  max-width: 150px;
+  /* max-width: 15vw; */
+  /* max-width: 5%; */
+  height: 100vh;
+}
+
+.XToolbar {
+  max-height: 10vh;
 }
 
 .XContent {
-    width: calc(100% - 150px);
-    margin-right: 100px;
+  margin-left: 10vw;
+  /* padding-left: 1vw;
+  padding-right: 1vw; */
+
+  padding-top: 10vh;
+  max-width: 85vw;
+  /* overflow-y: auto; */
+  /* margin-left: 5%; */
+  /* width: calc(100% - 150px);
+  margin-right: 100px; */
 }
 
 .XCircleIcon {
-    box-shadow: none!important;
+  box-shadow: none !important;
 }
 
 /*
  * Prevent sidebar menu from scrolling. See #109 (https://github.com/KCarretto/paragon/issues/109)
  */
 .pushable:not(body) {
-    transform: none;
+  transform: none;
 }
 .pushable:not(body) > .ui.sidebar,
 .pushable:not(body) > .fixed,
 .pushable:not(body) > .pusher:after {
-    position: fixed;
+  position: fixed;
 }

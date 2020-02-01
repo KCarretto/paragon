@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button, Container, Icon, Label } from "semantic-ui-react";
+import { Button, Icon, Label } from "semantic-ui-react";
 import { XJobHeader } from "../components/job";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import {
@@ -119,7 +119,7 @@ const XTaskView = () => {
   }).icon;
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <Link to={"/jobs/" + jobID}>
         <XJobHeader
           name={name}
@@ -159,7 +159,7 @@ const XTaskView = () => {
       <XTaskContent content={content} />
       <XTaskOutput output={output} />
       <XTaskError error={error} />
-    </Container>
+    </React.Fragment>
   );
 };
 

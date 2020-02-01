@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Container, Feed, Loader, Segment } from "semantic-ui-react";
+import { Feed, Loader } from "semantic-ui-react";
 import { EventKind, XEvent, XNoEventsFound } from "../components/event";
 import { XErrorMessage } from "../components/messages";
 import { Event } from "../graphql/models";
@@ -98,19 +98,17 @@ const XEventFeedView = () => {
   }
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <Loader disabled={!called || !loading} />
-      <Segment raised>
-        <Feed size="large">
-          {data.events.map((e, index) => {
-            console.log(e.kind);
-            console.log(EventKind[e.kind]);
-            return <XEvent key={index} event={e} kind={EventKind[e.kind]} />;
-          })}
-        </Feed>
-      </Segment>
+      <Feed size="large">
+        {data.events.map((e, index) => {
+          console.log(e.kind);
+          console.log(EventKind[e.kind]);
+          return <XEvent key={index} event={e} kind={EventKind[e.kind]} />;
+        })}
+      </Feed>
       <XErrorMessage title="Error Loading Feed" err={error} />
-    </Container>
+    </React.Fragment>
   );
 };
 

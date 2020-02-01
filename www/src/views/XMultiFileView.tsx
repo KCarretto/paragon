@@ -1,8 +1,9 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader } from "semantic-ui-react";
+import { Loader } from "semantic-ui-react";
 import { XFileCard, XNoFilesFound } from "../components/file";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
 import { File } from "../graphql/models";
 
@@ -43,20 +44,20 @@ const XMultiFileView = () => {
       return <XNoFilesFound />;
     }
     return (
-      <Card.Group centered itemsPerRow={4}>
+      <XCardGroup>
         {data.files.map(file => (
           <XFileCard key={file.id} {...file} />
         ))}
-      </Card.Group>
+      </XCardGroup>
     );
   };
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <Loader disabled={!called || !loading} />
       <XErrorMessage title="Error Loading Files" err={error} />
       {showCards()}
-    </Container>
+    </React.Fragment>
   );
 };
 

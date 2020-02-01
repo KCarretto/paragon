@@ -14,6 +14,7 @@ import {
   Radio
 } from "semantic-ui-react";
 import XClipboard from "../components/form/XClipboard";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
 import { Service, User } from "../graphql/models";
 
@@ -270,7 +271,7 @@ const XAdminView = () => {
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openUsers}>
-          <Card.Group centered itemsPerRow={4}>
+          <XCardGroup>
             {usersQuery.data.users.map(u => {
               return (
                 <Card key={u.id}>
@@ -304,7 +305,7 @@ const XAdminView = () => {
                 </Card>
               );
             })}
-          </Card.Group>
+          </XCardGroup>
         </Accordion.Content>
         <XErrorMessage title="Error Loading Users" err={usersError} />
         <Divider />
@@ -335,7 +336,7 @@ const XAdminView = () => {
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openServices}>
-          <Card.Group centered itemsPerRow={4}>
+          <XCardGroup>
             {servicesQuery.data.services.map(s => {
               return (
                 <Card key={s.id}>
@@ -364,7 +365,7 @@ const XAdminView = () => {
                 </Card>
               );
             })}
-          </Card.Group>
+          </XCardGroup>
         </Accordion.Content>
         <XErrorMessage title="Error Loading Users" err={servicesError} />
         <Divider />

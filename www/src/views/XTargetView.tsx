@@ -5,9 +5,10 @@ import moment from "moment";
 import * as React from "react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Container, Header, Icon, Table } from "semantic-ui-react";
+import { Header, Icon, Table } from "semantic-ui-react";
 import { XCredentialSummary } from "../components/credential";
 import { XClipboard } from "../components/form";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XTargetHeader } from "../components/target";
 import { XTaskCard, XTaskCardDisplayType } from "../components/task";
@@ -89,7 +90,7 @@ const XTargetView = () => {
   });
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <XTargetHeader name={name} tags={tags} lastSeen={lastSeen} />
 
       <XErrorMessage title="Error Loading Target" err={error} />
@@ -196,7 +197,7 @@ const XTargetView = () => {
         <Header.Content>Tasks</Header.Content>
       </Header>
 
-      <Card.Group centered itemsPerRow={4}>
+      <XCardGroup>
         {tasks.map(task => (
           <XTaskCard
             key={task.id}
@@ -204,8 +205,8 @@ const XTargetView = () => {
             task={task}
           />
         ))}
-      </Card.Group>
-    </Container>
+      </XCardGroup>
+    </React.Fragment>
   );
 };
 

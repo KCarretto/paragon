@@ -1,8 +1,9 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader } from "semantic-ui-react";
+import { Loader } from "semantic-ui-react";
 import { XJobCard, XNoJobsFound } from "../components/job";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
 
 export const MULTI_JOB_QUERY = gql`
@@ -48,20 +49,20 @@ const XMultiJobView = () => {
       return <XNoJobsFound />;
     }
     return (
-      <Card.Group centered itemsPerRow={4}>
+      <XCardGroup>
         {data.jobs.map(job => (
           <XJobCard key={job.id} {...job} />
         ))}
-      </Card.Group>
+      </XCardGroup>
     );
   };
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <Loader disabled={!called || !loading} />
       <XErrorMessage title="Error Loading Jobs" err={error} />
       {showCards()}
-    </Container>
+    </React.Fragment>
   );
 };
 
