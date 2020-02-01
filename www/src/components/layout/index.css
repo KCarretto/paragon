@@ -4,8 +4,6 @@
 
 .XSidebar {
   max-width: 150px;
-  /* max-width: 15vw; */
-  /* max-width: 5%; */
   height: 100vh;
 }
 
@@ -15,15 +13,8 @@
 
 .XContent {
   margin-left: 10vw;
-  /* padding-left: 1vw;
-  padding-right: 1vw; */
-
-  padding-top: 10vh;
+  padding-top: 3vh;
   max-width: 85vw;
-  /* overflow-y: auto; */
-  /* margin-left: 5%; */
-  /* width: calc(100% - 150px);
-  margin-right: 100px; */
 }
 
 .XCircleIcon {

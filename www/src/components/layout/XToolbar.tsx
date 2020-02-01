@@ -7,7 +7,7 @@ import { XTagCreateModal } from "../tag";
 import { XTargetCreateModal } from "../target";
 
 const XToolbar = () => (
-  <Menu secondary compact fixed="top" className="XToolbar">
+  <Menu secondary compact fixed="bottom" className="XToolbar">
     <Menu.Item position="right">
       <Button.Group icon color="green">
         <XJobQueueModal />
