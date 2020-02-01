@@ -104,92 +104,94 @@ const XTargetView = () => {
       </Header>
 
       <Table>
-        <Table.Row>
-          <Table.HeaderCell collapsing>
-            <Icon name="desktop" style={{ marginLeft: "10px" }} />
-            Hostname
-          </Table.HeaderCell>
-          <Table.Cell>
-            {hostname ? (
-              <a>
-                <XClipboard value={hostname}>{hostname}</XClipboard>
-              </a>
-            ) : (
-              "Unknown"
-            )}
-          </Table.Cell>
-        </Table.Row>
-        <Table.Row>
-          <Table.HeaderCell collapsing>
-            <Icon name="time" style={{ marginLeft: "10px" }} />
-            Last Seen
-          </Table.HeaderCell>
-          <Table.Cell>
-            {lastSeen ? (
-              <a>
-                <XClipboard value={lastSeen}>
-                  {moment(lastSeen).fromNow()}
-                </XClipboard>
-              </a>
-            ) : (
-              "Never"
-            )}
-          </Table.Cell>
-        </Table.Row>
-        <Table.Row>
-          <Table.HeaderCell collapsing>
-            <Icon name="wifi" style={{ marginLeft: "10px" }} />
-            Primary IP
-          </Table.HeaderCell>
-          <Table.Cell>
-            {primaryIP ? (
-              <a>
-                <XClipboard value={primaryIP}>{primaryIP}</XClipboard>
-              </a>
-            ) : (
-              "Unknown"
-            )}
-          </Table.Cell>
-        </Table.Row>
-        <Table.Row>
-          <Table.HeaderCell collapsing>
-            <Icon name="microchip" style={{ marginLeft: "10px" }} />
-            Primary MAC
-          </Table.HeaderCell>
-          <Table.Cell>
-            {primaryMAC ? (
-              <a>
-                <XClipboard value={primaryMAC}>{primaryMAC}</XClipboard>
-              </a>
-            ) : (
-              "Unknown"
-            )}
-          </Table.Cell>
-        </Table.Row>
-        <Table.Row>
-          <Table.HeaderCell collapsing>
-            <Icon name="id card outline" style={{ marginLeft: "10px" }} />
-            MachineUUID
-          </Table.HeaderCell>
-          <Table.Cell>
-            {machineUUID ? (
-              <a>
-                <XClipboard value={machineUUID}>{machineUUID}</XClipboard>
-              </a>
-            ) : (
-              "Unknown"
-            )}
-          </Table.Cell>
-        </Table.Row>
-        <Table.Row>
-          <Table.HeaderCell collapsing>
-            <Icon name="key" style={{ marginLeft: "10px" }} />
-            Credentials
-          </Table.HeaderCell>
-          <Table.Cell>
-            <XCredentialSummary credentials={credentials} />
-          </Table.Cell>
-        </Table.Row>
+        <Table.Body>
+          <Table.Row>
+            <Table.HeaderCell collapsing>
+              <Icon name="desktop" style={{ marginLeft: "10px" }} />
+              Hostname
+            </Table.HeaderCell>
+            <Table.Cell>
+              {hostname ? (
+                <a>
+                  <XClipboard value={hostname}>{hostname}</XClipboard>
+                </a>
+              ) : (
+                "Unknown"
+              )}
+            </Table.Cell>
+          </Table.Row>
+          <Table.Row>
+            <Table.HeaderCell collapsing>
+              <Icon name="time" style={{ marginLeft: "10px" }} />
+              Last Seen
+            </Table.HeaderCell>
+            <Table.Cell>
+              {lastSeen ? (
+                <a>
+                  <XClipboard value={lastSeen}>
+                    {moment(lastSeen).fromNow()}
+                  </XClipboard>
+                </a>
+              ) : (
+                "Never"
+              )}
+            </Table.Cell>
+          </Table.Row>
+          <Table.Row>
+            <Table.HeaderCell collapsing>
+              <Icon name="wifi" style={{ marginLeft: "10px" }} />
+              Primary IP
+            </Table.HeaderCell>
+            <Table.Cell>
+              {primaryIP ? (
+                <a>
+                  <XClipboard value={primaryIP}>{primaryIP}</XClipboard>
+                </a>
+              ) : (
+                "Unknown"
+              )}
+            </Table.Cell>
+          </Table.Row>
+          <Table.Row>
+            <Table.HeaderCell collapsing>
+              <Icon name="microchip" style={{ marginLeft: "10px" }} />
+              Primary MAC
+            </Table.HeaderCell>
+            <Table.Cell>
+              {primaryMAC ? (
+                <a>
+                  <XClipboard value={primaryMAC}>{primaryMAC}</XClipboard>
+                </a>
+              ) : (
+                "Unknown"
+              )}
+            </Table.Cell>
+          </Table.Row>
+          <Table.Row>
+            <Table.HeaderCell collapsing>
+              <Icon name="id card outline" style={{ marginLeft: "10px" }} />
+              MachineUUID
+            </Table.HeaderCell>
+            <Table.Cell>
+              {machineUUID ? (
+                <a>
+                  <XClipboard value={machineUUID}>{machineUUID}</XClipboard>
+                </a>
+              ) : (
+                "Unknown"
+              )}
+            </Table.Cell>
+          </Table.Row>
+          <Table.Row>
+            <Table.HeaderCell collapsing>
+              <Icon name="key" style={{ marginLeft: "10px" }} />
+              Credentials
+            </Table.HeaderCell>
+            <Table.Cell>
+              <XCredentialSummary credentials={credentials} />
+            </Table.Cell>
+          </Table.Row>
+        </Table.Body>
       </Table>
 
       <Header size="large" block inverted>

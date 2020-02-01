@@ -259,12 +259,7 @@ const XAdminView = () => {
     return (
       <React.Fragment>
         <Loader disabled={!usersQuery.called || !usersQuery.loading} />
-        <Accordion.Title
-          inverted
-          active={openUsers}
-          index={0}
-          onClick={handleClick}
-        >
+        <Accordion.Title active={openUsers} index={0} onClick={handleClick}>
           <Header icon as="h2" textAlign="center">
             <Icon name="dropdown" />
             <Header.Content>Users</Header.Content>
