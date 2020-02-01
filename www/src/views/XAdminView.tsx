@@ -3,16 +3,7 @@ import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import {
-  Accordion,
-  Card,
-  Divider,
-  Header,
-  Icon,
-  Image,
-  Loader,
-  Radio
-} from "semantic-ui-react";
+import { Accordion, Card, Divider, Header, Icon, Image, Loader, Radio } from "semantic-ui-react";
 import XClipboard from "../components/form/XClipboard";
 import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
@@ -294,6 +285,7 @@ const XAdminView = () => {
                         onClick={handleUserAdmin}
                         checked={u.isAdmin}
                         type="radio"
+                        style={{ marginTop: "5px" }}
                       />
                     </Card.Description>
                   </Card.Content>

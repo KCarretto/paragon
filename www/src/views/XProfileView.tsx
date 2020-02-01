@@ -55,6 +55,7 @@ const XProfileView = () => {
                 toggle
                 checked={data.me.isAdmin}
                 type="radio"
+                style={{ marginTop: "5px", marginBottom: "5px" }}
               />
               <XUserChangeNameModal />
             </Card.Description>
