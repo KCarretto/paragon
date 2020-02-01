@@ -113,7 +113,10 @@ const XEventDescription: FunctionComponent<EventProps> = ({
       return (
         <span>
           {" "}
-          created link <Link to={"/files"}>{event.link.alias}</Link>
+          created link{" "}
+          <Link to={"/files"}>
+            {event.link ? event.link.alias : "[deleted]"}
+          </Link>
         </span>
       );
     case EventKind.CREATE_USER:
