@@ -408,8 +408,8 @@ func (ec *EventCreate) SaveX(ctx context.Context) *Event {
 
 func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 	var (
-		e     = &Event{config: ec.config}
-		_spec = &sqlgraph.CreateSpec{
+		e    = &Event{config: ec.config}
+		spec = &sqlgraph.CreateSpec{
 			Table: event.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -418,7 +418,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		}
 	)
 	if value := ec.CreationTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: event.FieldCreationTime,
@@ -426,7 +426,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		e.CreationTime = *value
 	}
 	if value := ec.Kind; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
 			Value:  *value,
 			Column: event.FieldKind,
@@ -450,7 +450,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.file; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -469,7 +469,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.credential; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -488,7 +488,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.link; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -507,7 +507,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.tag; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -526,7 +526,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -545,7 +545,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.task; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -564,7 +564,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.user; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -583,7 +583,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.event; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -602,7 +602,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.service; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -621,7 +621,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.likers; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -640,7 +640,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.owner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -659,7 +659,7 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := ec.svcOwner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -678,15 +678,15 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, ec.driver, _spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, ec.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
+	id := spec.ID.Value.(int64)
 	e.ID = int(id)
 	return e, nil
 }

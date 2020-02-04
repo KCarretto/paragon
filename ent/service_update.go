@@ -165,7 +165,7 @@ func (su *ServiceUpdate) ExecX(ctx context.Context) {
 }
 
 func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   service.Table,
 			Columns: service.Columns,
@@ -176,28 +176,28 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := su.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := su.Name; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldName,
 		})
 	}
 	if value := su.PubKey; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldPubKey,
 		})
 	}
 	if value := su.IsActivated; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: service.FieldIsActivated,
@@ -217,7 +217,7 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := su.tag; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -236,7 +236,7 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if nodes := su.removedEvents; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -255,7 +255,7 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := su.events; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -274,9 +274,9 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -428,7 +428,7 @@ func (suo *ServiceUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   service.Table,
 			Columns: service.Columns,
@@ -440,21 +440,21 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 		},
 	}
 	if value := suo.Name; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldName,
 		})
 	}
 	if value := suo.PubKey; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldPubKey,
 		})
 	}
 	if value := suo.IsActivated; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: service.FieldIsActivated,
@@ -474,7 +474,7 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := suo.tag; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -493,7 +493,7 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if nodes := suo.removedEvents; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -512,7 +512,7 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := suo.events; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -531,12 +531,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	s = &Service{config: suo.config}
-	_spec.Assign = s.assignValues
-	_spec.ScanValues = s.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, suo.driver, _spec); err != nil {
+	spec.Assign = s.assignValues
+	spec.ScanValues = s.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, suo.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

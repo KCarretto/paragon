@@ -39,7 +39,7 @@ func (jd *JobDelete) ExecX(ctx context.Context) int {
 }
 
 func (jd *JobDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
+	spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: job.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -49,13 +49,13 @@ func (jd *JobDelete) sqlExec(ctx context.Context) (int, error) {
 		},
 	}
 	if ps := jd.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return sqlgraph.DeleteNodes(ctx, jd.driver, _spec)
+	return sqlgraph.DeleteNodes(ctx, jd.driver, spec)
 }
 
 // JobDeleteOne is the builder for deleting a single Job entity.

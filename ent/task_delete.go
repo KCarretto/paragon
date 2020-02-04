@@ -39,7 +39,7 @@ func (td *TaskDelete) ExecX(ctx context.Context) int {
 }
 
 func (td *TaskDelete) sqlExec(ctx context.Context) (int, error) {
-	_spec := &sqlgraph.DeleteSpec{
+	spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: task.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -49,13 +49,13 @@ func (td *TaskDelete) sqlExec(ctx context.Context) (int, error) {
 		},
 	}
 	if ps := td.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return sqlgraph.DeleteNodes(ctx, td.driver, _spec)
+	return sqlgraph.DeleteNodes(ctx, td.driver, spec)
 }
 
 // TaskDeleteOne is the builder for deleting a single Task entity.

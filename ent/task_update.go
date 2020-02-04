@@ -338,7 +338,7 @@ func (tu *TaskUpdate) ExecX(ctx context.Context) {
 }
 
 func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   task.Table,
 			Columns: task.Columns,
@@ -349,107 +349,107 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := tu.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := tu.QueueTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldQueueTime,
 		})
 	}
 	if value := tu.LastChangedTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldLastChangedTime,
 		})
 	}
 	if value := tu.ClaimTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldClaimTime,
 		})
 	}
 	if tu.clearClaimTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldClaimTime,
 		})
 	}
 	if value := tu.ExecStartTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldExecStartTime,
 		})
 	}
 	if tu.clearExecStartTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStartTime,
 		})
 	}
 	if value := tu.ExecStopTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldExecStopTime,
 		})
 	}
 	if tu.clearExecStopTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStopTime,
 		})
 	}
 	if value := tu.Content; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldContent,
 		})
 	}
 	if value := tu.Output; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldOutput,
 		})
 	}
 	if tu.clearOutput {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldOutput,
 		})
 	}
 	if value := tu.Error; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldError,
 		})
 	}
 	if tu.clearError {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldError,
 		})
 	}
 	if value := tu.SessionID; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldSessionID,
 		})
 	}
 	if tu.clearSessionID {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldSessionID,
 		})
@@ -471,7 +471,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := tu.tags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -490,7 +490,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if tu.clearedJob {
 		edge := &sqlgraph.EdgeSpec{
@@ -506,7 +506,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := tu.job; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -525,7 +525,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if tu.clearedTarget {
 		edge := &sqlgraph.EdgeSpec{
@@ -541,7 +541,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := tu.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -560,9 +560,9 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -885,7 +885,7 @@ func (tuo *TaskUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   task.Table,
 			Columns: task.Columns,
@@ -897,100 +897,100 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		},
 	}
 	if value := tuo.QueueTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldQueueTime,
 		})
 	}
 	if value := tuo.LastChangedTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldLastChangedTime,
 		})
 	}
 	if value := tuo.ClaimTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldClaimTime,
 		})
 	}
 	if tuo.clearClaimTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldClaimTime,
 		})
 	}
 	if value := tuo.ExecStartTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldExecStartTime,
 		})
 	}
 	if tuo.clearExecStartTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStartTime,
 		})
 	}
 	if value := tuo.ExecStopTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldExecStopTime,
 		})
 	}
 	if tuo.clearExecStopTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStopTime,
 		})
 	}
 	if value := tuo.Content; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldContent,
 		})
 	}
 	if value := tuo.Output; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldOutput,
 		})
 	}
 	if tuo.clearOutput {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldOutput,
 		})
 	}
 	if value := tuo.Error; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldError,
 		})
 	}
 	if tuo.clearError {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldError,
 		})
 	}
 	if value := tuo.SessionID; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldSessionID,
 		})
 	}
 	if tuo.clearSessionID {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldSessionID,
 		})
@@ -1012,7 +1012,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := tuo.tags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1031,7 +1031,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if tuo.clearedJob {
 		edge := &sqlgraph.EdgeSpec{
@@ -1047,7 +1047,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := tuo.job; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1066,7 +1066,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if tuo.clearedTarget {
 		edge := &sqlgraph.EdgeSpec{
@@ -1082,7 +1082,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := tuo.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1101,12 +1101,12 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	t = &Task{config: tuo.config}
-	_spec.Assign = t.assignValues
-	_spec.ScanValues = t.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
+	spec.Assign = t.assignValues
+	spec.ScanValues = t.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, tuo.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

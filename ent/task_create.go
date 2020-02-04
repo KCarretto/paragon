@@ -242,8 +242,8 @@ func (tc *TaskCreate) SaveX(ctx context.Context) *Task {
 
 func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 	var (
-		t     = &Task{config: tc.config}
-		_spec = &sqlgraph.CreateSpec{
+		t    = &Task{config: tc.config}
+		spec = &sqlgraph.CreateSpec{
 			Table: task.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -252,7 +252,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		}
 	)
 	if value := tc.QueueTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldQueueTime,
@@ -260,7 +260,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.QueueTime = *value
 	}
 	if value := tc.LastChangedTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldLastChangedTime,
@@ -268,7 +268,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.LastChangedTime = *value
 	}
 	if value := tc.ClaimTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldClaimTime,
@@ -276,7 +276,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.ClaimTime = *value
 	}
 	if value := tc.ExecStartTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldExecStartTime,
@@ -284,7 +284,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.ExecStartTime = *value
 	}
 	if value := tc.ExecStopTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: task.FieldExecStopTime,
@@ -292,7 +292,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.ExecStopTime = *value
 	}
 	if value := tc.Content; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldContent,
@@ -300,7 +300,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.Content = *value
 	}
 	if value := tc.Output; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldOutput,
@@ -308,7 +308,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.Output = *value
 	}
 	if value := tc.Error; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldError,
@@ -316,7 +316,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		t.Error = *value
 	}
 	if value := tc.SessionID; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: task.FieldSessionID,
@@ -340,7 +340,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := tc.job; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -359,7 +359,7 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := tc.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -378,15 +378,15 @@ func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, tc.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
+	id := spec.ID.Value.(int64)
 	t.ID = int(id)
 	return t, nil
 }

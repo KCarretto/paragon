@@ -151,7 +151,7 @@ func (cu *CredentialUpdate) ExecX(ctx context.Context) {
 }
 
 func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   credential.Table,
 			Columns: credential.Columns,
@@ -162,42 +162,42 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := cu.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := cu.principal; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: credential.FieldPrincipal,
 		})
 	}
 	if value := cu.secret; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: credential.FieldSecret,
 		})
 	}
 	if value := cu.kind; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
 			Value:  *value,
 			Column: credential.FieldKind,
 		})
 	}
 	if value := cu.fails; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: credential.FieldFails,
 		})
 	}
 	if value := cu.addfails; value != nil {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+		spec.Fields.Add = append(spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: credential.FieldFails,
@@ -217,7 +217,7 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := cu.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -236,9 +236,9 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -377,7 +377,7 @@ func (cuo *CredentialUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   credential.Table,
 			Columns: credential.Columns,
@@ -389,35 +389,35 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 		},
 	}
 	if value := cuo.principal; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: credential.FieldPrincipal,
 		})
 	}
 	if value := cuo.secret; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: credential.FieldSecret,
 		})
 	}
 	if value := cuo.kind; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
 			Value:  *value,
 			Column: credential.FieldKind,
 		})
 	}
 	if value := cuo.fails; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: credential.FieldFails,
 		})
 	}
 	if value := cuo.addfails; value != nil {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+		spec.Fields.Add = append(spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: credential.FieldFails,
@@ -437,7 +437,7 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := cuo.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -456,12 +456,12 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	c = &Credential{config: cuo.config}
-	_spec.Assign = c.assignValues
-	_spec.ScanValues = c.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, cuo.driver, _spec); err != nil {
+	spec.Assign = c.assignValues
+	spec.ScanValues = c.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, cuo.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

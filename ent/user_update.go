@@ -217,7 +217,7 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 }
 
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -228,48 +228,48 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := uu.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := uu.Name; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldName,
 		})
 	}
 	if value := uu.PhotoURL; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldPhotoURL,
 		})
 	}
 	if value := uu.SessionToken; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldSessionToken,
 		})
 	}
 	if uu.clearSessionToken {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldSessionToken,
 		})
 	}
 	if value := uu.IsActivated; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: user.FieldIsActivated,
 		})
 	}
 	if value := uu.IsAdmin; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: user.FieldIsAdmin,
@@ -292,7 +292,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := uu.jobs; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -311,7 +311,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if nodes := uu.removedEvents; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -330,7 +330,7 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := uu.events; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -349,9 +349,9 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -556,7 +556,7 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -568,41 +568,41 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 		},
 	}
 	if value := uuo.Name; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldName,
 		})
 	}
 	if value := uuo.PhotoURL; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldPhotoURL,
 		})
 	}
 	if value := uuo.SessionToken; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldSessionToken,
 		})
 	}
 	if uuo.clearSessionToken {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldSessionToken,
 		})
 	}
 	if value := uuo.IsActivated; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: user.FieldIsActivated,
 		})
 	}
 	if value := uuo.IsAdmin; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: user.FieldIsAdmin,
@@ -625,7 +625,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := uuo.jobs; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -644,7 +644,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	if nodes := uuo.removedEvents; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -663,7 +663,7 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := uuo.events; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -682,12 +682,12 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	u = &User{config: uuo.config}
-	_spec.Assign = u.assignValues
-	_spec.ScanValues = u.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, uuo.driver, _spec); err != nil {
+	spec.Assign = u.assignValues
+	spec.ScanValues = u.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, uuo.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

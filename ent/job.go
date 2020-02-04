@@ -22,46 +22,22 @@ type Job struct {
 	CreationTime time.Time `json:"CreationTime,omitempty"`
 	// Content holds the value of the "Content" field.
 	Content string `json:"Content,omitempty"`
-	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the JobQuery when eager-loading is set.
-	Edges struct {
-		// Tasks holds the value of the tasks edge.
-		Tasks []*Task
-		// Tags holds the value of the tags edge.
-		Tags []*Tag
-		// Prev holds the value of the prev edge.
-		Prev *Job
-		// Next holds the value of the next edge.
-		Next *Job
-		// Owner holds the value of the owner edge.
-		Owner *User
-	} `json:"edges"`
-	prev_id  *int
-	owner_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Job) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // Name
-		&sql.NullTime{},   // CreationTime
-		&sql.NullString{}, // Content
-	}
-}
-
-// fkValues returns the types for scanning foreign-keys values from sql.Rows.
-func (*Job) fkValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{}, // prev_id
-		&sql.NullInt64{}, // owner_id
+		&sql.NullInt64{},
+		&sql.NullString{},
+		&sql.NullTime{},
+		&sql.NullString{},
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Job fields.
 func (j *Job) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(job.Columns); m < n {
+	if m, n := len(values), len(job.Columns); m != n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -84,21 +60,6 @@ func (j *Job) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field Content", values[2])
 	} else if value.Valid {
 		j.Content = value.String
-	}
-	values = values[3:]
-	if len(values) == len(job.ForeignKeys) {
-		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field prev_id", value)
-		} else if value.Valid {
-			j.prev_id = new(int)
-			*j.prev_id = int(value.Int64)
-		}
-		if value, ok := values[1].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
-		} else if value.Valid {
-			j.owner_id = new(int)
-			*j.owner_id = int(value.Int64)
-		}
 	}
 	return nil
 }

@@ -4,7 +4,6 @@ package ent
 
 import (
 	"context"
-	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -26,10 +25,6 @@ type UserQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.User
-	// eager-loading edges.
-	withJobs   *JobQuery
-	withEvents *EventQuery
-	withFKs    bool
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -251,28 +246,6 @@ func (uq *UserQuery) Clone() *UserQuery {
 	}
 }
 
-//  WithJobs tells the query-builder to eager-loads the nodes that are connected to
-// the "jobs" edge. The optional arguments used to configure the query builder of the edge.
-func (uq *UserQuery) WithJobs(opts ...func(*JobQuery)) *UserQuery {
-	query := &JobQuery{config: uq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	uq.withJobs = query
-	return uq
-}
-
-//  WithEvents tells the query-builder to eager-loads the nodes that are connected to
-// the "events" edge. The optional arguments used to configure the query builder of the edge.
-func (uq *UserQuery) WithEvents(opts ...func(*EventQuery)) *UserQuery {
-	query := &EventQuery{config: uq.config}
-	for _, opt := range opts {
-		opt(query)
-	}
-	uq.withEvents = query
-	return uq
-}
-
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -316,98 +289,30 @@ func (uq *UserQuery) Select(field string, fields ...string) *UserSelect {
 
 func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
-		nodes   []*User = []*User{}
-		withFKs         = uq.withFKs
-		_spec           = uq.querySpec()
+		nodes []*User
+		spec  = uq.querySpec()
 	)
-	if withFKs {
-		_spec.Node.Columns = append(_spec.Node.Columns, user.ForeignKeys...)
-	}
-	_spec.ScanValues = func() []interface{} {
+	spec.ScanValues = func() []interface{} {
 		node := &User{config: uq.config}
 		nodes = append(nodes, node)
-		values := node.scanValues()
-		if withFKs {
-			values = append(values, node.fkValues()...)
-		}
-		return values
+		return node.scanValues()
 	}
-	_spec.Assign = func(values ...interface{}) error {
+	spec.Assign = func(values ...interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
 		return node.assignValues(values...)
 	}
-	if err := sqlgraph.QueryNodes(ctx, uq.driver, _spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, uq.driver, spec); err != nil {
 		return nil, err
 	}
-	if len(nodes) == 0 {
-		return nodes, nil
-	}
-
-	if query := uq.withJobs; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int]*User)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-		}
-		query.withFKs = true
-		query.Where(predicate.Job(func(s *sql.Selector) {
-			s.Where(sql.InValues(user.JobsColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range neighbors {
-			fk := n.owner_id
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "owner_id" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.Jobs = append(node.Edges.Jobs, n)
-		}
-	}
-
-	if query := uq.withEvents; query != nil {
-		fks := make([]driver.Value, 0, len(nodes))
-		nodeids := make(map[int]*User)
-		for i := range nodes {
-			fks = append(fks, nodes[i].ID)
-			nodeids[nodes[i].ID] = nodes[i]
-		}
-		query.withFKs = true
-		query.Where(predicate.Event(func(s *sql.Selector) {
-			s.Where(sql.InValues(user.EventsColumn, fks...))
-		}))
-		neighbors, err := query.All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		for _, n := range neighbors {
-			fk := n.owner_id
-			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "owner_id" is nil for node %v`, n.ID)
-			}
-			node, ok := nodeids[*fk]
-			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v for node %v`, *fk, n.ID)
-			}
-			node.Edges.Events = append(node.Edges.Events, n)
-		}
-	}
-
 	return nodes, nil
 }
 
 func (uq *UserQuery) sqlCount(ctx context.Context) (int, error) {
-	_spec := uq.querySpec()
-	return sqlgraph.CountNodes(ctx, uq.driver, _spec)
+	spec := uq.querySpec()
+	return sqlgraph.CountNodes(ctx, uq.driver, spec)
 }
 
 func (uq *UserQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -419,7 +324,7 @@ func (uq *UserQuery) sqlExist(ctx context.Context) (bool, error) {
 }
 
 func (uq *UserQuery) querySpec() *sqlgraph.QuerySpec {
-	_spec := &sqlgraph.QuerySpec{
+	spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
@@ -432,26 +337,26 @@ func (uq *UserQuery) querySpec() *sqlgraph.QuerySpec {
 		Unique: true,
 	}
 	if ps := uq.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if limit := uq.limit; limit != nil {
-		_spec.Limit = *limit
+		spec.Limit = *limit
 	}
 	if offset := uq.offset; offset != nil {
-		_spec.Offset = *offset
+		spec.Offset = *offset
 	}
 	if ps := uq.order; len(ps) > 0 {
-		_spec.Order = func(selector *sql.Selector) {
+		spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return _spec
+	return spec
 }
 
 func (uq *UserQuery) sqlQuery() *sql.Selector {
