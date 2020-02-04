@@ -14,14 +14,24 @@ type Tx struct {
 	config
 	// Credential is the client for interacting with the Credential builders.
 	Credential *CredentialClient
+	// Event is the client for interacting with the Event builders.
+	Event *EventClient
+	// File is the client for interacting with the File builders.
+	File *FileClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// Link is the client for interacting with the Link builders.
+	Link *LinkClient
+	// Service is the client for interacting with the Service builders.
+	Service *ServiceClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 }
 
 // Commit commits the transaction.
@@ -40,10 +50,15 @@ func (tx *Tx) Client() *Client {
 		config:     tx.config,
 		Schema:     migrate.NewSchema(tx.driver),
 		Credential: NewCredentialClient(tx.config),
+		Event:      NewEventClient(tx.config),
+		File:       NewFileClient(tx.config),
 		Job:        NewJobClient(tx.config),
+		Link:       NewLinkClient(tx.config),
+		Service:    NewServiceClient(tx.config),
 		Tag:        NewTagClient(tx.config),
 		Target:     NewTargetClient(tx.config),
 		Task:       NewTaskClient(tx.config),
+		User:       NewUserClient(tx.config),
 	}
 }
 

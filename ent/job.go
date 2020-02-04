@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/job"
 )
 
 // Job is the model entity for the Job schema.
@@ -21,29 +22,84 @@ type Job struct {
 	CreationTime time.Time `json:"CreationTime,omitempty"`
 	// Content holds the value of the "Content" field.
 	Content string `json:"Content,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the JobQuery when eager-loading is set.
+	Edges struct {
+		// Tasks holds the value of the tasks edge.
+		Tasks []*Task
+		// Tags holds the value of the tags edge.
+		Tags []*Tag
+		// Prev holds the value of the prev edge.
+		Prev *Job
+		// Next holds the value of the next edge.
+		Next *Job
+		// Owner holds the value of the owner edge.
+		Owner *User
+	} `json:"edges"`
+	prev_id  *int
+	owner_id *int
 }
 
-// FromRows scans the sql response data into Job.
-func (j *Job) FromRows(rows *sql.Rows) error {
-	var vj struct {
-		ID           int
-		Name         sql.NullString
-		CreationTime sql.NullTime
-		Content      sql.NullString
+// scanValues returns the types for scanning values from sql.Rows.
+func (*Job) scanValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Name
+		&sql.NullTime{},   // CreationTime
+		&sql.NullString{}, // Content
 	}
-	// the order here should be the same as in the `job.Columns`.
-	if err := rows.Scan(
-		&vj.ID,
-		&vj.Name,
-		&vj.CreationTime,
-		&vj.Content,
-	); err != nil {
-		return err
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Job) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // prev_id
+		&sql.NullInt64{}, // owner_id
 	}
-	j.ID = vj.ID
-	j.Name = vj.Name.String
-	j.CreationTime = vj.CreationTime.Time
-	j.Content = vj.Content.String
+}
+
+// assignValues assigns the values that were returned from sql.Rows (after scanning)
+// to the Job fields.
+func (j *Job) assignValues(values ...interface{}) error {
+	if m, n := len(values), len(job.Columns); m < n {
+		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
+	}
+	value, ok := values[0].(*sql.NullInt64)
+	if !ok {
+		return fmt.Errorf("unexpected type %T for field id", value)
+	}
+	j.ID = int(value.Int64)
+	values = values[1:]
+	if value, ok := values[0].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Name", values[0])
+	} else if value.Valid {
+		j.Name = value.String
+	}
+	if value, ok := values[1].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field CreationTime", values[1])
+	} else if value.Valid {
+		j.CreationTime = value.Time
+	}
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Content", values[2])
+	} else if value.Valid {
+		j.Content = value.String
+	}
+	values = values[3:]
+	if len(values) == len(job.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field prev_id", value)
+		} else if value.Valid {
+			j.prev_id = new(int)
+			*j.prev_id = int(value.Int64)
+		}
+		if value, ok := values[1].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
+		} else if value.Valid {
+			j.owner_id = new(int)
+			*j.owner_id = int(value.Int64)
+		}
+	}
 	return nil
 }
 
@@ -65,6 +121,11 @@ func (j *Job) QueryPrev() *JobQuery {
 // QueryNext queries the next edge of the Job.
 func (j *Job) QueryNext() *JobQuery {
 	return (&JobClient{j.config}).QueryNext(j)
+}
+
+// QueryOwner queries the owner edge of the Job.
+func (j *Job) QueryOwner() *UserQuery {
+	return (&JobClient{j.config}).QueryOwner(j)
 }
 
 // Update returns a builder for updating this Job.
@@ -102,18 +163,6 @@ func (j *Job) String() string {
 
 // Jobs is a parsable slice of Job.
 type Jobs []*Job
-
-// FromRows scans the sql response data into Jobs.
-func (j *Jobs) FromRows(rows *sql.Rows) error {
-	for rows.Next() {
-		vj := &Job{}
-		if err := vj.FromRows(rows); err != nil {
-			return err
-		}
-		*j = append(*j, vj)
-	}
-	return nil
-}
 
 func (j Jobs) config(cfg config) {
 	for _i := range j {

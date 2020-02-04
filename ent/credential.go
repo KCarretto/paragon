@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/credential"
 )
 
 // Credential is the model entity for the Credential schema.
@@ -18,32 +19,84 @@ type Credential struct {
 	Principal string `json:"principal,omitempty"`
 	// Secret holds the value of the "secret" field.
 	Secret string `json:"secret,omitempty"`
+	// Kind holds the value of the "kind" field.
+	Kind credential.Kind `json:"kind,omitempty"`
 	// Fails holds the value of the "fails" field.
 	Fails int `json:"fails,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the CredentialQuery when eager-loading is set.
+	Edges struct {
+		// Target holds the value of the target edge.
+		Target *Target
+	} `json:"edges"`
+	target_id *int
 }
 
-// FromRows scans the sql response data into Credential.
-func (c *Credential) FromRows(rows *sql.Rows) error {
-	var vc struct {
-		ID        int
-		Principal sql.NullString
-		Secret    sql.NullString
-		Fails     sql.NullInt64
+// scanValues returns the types for scanning values from sql.Rows.
+func (*Credential) scanValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // principal
+		&sql.NullString{}, // secret
+		&sql.NullString{}, // kind
+		&sql.NullInt64{},  // fails
 	}
-	// the order here should be the same as in the `credential.Columns`.
-	if err := rows.Scan(
-		&vc.ID,
-		&vc.Principal,
-		&vc.Secret,
-		&vc.Fails,
-	); err != nil {
-		return err
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Credential) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // target_id
 	}
-	c.ID = vc.ID
-	c.Principal = vc.Principal.String
-	c.Secret = vc.Secret.String
-	c.Fails = int(vc.Fails.Int64)
+}
+
+// assignValues assigns the values that were returned from sql.Rows (after scanning)
+// to the Credential fields.
+func (c *Credential) assignValues(values ...interface{}) error {
+	if m, n := len(values), len(credential.Columns); m < n {
+		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
+	}
+	value, ok := values[0].(*sql.NullInt64)
+	if !ok {
+		return fmt.Errorf("unexpected type %T for field id", value)
+	}
+	c.ID = int(value.Int64)
+	values = values[1:]
+	if value, ok := values[0].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field principal", values[0])
+	} else if value.Valid {
+		c.Principal = value.String
+	}
+	if value, ok := values[1].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field secret", values[1])
+	} else if value.Valid {
+		c.Secret = value.String
+	}
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field kind", values[2])
+	} else if value.Valid {
+		c.Kind = credential.Kind(value.String)
+	}
+	if value, ok := values[3].(*sql.NullInt64); !ok {
+		return fmt.Errorf("unexpected type %T for field fails", values[3])
+	} else if value.Valid {
+		c.Fails = int(value.Int64)
+	}
+	values = values[4:]
+	if len(values) == len(credential.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
+		} else if value.Valid {
+			c.target_id = new(int)
+			*c.target_id = int(value.Int64)
+		}
+	}
 	return nil
+}
+
+// QueryTarget queries the target edge of the Credential.
+func (c *Credential) QueryTarget() *TargetQuery {
+	return (&CredentialClient{c.config}).QueryTarget(c)
 }
 
 // Update returns a builder for updating this Credential.
@@ -73,6 +126,8 @@ func (c *Credential) String() string {
 	builder.WriteString(c.Principal)
 	builder.WriteString(", secret=")
 	builder.WriteString(c.Secret)
+	builder.WriteString(", kind=")
+	builder.WriteString(fmt.Sprintf("%v", c.Kind))
 	builder.WriteString(", fails=")
 	builder.WriteString(fmt.Sprintf("%v", c.Fails))
 	builder.WriteByte(')')
@@ -81,18 +136,6 @@ func (c *Credential) String() string {
 
 // Credentials is a parsable slice of Credential.
 type Credentials []*Credential
-
-// FromRows scans the sql response data into Credentials.
-func (c *Credentials) FromRows(rows *sql.Rows) error {
-	for rows.Next() {
-		vc := &Credential{}
-		if err := vc.FromRows(rows); err != nil {
-			return err
-		}
-		*c = append(*c, vc)
-	}
-	return nil
-}
 
 func (c Credentials) config(cfg config) {
 	for _i := range c {

@@ -1,25 +1,34 @@
 # Dependency Cache
 FROM golang:1.13.1-alpine as base
-COPY ./go.mod /app/go.mod
-COPY ./go.sum /app/go.sum
 WORKDIR /app
 RUN apk add alpine-sdk git \
-    && go mod download \
-    && mkdir ./build
+    && mkdir -p /app/build
+COPY ./go.mod /app/go.mod
+COPY ./go.sum /app/go.sum
+RUN go mod download
 
-# Debug Build
-FROM base as build
+# Build Cache
+FROM base as build-cache
 COPY ./cmd /app/cmd
-COPY ./proto /app/proto
-COPY ./teamserver /app/teamserver
+COPY ./pkg /app/pkg
 COPY ./ent /app/ent
-RUN go build -tags=debug,profile_cpu,gcp -o ./build/teamserver ./cmd/teamserver
+COPY ./graphql /app/graphql
+COPY ./www/service.go /app/www/service.go
+COPY ./www/assets.gen.go /app/www/assets.gen.go
+
+# Dev
+FROM build-cache as dev
+CMD ["/app/build/teamserver"]
+EXPOSE 80 443 8080
+RUN go build -tags=dev,profile_cpu,nats -o /app/build/teamserver ./cmd/teamserver
+
+# Production Build
+FROM build-cache as prod-build
+RUN go build -o /app/build/teamserver ./cmd/teamserver
 
 # Production
 FROM alpine:3.10.2 as production
 WORKDIR /app
-COPY --from=build /app/build/teamserver /teamserver
-EXPOSE 443
-EXPOSE 80
-EXPOSE 8080
 CMD ["/teamserver"]
+EXPOSE 80 443 8080
+COPY --from=prod-build /app/build/teamserver /teamserver

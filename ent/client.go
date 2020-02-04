@@ -10,13 +10,19 @@ import (
 	"github.com/kcarretto/paragon/ent/migrate"
 
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 
 	"github.com/facebookincubator/ent/dialect"
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
 )
 
 // Client is the client that holds all ent builders.
@@ -26,14 +32,24 @@ type Client struct {
 	Schema *migrate.Schema
 	// Credential is the client for interacting with the Credential builders.
 	Credential *CredentialClient
+	// Event is the client for interacting with the Event builders.
+	Event *EventClient
+	// File is the client for interacting with the File builders.
+	File *FileClient
 	// Job is the client for interacting with the Job builders.
 	Job *JobClient
+	// Link is the client for interacting with the Link builders.
+	Link *LinkClient
+	// Service is the client for interacting with the Service builders.
+	Service *ServiceClient
 	// Tag is the client for interacting with the Tag builders.
 	Tag *TagClient
 	// Target is the client for interacting with the Target builders.
 	Target *TargetClient
 	// Task is the client for interacting with the Task builders.
 	Task *TaskClient
+	// User is the client for interacting with the User builders.
+	User *UserClient
 }
 
 // NewClient creates a new client configured with the given options.
@@ -44,10 +60,15 @@ func NewClient(opts ...Option) *Client {
 		config:     c,
 		Schema:     migrate.NewSchema(c.driver),
 		Credential: NewCredentialClient(c),
+		Event:      NewEventClient(c),
+		File:       NewFileClient(c),
 		Job:        NewJobClient(c),
+		Link:       NewLinkClient(c),
+		Service:    NewServiceClient(c),
 		Tag:        NewTagClient(c),
 		Target:     NewTargetClient(c),
 		Task:       NewTaskClient(c),
+		User:       NewUserClient(c),
 	}
 }
 
@@ -56,13 +77,12 @@ func NewClient(opts ...Option) *Client {
 // Optional parameters can be added for configuring the client.
 func Open(driverName, dataSourceName string, options ...Option) (*Client, error) {
 	switch driverName {
-	case dialect.MySQL, dialect.SQLite:
+	case dialect.MySQL, dialect.Postgres, dialect.SQLite:
 		drv, err := sql.Open(driverName, dataSourceName)
 		if err != nil {
 			return nil, err
 		}
 		return NewClient(append(options, Driver(drv))...), nil
-
 	default:
 		return nil, fmt.Errorf("unsupported driver: %q", driverName)
 	}
@@ -81,10 +101,15 @@ func (c *Client) Tx(ctx context.Context) (*Tx, error) {
 	return &Tx{
 		config:     cfg,
 		Credential: NewCredentialClient(cfg),
+		Event:      NewEventClient(cfg),
+		File:       NewFileClient(cfg),
 		Job:        NewJobClient(cfg),
+		Link:       NewLinkClient(cfg),
+		Service:    NewServiceClient(cfg),
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
 		Task:       NewTaskClient(cfg),
+		User:       NewUserClient(cfg),
 	}, nil
 }
 
@@ -104,10 +129,15 @@ func (c *Client) Debug() *Client {
 		config:     cfg,
 		Schema:     migrate.NewSchema(cfg.driver),
 		Credential: NewCredentialClient(cfg),
+		Event:      NewEventClient(cfg),
+		File:       NewFileClient(cfg),
 		Job:        NewJobClient(cfg),
+		Link:       NewLinkClient(cfg),
+		Service:    NewServiceClient(cfg),
 		Tag:        NewTagClient(cfg),
 		Target:     NewTargetClient(cfg),
 		Task:       NewTaskClient(cfg),
+		User:       NewUserClient(cfg),
 	}
 }
 
@@ -180,6 +210,344 @@ func (c *CredentialClient) GetX(ctx context.Context, id int) *Credential {
 	return cr
 }
 
+// QueryTarget queries the target edge of a Credential.
+func (c *CredentialClient) QueryTarget(cr *Credential) *TargetQuery {
+	query := &TargetQuery{config: c.config}
+	id := cr.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(credential.Table, credential.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, credential.TargetTable, credential.TargetColumn),
+	)
+	query.sql = sqlgraph.Neighbors(cr.driver.Dialect(), step)
+
+	return query
+}
+
+// EventClient is a client for the Event schema.
+type EventClient struct {
+	config
+}
+
+// NewEventClient returns a client for the Event from the given config.
+func NewEventClient(c config) *EventClient {
+	return &EventClient{config: c}
+}
+
+// Create returns a create builder for Event.
+func (c *EventClient) Create() *EventCreate {
+	return &EventCreate{config: c.config}
+}
+
+// Update returns an update builder for Event.
+func (c *EventClient) Update() *EventUpdate {
+	return &EventUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *EventClient) UpdateOne(e *Event) *EventUpdateOne {
+	return c.UpdateOneID(e.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *EventClient) UpdateOneID(id int) *EventUpdateOne {
+	return &EventUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for Event.
+func (c *EventClient) Delete() *EventDelete {
+	return &EventDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *EventClient) DeleteOne(e *Event) *EventDeleteOne {
+	return c.DeleteOneID(e.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *EventClient) DeleteOneID(id int) *EventDeleteOne {
+	return &EventDeleteOne{c.Delete().Where(event.ID(id))}
+}
+
+// Create returns a query builder for Event.
+func (c *EventClient) Query() *EventQuery {
+	return &EventQuery{config: c.config}
+}
+
+// Get returns a Event entity by its id.
+func (c *EventClient) Get(ctx context.Context, id int) (*Event, error) {
+	return c.Query().Where(event.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *EventClient) GetX(ctx context.Context, id int) *Event {
+	e, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return e
+}
+
+// QueryJob queries the job edge of a Event.
+func (c *EventClient) QueryJob(e *Event) *JobQuery {
+	query := &JobQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.JobTable, event.JobColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryFile queries the file edge of a Event.
+func (c *EventClient) QueryFile(e *Event) *FileQuery {
+	query := &FileQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(file.Table, file.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.FileTable, event.FileColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryCredential queries the credential edge of a Event.
+func (c *EventClient) QueryCredential(e *Event) *CredentialQuery {
+	query := &CredentialQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(credential.Table, credential.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.CredentialTable, event.CredentialColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryLink queries the link edge of a Event.
+func (c *EventClient) QueryLink(e *Event) *LinkQuery {
+	query := &LinkQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(link.Table, link.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.LinkTable, event.LinkColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryTag queries the tag edge of a Event.
+func (c *EventClient) QueryTag(e *Event) *TagQuery {
+	query := &TagQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.TagTable, event.TagColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryTarget queries the target edge of a Event.
+func (c *EventClient) QueryTarget(e *Event) *TargetQuery {
+	query := &TargetQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.TargetTable, event.TargetColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryTask queries the task edge of a Event.
+func (c *EventClient) QueryTask(e *Event) *TaskQuery {
+	query := &TaskQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.TaskTable, event.TaskColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryUser queries the user edge of a Event.
+func (c *EventClient) QueryUser(e *Event) *UserQuery {
+	query := &UserQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(user.Table, user.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.UserTable, event.UserColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryEvent queries the event edge of a Event.
+func (c *EventClient) QueryEvent(e *Event) *EventQuery {
+	query := &EventQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(event.Table, event.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, event.EventTable, event.EventColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryService queries the service edge of a Event.
+func (c *EventClient) QueryService(e *Event) *ServiceQuery {
+	query := &ServiceQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(service.Table, service.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, event.ServiceTable, event.ServiceColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryLikers queries the likers edge of a Event.
+func (c *EventClient) QueryLikers(e *Event) *UserQuery {
+	query := &UserQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(user.Table, user.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, event.LikersTable, event.LikersColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryOwner queries the owner edge of a Event.
+func (c *EventClient) QueryOwner(e *Event) *UserQuery {
+	query := &UserQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(user.Table, user.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, event.OwnerTable, event.OwnerColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// QuerySvcOwner queries the svcOwner edge of a Event.
+func (c *EventClient) QuerySvcOwner(e *Event) *ServiceQuery {
+	query := &ServiceQuery{config: c.config}
+	id := e.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(event.Table, event.FieldID, id),
+		sqlgraph.To(service.Table, service.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, event.SvcOwnerTable, event.SvcOwnerColumn),
+	)
+	query.sql = sqlgraph.Neighbors(e.driver.Dialect(), step)
+
+	return query
+}
+
+// FileClient is a client for the File schema.
+type FileClient struct {
+	config
+}
+
+// NewFileClient returns a client for the File from the given config.
+func NewFileClient(c config) *FileClient {
+	return &FileClient{config: c}
+}
+
+// Create returns a create builder for File.
+func (c *FileClient) Create() *FileCreate {
+	return &FileCreate{config: c.config}
+}
+
+// Update returns an update builder for File.
+func (c *FileClient) Update() *FileUpdate {
+	return &FileUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *FileClient) UpdateOne(f *File) *FileUpdateOne {
+	return c.UpdateOneID(f.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *FileClient) UpdateOneID(id int) *FileUpdateOne {
+	return &FileUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for File.
+func (c *FileClient) Delete() *FileDelete {
+	return &FileDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *FileClient) DeleteOne(f *File) *FileDeleteOne {
+	return c.DeleteOneID(f.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *FileClient) DeleteOneID(id int) *FileDeleteOne {
+	return &FileDeleteOne{c.Delete().Where(file.ID(id))}
+}
+
+// Create returns a query builder for File.
+func (c *FileClient) Query() *FileQuery {
+	return &FileQuery{config: c.config}
+}
+
+// Get returns a File entity by its id.
+func (c *FileClient) Get(ctx context.Context, id int) (*File, error) {
+	return c.Query().Where(file.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *FileClient) GetX(ctx context.Context, id int) *File {
+	f, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
+// QueryLinks queries the links edge of a File.
+func (c *FileClient) QueryLinks(f *File) *LinkQuery {
+	query := &LinkQuery{config: c.config}
+	id := f.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(file.Table, file.FieldID, id),
+		sqlgraph.To(link.Table, link.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, file.LinksTable, file.LinksColumn),
+	)
+	query.sql = sqlgraph.Neighbors(f.driver.Dialect(), step)
+
+	return query
+}
+
 // JobClient is a client for the Job schema.
 type JobClient struct {
 	config
@@ -248,8 +616,12 @@ func (c *JobClient) GetX(ctx context.Context, id int) *Job {
 func (c *JobClient) QueryTasks(j *Job) *TaskQuery {
 	query := &TaskQuery{config: c.config}
 	id := j.ID
-	query.sql = sql.Select().From(sql.Table(task.Table)).
-		Where(sql.EQ(job.TasksColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, job.TasksTable, job.TasksColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -258,18 +630,12 @@ func (c *JobClient) QueryTasks(j *Job) *TaskQuery {
 func (c *JobClient) QueryTags(j *Job) *TagQuery {
 	query := &TagQuery{config: c.config}
 	id := j.ID
-	t1 := sql.Table(tag.Table)
-	t2 := sql.Table(job.Table)
-	t3 := sql.Table(job.TagsTable)
-	t4 := sql.Select(t3.C(job.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(job.TagsPrimaryKey[0]), t2.C(job.FieldID)).
-		Where(sql.EQ(t2.C(job.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(job.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, job.TagsTable, job.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -278,11 +644,12 @@ func (c *JobClient) QueryTags(j *Job) *TagQuery {
 func (c *JobClient) QueryPrev(j *Job) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := j.ID
-	t1 := sql.Table(job.Table)
-	t2 := sql.Select(job.PrevColumn).
-		From(sql.Table(job.PrevTable)).
-		Where(sql.EQ(job.FieldID, id))
-	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(job.FieldID), t2.C(job.PrevColumn))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, true, job.PrevTable, job.PrevColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
 
 	return query
 }
@@ -291,8 +658,196 @@ func (c *JobClient) QueryPrev(j *Job) *JobQuery {
 func (c *JobClient) QueryNext(j *Job) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := j.ID
-	query.sql = sql.Select().From(sql.Table(job.Table)).
-		Where(sql.EQ(job.NextColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryOwner queries the owner edge of a Job.
+func (c *JobClient) QueryOwner(j *Job) *UserQuery {
+	query := &UserQuery{config: c.config}
+	id := j.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, id),
+		sqlgraph.To(user.Table, user.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, job.OwnerTable, job.OwnerColumn),
+	)
+	query.sql = sqlgraph.Neighbors(j.driver.Dialect(), step)
+
+	return query
+}
+
+// LinkClient is a client for the Link schema.
+type LinkClient struct {
+	config
+}
+
+// NewLinkClient returns a client for the Link from the given config.
+func NewLinkClient(c config) *LinkClient {
+	return &LinkClient{config: c}
+}
+
+// Create returns a create builder for Link.
+func (c *LinkClient) Create() *LinkCreate {
+	return &LinkCreate{config: c.config}
+}
+
+// Update returns an update builder for Link.
+func (c *LinkClient) Update() *LinkUpdate {
+	return &LinkUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *LinkClient) UpdateOne(l *Link) *LinkUpdateOne {
+	return c.UpdateOneID(l.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *LinkClient) UpdateOneID(id int) *LinkUpdateOne {
+	return &LinkUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for Link.
+func (c *LinkClient) Delete() *LinkDelete {
+	return &LinkDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *LinkClient) DeleteOne(l *Link) *LinkDeleteOne {
+	return c.DeleteOneID(l.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *LinkClient) DeleteOneID(id int) *LinkDeleteOne {
+	return &LinkDeleteOne{c.Delete().Where(link.ID(id))}
+}
+
+// Create returns a query builder for Link.
+func (c *LinkClient) Query() *LinkQuery {
+	return &LinkQuery{config: c.config}
+}
+
+// Get returns a Link entity by its id.
+func (c *LinkClient) Get(ctx context.Context, id int) (*Link, error) {
+	return c.Query().Where(link.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *LinkClient) GetX(ctx context.Context, id int) *Link {
+	l, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return l
+}
+
+// QueryFile queries the file edge of a Link.
+func (c *LinkClient) QueryFile(l *Link) *FileQuery {
+	query := &FileQuery{config: c.config}
+	id := l.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(link.Table, link.FieldID, id),
+		sqlgraph.To(file.Table, file.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, link.FileTable, link.FileColumn),
+	)
+	query.sql = sqlgraph.Neighbors(l.driver.Dialect(), step)
+
+	return query
+}
+
+// ServiceClient is a client for the Service schema.
+type ServiceClient struct {
+	config
+}
+
+// NewServiceClient returns a client for the Service from the given config.
+func NewServiceClient(c config) *ServiceClient {
+	return &ServiceClient{config: c}
+}
+
+// Create returns a create builder for Service.
+func (c *ServiceClient) Create() *ServiceCreate {
+	return &ServiceCreate{config: c.config}
+}
+
+// Update returns an update builder for Service.
+func (c *ServiceClient) Update() *ServiceUpdate {
+	return &ServiceUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *ServiceClient) UpdateOne(s *Service) *ServiceUpdateOne {
+	return c.UpdateOneID(s.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *ServiceClient) UpdateOneID(id int) *ServiceUpdateOne {
+	return &ServiceUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for Service.
+func (c *ServiceClient) Delete() *ServiceDelete {
+	return &ServiceDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *ServiceClient) DeleteOne(s *Service) *ServiceDeleteOne {
+	return c.DeleteOneID(s.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *ServiceClient) DeleteOneID(id int) *ServiceDeleteOne {
+	return &ServiceDeleteOne{c.Delete().Where(service.ID(id))}
+}
+
+// Create returns a query builder for Service.
+func (c *ServiceClient) Query() *ServiceQuery {
+	return &ServiceQuery{config: c.config}
+}
+
+// Get returns a Service entity by its id.
+func (c *ServiceClient) Get(ctx context.Context, id int) (*Service, error) {
+	return c.Query().Where(service.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *ServiceClient) GetX(ctx context.Context, id int) *Service {
+	s, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return s
+}
+
+// QueryTag queries the tag edge of a Service.
+func (c *ServiceClient) QueryTag(s *Service) *TagQuery {
+	query := &TagQuery{config: c.config}
+	id := s.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(service.Table, service.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, false, service.TagTable, service.TagColumn),
+	)
+	query.sql = sqlgraph.Neighbors(s.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryEvents queries the events edge of a Service.
+func (c *ServiceClient) QueryEvents(s *Service) *EventQuery {
+	query := &EventQuery{config: c.config}
+	id := s.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(service.Table, service.FieldID, id),
+		sqlgraph.To(event.Table, event.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, service.EventsTable, service.EventsColumn),
+	)
+	query.sql = sqlgraph.Neighbors(s.driver.Dialect(), step)
 
 	return query
 }
@@ -365,18 +920,12 @@ func (c *TagClient) GetX(ctx context.Context, id int) *Tag {
 func (c *TagClient) QueryTargets(t *Tag) *TargetQuery {
 	query := &TargetQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(target.Table)
-	t2 := sql.Table(tag.Table)
-	t3 := sql.Table(tag.TargetsTable)
-	t4 := sql.Select(t3.C(tag.TargetsPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.TargetsPrimaryKey[1]), t2.C(tag.FieldID)).
-		Where(sql.EQ(t2.C(tag.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(target.FieldID), t4.C(tag.TargetsPrimaryKey[0]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(tag.Table, tag.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, tag.TargetsTable, tag.TargetsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -385,18 +934,12 @@ func (c *TagClient) QueryTargets(t *Tag) *TargetQuery {
 func (c *TagClient) QueryTasks(t *Tag) *TaskQuery {
 	query := &TaskQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(task.Table)
-	t2 := sql.Table(tag.Table)
-	t3 := sql.Table(tag.TasksTable)
-	t4 := sql.Select(t3.C(tag.TasksPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.TasksPrimaryKey[1]), t2.C(tag.FieldID)).
-		Where(sql.EQ(t2.C(tag.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(task.FieldID), t4.C(tag.TasksPrimaryKey[0]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(tag.Table, tag.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, tag.TasksTable, tag.TasksPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -405,18 +948,12 @@ func (c *TagClient) QueryTasks(t *Tag) *TaskQuery {
 func (c *TagClient) QueryJobs(t *Tag) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(job.Table)
-	t2 := sql.Table(tag.Table)
-	t3 := sql.Table(tag.JobsTable)
-	t4 := sql.Select(t3.C(tag.JobsPrimaryKey[0])).
-		From(t3).
-		Join(t2).
-		On(t3.C(tag.JobsPrimaryKey[1]), t2.C(tag.FieldID)).
-		Where(sql.EQ(t2.C(tag.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(job.FieldID), t4.C(tag.JobsPrimaryKey[0]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(tag.Table, tag.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, true, tag.JobsTable, tag.JobsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -489,8 +1026,12 @@ func (c *TargetClient) GetX(ctx context.Context, id int) *Target {
 func (c *TargetClient) QueryTasks(t *Target) *TaskQuery {
 	query := &TaskQuery{config: c.config}
 	id := t.ID
-	query.sql = sql.Select().From(sql.Table(task.Table)).
-		Where(sql.EQ(target.TasksColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(target.Table, target.FieldID, id),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, target.TasksTable, target.TasksColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -499,18 +1040,12 @@ func (c *TargetClient) QueryTasks(t *Target) *TaskQuery {
 func (c *TargetClient) QueryTags(t *Target) *TagQuery {
 	query := &TagQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(tag.Table)
-	t2 := sql.Table(target.Table)
-	t3 := sql.Table(target.TagsTable)
-	t4 := sql.Select(t3.C(target.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(target.TagsPrimaryKey[0]), t2.C(target.FieldID)).
-		Where(sql.EQ(t2.C(target.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(target.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(target.Table, target.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, target.TagsTable, target.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -519,8 +1054,12 @@ func (c *TargetClient) QueryTags(t *Target) *TagQuery {
 func (c *TargetClient) QueryCredentials(t *Target) *CredentialQuery {
 	query := &CredentialQuery{config: c.config}
 	id := t.ID
-	query.sql = sql.Select().From(sql.Table(credential.Table)).
-		Where(sql.EQ(target.CredentialsColumn, id))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(target.Table, target.FieldID, id),
+		sqlgraph.To(credential.Table, credential.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, target.CredentialsTable, target.CredentialsColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -593,18 +1132,12 @@ func (c *TaskClient) GetX(ctx context.Context, id int) *Task {
 func (c *TaskClient) QueryTags(t *Task) *TagQuery {
 	query := &TagQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(tag.Table)
-	t2 := sql.Table(task.Table)
-	t3 := sql.Table(task.TagsTable)
-	t4 := sql.Select(t3.C(task.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(task.TagsPrimaryKey[0]), t2.C(task.FieldID)).
-		Where(sql.EQ(t2.C(task.FieldID), id))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(task.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(task.Table, task.FieldID, id),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, task.TagsTable, task.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
 
 	return query
 }
@@ -613,11 +1146,118 @@ func (c *TaskClient) QueryTags(t *Task) *TagQuery {
 func (c *TaskClient) QueryJob(t *Task) *JobQuery {
 	query := &JobQuery{config: c.config}
 	id := t.ID
-	t1 := sql.Table(job.Table)
-	t2 := sql.Select(task.JobColumn).
-		From(sql.Table(task.JobTable)).
-		Where(sql.EQ(task.FieldID, id))
-	query.sql = sql.Select().From(t1).Join(t2).On(t1.C(job.FieldID), t2.C(task.JobColumn))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(task.Table, task.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, task.JobTable, task.JobColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryTarget queries the target edge of a Task.
+func (c *TaskClient) QueryTarget(t *Task) *TargetQuery {
+	query := &TargetQuery{config: c.config}
+	id := t.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(task.Table, task.FieldID, id),
+		sqlgraph.To(target.Table, target.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, task.TargetTable, task.TargetColumn),
+	)
+	query.sql = sqlgraph.Neighbors(t.driver.Dialect(), step)
+
+	return query
+}
+
+// UserClient is a client for the User schema.
+type UserClient struct {
+	config
+}
+
+// NewUserClient returns a client for the User from the given config.
+func NewUserClient(c config) *UserClient {
+	return &UserClient{config: c}
+}
+
+// Create returns a create builder for User.
+func (c *UserClient) Create() *UserCreate {
+	return &UserCreate{config: c.config}
+}
+
+// Update returns an update builder for User.
+func (c *UserClient) Update() *UserUpdate {
+	return &UserUpdate{config: c.config}
+}
+
+// UpdateOne returns an update builder for the given entity.
+func (c *UserClient) UpdateOne(u *User) *UserUpdateOne {
+	return c.UpdateOneID(u.ID)
+}
+
+// UpdateOneID returns an update builder for the given id.
+func (c *UserClient) UpdateOneID(id int) *UserUpdateOne {
+	return &UserUpdateOne{config: c.config, id: id}
+}
+
+// Delete returns a delete builder for User.
+func (c *UserClient) Delete() *UserDelete {
+	return &UserDelete{config: c.config}
+}
+
+// DeleteOne returns a delete builder for the given entity.
+func (c *UserClient) DeleteOne(u *User) *UserDeleteOne {
+	return c.DeleteOneID(u.ID)
+}
+
+// DeleteOneID returns a delete builder for the given id.
+func (c *UserClient) DeleteOneID(id int) *UserDeleteOne {
+	return &UserDeleteOne{c.Delete().Where(user.ID(id))}
+}
+
+// Create returns a query builder for User.
+func (c *UserClient) Query() *UserQuery {
+	return &UserQuery{config: c.config}
+}
+
+// Get returns a User entity by its id.
+func (c *UserClient) Get(ctx context.Context, id int) (*User, error) {
+	return c.Query().Where(user.ID(id)).Only(ctx)
+}
+
+// GetX is like Get, but panics if an error occurs.
+func (c *UserClient) GetX(ctx context.Context, id int) *User {
+	u, err := c.Get(ctx, id)
+	if err != nil {
+		panic(err)
+	}
+	return u
+}
+
+// QueryJobs queries the jobs edge of a User.
+func (c *UserClient) QueryJobs(u *User) *JobQuery {
+	query := &JobQuery{config: c.config}
+	id := u.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(user.Table, user.FieldID, id),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, user.JobsTable, user.JobsColumn),
+	)
+	query.sql = sqlgraph.Neighbors(u.driver.Dialect(), step)
+
+	return query
+}
+
+// QueryEvents queries the events edge of a User.
+func (c *UserClient) QueryEvents(u *User) *EventQuery {
+	query := &EventQuery{config: c.config}
+	id := u.ID
+	step := sqlgraph.NewStep(
+		sqlgraph.From(user.Table, user.FieldID, id),
+		sqlgraph.To(event.Table, event.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, user.EventsTable, user.EventsColumn),
+	)
+	query.sql = sqlgraph.Neighbors(u.driver.Dialect(), step)
 
 	return query
 }

@@ -3,14 +3,27 @@ package graphql
 import (
 	"bytes"
 	"context"
+	"crypto"
+	"crypto/ed25519"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
+	"github.com/kcarretto/paragon/pkg/auth"
 )
+
+// QueryResolver is an alias for github.com/kcarretto/paragon/graphql/generated.QueryResolver
+type QueryResolver generated.QueryResolver
+
+// MutationResolver is an alias for github.com/kcarretto/paragon/graphql/generated.MutationResolver
+type MutationResolver generated.MutationResolver
 
 // An Error returned by the GraphQL server
 type Error struct {
@@ -34,10 +47,14 @@ type Request struct {
 type Client struct {
 	URL  string
 	HTTP *http.Client
+
+	Service    string
+	PublicKey  ed25519.PublicKey
+	PrivateKey ed25519.PrivateKey
 }
 
 // Do executes a GraphQL request and unmarshals the JSON result into the destination struct.
-func (client Client) Do(ctx context.Context, request Request, dst interface{}) error {
+func (client *Client) Do(ctx context.Context, request Request, dst interface{}) error {
 	// Encode request payload
 	payload, err := json.Marshal(request)
 	if err != nil {
@@ -50,6 +67,17 @@ func (client Client) Do(ctx context.Context, request Request, dst interface{}) e
 		return fmt.Errorf("failed to encode request: %w", err)
 	}
 	httpReq.Header.Set("Content-Type", "application/json")
+
+	// Sign http request
+	epoch := fmt.Sprintf("%d", time.Now().Unix())
+	sig, err := client.sign([]byte(epoch))
+	if err != nil {
+		panic(fmt.Errorf("failed to sign request: %w", err))
+	}
+	httpReq.Header.Set(auth.HeaderService, client.Service)
+	httpReq.Header.Set(auth.HeaderIdentity, base64.StdEncoding.EncodeToString(client.PublicKey))
+	httpReq.Header.Set(auth.HeaderEpoch, epoch)
+	httpReq.Header.Set(auth.HeaderSignature, base64.StdEncoding.EncodeToString(sig))
 
 	// Set default http client if necessary
 	if client.HTTP == nil {
@@ -68,8 +96,15 @@ func (client Client) Do(ctx context.Context, request Request, dst interface{}) e
 		return fmt.Errorf("http status error: %s", httpResp.Status)
 	}
 
+	tstData, err := ioutil.ReadAll(httpResp.Body)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("Received response from teamserver: %s\n", string(tstData))
+
 	// Decode the response
-	data := json.NewDecoder(httpResp.Body)
+	// data := json.NewDecoder(httpResp.Body)
+	data := json.NewDecoder(bytes.NewBuffer(tstData))
 	if err := data.Decode(dst); err != nil {
 		return fmt.Errorf("failed to decode response: %w", err)
 	}
@@ -80,12 +115,12 @@ func (client Client) Do(ctx context.Context, request Request, dst interface{}) e
 // ClaimTasks for a target that has the provided attributes, returning an array of tasks to execute.
 // If no tasks are available, an empty task array is returned. If no target can be found, an error
 // will be returned.
-func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskRequest) ([]*ent.Task, error) {
+func (client *Client) ClaimTasks(ctx context.Context, vars models.ClaimTasksRequest) ([]*ent.Task, error) {
 	// Build request
 	req := Request{
 		Operation: "ClaimTasks",
 		Query: `
-		mutation ClaimTasks($params: ClaimTaskRequest!) {
+		mutation ClaimTasks($params: ClaimTasksRequest!) {
 			claimTasks(input: $params) {
 			  id
 			  content
@@ -109,6 +144,8 @@ func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskReques
 		return nil, err
 	}
 
+	fmt.Printf("Response from teamserver: %+v\n", resp)
+
 	// Check for errors
 	if resp.Errors != nil {
 		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
@@ -119,7 +156,7 @@ func (client Client) ClaimTasks(ctx context.Context, vars models.ClaimTaskReques
 }
 
 // SubmitTaskResult updates a task with execution output.
-func (client Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTaskResultRequest) error {
+func (client *Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTaskResultRequest) error {
 	// Build request
 	req := Request{
 		Operation: "SubmitTaskResult",
@@ -150,4 +187,16 @@ func (client Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTas
 	}
 
 	return nil
+}
+
+func (client *Client) sign(msg []byte) ([]byte, error) {
+	if client.PublicKey == nil || client.PrivateKey == nil {
+		pubKey, privKey, err := ed25519.GenerateKey(nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate keypair: %w", err)
+		}
+		client.PublicKey = pubKey
+		client.PrivateKey = privKey
+	}
+	return client.PrivateKey.Sign(nil, msg, crypto.Hash(0))
 }

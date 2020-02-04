@@ -40,7 +40,7 @@ func main() {
 
 	// C2 Server Address
 	httpAddr := "127.0.0.1:8080"
-	if addr := os.Getenv("HTTP_ADDR"); addr != "" {
+	if addr := os.Getenv("PG_HTTP_ADDR"); addr != "" {
 		httpAddr = addr
 	}
 
@@ -52,8 +52,9 @@ func main() {
 
 	// Initialize Server
 	srv := &c2.Server{
-		Teamserver: graphql.Client{
-			URL: teamserverURL,
+		Teamserver: &graphql.Client{
+			Service: "pg-c2",
+			URL:     teamserverURL,
 		},
 	}
 

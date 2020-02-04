@@ -42,14 +42,27 @@ const (
 	NextTable = "jobs"
 	// NextColumn is the table column denoting the next relation/edge.
 	NextColumn = "prev_id"
+	// OwnerTable is the table the holds the owner relation/edge.
+	OwnerTable = "jobs"
+	// OwnerInverseTable is the table name for the User entity.
+	// It exists in this package in order to avoid circular dependency with the "user" package.
+	OwnerInverseTable = "users"
+	// OwnerColumn is the table column denoting the owner relation/edge.
+	OwnerColumn = "owner_id"
 )
 
-// Columns holds all SQL columns are job fields.
+// Columns holds all SQL columns for job fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldCreationTime,
 	FieldContent,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Job type.
+var ForeignKeys = []string{
+	"prev_id",
+	"owner_id",
 }
 
 var (

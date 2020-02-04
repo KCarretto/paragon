@@ -41,7 +41,6 @@ func CollectMetadata(agent *Agent) {
 		machineUUID, err := machineid.ID()
 		if err != nil {
 			agent.Log.Error("Failed to collect machine UUID", zap.Error(err))
-			machineUUID = fmt.Sprintf("machine_uuid_err_%d", time.Now().Unix())
 		}
 
 		// Initial (static) agent metadata
@@ -75,12 +74,17 @@ func CollectMetadata(agent *Agent) {
 
 	// Update primary IP
 	ipAddrs, err := iface.Addrs()
+	if err != nil || len(ipAddrs) < 1 {
+		agent.Log.Error("Failed to collect machine primary IP")
+		return
+	}
+
+	ip, _, err := net.ParseCIDR(ipAddrs[0].String())
 	if err != nil {
 		agent.Log.Error("Failed to collect machine primary IP")
+		return
 	}
-	if len(ipAddrs) >= 1 {
-		agent.Metadata.PrimaryIP = ipAddrs[0].String()
-	}
+	agent.Metadata.PrimaryIP = ip.String()
 }
 
 // isMulticastCapable reports whether ifi is an IP multicast-capable

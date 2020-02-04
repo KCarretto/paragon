@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/tag"
 )
 
 // Tag is the model entity for the Tag schema.
@@ -16,23 +17,43 @@ type Tag struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
 	Name string `json:"Name,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TagQuery when eager-loading is set.
+	Edges struct {
+		// Targets holds the value of the targets edge.
+		Targets []*Target
+		// Tasks holds the value of the tasks edge.
+		Tasks []*Task
+		// Jobs holds the value of the jobs edge.
+		Jobs []*Job
+	} `json:"edges"`
 }
 
-// FromRows scans the sql response data into Tag.
-func (t *Tag) FromRows(rows *sql.Rows) error {
-	var vt struct {
-		ID   int
-		Name sql.NullString
+// scanValues returns the types for scanning values from sql.Rows.
+func (*Tag) scanValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Name
 	}
-	// the order here should be the same as in the `tag.Columns`.
-	if err := rows.Scan(
-		&vt.ID,
-		&vt.Name,
-	); err != nil {
-		return err
+}
+
+// assignValues assigns the values that were returned from sql.Rows (after scanning)
+// to the Tag fields.
+func (t *Tag) assignValues(values ...interface{}) error {
+	if m, n := len(values), len(tag.Columns); m < n {
+		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	t.ID = vt.ID
-	t.Name = vt.Name.String
+	value, ok := values[0].(*sql.NullInt64)
+	if !ok {
+		return fmt.Errorf("unexpected type %T for field id", value)
+	}
+	t.ID = int(value.Int64)
+	values = values[1:]
+	if value, ok := values[0].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Name", values[0])
+	} else if value.Valid {
+		t.Name = value.String
+	}
 	return nil
 }
 
@@ -82,18 +103,6 @@ func (t *Tag) String() string {
 
 // Tags is a parsable slice of Tag.
 type Tags []*Tag
-
-// FromRows scans the sql response data into Tags.
-func (t *Tags) FromRows(rows *sql.Rows) error {
-	for rows.Next() {
-		vt := &Tag{}
-		if err := vt.FromRows(rows); err != nil {
-			return err
-		}
-		*t = append(*t, vt)
-	}
-	return nil
-}
 
 func (t Tags) config(cfg config) {
 	for _i := range t {

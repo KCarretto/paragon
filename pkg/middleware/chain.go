@@ -2,11 +2,8 @@ package middleware
 
 import "net/http"
 
-// Wrapper is a helper type for declraing the chain segments
-type Wrapper func(http.Handler) http.HandlerFunc
-
-// Chain is used to chain mutliple middleware calls for http handlers
-func Chain(handler http.Handler, middleware ...Wrapper) http.Handler {
+// Chain is used to chain multiliple middleware calls for http handlers
+func Chain(handler http.Handler, middleware ...func(http.Handler) http.HandlerFunc) http.Handler {
 	if len(middleware) < 1 {
 		return handler
 	}

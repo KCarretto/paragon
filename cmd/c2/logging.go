@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -42,23 +41,6 @@ func withLogging(logger *zap.Logger, next http.Handler) http.Handler {
 			zap.Duration("req_latency", end.Sub(start)),
 			zap.Int("req_status", resp.Status),
 			zap.String("req_uri", r.RequestURI),
-		)
-
-		body, err := r.GetBody()
-		if err != nil {
-			log.Error("Failed to get request body for request logging", zap.Error(err))
-			return
-		}
-
-		content, err := ioutil.ReadAll(body)
-		if err != nil {
-			log.Error("Failed to read request body for request logging", zap.Error(err))
-			return
-		}
-
-		log = log.With(
-			zap.Int("req_content_len", len(content)),
-			zap.String("req_content", string(content)),
 		)
 
 		if resp.Status != http.StatusOK {

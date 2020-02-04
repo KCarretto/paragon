@@ -7,8 +7,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/tag"
+	"github.com/kcarretto/paragon/ent/target"
+	"github.com/kcarretto/paragon/ent/task"
 )
 
 // TagCreate is the builder for creating a Tag entity.
@@ -108,67 +112,87 @@ func (tc *TagCreate) SaveX(ctx context.Context) *Tag {
 
 func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 	var (
-		res sql.Result
-		t   = &Tag{config: tc.config}
+		t     = &Tag{config: tc.config}
+		_spec = &sqlgraph.CreateSpec{
+			Table: tag.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: tag.FieldID,
+			},
+		}
 	)
-	tx, err := tc.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder := sql.Dialect(tc.driver.Dialect()).
-		Insert(tag.Table).
-		Default()
 	if value := tc.Name; value != nil {
-		builder.Set(tag.FieldName, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: tag.FieldName,
+		})
 		t.Name = *value
 	}
-	query, args := builder.Query()
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return nil, rollback(tx, err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, rollback(tx, err)
-	}
-	t.ID = int(id)
-	if len(tc.targets) > 0 {
-		for eid := range tc.targets {
-
-			query, args := sql.Insert(tag.TargetsTable).
-				Columns(tag.TargetsPrimaryKey[1], tag.TargetsPrimaryKey[0]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if nodes := tc.targets; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.TargetsTable,
+			Columns: tag.TargetsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
 		}
-	}
-	if len(tc.tasks) > 0 {
-		for eid := range tc.tasks {
-
-			query, args := sql.Insert(tag.TasksTable).
-				Columns(tag.TasksPrimaryKey[1], tag.TasksPrimaryKey[0]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if len(tc.jobs) > 0 {
-		for eid := range tc.jobs {
-
-			query, args := sql.Insert(tag.JobsTable).
-				Columns(tag.JobsPrimaryKey[1], tag.JobsPrimaryKey[0]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if nodes := tc.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.TasksTable,
+			Columns: tag.TasksPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := tx.Commit(); err != nil {
+	if nodes := tc.jobs; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: true,
+			Table:   tag.JobsTable,
+			Columns: tag.JobsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
+		}
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	t.ID = int(id)
 	return t, nil
 }

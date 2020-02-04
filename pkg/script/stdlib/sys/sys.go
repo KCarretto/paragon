@@ -21,6 +21,6 @@ func Import() script.Library {
 		"dir":           script.Func(Dir),
 		"replaceString": script.Func(ReplaceString),
 		"request":       script.Func(Request),
-		"detectOS":      script.Func(Detect),
+		"detectOS":      script.Func(DetectOS),
 	}
 }

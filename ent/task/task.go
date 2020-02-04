@@ -15,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldQueueTime holds the string denoting the queuetime vertex property in the database.
 	FieldQueueTime = "queue_time"
+	// FieldLastChangedTime holds the string denoting the lastchangedtime vertex property in the database.
+	FieldLastChangedTime = "last_changed_time"
 	// FieldClaimTime holds the string denoting the claimtime vertex property in the database.
 	FieldClaimTime = "claim_time"
 	// FieldExecStartTime holds the string denoting the execstarttime vertex property in the database.
@@ -44,12 +46,20 @@ const (
 	JobInverseTable = "jobs"
 	// JobColumn is the table column denoting the job relation/edge.
 	JobColumn = "job_id"
+	// TargetTable is the table the holds the target relation/edge.
+	TargetTable = "tasks"
+	// TargetInverseTable is the table name for the Target entity.
+	// It exists in this package in order to avoid circular dependency with the "target" package.
+	TargetInverseTable = "targets"
+	// TargetColumn is the table column denoting the target relation/edge.
+	TargetColumn = "target_id"
 )
 
-// Columns holds all SQL columns are task fields.
+// Columns holds all SQL columns for task fields.
 var Columns = []string{
 	FieldID,
 	FieldQueueTime,
+	FieldLastChangedTime,
 	FieldClaimTime,
 	FieldExecStartTime,
 	FieldExecStopTime,
@@ -57,6 +67,12 @@ var Columns = []string{
 	FieldOutput,
 	FieldError,
 	FieldSessionID,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Task type.
+var ForeignKeys = []string{
+	"job_id",
+	"target_id",
 }
 
 var (
@@ -74,7 +90,12 @@ var (
 	DefaultQueueTime = descQueueTime.Default.(func() time.Time)
 
 	// descContent is the schema descriptor for Content field.
-	descContent = fields[4].Descriptor()
+	descContent = fields[5].Descriptor()
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
 	ContentValidator = descContent.Validators[0].(func(string) error)
+
+	// descSessionID is the schema descriptor for SessionID field.
+	descSessionID = fields[8].Descriptor()
+	// SessionIDValidator is a validator for the "SessionID" field. It is called by the builders before save.
+	SessionIDValidator = descSessionID.Validators[0].(func(string) error)
 )

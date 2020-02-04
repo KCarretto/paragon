@@ -14,13 +14,17 @@ import (
 )
 
 var sampleUUID = "ABCD"
+var sampleHostname = "Box"
+var sampleSessionID = "sesh"
+var samplePrimaryIP = "127.257.12.34"
+var samplePrimaryMAC = "mac-daddy"
 
 // HandleAgentTestCase holds parameters used to test the server's HandleAgent method.
 type HandleAgentTestCase struct {
 	ReceivedMessage c2.AgentMessage
 	ClaimedTasks    []*ent.Task
 	ClaimTaskErr    error
-	ExpectedParams  models.ClaimTaskRequest
+	ExpectedParams  models.ClaimTasksRequest
 	ExpectedErr     error
 }
 
@@ -40,19 +44,24 @@ func (test HandleAgentTestCase) Run(t *testing.T) {
 	require.Equal(t, test.ExpectedErr, err)
 	require.Equal(t, len(test.ClaimedTasks), len(resp.Tasks))
 	for i, task := range test.ClaimedTasks {
-		require.Equal(t, int32(task.ID), resp.Tasks[i].Id)
+		require.Equal(t, int64(task.ID), resp.Tasks[i].Id)
 		require.Equal(t, task.Content, resp.Tasks[i].Content)
 	}
 }
 
 // TestHandleAgent method with various test cases.
 func TestHandleAgent(t *testing.T) {
+	metadata := &c2.AgentMetadata{
+		MachineUUID: sampleUUID,
+		SessionID:   sampleSessionID,
+		Hostname:    sampleHostname,
+		PrimaryIP:   samplePrimaryIP,
+		PrimaryMAC:  samplePrimaryMAC,
+	}
 	testCases := []HandleAgentTestCase{
 		{
 			ReceivedMessage: c2.AgentMessage{
-				Metadata: &c2.AgentMetadata{
-					MachineUUID: sampleUUID,
-				},
+				Metadata: metadata,
 			},
 			ClaimedTasks: []*ent.Task{
 				&ent.Task{
@@ -60,8 +69,12 @@ func TestHandleAgent(t *testing.T) {
 					Content: "print('testing')",
 				},
 			},
-			ExpectedParams: models.ClaimTaskRequest{
-				MachineUUID: &sampleUUID,
+			ExpectedParams: models.ClaimTasksRequest{
+				MachineUUID: &metadata.MachineUUID,
+				SessionID:   &metadata.SessionID,
+				Hostname:    &metadata.Hostname,
+				PrimaryIP:   &metadata.PrimaryIP,
+				PrimaryMac:  &metadata.PrimaryMAC,
 			},
 		},
 	}

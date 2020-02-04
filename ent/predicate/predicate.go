@@ -9,8 +9,20 @@ import (
 // Credential is the predicate function for credential builders.
 type Credential func(*sql.Selector)
 
+// Event is the predicate function for event builders.
+type Event func(*sql.Selector)
+
+// File is the predicate function for file builders.
+type File func(*sql.Selector)
+
 // Job is the predicate function for job builders.
 type Job func(*sql.Selector)
+
+// Link is the predicate function for link builders.
+type Link func(*sql.Selector)
+
+// Service is the predicate function for service builders.
+type Service func(*sql.Selector)
 
 // Tag is the predicate function for tag builders.
 type Tag func(*sql.Selector)
@@ -20,3 +32,6 @@ type Target func(*sql.Selector)
 
 // Task is the predicate function for task builders.
 type Task func(*sql.Selector)
+
+// User is the predicate function for user builders.
+type User func(*sql.Selector)

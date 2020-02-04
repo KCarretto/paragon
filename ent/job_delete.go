@@ -6,6 +6,8 @@ import (
 	"context"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -37,20 +39,23 @@ func (jd *JobDelete) ExecX(ctx context.Context) int {
 }
 
 func (jd *JobDelete) sqlExec(ctx context.Context) (int, error) {
-	var res sql.Result
-	selector := sql.Select().From(sql.Table(job.Table))
-	for _, p := range jd.predicates {
-		p(selector)
+	_spec := &sqlgraph.DeleteSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table: job.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: job.FieldID,
+			},
+		},
 	}
-	query, args := sql.Delete(job.Table).FromSelect(selector).Query()
-	if err := jd.driver.Exec(ctx, query, args, &res); err != nil {
-		return 0, err
+	if ps := jd.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
 	}
-	affected, err := res.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-	return int(affected), nil
+	return sqlgraph.DeleteNodes(ctx, jd.driver, _spec)
 }
 
 // JobDeleteOne is the builder for deleting a single Job entity.

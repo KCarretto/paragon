@@ -1,14 +1,19 @@
-directive @goModel(model: String, models: [String!]) on OBJECT
-    | INPUT_OBJECT
-    | SCALAR
-    | ENUM
-    | INTERFACE
-    | UNION
+directive @goModel(
+  model: String
+  models: [String!]
+) on OBJECT | INPUT_OBJECT | SCALAR | ENUM | INTERFACE | UNION
 
-directive @goField(forceResolver: Boolean, name: String) on INPUT_FIELD_DEFINITION
-    | FIELD_DEFINITION
+directive @goField(
+  forceResolver: Boolean
+  name: String
+) on INPUT_FIELD_DEFINITION | FIELD_DEFINITION
 
 scalar Time
+
+input Filter {
+  offset: Int
+  limit: Int
+}
 
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
@@ -20,22 +25,25 @@ type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   hostname: String
   lastSeen: Time
 
-  tasks: [Task]
-  tags: [Tag]
-  credentials: [Credential]
+  tasks(input: Filter): [Task]
+  tags(input: Filter): [Tag]
+  credentials(input: Filter): [Credential]
 }
 
 type Tag @goModel(model: "github.com/kcarretto/paragon/ent.Tag") {
-  id: ID
+  id: ID!
   name: String
 
-  tasks: [Task]
-  targets: [Target]
-  jobs: [Job]
+  tasks(input: Filter): [Task]
+  targets(input: Filter): [Target]
+  jobs(input: Filter): [Job]
 }
 
 type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
-  id: ID
+  id: ID!
+
+  lastChangedTime: Time
+
   queueTime: Time
   claimTime: Time
   execStartTime: Time
@@ -47,25 +55,89 @@ type Task @goModel(model: "github.com/kcarretto/paragon/ent.Task") {
   sessionID: String
 
   job: Job
+  target: Target
 }
 
 type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
-  id: ID
+  id: ID!
   name: String
   creationTime: Time
   content: String
 
-  tasks: [Task]
-  tags: [Tag]
+  tasks(input: Filter): [Task]
+  tags(input: Filter): [Tag]
   next: Job
   prev: Job
+  owner: User
 }
 
 type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
-  id: ID
+  id: ID!
   principal: String
   secret: String
+  kind: String
   fails: Int
+}
+
+type File @goModel(model: "github.com/kcarretto/paragon/ent.File") {
+  id: ID!
+  name: String
+  creationTime: Time
+  lastModifiedTime: Time
+  size: Int
+  hash: String
+  contentType: String
+
+  links(input: Filter): [Link]
+}
+
+type Link @goModel(model: "github.com/kcarretto/paragon/ent.Link") {
+  id: ID!
+  alias: String
+  expirationTime: Time
+  clicks: Int
+
+  file: File
+}
+
+type User @goModel(model: "github.com/kcarretto/paragon/ent.User") {
+  id: ID!
+  name: String
+  oAuthID: String
+  photoURL: String
+  isActivated: Boolean
+  isAdmin: Boolean
+
+  jobs(input: Filter): [Job]
+}
+
+type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
+  id: ID!
+  name: String
+  pubKey: String
+  isActivated: Boolean
+
+  tag: Tag!
+}
+
+type Event @goModel(model: "github.com/kcarretto/paragon/ent.Event") {
+  id: ID!
+  creationTime: Time
+  kind: String
+
+  job: Job
+  file: File
+  credential: Credential
+  link: Link
+  tag: Tag
+  target: Target
+  task: Task
+  user: User
+  service: Service
+  event: Event
+  likers(input: Filter): [User]
+  owner: User
+  svcOwner: Service
 }
 
 input FailCredentialRequest {
@@ -75,7 +147,9 @@ input FailCredentialRequest {
 input CreateJobRequest {
   name: String!
   content: String!
+  sessionID: String
 
+  targets: [ID!]
   tags: [ID!]
   prev: ID
 }
@@ -102,13 +176,13 @@ input CreateTargetRequest {
 }
 
 input SetTargetFieldsRequest {
-    id: ID!
-    name: String
-    machineUUID: String
-    primaryIP: String
-    publicIP: String
-    primaryMAC: String
-    hostname: String
+  id: ID!
+  name: String
+  machineUUID: String
+  primaryIP: String
+  publicIP: String
+  primaryMAC: String
+  hostname: String
 }
 
 input DeleteTargetRequest {
@@ -119,13 +193,22 @@ input AddCredentialForTargetRequest {
   id: ID!
   principal: String!
   secret: String!
+  kind: String
 }
 
-input ClaimTaskRequest {
+input AddCredentialForTargetsRequest {
+  ids: [ID!]
+  principal: String!
+  secret: String!
+  kind: String
+}
+
+input ClaimTasksRequest {
   machineUUID: String
-  hostname: String
   primaryIP: String
+  hostname: String
   primaryMAC: String
+  sessionID: String
 }
 
 input SubmitTaskResultRequest {
@@ -134,6 +217,47 @@ input SubmitTaskResultRequest {
   error: String
   execStartTime: Time
   execStopTime: Time
+}
+
+input CreateLinkRequest {
+  alias: String!
+  expirationTime: Time
+  clicks: Int
+  file: ID!
+}
+
+input SetLinkFieldsRequest {
+  id: ID!
+  alias: String
+  ExpirationTime: Time
+  clicks: Int
+}
+
+input ActivateUserRequest {
+  id: ID!
+}
+input DeactivateUserRequest {
+  id: ID!
+}
+input MakeAdminRequest {
+  id: ID!
+}
+input RemoveAdminRequest {
+  id: ID!
+}
+input ChangeNameRequest {
+  name: String!
+}
+
+input ActivateServiceRequest {
+  id: ID!
+}
+input DeactivateServiceRequest {
+  id: ID!
+}
+
+input LikeEventRequest {
+  id: ID!
 }
 
 type Mutation {
@@ -157,26 +281,61 @@ type Mutation {
   setTargetFields(input: SetTargetFieldsRequest): Target!
   deleteTarget(input: DeleteTargetRequest): Boolean!
   addCredentialForTarget(input: AddCredentialForTargetRequest): Target!
+  addCredentialForTargets(input: AddCredentialForTargetsRequest): [Target!]
 
   # Task Mutations
-  claimTasks(input: ClaimTaskRequest): [Task!]
+  claimTasks(input: ClaimTasksRequest): [Task!]
   claimTask(id: ID!): Task
   submitTaskResult(input: SubmitTaskResultRequest): Task!
+
+  # Link Mutations
+  createLink(input: CreateLinkRequest): Link!
+  setLinkFields(input: SetLinkFieldsRequest): Link!
+
+  # User Mutations
+  activateUser(input: ActivateUserRequest): User!
+  deactivateUser(input: DeactivateUserRequest): User!
+  makeAdmin(input: MakeAdminRequest): User!
+  removeAdmin(input: RemoveAdminRequest): User!
+  changeName(input: ChangeNameRequest): User!
+
+  # Service Mutations
+  activateService(input: ActivateServiceRequest): Service!
+  deactivateService(input: DeactivateServiceRequest): Service!
+
+  # Event Mutations
+  likeEvent(input: LikeEventRequest): Event!
 }
 
 type Query {
+  link(id: ID!): Link
+  links(input: Filter): [Link]
+
+  file(id: ID!): File
+  files(input: Filter): [File]
+
   credential(id: ID!): Credential
-  credentials: [Credential]
+  credentials(input: Filter): [Credential]
 
   job(id: ID!): Job
-  jobs: [Job]
+  jobs(input: Filter): [Job]
 
   tag(id: ID!): Tag
-  tags: [Tag]
+  tags(input: Filter): [Tag]
 
   target(id: ID!): Target
-  targets: [Target]
+  targets(input: Filter): [Target]
 
   task(id: ID!): Task
-  tasks: [Task]
+  tasks(input: Filter): [Task]
+
+  user(id: ID!): User
+  me: User
+  users(input: Filter): [User]
+
+  service(id: ID!): Service
+  services(input: Filter): [Service]
+
+  event(id: ID!): Event
+  events(input: Filter): [Event]
 }

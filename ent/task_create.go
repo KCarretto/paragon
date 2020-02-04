@@ -8,23 +8,29 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/tag"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
 // TaskCreate is the builder for creating a Task entity.
 type TaskCreate struct {
 	config
-	QueueTime     *time.Time
-	ClaimTime     *time.Time
-	ExecStartTime *time.Time
-	ExecStopTime  *time.Time
-	Content       *string
-	Output        *string
-	Error         *string
-	SessionID     *string
-	tags          map[int]struct{}
-	job           map[int]struct{}
+	QueueTime       *time.Time
+	LastChangedTime *time.Time
+	ClaimTime       *time.Time
+	ExecStartTime   *time.Time
+	ExecStopTime    *time.Time
+	Content         *string
+	Output          *string
+	Error           *string
+	SessionID       *string
+	tags            map[int]struct{}
+	job             map[int]struct{}
+	target          map[int]struct{}
 }
 
 // SetQueueTime sets the QueueTime field.
@@ -38,6 +44,12 @@ func (tc *TaskCreate) SetNillableQueueTime(t *time.Time) *TaskCreate {
 	if t != nil {
 		tc.SetQueueTime(*t)
 	}
+	return tc
+}
+
+// SetLastChangedTime sets the LastChangedTime field.
+func (tc *TaskCreate) SetLastChangedTime(t time.Time) *TaskCreate {
+	tc.LastChangedTime = &t
 	return tc
 }
 
@@ -165,11 +177,36 @@ func (tc *TaskCreate) SetJob(j *Job) *TaskCreate {
 	return tc.SetJobID(j.ID)
 }
 
+// SetTargetID sets the target edge to Target by id.
+func (tc *TaskCreate) SetTargetID(id int) *TaskCreate {
+	if tc.target == nil {
+		tc.target = make(map[int]struct{})
+	}
+	tc.target[id] = struct{}{}
+	return tc
+}
+
+// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+func (tc *TaskCreate) SetNillableTargetID(id *int) *TaskCreate {
+	if id != nil {
+		tc = tc.SetTargetID(*id)
+	}
+	return tc
+}
+
+// SetTarget sets the target edge to Target.
+func (tc *TaskCreate) SetTarget(t *Target) *TaskCreate {
+	return tc.SetTargetID(t.ID)
+}
+
 // Save creates the Task in the database.
 func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 	if tc.QueueTime == nil {
 		v := task.DefaultQueueTime()
 		tc.QueueTime = &v
+	}
+	if tc.LastChangedTime == nil {
+		return nil, errors.New("ent: missing required field \"LastChangedTime\"")
 	}
 	if tc.Content == nil {
 		return nil, errors.New("ent: missing required field \"Content\"")
@@ -177,11 +214,19 @@ func (tc *TaskCreate) Save(ctx context.Context) (*Task, error) {
 	if err := task.ContentValidator(*tc.Content); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
+	if tc.SessionID != nil {
+		if err := task.SessionIDValidator(*tc.SessionID); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"SessionID\": %v", err)
+		}
+	}
 	if len(tc.job) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
 	}
 	if tc.job == nil {
 		return nil, errors.New("ent: missing required edge \"job\"")
+	}
+	if len(tc.target) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
 	}
 	return tc.sqlSave(ctx)
 }
@@ -197,82 +242,151 @@ func (tc *TaskCreate) SaveX(ctx context.Context) *Task {
 
 func (tc *TaskCreate) sqlSave(ctx context.Context) (*Task, error) {
 	var (
-		res sql.Result
-		t   = &Task{config: tc.config}
+		t     = &Task{config: tc.config}
+		_spec = &sqlgraph.CreateSpec{
+			Table: task.Table,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: task.FieldID,
+			},
+		}
 	)
-	tx, err := tc.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	builder := sql.Dialect(tc.driver.Dialect()).
-		Insert(task.Table).
-		Default()
 	if value := tc.QueueTime; value != nil {
-		builder.Set(task.FieldQueueTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldQueueTime,
+		})
 		t.QueueTime = *value
 	}
+	if value := tc.LastChangedTime; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldLastChangedTime,
+		})
+		t.LastChangedTime = *value
+	}
 	if value := tc.ClaimTime; value != nil {
-		builder.Set(task.FieldClaimTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldClaimTime,
+		})
 		t.ClaimTime = *value
 	}
 	if value := tc.ExecStartTime; value != nil {
-		builder.Set(task.FieldExecStartTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldExecStartTime,
+		})
 		t.ExecStartTime = *value
 	}
 	if value := tc.ExecStopTime; value != nil {
-		builder.Set(task.FieldExecStopTime, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: task.FieldExecStopTime,
+		})
 		t.ExecStopTime = *value
 	}
 	if value := tc.Content; value != nil {
-		builder.Set(task.FieldContent, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldContent,
+		})
 		t.Content = *value
 	}
 	if value := tc.Output; value != nil {
-		builder.Set(task.FieldOutput, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldOutput,
+		})
 		t.Output = *value
 	}
 	if value := tc.Error; value != nil {
-		builder.Set(task.FieldError, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldError,
+		})
 		t.Error = *value
 	}
 	if value := tc.SessionID; value != nil {
-		builder.Set(task.FieldSessionID, *value)
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: task.FieldSessionID,
+		})
 		t.SessionID = *value
 	}
-	query, args := builder.Query()
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return nil, rollback(tx, err)
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return nil, rollback(tx, err)
-	}
-	t.ID = int(id)
-	if len(tc.tags) > 0 {
-		for eid := range tc.tags {
-
-			query, args := sql.Insert(task.TagsTable).
-				Columns(task.TagsPrimaryKey[0], task.TagsPrimaryKey[1]).
-				Values(id, eid).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+	if nodes := tc.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   task.TagsTable,
+			Columns: task.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
-	}
-	if len(tc.job) > 0 {
-		for eid := range tc.job {
-			query, args := sql.Update(task.JobTable).
-				Set(task.JobColumn, eid).
-				Where(sql.EQ(task.FieldID, id)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := tx.Commit(); err != nil {
+	if nodes := tc.job; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.JobTable,
+			Columns: []string{task.JobColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if nodes := tc.target; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   task.TargetTable,
+			Columns: []string{task.TargetColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: target.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
+	}
+	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
+		}
 		return nil, err
 	}
+	id := _spec.ID.Value.(int64)
+	t.ID = int(id)
 	return t, nil
 }

@@ -1,6 +1,8 @@
-FROM golang:1.13.1-alpine as dev
+FROM golang:1.13.6-buster
 WORKDIR /app
-RUN apk add alpine-sdk git protobuf-dev libgcc libstdc++ npm \
+RUN apt-get update \
+    && apt-get -y install --no-install-recommends apt-utils dialog npm libprotobuf-dev protobuf-compiler 2>&1 \
+    && apt-get -y install git iproute2 procps lsb-release \
     && mkdir /go/tools \
     && ln -s /go/bin /go/tools/bin \
     && mkdir /tmp/goinstall \
@@ -24,10 +26,11 @@ RUN apk add alpine-sdk git protobuf-dev libgcc libstdc++ npm \
     github.com/gogo/protobuf/protoc-gen-gogoslick \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
     && rm -rf /tmp/goinstall
-
+RUN npm install -g npm
+RUN npm install -g eslint
+RUN npm install -g typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin \
+    @types/react
+RUN echo "export PG_HTTP_ADDR='0.0.0.0:80'" >> ~/.bashrc
 COPY go.mod /app/go.mod
 COPY go.sum /app/go.sum
 RUN go mod download
-
-# github.com/reviewdog/reviewdog/cmd/reviewdog
-

@@ -33,7 +33,7 @@ const (
 	JobsInverseTable = "jobs"
 )
 
-// Columns holds all SQL columns are tag fields.
+// Columns holds all SQL columns for tag fields.
 var Columns = []string{
 	FieldID,
 	FieldName,

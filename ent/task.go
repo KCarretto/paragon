@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/task"
 )
 
 // Task is the model entity for the Task schema.
@@ -17,6 +18,8 @@ type Task struct {
 	ID int `json:"id,omitempty"`
 	// QueueTime holds the value of the "QueueTime" field.
 	QueueTime time.Time `json:"QueueTime,omitempty"`
+	// LastChangedTime holds the value of the "LastChangedTime" field.
+	LastChangedTime time.Time `json:"LastChangedTime,omitempty"`
 	// ClaimTime holds the value of the "ClaimTime" field.
 	ClaimTime time.Time `json:"ClaimTime,omitempty"`
 	// ExecStartTime holds the value of the "ExecStartTime" field.
@@ -31,44 +34,116 @@ type Task struct {
 	Error string `json:"Error,omitempty"`
 	// SessionID holds the value of the "SessionID" field.
 	SessionID string `json:"SessionID,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TaskQuery when eager-loading is set.
+	Edges struct {
+		// Tags holds the value of the tags edge.
+		Tags []*Tag
+		// Job holds the value of the job edge.
+		Job *Job
+		// Target holds the value of the target edge.
+		Target *Target
+	} `json:"edges"`
+	job_id    *int
+	target_id *int
 }
 
-// FromRows scans the sql response data into Task.
-func (t *Task) FromRows(rows *sql.Rows) error {
-	var vt struct {
-		ID            int
-		QueueTime     sql.NullTime
-		ClaimTime     sql.NullTime
-		ExecStartTime sql.NullTime
-		ExecStopTime  sql.NullTime
-		Content       sql.NullString
-		Output        sql.NullString
-		Error         sql.NullString
-		SessionID     sql.NullString
+// scanValues returns the types for scanning values from sql.Rows.
+func (*Task) scanValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{},  // id
+		&sql.NullTime{},   // QueueTime
+		&sql.NullTime{},   // LastChangedTime
+		&sql.NullTime{},   // ClaimTime
+		&sql.NullTime{},   // ExecStartTime
+		&sql.NullTime{},   // ExecStopTime
+		&sql.NullString{}, // Content
+		&sql.NullString{}, // Output
+		&sql.NullString{}, // Error
+		&sql.NullString{}, // SessionID
 	}
-	// the order here should be the same as in the `task.Columns`.
-	if err := rows.Scan(
-		&vt.ID,
-		&vt.QueueTime,
-		&vt.ClaimTime,
-		&vt.ExecStartTime,
-		&vt.ExecStopTime,
-		&vt.Content,
-		&vt.Output,
-		&vt.Error,
-		&vt.SessionID,
-	); err != nil {
-		return err
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Task) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // job_id
+		&sql.NullInt64{}, // target_id
 	}
-	t.ID = vt.ID
-	t.QueueTime = vt.QueueTime.Time
-	t.ClaimTime = vt.ClaimTime.Time
-	t.ExecStartTime = vt.ExecStartTime.Time
-	t.ExecStopTime = vt.ExecStopTime.Time
-	t.Content = vt.Content.String
-	t.Output = vt.Output.String
-	t.Error = vt.Error.String
-	t.SessionID = vt.SessionID.String
+}
+
+// assignValues assigns the values that were returned from sql.Rows (after scanning)
+// to the Task fields.
+func (t *Task) assignValues(values ...interface{}) error {
+	if m, n := len(values), len(task.Columns); m < n {
+		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
+	}
+	value, ok := values[0].(*sql.NullInt64)
+	if !ok {
+		return fmt.Errorf("unexpected type %T for field id", value)
+	}
+	t.ID = int(value.Int64)
+	values = values[1:]
+	if value, ok := values[0].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field QueueTime", values[0])
+	} else if value.Valid {
+		t.QueueTime = value.Time
+	}
+	if value, ok := values[1].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field LastChangedTime", values[1])
+	} else if value.Valid {
+		t.LastChangedTime = value.Time
+	}
+	if value, ok := values[2].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field ClaimTime", values[2])
+	} else if value.Valid {
+		t.ClaimTime = value.Time
+	}
+	if value, ok := values[3].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field ExecStartTime", values[3])
+	} else if value.Valid {
+		t.ExecStartTime = value.Time
+	}
+	if value, ok := values[4].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field ExecStopTime", values[4])
+	} else if value.Valid {
+		t.ExecStopTime = value.Time
+	}
+	if value, ok := values[5].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Content", values[5])
+	} else if value.Valid {
+		t.Content = value.String
+	}
+	if value, ok := values[6].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Output", values[6])
+	} else if value.Valid {
+		t.Output = value.String
+	}
+	if value, ok := values[7].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Error", values[7])
+	} else if value.Valid {
+		t.Error = value.String
+	}
+	if value, ok := values[8].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field SessionID", values[8])
+	} else if value.Valid {
+		t.SessionID = value.String
+	}
+	values = values[9:]
+	if len(values) == len(task.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field job_id", value)
+		} else if value.Valid {
+			t.job_id = new(int)
+			*t.job_id = int(value.Int64)
+		}
+		if value, ok := values[1].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
+		} else if value.Valid {
+			t.target_id = new(int)
+			*t.target_id = int(value.Int64)
+		}
+	}
 	return nil
 }
 
@@ -80,6 +155,11 @@ func (t *Task) QueryTags() *TagQuery {
 // QueryJob queries the job edge of the Task.
 func (t *Task) QueryJob() *JobQuery {
 	return (&TaskClient{t.config}).QueryJob(t)
+}
+
+// QueryTarget queries the target edge of the Task.
+func (t *Task) QueryTarget() *TargetQuery {
+	return (&TaskClient{t.config}).QueryTarget(t)
 }
 
 // Update returns a builder for updating this Task.
@@ -107,6 +187,8 @@ func (t *Task) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", t.ID))
 	builder.WriteString(", QueueTime=")
 	builder.WriteString(t.QueueTime.Format(time.ANSIC))
+	builder.WriteString(", LastChangedTime=")
+	builder.WriteString(t.LastChangedTime.Format(time.ANSIC))
 	builder.WriteString(", ClaimTime=")
 	builder.WriteString(t.ClaimTime.Format(time.ANSIC))
 	builder.WriteString(", ExecStartTime=")
@@ -127,18 +209,6 @@ func (t *Task) String() string {
 
 // Tasks is a parsable slice of Task.
 type Tasks []*Task
-
-// FromRows scans the sql response data into Tasks.
-func (t *Tasks) FromRows(rows *sql.Rows) error {
-	for rows.Next() {
-		vt := &Task{}
-		if err := vt.FromRows(rows); err != nil {
-			return err
-		}
-		*t = append(*t, vt)
-	}
-	return nil
-}
 
 func (t Tasks) config(cfg config) {
 	for _i := range t {

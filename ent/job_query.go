@@ -4,15 +4,19 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // JobQuery is the builder for querying Job entities.
@@ -23,7 +27,14 @@ type JobQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.Job
-	// intermediate queries.
+	// eager-loading edges.
+	withTasks *TaskQuery
+	withTags  *TagQuery
+	withPrev  *JobQuery
+	withNext  *JobQuery
+	withOwner *UserQuery
+	withFKs   bool
+	// intermediate query.
 	sql *sql.Selector
 }
 
@@ -54,57 +65,60 @@ func (jq *JobQuery) Order(o ...Order) *JobQuery {
 // QueryTasks chains the current query on the tasks edge.
 func (jq *JobQuery) QueryTasks() *TaskQuery {
 	query := &TaskQuery{config: jq.config}
-	t1 := sql.Table(task.Table)
-	t2 := jq.sqlQuery()
-	t2.Select(t2.C(job.FieldID))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t2).
-		On(t1.C(job.TasksColumn), t2.C(job.FieldID))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
+		sqlgraph.To(task.Table, task.FieldID),
+		sqlgraph.Edge(sqlgraph.O2M, false, job.TasksTable, job.TasksColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
 	return query
 }
 
 // QueryTags chains the current query on the tags edge.
 func (jq *JobQuery) QueryTags() *TagQuery {
 	query := &TagQuery{config: jq.config}
-	t1 := sql.Table(tag.Table)
-	t2 := jq.sqlQuery()
-	t2.Select(t2.C(job.FieldID))
-	t3 := sql.Table(job.TagsTable)
-	t4 := sql.Select(t3.C(job.TagsPrimaryKey[1])).
-		From(t3).
-		Join(t2).
-		On(t3.C(job.TagsPrimaryKey[0]), t2.C(job.FieldID))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t4).
-		On(t1.C(tag.FieldID), t4.C(job.TagsPrimaryKey[1]))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
+		sqlgraph.To(tag.Table, tag.FieldID),
+		sqlgraph.Edge(sqlgraph.M2M, false, job.TagsTable, job.TagsPrimaryKey...),
+	)
+	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
 	return query
 }
 
 // QueryPrev chains the current query on the prev edge.
 func (jq *JobQuery) QueryPrev() *JobQuery {
 	query := &JobQuery{config: jq.config}
-	t1 := sql.Table(job.Table)
-	t2 := jq.sqlQuery()
-	t2.Select(t2.C(job.PrevColumn))
-	query.sql = sql.Select(t1.Columns(job.Columns...)...).
-		From(t1).
-		Join(t2).
-		On(t1.C(job.FieldID), t2.C(job.PrevColumn))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, true, job.PrevTable, job.PrevColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
 	return query
 }
 
 // QueryNext chains the current query on the next edge.
 func (jq *JobQuery) QueryNext() *JobQuery {
 	query := &JobQuery{config: jq.config}
-	t1 := sql.Table(job.Table)
-	t2 := jq.sqlQuery()
-	t2.Select(t2.C(job.FieldID))
-	query.sql = sql.Select().
-		From(t1).
-		Join(t2).
-		On(t1.C(job.NextColumn), t2.C(job.FieldID))
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
+		sqlgraph.To(job.Table, job.FieldID),
+		sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	return query
+}
+
+// QueryOwner chains the current query on the owner edge.
+func (jq *JobQuery) QueryOwner() *UserQuery {
+	query := &UserQuery{config: jq.config}
+	step := sqlgraph.NewStep(
+		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
+		sqlgraph.To(user.Table, user.FieldID),
+		sqlgraph.Edge(sqlgraph.M2O, true, job.OwnerTable, job.OwnerColumn),
+	)
+	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
 	return query
 }
 
@@ -272,9 +286,64 @@ func (jq *JobQuery) Clone() *JobQuery {
 		order:      append([]Order{}, jq.order...),
 		unique:     append([]string{}, jq.unique...),
 		predicates: append([]predicate.Job{}, jq.predicates...),
-		// clone intermediate queries.
+		// clone intermediate query.
 		sql: jq.sql.Clone(),
 	}
+}
+
+//  WithTasks tells the query-builder to eager-loads the nodes that are connected to
+// the "tasks" edge. The optional arguments used to configure the query builder of the edge.
+func (jq *JobQuery) WithTasks(opts ...func(*TaskQuery)) *JobQuery {
+	query := &TaskQuery{config: jq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	jq.withTasks = query
+	return jq
+}
+
+//  WithTags tells the query-builder to eager-loads the nodes that are connected to
+// the "tags" edge. The optional arguments used to configure the query builder of the edge.
+func (jq *JobQuery) WithTags(opts ...func(*TagQuery)) *JobQuery {
+	query := &TagQuery{config: jq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	jq.withTags = query
+	return jq
+}
+
+//  WithPrev tells the query-builder to eager-loads the nodes that are connected to
+// the "prev" edge. The optional arguments used to configure the query builder of the edge.
+func (jq *JobQuery) WithPrev(opts ...func(*JobQuery)) *JobQuery {
+	query := &JobQuery{config: jq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	jq.withPrev = query
+	return jq
+}
+
+//  WithNext tells the query-builder to eager-loads the nodes that are connected to
+// the "next" edge. The optional arguments used to configure the query builder of the edge.
+func (jq *JobQuery) WithNext(opts ...func(*JobQuery)) *JobQuery {
+	query := &JobQuery{config: jq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	jq.withNext = query
+	return jq
+}
+
+//  WithOwner tells the query-builder to eager-loads the nodes that are connected to
+// the "owner" edge. The optional arguments used to configure the query builder of the edge.
+func (jq *JobQuery) WithOwner(opts ...func(*UserQuery)) *JobQuery {
+	query := &UserQuery{config: jq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	jq.withOwner = query
+	return jq
 }
 
 // GroupBy used to group vertices by one or more fields/columns.
@@ -319,45 +388,215 @@ func (jq *JobQuery) Select(field string, fields ...string) *JobSelect {
 }
 
 func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
-	rows := &sql.Rows{}
-	selector := jq.sqlQuery()
-	if unique := jq.unique; len(unique) == 0 {
-		selector.Distinct()
+	var (
+		nodes   []*Job = []*Job{}
+		withFKs        = jq.withFKs
+		_spec          = jq.querySpec()
+	)
+	if jq.withPrev != nil || jq.withOwner != nil {
+		withFKs = true
 	}
-	query, args := selector.Query()
-	if err := jq.driver.Query(ctx, query, args, rows); err != nil {
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, job.ForeignKeys...)
+	}
+	_spec.ScanValues = func() []interface{} {
+		node := &Job{config: jq.config}
+		nodes = append(nodes, node)
+		values := node.scanValues()
+		if withFKs {
+			values = append(values, node.fkValues()...)
+		}
+		return values
+	}
+	_spec.Assign = func(values ...interface{}) error {
+		if len(nodes) == 0 {
+			return fmt.Errorf("ent: Assign called without calling ScanValues")
+		}
+		node := nodes[len(nodes)-1]
+		return node.assignValues(values...)
+	}
+	if err := sqlgraph.QueryNodes(ctx, jq.driver, _spec); err != nil {
 		return nil, err
 	}
-	defer rows.Close()
-	var js Jobs
-	if err := js.FromRows(rows); err != nil {
-		return nil, err
+	if len(nodes) == 0 {
+		return nodes, nil
 	}
-	js.config(jq.config)
-	return js, nil
+
+	if query := jq.withTasks; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Job)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Task(func(s *sql.Selector) {
+			s.Where(sql.InValues(job.TasksColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.job_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "job_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "job_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Tasks = append(node.Edges.Tasks, n)
+		}
+	}
+
+	if query := jq.withTags; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Job, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Job)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: false,
+				Table:   job.TagsTable,
+				Columns: job.TagsPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(job.TagsPrimaryKey[0], fks...))
+			},
+
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{&sql.NullInt64{}, &sql.NullInt64{}}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(eout.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				edgeids = append(edgeids, inValue)
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, jq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "tags": %v`, err)
+		}
+		query.Where(tag.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "tags" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Tags = append(nodes[i].Edges.Tags, n)
+			}
+		}
+	}
+
+	if query := jq.withPrev; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Job)
+		for i := range nodes {
+			if fk := nodes[i].prev_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(job.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Prev = n
+			}
+		}
+	}
+
+	if query := jq.withNext; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Job)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Job(func(s *sql.Selector) {
+			s.Where(sql.InValues(job.NextColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.prev_id
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "prev_id" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Next = n
+		}
+	}
+
+	if query := jq.withOwner; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Job)
+		for i := range nodes {
+			if fk := nodes[i].owner_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Owner = n
+			}
+		}
+	}
+
+	return nodes, nil
 }
 
 func (jq *JobQuery) sqlCount(ctx context.Context) (int, error) {
-	rows := &sql.Rows{}
-	selector := jq.sqlQuery()
-	unique := []string{job.FieldID}
-	if len(jq.unique) > 0 {
-		unique = jq.unique
-	}
-	selector.Count(sql.Distinct(selector.Columns(unique...)...))
-	query, args := selector.Query()
-	if err := jq.driver.Query(ctx, query, args, rows); err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-	if !rows.Next() {
-		return 0, errors.New("ent: no rows found")
-	}
-	var n int
-	if err := rows.Scan(&n); err != nil {
-		return 0, fmt.Errorf("ent: failed reading count: %v", err)
-	}
-	return n, nil
+	_spec := jq.querySpec()
+	return sqlgraph.CountNodes(ctx, jq.driver, _spec)
 }
 
 func (jq *JobQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -368,9 +607,46 @@ func (jq *JobQuery) sqlExist(ctx context.Context) (bool, error) {
 	return n > 0, nil
 }
 
+func (jq *JobQuery) querySpec() *sqlgraph.QuerySpec {
+	_spec := &sqlgraph.QuerySpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   job.Table,
+			Columns: job.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: job.FieldID,
+			},
+		},
+		From:   jq.sql,
+		Unique: true,
+	}
+	if ps := jq.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if limit := jq.limit; limit != nil {
+		_spec.Limit = *limit
+	}
+	if offset := jq.offset; offset != nil {
+		_spec.Offset = *offset
+	}
+	if ps := jq.order; len(ps) > 0 {
+		_spec.Order = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	return _spec
+}
+
 func (jq *JobQuery) sqlQuery() *sql.Selector {
-	t1 := sql.Table(job.Table)
-	selector := sql.Select(t1.Columns(job.Columns...)...).From(t1)
+	builder := sql.Dialect(jq.driver.Dialect())
+	t1 := builder.Table(job.Table)
+	selector := builder.Select(t1.Columns(job.Columns...)...).From(t1)
 	if jq.sql != nil {
 		selector = jq.sql
 		selector.Select(selector.Columns(job.Columns...)...)
@@ -397,7 +673,7 @@ type JobGroupBy struct {
 	config
 	fields []string
 	fns    []Aggregate
-	// intermediate queries.
+	// intermediate query.
 	sql *sql.Selector
 }
 
@@ -518,7 +794,7 @@ func (jgb *JobGroupBy) sqlQuery() *sql.Selector {
 	columns := make([]string, 0, len(jgb.fields)+len(jgb.fns))
 	columns = append(columns, jgb.fields...)
 	for _, fn := range jgb.fns {
-		columns = append(columns, fn.SQL(selector))
+		columns = append(columns, fn(selector))
 	}
 	return selector.Select(columns...).GroupBy(jgb.fields...)
 }
@@ -638,6 +914,7 @@ func (js *JobSelect) sqlScan(ctx context.Context, v interface{}) error {
 }
 
 func (js *JobSelect) sqlQuery() sql.Querier {
-	view := "job_view"
-	return sql.Select(js.fields...).From(js.sql.As(view))
+	selector := js.sql
+	selector.Select(selector.Columns(js.fields...)...)
+	return selector
 }

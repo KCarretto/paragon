@@ -9,9 +9,13 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"github.com/facebookincubator/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // JobUpdate is the builder for updating Job entities.
@@ -24,10 +28,12 @@ type JobUpdate struct {
 	tags         map[int]struct{}
 	prev         map[int]struct{}
 	next         map[int]struct{}
+	owner        map[int]struct{}
 	removedTasks map[int]struct{}
 	removedTags  map[int]struct{}
 	clearedPrev  bool
 	clearedNext  bool
+	clearedOwner bool
 	predicates   []predicate.Job
 }
 
@@ -147,6 +153,20 @@ func (ju *JobUpdate) SetNext(j *Job) *JobUpdate {
 	return ju.SetNextID(j.ID)
 }
 
+// SetOwnerID sets the owner edge to User by id.
+func (ju *JobUpdate) SetOwnerID(id int) *JobUpdate {
+	if ju.owner == nil {
+		ju.owner = make(map[int]struct{})
+	}
+	ju.owner[id] = struct{}{}
+	return ju
+}
+
+// SetOwner sets the owner edge to User.
+func (ju *JobUpdate) SetOwner(u *User) *JobUpdate {
+	return ju.SetOwnerID(u.ID)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (ju *JobUpdate) RemoveTaskIDs(ids ...int) *JobUpdate {
 	if ju.removedTasks == nil {
@@ -199,6 +219,12 @@ func (ju *JobUpdate) ClearNext() *JobUpdate {
 	return ju
 }
 
+// ClearOwner clears the owner edge to User.
+func (ju *JobUpdate) ClearOwner() *JobUpdate {
+	ju.clearedOwner = true
+	return ju
+}
+
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 	if ju.Name != nil {
@@ -216,6 +242,12 @@ func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
 	}
 	if len(ju.next) > 1 {
 		return 0, errors.New("ent: multiple assignments on a unique edge \"next\"")
+	}
+	if len(ju.owner) > 1 {
+		return 0, errors.New("ent: multiple assignments on a unique edge \"owner\"")
+	}
+	if ju.clearedOwner && ju.owner == nil {
+		return 0, errors.New("ent: clearing a unique edge \"owner\"")
 	}
 	return ju.sqlSave(ctx)
 }
@@ -243,177 +275,232 @@ func (ju *JobUpdate) ExecX(ctx context.Context) {
 }
 
 func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	selector := sql.Select(job.FieldID).From(sql.Table(job.Table))
-	for _, p := range ju.predicates {
-		p(selector)
+	_spec := &sqlgraph.UpdateSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   job.Table,
+			Columns: job.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Type:   field.TypeInt,
+				Column: job.FieldID,
+			},
+		},
 	}
-	rows := &sql.Rows{}
-	query, args := selector.Query()
-	if err = ju.driver.Query(ctx, query, args, rows); err != nil {
-		return 0, err
-	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
-			return 0, fmt.Errorf("ent: failed reading id: %v", err)
+	if ps := ju.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
 		}
-		ids = append(ids, id)
 	}
-	if len(ids) == 0 {
-		return 0, nil
-	}
-
-	tx, err := ju.driver.Tx(ctx)
-	if err != nil {
-		return 0, err
-	}
-	var (
-		res     sql.Result
-		builder = sql.Update(job.Table).Where(sql.InInts(job.FieldID, ids...))
-	)
 	if value := ju.Name; value != nil {
-		builder.Set(job.FieldName, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: job.FieldName,
+		})
 	}
 	if value := ju.CreationTime; value != nil {
-		builder.Set(job.FieldCreationTime, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: job.FieldCreationTime,
+		})
 	}
 	if value := ju.Content; value != nil {
-		builder.Set(job.FieldContent, *value)
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: job.FieldContent,
+		})
 	}
-	if !builder.Empty() {
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+	if nodes := ju.removedTasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(ju.removedTasks) > 0 {
-		eids := make([]int, len(ju.removedTasks))
-		for eid := range ju.removedTasks {
-			eids = append(eids, eid)
+	if nodes := ju.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(job.TasksTable).
-			SetNull(job.TasksColumn).
-			Where(sql.InInts(job.TasksColumn, ids...)).
-			Where(sql.InInts(task.FieldID, eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(ju.tasks) > 0 {
-		for _, id := range ids {
-			p := sql.P()
-			for eid := range ju.tasks {
-				p.Or().EQ(task.FieldID, eid)
-			}
-			query, args := sql.Update(job.TasksTable).
-				Set(job.TasksColumn, id).
-				Where(sql.And(p, sql.IsNull(job.TasksColumn))).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return 0, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return 0, rollback(tx, err)
-			}
-			if int(affected) < len(ju.tasks) {
-				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Job\"", keys(ju.tasks))})
-			}
+	if nodes := ju.removedTags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(ju.removedTags) > 0 {
-		eids := make([]int, len(ju.removedTags))
-		for eid := range ju.removedTags {
-			eids = append(eids, eid)
+	if nodes := ju.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
-		query, args := sql.Delete(job.TagsTable).
-			Where(sql.InInts(job.TagsPrimaryKey[0], ids...)).
-			Where(sql.InInts(job.TagsPrimaryKey[1], eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-	}
-	if len(ju.tags) > 0 {
-		values := make([][]int, 0, len(ids))
-		for _, id := range ids {
-			for eid := range ju.tags {
-				values = append(values, []int{id, eid})
-			}
-		}
-		builder := sql.Insert(job.TagsTable).
-			Columns(job.TagsPrimaryKey[0], job.TagsPrimaryKey[1])
-		for _, v := range values {
-			builder.Values(v[0], v[1])
-		}
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
-		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ju.clearedPrev {
-		query, args := sql.Update(job.PrevTable).
-			SetNull(job.PrevColumn).
-			Where(sql.InInts(job.FieldID, ids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   job.PrevTable,
+			Columns: []string{job.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(ju.prev) > 0 {
-		for _, id := range ids {
-			eid := keys(ju.prev)[0]
-			query, args := sql.Update(job.PrevTable).
-				Set(job.PrevColumn, eid).
-				Where(sql.EQ(job.FieldID, id).And().IsNull(job.PrevColumn)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return 0, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return 0, rollback(tx, err)
-			}
-			if int(affected) < len(ju.prev) {
-				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"prev\" %v already connected to a different \"Job\"", keys(ju.prev))})
-			}
+	if nodes := ju.prev; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   job.PrevTable,
+			Columns: []string{job.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ju.clearedNext {
-		query, args := sql.Update(job.NextTable).
-			SetNull(job.NextColumn).
-			Where(sql.InInts(job.FieldID, ids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return 0, rollback(tx, err)
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   job.NextTable,
+			Columns: []string{job.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(ju.next) > 0 {
-		for _, id := range ids {
-			eid := keys(ju.next)[0]
-			query, args := sql.Update(job.NextTable).
-				Set(job.NextColumn, id).
-				Where(sql.EQ(job.FieldID, eid).And().IsNull(job.NextColumn)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return 0, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return 0, rollback(tx, err)
-			}
-			if int(affected) < len(ju.next) {
-				return 0, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"next\" %v already connected to a different \"Job\"", keys(ju.next))})
-			}
+	if nodes := ju.next; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   job.NextTable,
+			Columns: []string{job.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if err = tx.Commit(); err != nil {
+	if ju.clearedOwner {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ju.owner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if n, err = sqlgraph.UpdateNodes(ctx, ju.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
+		}
 		return 0, err
 	}
-	return len(ids), nil
+	return n, nil
 }
 
 // JobUpdateOne is the builder for updating a single Job entity.
@@ -427,10 +514,12 @@ type JobUpdateOne struct {
 	tags         map[int]struct{}
 	prev         map[int]struct{}
 	next         map[int]struct{}
+	owner        map[int]struct{}
 	removedTasks map[int]struct{}
 	removedTags  map[int]struct{}
 	clearedPrev  bool
 	clearedNext  bool
+	clearedOwner bool
 }
 
 // SetName sets the Name field.
@@ -543,6 +632,20 @@ func (juo *JobUpdateOne) SetNext(j *Job) *JobUpdateOne {
 	return juo.SetNextID(j.ID)
 }
 
+// SetOwnerID sets the owner edge to User by id.
+func (juo *JobUpdateOne) SetOwnerID(id int) *JobUpdateOne {
+	if juo.owner == nil {
+		juo.owner = make(map[int]struct{})
+	}
+	juo.owner[id] = struct{}{}
+	return juo
+}
+
+// SetOwner sets the owner edge to User.
+func (juo *JobUpdateOne) SetOwner(u *User) *JobUpdateOne {
+	return juo.SetOwnerID(u.ID)
+}
+
 // RemoveTaskIDs removes the tasks edge to Task by ids.
 func (juo *JobUpdateOne) RemoveTaskIDs(ids ...int) *JobUpdateOne {
 	if juo.removedTasks == nil {
@@ -595,6 +698,12 @@ func (juo *JobUpdateOne) ClearNext() *JobUpdateOne {
 	return juo
 }
 
+// ClearOwner clears the owner edge to User.
+func (juo *JobUpdateOne) ClearOwner() *JobUpdateOne {
+	juo.clearedOwner = true
+	return juo
+}
+
 // Save executes the query and returns the updated entity.
 func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 	if juo.Name != nil {
@@ -612,6 +721,12 @@ func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
 	}
 	if len(juo.next) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
+	}
+	if len(juo.owner) > 1 {
+		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
+	}
+	if juo.clearedOwner && juo.owner == nil {
+		return nil, errors.New("ent: clearing a unique edge \"owner\"")
 	}
 	return juo.sqlSave(ctx)
 }
@@ -639,180 +754,226 @@ func (juo *JobUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
-	selector := sql.Select(job.Columns...).From(sql.Table(job.Table))
-	job.ID(juo.id)(selector)
-	rows := &sql.Rows{}
-	query, args := selector.Query()
-	if err = juo.driver.Query(ctx, query, args, rows); err != nil {
-		return nil, err
+	_spec := &sqlgraph.UpdateSpec{
+		Node: &sqlgraph.NodeSpec{
+			Table:   job.Table,
+			Columns: job.Columns,
+			ID: &sqlgraph.FieldSpec{
+				Value:  juo.id,
+				Type:   field.TypeInt,
+				Column: job.FieldID,
+			},
+		},
 	}
-	defer rows.Close()
-	var ids []int
-	for rows.Next() {
-		var id int
-		j = &Job{config: juo.config}
-		if err := j.FromRows(rows); err != nil {
-			return nil, fmt.Errorf("ent: failed scanning row into Job: %v", err)
-		}
-		id = j.ID
-		ids = append(ids, id)
-	}
-	switch n := len(ids); {
-	case n == 0:
-		return nil, &ErrNotFound{fmt.Sprintf("Job with id: %v", juo.id)}
-	case n > 1:
-		return nil, fmt.Errorf("ent: more than one Job with the same id: %v", juo.id)
-	}
-
-	tx, err := juo.driver.Tx(ctx)
-	if err != nil {
-		return nil, err
-	}
-	var (
-		res     sql.Result
-		builder = sql.Update(job.Table).Where(sql.InInts(job.FieldID, ids...))
-	)
 	if value := juo.Name; value != nil {
-		builder.Set(job.FieldName, *value)
-		j.Name = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: job.FieldName,
+		})
 	}
 	if value := juo.CreationTime; value != nil {
-		builder.Set(job.FieldCreationTime, *value)
-		j.CreationTime = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeTime,
+			Value:  *value,
+			Column: job.FieldCreationTime,
+		})
 	}
 	if value := juo.Content; value != nil {
-		builder.Set(job.FieldContent, *value)
-		j.Content = *value
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: job.FieldContent,
+		})
 	}
-	if !builder.Empty() {
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+	if nodes := juo.removedTasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(juo.removedTasks) > 0 {
-		eids := make([]int, len(juo.removedTasks))
-		for eid := range juo.removedTasks {
-			eids = append(eids, eid)
+	if nodes := juo.tasks; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
 		}
-		query, args := sql.Update(job.TasksTable).
-			SetNull(job.TasksColumn).
-			Where(sql.InInts(job.TasksColumn, ids...)).
-			Where(sql.InInts(task.FieldID, eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if len(juo.tasks) > 0 {
-		for _, id := range ids {
-			p := sql.P()
-			for eid := range juo.tasks {
-				p.Or().EQ(task.FieldID, eid)
-			}
-			query, args := sql.Update(job.TasksTable).
-				Set(job.TasksColumn, id).
-				Where(sql.And(p, sql.IsNull(job.TasksColumn))).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return nil, rollback(tx, err)
-			}
-			if int(affected) < len(juo.tasks) {
-				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"tasks\" %v already connected to a different \"Job\"", keys(juo.tasks))})
-			}
+	if nodes := juo.removedTags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(juo.removedTags) > 0 {
-		eids := make([]int, len(juo.removedTags))
-		for eid := range juo.removedTags {
-			eids = append(eids, eid)
+	if nodes := juo.tags; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
 		}
-		query, args := sql.Delete(job.TagsTable).
-			Where(sql.InInts(job.TagsPrimaryKey[0], ids...)).
-			Where(sql.InInts(job.TagsPrimaryKey[1], eids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-	}
-	if len(juo.tags) > 0 {
-		values := make([][]int, 0, len(ids))
-		for _, id := range ids {
-			for eid := range juo.tags {
-				values = append(values, []int{id, eid})
-			}
-		}
-		builder := sql.Insert(job.TagsTable).
-			Columns(job.TagsPrimaryKey[0], job.TagsPrimaryKey[1])
-		for _, v := range values {
-			builder.Values(v[0], v[1])
-		}
-		query, args := builder.Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
-		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if juo.clearedPrev {
-		query, args := sql.Update(job.PrevTable).
-			SetNull(job.PrevColumn).
-			Where(sql.InInts(job.FieldID, ids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   job.PrevTable,
+			Columns: []string{job.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(juo.prev) > 0 {
-		for _, id := range ids {
-			eid := keys(juo.prev)[0]
-			query, args := sql.Update(job.PrevTable).
-				Set(job.PrevColumn, eid).
-				Where(sql.EQ(job.FieldID, id).And().IsNull(job.PrevColumn)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return nil, rollback(tx, err)
-			}
-			if int(affected) < len(juo.prev) {
-				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"prev\" %v already connected to a different \"Job\"", keys(juo.prev))})
-			}
+	if nodes := juo.prev; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: true,
+			Table:   job.PrevTable,
+			Columns: []string{job.PrevColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if juo.clearedNext {
-		query, args := sql.Update(job.NextTable).
-			SetNull(job.NextColumn).
-			Where(sql.InInts(job.FieldID, ids...)).
-			Query()
-		if err := tx.Exec(ctx, query, args, &res); err != nil {
-			return nil, rollback(tx, err)
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   job.NextTable,
+			Columns: []string{job.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if len(juo.next) > 0 {
-		for _, id := range ids {
-			eid := keys(juo.next)[0]
-			query, args := sql.Update(job.NextTable).
-				Set(job.NextColumn, id).
-				Where(sql.EQ(job.FieldID, eid).And().IsNull(job.NextColumn)).
-				Query()
-			if err := tx.Exec(ctx, query, args, &res); err != nil {
-				return nil, rollback(tx, err)
-			}
-			affected, err := res.RowsAffected()
-			if err != nil {
-				return nil, rollback(tx, err)
-			}
-			if int(affected) < len(juo.next) {
-				return nil, rollback(tx, &ErrConstraintFailed{msg: fmt.Sprintf("one of \"next\" %v already connected to a different \"Job\"", keys(juo.next))})
-			}
+	if nodes := juo.next; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2O,
+			Inverse: false,
+			Table:   job.NextTable,
+			Columns: []string{job.NextColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
 		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if err = tx.Commit(); err != nil {
+	if juo.clearedOwner {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := juo.owner; len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2O,
+			Inverse: true,
+			Table:   job.OwnerTable,
+			Columns: []string{job.OwnerColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for k, _ := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	j = &Job{config: juo.config}
+	_spec.Assign = j.assignValues
+	_spec.ScanValues = j.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, juo.driver, _spec); err != nil {
+		if cerr, ok := isSQLConstraintError(err); ok {
+			err = cerr
+		}
 		return nil, err
 	}
 	return j, nil

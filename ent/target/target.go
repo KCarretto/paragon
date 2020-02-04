@@ -2,6 +2,10 @@
 
 package target
 
+import (
+	"github.com/kcarretto/paragon/ent/schema"
+)
+
 const (
 	// Label holds the string label denoting the target type in the database.
 	Label = "target"
@@ -30,7 +34,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "target_task_id"
+	TasksColumn = "target_id"
 	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
 	TagsTable = "target_tags"
 	// TagsInverseTable is the table name for the Tag entity.
@@ -42,10 +46,10 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "credential" package.
 	CredentialsInverseTable = "credentials"
 	// CredentialsColumn is the table column denoting the credentials relation/edge.
-	CredentialsColumn = "target_credential_id"
+	CredentialsColumn = "target_id"
 )
 
-// Columns holds all SQL columns are target fields.
+// Columns holds all SQL columns for target fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
@@ -61,4 +65,13 @@ var (
 	// TagsPrimaryKey and TagsColumn2 are the table columns denoting the
 	// primary key for the tags relation (M2M).
 	TagsPrimaryKey = []string{"target_id", "tag_id"}
+)
+
+var (
+	fields = schema.Target{}.Fields()
+
+	// descMachineUUID is the schema descriptor for MachineUUID field.
+	descMachineUUID = fields[2].Descriptor()
+	// MachineUUIDValidator is a validator for the "MachineUUID" field. It is called by the builders before save.
+	MachineUUIDValidator = descMachineUUID.Validators[0].(func(string) error)
 )

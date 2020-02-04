@@ -1,12 +1,16 @@
 package schema
 
 import (
+	"math"
 	"time"
 
 	"github.com/facebookincubator/ent"
 	"github.com/facebookincubator/ent/schema/edge"
 	"github.com/facebookincubator/ent/schema/field"
 )
+
+const MaxTaskContentSize = 65535
+const MaxTaskOutputSize = math.MaxUint32
 
 // Task holds the schema definition for the Task entity.
 type Task struct {
@@ -21,25 +25,28 @@ func (Task) Fields() []ent.Field {
 				return time.Now()
 			}).
 			Comment("The timestamp for when the Task was queued/created"),
+		field.Time("LastChangedTime").
+			Comment("The timestamp for when the Task was last changed"),
 		field.Time("ClaimTime").
 			Optional().
-			Comment("The timestamp for when the Task was claime."),
+			Comment("The timestamp for when the Task was claim"),
 		field.Time("ExecStartTime").
 			Optional().
 			Comment("The timestamp for when the Task was executed"),
 		field.Time("ExecStopTime").
 			Optional().
 			Comment("The timestamp for when the Task's execution ended"),
-		field.String("Content").
+		field.Text("Content").
 			NotEmpty().
 			Comment("The content of the task (usually a Renegade Script)"),
-		field.String("Output").
+		field.Text("Output").
 			Optional().
 			Comment("The output from executing the task"),
 		field.String("Error").
 			Optional().
 			Comment("The error, if any, produced while executing the Task"),
 		field.String("SessionID").
+			MaxLen(250).
 			Optional(),
 	}
 }
@@ -53,6 +60,10 @@ func (Task) Edges() []ent.Edge {
 			Ref("tasks").
 			Unique().
 			Required().
-			Comment("A Task must have job"),
+			Comment("A Task must have a job"),
+		edge.From("target", Target.Type).
+			Ref("tasks").
+			Unique().
+			Comment("A Task might have a target"),
 	}
 }

@@ -16,7 +16,7 @@ import (
 
 // Teamserver provides client methods used to interact with a teamserver.
 type Teamserver interface {
-	ClaimTasks(context.Context, models.ClaimTaskRequest) ([]*ent.Task, error)
+	ClaimTasks(context.Context, models.ClaimTasksRequest) ([]*ent.Task, error)
 	SubmitTaskResult(context.Context, models.SubmitTaskResultRequest) error
 }
 
@@ -68,9 +68,12 @@ func (srv Server) HandleAgent(ctx context.Context, msg AgentMessage) (*ServerMes
 	if err != nil {
 		return nil, fmt.Errorf("failed to claim tasks from teamserver: %w", err)
 	}
+	fmt.Printf("Claimed tasks: %+v\n", tasks)
 
+	t := convertTasks(tasks)
+	fmt.Printf("Converted tasks: %+v\n", t)
 	return &ServerMessage{
-		Tasks: convertTasks(tasks),
+		Tasks: t,
 	}, nil
 }
 
@@ -82,7 +85,7 @@ func convertTasks(models []*ent.Task) (tasks []*Task) {
 		}
 
 		tasks = append(tasks, &Task{
-			Id:      int32(task.ID),
+			Id:      int64(task.ID),
 			Content: task.Content,
 		})
 	}
@@ -91,22 +94,18 @@ func convertTasks(models []*ent.Task) (tasks []*Task) {
 }
 
 // resolveTarget determines parameters necessary to claim tasks based on received agent metadata.
-func resolveTarget(metadata *AgentMetadata) (models.ClaimTaskRequest, error) {
+func resolveTarget(metadata *AgentMetadata) (models.ClaimTasksRequest, error) {
 	// Ensure Agent provided metadata to resolve a target
 	if metadata == nil {
-		return models.ClaimTaskRequest{}, fmt.Errorf("agent provided no valid metadata for target resolution")
-	}
-
-	// Use Machine UUID if available
-	if uuid := metadata.MachineUUID; uuid != "" {
-		return models.ClaimTaskRequest{
-			MachineUUID: &uuid,
-		}, nil
+		return models.ClaimTasksRequest{}, fmt.Errorf("agent provided no valid metadata for target resolution")
 	}
 
 	// Otherwise combine Primary IP and Primary MAC addresses
-	return models.ClaimTaskRequest{
-		PrimaryIP:  &metadata.PrimaryIP,
-		PrimaryMac: &metadata.PrimaryMAC,
+	return models.ClaimTasksRequest{
+		MachineUUID: &metadata.MachineUUID,
+		SessionID:   &metadata.SessionID,
+		Hostname:    &metadata.Hostname,
+		PrimaryIP:   &metadata.PrimaryIP,
+		PrimaryMac:  &metadata.PrimaryMAC,
 	}, nil
 }

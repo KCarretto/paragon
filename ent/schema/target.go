@@ -19,6 +19,7 @@ func (Target) Fields() []ent.Field {
 		field.String("PrimaryIP").
 			Comment("The IP Address for the primary interface of the Target"),
 		field.String("MachineUUID").
+			MaxLen(250).
 			Unique().
 			Optional().
 			Comment("The machine UUID of the Target"),

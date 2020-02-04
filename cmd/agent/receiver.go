@@ -42,7 +42,7 @@ func (r Receiver) Receive(w agent.MessageWriter, msg agent.ServerMessage) {
 
 		err := code.Exec(r)
 		if err != nil {
-			r.Log.Error("failed to execute script", zap.Error(err), zap.Int32("task_id", task.GetId()))
+			r.Log.Error("failed to execute script", zap.Error(err), zap.Int64("task_id", task.GetId()))
 		}
 
 		r.Log.Debug("completed script execution", zap.String("task", task.String()))

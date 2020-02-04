@@ -6,10 +6,26 @@ import (
 	"time"
 )
 
+type ActivateServiceRequest struct {
+	ID int `json:"id"`
+}
+
+type ActivateUserRequest struct {
+	ID int `json:"id"`
+}
+
 type AddCredentialForTargetRequest struct {
-	ID        int    `json:"id"`
-	Principal string `json:"principal"`
-	Secret    string `json:"secret"`
+	ID        int     `json:"id"`
+	Principal string  `json:"principal"`
+	Secret    string  `json:"secret"`
+	Kind      *string `json:"kind"`
+}
+
+type AddCredentialForTargetsRequest struct {
+	Ids       []int   `json:"ids"`
+	Principal string  `json:"principal"`
+	Secret    string  `json:"secret"`
+	Kind      *string `json:"kind"`
 }
 
 type ApplyTagRequest struct {
@@ -17,18 +33,32 @@ type ApplyTagRequest struct {
 	EntID int `json:"entID"`
 }
 
-type ClaimTaskRequest struct {
+type ChangeNameRequest struct {
+	Name string `json:"name"`
+}
+
+type ClaimTasksRequest struct {
 	MachineUUID *string `json:"machineUUID"`
-	Hostname    *string `json:"hostname"`
 	PrimaryIP   *string `json:"primaryIP"`
+	Hostname    *string `json:"hostname"`
 	PrimaryMac  *string `json:"primaryMAC"`
+	SessionID   *string `json:"sessionID"`
 }
 
 type CreateJobRequest struct {
-	Name    string `json:"name"`
-	Content string `json:"content"`
-	Tags    []int  `json:"tags"`
-	Prev    *int   `json:"prev"`
+	Name      string  `json:"name"`
+	Content   string  `json:"content"`
+	SessionID *string `json:"sessionID"`
+	Targets   []int   `json:"targets"`
+	Tags      []int   `json:"tags"`
+	Prev      *int    `json:"prev"`
+}
+
+type CreateLinkRequest struct {
+	Alias          string     `json:"alias"`
+	ExpirationTime *time.Time `json:"expirationTime"`
+	Clicks         *int       `json:"clicks"`
+	File           int        `json:"file"`
 }
 
 type CreateTagRequest struct {
@@ -41,6 +71,14 @@ type CreateTargetRequest struct {
 	Tags      []int  `json:"tags"`
 }
 
+type DeactivateServiceRequest struct {
+	ID int `json:"id"`
+}
+
+type DeactivateUserRequest struct {
+	ID int `json:"id"`
+}
+
 type DeleteTargetRequest struct {
 	ID int `json:"id"`
 }
@@ -49,9 +87,33 @@ type FailCredentialRequest struct {
 	ID int `json:"id"`
 }
 
+type Filter struct {
+	Offset *int `json:"offset"`
+	Limit  *int `json:"limit"`
+}
+
+type LikeEventRequest struct {
+	ID int `json:"id"`
+}
+
+type MakeAdminRequest struct {
+	ID int `json:"id"`
+}
+
+type RemoveAdminRequest struct {
+	ID int `json:"id"`
+}
+
 type RemoveTagRequest struct {
 	TagID int `json:"tagID"`
 	EntID int `json:"entID"`
+}
+
+type SetLinkFieldsRequest struct {
+	ID             int        `json:"id"`
+	Alias          *string    `json:"alias"`
+	ExpirationTime *time.Time `json:"ExpirationTime"`
+	Clicks         *int       `json:"clicks"`
 }
 
 type SetTargetFieldsRequest struct {
