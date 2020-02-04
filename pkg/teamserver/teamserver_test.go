@@ -122,7 +122,6 @@ func TestTargetQuery(t *testing.T) {
 	if !(t1 && t2) {
 		t.Errorf("Did not get the correct names for the targets")
 	}
-
 }
 
 func TestTargetsQuery(t *testing.T) {
@@ -143,21 +142,48 @@ func TestTargetsQuery(t *testing.T) {
 	}
 
 }
-func TestWithoutHttp(t *testing.T) {
+func TestJobQuery(t *testing.T) {
 	client := testClient()
 	defer client.Close()
-	target, err := client.Target.Create().SetHostname("test").SetName("test").SetPrimaryIP("test").Save(context.Background())
+	job, err := client.Job.Create().SetName("test").SetContent("wat").Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create job: %w", err)
+	}
+	task, err := client.Task.Create().SetContent("test").SetJob(job).Save(context.Background())
 	if err != nil {
 		t.Errorf("failed to create target: %w", err)
 	}
 	resolver := &resolve.Resolver{EntClient: client}
 	query := resolver.Query()
-	queriedTarget, err := query.Target(context.Background(), target.ID)
+	queriedTask, err := query.Task(context.Background(), task.ID)
 	if err != nil {
-		t.Errorf("Target query failed with %w", err)
+		t.Errorf("Task query failed with %w", err)
 	}
-	if queriedTarget.ID != target.ID {
-		t.Errorf("Target query failed to get the correct target \n expected: %#v \n given: %#v", target, queriedTarget)
+	if queriedTask.ID != task.ID {
+		t.Errorf("Task query failed to get the correct target \n expected: %#v \n given: %#v", task, queriedTask)
+	}
+
+}
+
+func TestJobsQuery(t *testing.T) {
+	client := testClient()
+	defer client.Close()
+	job, err := client.Job.Create().SetName("test").SetContent("wat").Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create job: %w", err)
+	}
+	task, err := client.Task.Create().SetContent("test").SetJob(job).Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create target: %w", err)
+	}
+	resolver := &resolve.Resolver{EntClient: client}
+	query := resolver.Query()
+	queriedTask, err := query.Task(context.Background(), task.ID)
+	if err != nil {
+		t.Errorf("Task query failed with %w", err)
+	}
+	if queriedTask.ID != task.ID {
+		t.Errorf("Task query failed to get the correct target \n expected: %#v \n given: %#v", task, queriedTask)
 	}
 
 }
