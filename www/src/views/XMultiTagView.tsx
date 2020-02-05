@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Container, Label, Loader } from "semantic-ui-react";
+import { Label, Loader } from "semantic-ui-react";
 import XClipboard from "../components/form/XClipboard";
 import { XErrorMessage } from "../components/messages";
 import { XNoTagsFound } from "../components/tag";
@@ -41,11 +41,11 @@ const XMultiTagView = () => {
   };
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <Loader disabled={!called || !loading} />
       {showList()}
       <XErrorMessage title="Error Loading Tags" err={error} />
-    </Container>
+    </React.Fragment>
   );
 };
 

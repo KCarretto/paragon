@@ -4,8 +4,9 @@ import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
-import { Card, Container, Header, Icon } from "semantic-ui-react";
+import { Header, Icon } from "semantic-ui-react";
 import { XJobHeader } from "../components/job";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XTaskCard, XTaskContent } from "../components/task";
 import { XTaskCardDisplayType } from "../components/task/XTaskCard";
@@ -87,7 +88,7 @@ const XJobView = () => {
       );
     }
     return (
-      <Card.Group centered itemsPerRow={4}>
+      <XCardGroup>
         {tasks.map(task => (
           <XTaskCard
             key={task.id}
@@ -95,12 +96,12 @@ const XJobView = () => {
             task={task}
           />
         ))}
-      </Card.Group>
+      </XCardGroup>
     );
   };
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <XJobHeader name={name} tags={tags} />
 
       <XErrorMessage title="Error Loading Job" err={error} />
@@ -118,7 +119,7 @@ const XJobView = () => {
       </Header>
 
       {showCards()}
-    </Container>
+    </React.Fragment>
   );
 };
 

@@ -1,7 +1,8 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader } from "semantic-ui-react";
+import { Loader } from "semantic-ui-react";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
 import { XNoTargetsFound } from "../components/target";
 import XTargetCard from "../components/target/XTargetCard";
@@ -55,20 +56,20 @@ const XMultiTargetView = () => {
       return <XNoTargetsFound />;
     }
     return (
-      <Card.Group centered itemsPerRow={4}>
+      <XCardGroup>
         {data.targets.map(target => (
           <XTargetCard key={target.id} {...target} />
         ))}
-      </Card.Group>
+      </XCardGroup>
     );
   };
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
+    <React.Fragment>
       <Loader disabled={!called || !loading} />
       <XErrorMessage title="Error Loading Targets" err={error} />
       {showCards()}
-    </Container>
+    </React.Fragment>
   );
 };
 

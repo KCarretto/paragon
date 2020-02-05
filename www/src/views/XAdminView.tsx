@@ -3,17 +3,9 @@ import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import {
-  Accordion,
-  Card,
-  Divider,
-  Header,
-  Icon,
-  Image,
-  Loader,
-  Radio
-} from "semantic-ui-react";
+import { Accordion, Card, Divider, Header, Icon, Image, Loader, Radio } from "semantic-ui-react";
 import XClipboard from "../components/form/XClipboard";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
 import { Service, User } from "../graphql/models";
 
@@ -258,19 +250,14 @@ const XAdminView = () => {
     return (
       <React.Fragment>
         <Loader disabled={!usersQuery.called || !usersQuery.loading} />
-        <Accordion.Title
-          inverted
-          active={openUsers}
-          index={0}
-          onClick={handleClick}
-        >
+        <Accordion.Title active={openUsers} index={0} onClick={handleClick}>
           <Header icon as="h2" textAlign="center">
             <Icon name="dropdown" />
             <Header.Content>Users</Header.Content>
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openUsers}>
-          <Card.Group centered itemsPerRow={4}>
+          <XCardGroup>
             {usersQuery.data.users.map(u => {
               return (
                 <Card key={u.id}>
@@ -298,13 +285,14 @@ const XAdminView = () => {
                         onClick={handleUserAdmin}
                         checked={u.isAdmin}
                         type="radio"
+                        style={{ marginTop: "5px" }}
                       />
                     </Card.Description>
                   </Card.Content>
                 </Card>
               );
             })}
-          </Card.Group>
+          </XCardGroup>
         </Accordion.Content>
         <XErrorMessage title="Error Loading Users" err={usersError} />
         <Divider />
@@ -335,7 +323,7 @@ const XAdminView = () => {
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openServices}>
-          <Card.Group centered itemsPerRow={4}>
+          <XCardGroup>
             {servicesQuery.data.services.map(s => {
               return (
                 <Card key={s.id}>
@@ -364,7 +352,7 @@ const XAdminView = () => {
                 </Card>
               );
             })}
-          </Card.Group>
+          </XCardGroup>
         </Accordion.Content>
         <XErrorMessage title="Error Loading Users" err={servicesError} />
         <Divider />
