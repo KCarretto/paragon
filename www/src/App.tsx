@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
+import { XEditor } from "./components/form";
 import { XLayout, XPrivateRoute, XUnimplemented } from "./components/layout";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
@@ -79,6 +80,12 @@ const App = () => {
               exact
               path="/"
               component={XUnimplemented}
+            />
+            <XPrivateRoute
+              authorized={authz}
+              exact
+              path="/editor"
+              component={XEditor}
             />
             <XPrivateRoute
               authorized={authz}
