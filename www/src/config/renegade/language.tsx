@@ -1,49 +1,44 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import * as monaco from "monaco-editor";
 import { BuiltIns } from "./grammar";
-import { Monaco } from "./monaco";
 
 interface ILanguage extends monaco.languages.IMonarchLanguage {
   keywords: string[];
 }
 
-export const LanguageConfig: (
-  m: Monaco
-) => monaco.languages.LanguageConfiguration = (m: Monaco) => {
-  return {
-    comments: { lineComment: "#", blockComment: ["'''", "'''"] },
-    brackets: [
-      ["{", "}"],
-      ["[", "]"],
-      ["(", ")"]
-    ],
-    autoClosingPairs: [
-      { open: "{", close: "}" },
-      { open: "[", close: "]" },
-      { open: "(", close: ")" },
-      { open: '"', close: '"', notIn: ["string"] },
-      { open: "'", close: "'", notIn: ["string", "comment"] }
-    ],
-    surroundingPairs: [
-      { open: "{", close: "}" },
-      { open: "[", close: "]" },
-      { open: "(", close: ")" },
-      { open: '"', close: '"' },
-      { open: "'", close: "'" }
-    ],
-    onEnterRules: [
-      {
-        beforeText: new RegExp("^\\s*(?:def|for|if|elif|else).*?:\\s*$"),
-        action: { indentAction: m.languages.IndentAction.Indent }
-      }
-    ],
-    folding: {
-      offSide: true,
-      markers: {
-        start: new RegExp("^\\s*#region\\b"),
-        end: new RegExp("^\\s*#endregion\\b")
-      }
+export const LanguageConfig: monaco.languages.LanguageConfiguration = {
+  comments: { lineComment: "#", blockComment: ["'''", "'''"] },
+  brackets: [
+    ["{", "}"],
+    ["[", "]"],
+    ["(", ")"]
+  ],
+  autoClosingPairs: [
+    { open: "{", close: "}" },
+    { open: "[", close: "]" },
+    { open: "(", close: ")" },
+    { open: '"', close: '"', notIn: ["string"] },
+    { open: "'", close: "'", notIn: ["string", "comment"] }
+  ],
+  surroundingPairs: [
+    { open: "{", close: "}" },
+    { open: "[", close: "]" },
+    { open: "(", close: ")" },
+    { open: '"', close: '"' },
+    { open: "'", close: "'" }
+  ],
+  onEnterRules: [
+    {
+      beforeText: new RegExp("^\\s*(?:def|for|if|elif|else).*?:\\s*$"),
+      action: { indentAction: monaco.languages.IndentAction.Indent }
     }
-  };
+  ],
+  folding: {
+    offSide: true,
+    markers: {
+      start: new RegExp("^\\s*#region\\b"),
+      end: new RegExp("^\\s*#endregion\\b")
+    }
+  }
 };
 
 export const Language: ILanguage = {

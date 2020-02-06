@@ -1,4 +1,4 @@
-import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import * as monaco from "monaco-editor";
 
 interface IFunc {
   name: string;
@@ -49,9 +49,13 @@ class Param implements IParam {
       case ParamType.OWNERTUPLE:
         return `"\${${index}:owner:group}"`;
       case ParamType.PATH:
-        return `"\${${index}:/path/to/${this.name}}"`;
+        return this.optional
+          ? `${this.name}="\${${index}:/path/to/${this.name}}"`
+          : `"\${${index}:/path/to/${this.name}}"`;
       case ParamType.STR:
-        return `"\${${index}:${this.name}}"`;
+        return this.optional
+          ? `${this.name}="\${${index}:/path/to/${this.name}}"`
+          : `"\${${index}:${this.name}}"`;
       case ParamType.URL:
         return `"\${${index}:http://${this.name}.com}"`;
       case ParamType.BOOL:
@@ -122,7 +126,7 @@ class Func implements IFunc {
 
   public getSignature(): monaco.languages.SignatureInformation {
     return {
-      label: this.name,
+      label: this.getDetail(),
       documentation: {
         value: this.docs
       },
@@ -271,10 +275,10 @@ export const BuiltIns: Func[] = [
     retVal: ParamType.STR,
     params: [
       new Param("request", "TODO", ParamType.URL),
-      new Param("method", "TODO", ParamType.STR),
-      new Param("writeToFile", "TODO", ParamType.PATH),
-      new Param("contentType", "TODO", ParamType.STR),
-      new Param("data", "TODO", ParamType.STR)
+      new Param("method", "TODO", ParamType.STR, true),
+      new Param("writeToFile", "TODO", ParamType.PATH, true),
+      new Param("contentType", "TODO", ParamType.STR, true),
+      new Param("data", "TODO", ParamType.STR, true)
     ]
   }),
   Func.From({
