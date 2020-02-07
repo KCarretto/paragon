@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
 	"time"
 
 	entsql "github.com/facebookincubator/ent/dialect/sql"
@@ -36,21 +37,36 @@ func newGraph(ctx context.Context, logger *zap.Logger) *ent.Client {
 		panic(fmt.Errorf("failed to connect to mysql: missing PG_MYSQL_DSN"))
 	}
 
+	maxConnections := 10
+	if limit := os.Getenv("PG_MYSQL_CONN_LIMIT"); limit != "" {
+		connLimit, err := strconv.Atoi(limit)
+		if err != nil {
+			logger.Error("Invalid value set for PG_MYSQL_CONN_LIMIT, using default", zap.Error(err), zap.String("PG_MYSQL_CONN_LIMIT", limit), zap.Int("default_limit", maxConnections))
+		} else {
+			maxConnections = connLimit
+		}
+	}
+	logger = logger.With(zap.Int("mysql_max_conns", maxConnections))
+
 	db, err := connect(ctx, logger, mysqlDSN)
 	if err != nil {
 		panic(fmt.Errorf("failed to connect to mysql: %w", err))
 	}
 
-	db.SetMaxIdleConns(10)
-	db.SetMaxOpenConns(100)
+	db.SetMaxIdleConns(maxConnections)
+	db.SetMaxOpenConns(maxConnections)
 	db.SetConnMaxLifetime(time.Hour)
 	// Create an ent.Driver from `db`.
 	drv := entsql.OpenDB("mysql", db)
 
 	client := ent.NewClient(ent.Driver(drv))
 	if err := client.Schema.Create(ctx, migrate.WithGlobalUniqueID(true)); err != nil {
+		if err := db.Close(); err != nil {
+			logger.Error("Failed to close MySQL connection", zap.Error(err))
+		}
 		panic(err)
 	}
+	logger.Info("Connected to MySQL")
 
 	return client
 }

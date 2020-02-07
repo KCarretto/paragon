@@ -40,7 +40,7 @@ func (err Error) Error() string {
 type Request struct {
 	Operation string      `json:"operationName"`
 	Query     string      `json:"query"`
-	Variables interface{} `json:"variables"`
+	Variables interface{} `json:"variables,omitempty"`
 }
 
 // A Client can be used to request GraphQL queries and mutations using HTTP.
@@ -100,7 +100,6 @@ func (client *Client) Do(ctx context.Context, request Request, dst interface{}) 
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Received response from teamserver: %s\n", string(tstData))
 
 	// Decode the response
 	// data := json.NewDecoder(httpResp.Body)
