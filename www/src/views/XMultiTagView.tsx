@@ -19,6 +19,10 @@ export const MULTI_TAG_QUERY = gql`
     tags {
       id
       name
+      targets {
+        id
+        name
+      }
     }
   }
 `;
@@ -26,6 +30,24 @@ export const MULTI_TAG_QUERY = gql`
 const CREATE_TAG = gql`
   mutation CreateTag($name: String!) {
     createTag(input: { name: $name }) {
+      id
+      name
+    }
+  }
+`;
+
+const APPLY_TAG_TO_TARGET = gql`
+  mutation ApplyTag($tag: ID!, $targets: [ID!]) {
+    applyTagToTargets(input: { tagID: $tag, targets: $targets }) {
+      id
+      name
+    }
+  }
+`;
+
+const REMOVE_TAG_FROM_TARGET = gql`
+  mutation RemoveTag($tag: ID!, $target: ID!) {
+    removeTagFromTarget(input: { tagID: $tag, entID: $target }) {
       id
       name
     }
@@ -45,8 +67,42 @@ type AddTagToTargetsFormProps = {
   tag: Tag;
 };
 
-const AddTagToTargetsForm = ({ tag }: AddTagToTargetsFormProps) => {
+const AddTagToTargetsForm: FunctionComponent<AddTagToTargetsFormProps> = ({
+  tag
+}) => {
   const [targets, setTargets] = useState<Target[]>([]);
+  const [error, setError] = useState<ApolloError>(null);
+
+  const [applyTag, { called, loading }] = useMutation(APPLY_TAG_TO_TARGET, {
+    refetchQueries: [
+      { query: MULTI_TAG_QUERY },
+      { query: SUGGEST_TAGS_QUERY },
+      { query: SUGGEST_TARGETS_QUERY }
+    ]
+  });
+
+  const handleSubmit = () => {
+    let vars = {
+      tag: tag.id,
+      targets: targets
+    };
+
+    applyTag({
+      variables: vars
+    })
+      .then(({ data, errors }) => {
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
+        }
+      })
+      .catch(err => setError(err));
+  };
 
   return (
     // <Input
@@ -58,13 +114,64 @@ const AddTagToTargetsForm = ({ tag }: AddTagToTargetsFormProps) => {
       onChange={(e, { value }) => setTargets(value)}
       labeled
       input={{
+        loading: loading,
+        error: error !== null,
         fluid: true,
-        label: <Button icon="plus" positive />,
+        label: <Button icon="plus" positive onClick={handleSubmit} />,
         labelPosition: "right"
       }}
     />
     // }
     // />
+  );
+};
+
+type TargetLabelProps = {
+  tag: Tag;
+  target: Target;
+};
+
+const TargetLabel: FunctionComponent<TargetLabelProps> = ({ tag, target }) => {
+  const [error, setError] = useState<ApolloError>(null);
+
+  const [removeTag, { called, loading }] = useMutation(REMOVE_TAG_FROM_TARGET, {
+    refetchQueries: [
+      { query: MULTI_TAG_QUERY },
+      { query: SUGGEST_TAGS_QUERY },
+      { query: SUGGEST_TARGETS_QUERY }
+    ]
+  });
+
+  const handleRemove = () => {
+    let vars = {
+      tag: tag.id,
+      target: target.id
+    };
+    console.log("APPLY VARS", vars);
+
+    removeTag({
+      variables: vars
+    })
+      .then(({ data, errors }) => {
+        if (errors && errors.length > 0) {
+          let s = errors.map(e => e.message);
+          let e = new ApolloError({
+            graphQLErrors: errors,
+            errorMessage: s.join("\n")
+          });
+          setError(e);
+          return;
+        }
+      })
+      .catch(err => setError(err));
+  };
+  return (
+    <Button.Group labeled>
+      <Button compact as={Link} to={"/targets/" + target.id}>
+        {target.name}
+      </Button>
+      <Button compact negative icon="x" onClick={handleRemove} />
+    </Button.Group>
   );
 };
 
@@ -132,11 +239,9 @@ const XTagTableRow: FunctionComponent<XTagTableRowProps> = ({ tag }) => {
         {tag.name}
       </Table.Cell>
       <Table.Cell collapsing width={8}>
-        {tag.targets
+        {tag.targets && tag.targets.length > 0
           ? tag.targets.map((target, index) => (
-              <Link key={index} to={"/targets/" + target.id}>
-                {target.name}
-              </Link>
+              <TargetLabel key={index} tag={tag} target={target} />
             ))
           : "No Targets"}
       </Table.Cell>
