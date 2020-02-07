@@ -33,6 +33,11 @@ type ApplyTagRequest struct {
 	EntID int `json:"entID"`
 }
 
+type ApplyTagToTargetsRequest struct {
+	TagID   int   `json:"tagID"`
+	Targets []int `json:"targets"`
+}
+
 type ChangeNameRequest struct {
 	Name string `json:"name"`
 }
