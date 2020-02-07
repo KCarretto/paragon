@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
-import { XLayout, XPrivateRoute, XUnimplemented } from "./components/layout";
+import { XLayout, XPrivateRoute } from "./components/layout";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
@@ -78,7 +78,7 @@ const App = () => {
               authorized={authz}
               exact
               path="/"
-              component={XUnimplemented}
+              component={XEventFeedView}
             />
             <XPrivateRoute
               authorized={authz}
