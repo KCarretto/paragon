@@ -46,14 +46,23 @@ func newGraph(ctx context.Context, logger *zap.Logger) *ent.Client {
 			maxConnections = connLimit
 		}
 	}
-	logger = logger.With(zap.Int("mysql_max_conns", maxConnections))
+	maxIdle := 10
+	if limit := os.Getenv("PG_MYSQL_IDLE_LIMIT"); limit != "" {
+		idleLimit, err := strconv.Atoi(limit)
+		if err != nil {
+			logger.Error("Invalid value set for PG_MYSQL_IDLE_LIMIT, using default", zap.Error(err), zap.String("PG_MYSQL_IDLE_LIMIT", limit), zap.Int("default_limit", maxIdle))
+		} else {
+			maxIdle = idleLimit
+		}
+	}
+	logger = logger.With(zap.Int("mysql_max_conns", maxConnections), zap.Int("mysql_max_idle", maxIdle))
 
 	db, err := connect(ctx, logger, mysqlDSN)
 	if err != nil {
 		panic(fmt.Errorf("failed to connect to mysql: %w", err))
 	}
 
-	db.SetMaxIdleConns(maxConnections)
+	db.SetMaxIdleConns(maxIdle)
 	db.SetMaxOpenConns(maxConnections)
 	db.SetConnMaxLifetime(time.Hour)
 	// Create an ent.Driver from `db`.
