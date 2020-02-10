@@ -39,6 +39,26 @@ func (test *testResolver) newTarget(t *testing.T, options ...func(*ent.TargetCre
 	return target
 }
 
+func (test *testResolver) newTask(t *testing.T, options ...func(*ent.TaskCreate)) *ent.Task {
+	u, err := test.Client.User.Create().SetName("joe").SetOAuthID("who").SetPhotoURL("uneccsarybutfine").Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create user: %w", err)
+	}
+	job, err := test.Client.Job.Create().SetName("test").SetOwner(u).SetContent("wat").Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create job: %w", err)
+	}
+	taskCreater := test.Client.Task.Create().SetContent("test").SetLastChangedTime(time.Now()).SetJob(job)
+	if err != nil {
+		t.Errorf("failed to create task: %w", err)
+	}
+	for _, opt := range options {
+		opt(taskCreater)
+	} // Maybe put this before and see if we can find out if job is empty before creating our test one?
+	task, _ := taskCreater.Save(context.Background())
+	return task
+}
+
 func NewTestClient() *testResolver {
 	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	if err != nil {
@@ -95,10 +115,7 @@ func TestTargetsQuery(t *testing.T) {
 func TestTargetQuery(t *testing.T) {
 	client := NewTestClient()
 	defer client.Close()
-	target, err := client.Target.Create().SetHostname("test").SetName("test").SetPrimaryIP("test").Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create target: %w", err)
-	}
+	target := client.newTarget(t)
 	query := client.Resolver.Query()
 	queriedTarget, err := query.Target(context.Background(), target.ID)
 	if err != nil {
@@ -109,21 +126,10 @@ func TestTargetQuery(t *testing.T) {
 	}
 }
 
-func TestJobQuery(t *testing.T) {
+func TestTaskQuery(t *testing.T) {
 	client := NewTestClient()
 	defer client.Close()
-	u, err := client.User.Create().SetName("joe").SetOAuthID("who").SetPhotoURL("uneccsarybutfine").Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create user: %w", err)
-	}
-	job, err := client.Job.Create().SetName("test").SetOwner(u).SetContent("wat").Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create job: %w", err)
-	}
-	task, err := client.Task.Create().SetContent("test").SetLastChangedTime(time.Now()).SetJob(job).Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create task: %w", err)
-	}
+	task := client.newTask(t)
 	query := client.Resolver.Query()
 	queriedTask, err := query.Task(context.Background(), task.ID)
 	if err != nil {
@@ -134,21 +140,10 @@ func TestJobQuery(t *testing.T) {
 	}
 }
 
-func TestJobsQuery(t *testing.T) {
+func TestTasksQuery(t *testing.T) {
 	client := NewTestClient()
 	defer client.Close()
-	u, err := client.User.Create().SetName("joe").SetOAuthID("who").SetPhotoURL("uneccsarybutfine").Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create user: %w", err)
-	}
-	job, err := client.Job.Create().SetName("test").SetOwner(u).SetContent("wat").Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create job: %w", err)
-	}
-	_, err = client.Task.Create().SetContent("test").SetLastChangedTime(time.Now()).SetJob(job).Save(context.Background())
-	if err != nil {
-		t.Errorf("failed to create task: %w", err)
-	}
+	client.newTask(t)
 	query := client.Resolver.Query()
 	queriedTasks, err := query.Tasks(context.Background(), &models.Filter{})
 	if err != nil {
