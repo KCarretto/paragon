@@ -16,6 +16,9 @@ func (Target) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
 			Comment("The name of the Target"),
+		field.String("Type").
+			Optional().
+			Comment("Type of device ex: VM, Server, Network, Container"),
 		field.String("PrimaryIP").
 			Comment("The IP Address for the primary interface of the Target"),
 		field.String("MachineUUID").
