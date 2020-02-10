@@ -27,8 +27,16 @@ type testResolver struct {
 // 	return t.TargetClient.Create().SetHostname("test").SetName("test").SetPrimaryIP("test")
 // }
 
-func newTarget(client *testResolver) *ent.TargetCreate {
-	return client.Target.Create().SetHostname("test").SetName("test").SetPrimaryIP("test")
+func (test *testResolver) newTarget(t *testing.T, options ...func(*ent.TargetCreate)) *ent.Target {
+	targetCreater := test.Client.Target.Create().SetHostname("test").SetName("test").SetPrimaryIP("test")
+	for _, opt := range options {
+		opt(targetCreater)
+	}
+	target, err := targetCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create target: %w", err)
+	}
+	return target
 }
 
 func NewTestClient() *testResolver {
@@ -59,14 +67,8 @@ func testClient() *ent.Client {
 func TestTargetsQuery(t *testing.T) {
 	client := NewTestClient()
 	defer client.Close()
-	createOrFail := func(target *ent.TargetCreate) {
-		_, err := target.Save(context.Background())
-		if err != nil {
-			t.Errorf("failed to create target: %w", err)
-		}
-	}
-	createOrFail(newTarget(client).SetName("test"))
-	createOrFail(newTarget(client).SetName("test2"))
+	client.newTarget(t, func(target *ent.TargetCreate) { target.SetName("test") })
+	client.newTarget(t, func(target *ent.TargetCreate) { target.SetName("test2") })
 
 	query := client.Resolver.Query()
 	targets, err := query.Targets(context.Background(), &models.Filter{})
