@@ -2,6 +2,7 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { Card, Image, Loader, Radio } from "semantic-ui-react";
+import { XCardGroup } from "../components/layout";
 import { XErrorMessage } from "../components/messages";
 import XUserChangeNameModal from "../components/user/XUserChangeNameModel";
 import { User } from "../graphql/models";
@@ -28,7 +29,7 @@ const XProfileView = () => {
   );
 
   return (
-    <Card.Group centered itemsPerRow={3}>
+    <XCardGroup>
       <Loader disabled={!called || !loading} />
       {!data || !data.me ? (
         "hiii" + <span />
@@ -54,6 +55,7 @@ const XProfileView = () => {
                 toggle
                 checked={data.me.isAdmin}
                 type="radio"
+                style={{ marginTop: "5px", marginBottom: "5px" }}
               />
               <XUserChangeNameModal />
             </Card.Description>
@@ -61,7 +63,7 @@ const XProfileView = () => {
         </Card>
       )}
       <XErrorMessage title="Error Loading Profile" err={error} />
-    </Card.Group>
+    </XCardGroup>
   );
 };
 

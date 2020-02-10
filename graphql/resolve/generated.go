@@ -414,6 +414,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		}
 	}
 	_, err = r.Graph.Event.Create().
+		SetCreationTime(currentTime).
 		SetOwner(actor).
 		SetJob(job).
 		SetKind(event.KindCREATEJOB).
@@ -454,19 +455,24 @@ func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.App
 	}
 	return task, err
 }
-func (r *mutationResolver) ApplyTagToTarget(ctx context.Context, input *models.ApplyTagRequest) (*ent.Target, error) {
-	target, err := r.Graph.Target.UpdateOneID(input.EntID).
-		AddTagIDs(input.TagID).
-		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetTarget(target).
-		SetKind(event.KindAPPLYTAGTOTARGET).
-		Save(ctx)
-	if err != nil {
-		return target, err
+func (r *mutationResolver) ApplyTagToTargets(ctx context.Context, input *models.ApplyTagToTargetsRequest) ([]*ent.Target, error) {
+	var targets []*ent.Target
+	for _, targetID := range input.Targets {
+		t, err := r.Graph.Target.UpdateOneID(targetID).
+			AddTagIDs(input.TagID).
+			Save(ctx)
+		if err != nil {
+			return targets, err
+		}
+		targets = append(targets, t)
+		r.Graph.Event.Create().
+			SetOwner(auth.GetUser(ctx)).
+			SetTarget(t).
+			SetTagID(input.TagID).
+			SetKind(event.KindAPPLYTAGTOTARGET).
+			Save(ctx)
 	}
-	return target, err
+	return targets, nil
 }
 func (r *mutationResolver) ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (*ent.Job, error) {
 	job, err := r.Graph.Job.UpdateOneID(input.EntID).

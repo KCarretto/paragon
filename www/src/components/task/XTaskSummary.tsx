@@ -16,11 +16,13 @@ type TaskSummaryParams = {
 };
 
 const getName = (task: Task, display: XTaskSummaryDisplayType) => {
+  let target = task.target || { name: "Service Task" };
+
   switch (display) {
     case XTaskSummaryDisplayType.JOB:
       return task.job.name;
     case XTaskSummaryDisplayType.TARGET:
-      return task.target.name;
+      return target.name;
   }
 };
 

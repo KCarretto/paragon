@@ -15,12 +15,7 @@ import {
 } from "semantic-ui-react";
 import { Tag, Target } from "../../graphql/models";
 import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY } from "../../views";
-import {
-  useModal,
-  XScriptEditor,
-  XTagTypeahead,
-  XTargetTypeahead
-} from "../form";
+import { useModal, XEditor, XTagTypeahead, XTargetTypeahead } from "../form";
 
 export const QUEUE_JOB_MUTATION = gql`
   mutation QueueJob(
@@ -135,9 +130,12 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
           {name ? name : "Script"}
         </Header>
         <Form.Field
-          control={XScriptEditor}
-          content={content}
-          onChange={(e, { value }) => setContent(value)}
+          control={XEditor}
+          value={content}
+          onChange={(e, value) => setContent(value)}
+          // control={XScriptEditor}
+          // content={content}
+          // onChange={(e, { value }) => setContent(value)}
         />
         <Message
           error

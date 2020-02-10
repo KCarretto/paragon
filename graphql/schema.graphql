@@ -163,6 +163,11 @@ input ApplyTagRequest {
   entID: ID!
 }
 
+input ApplyTagToTargetsRequest {
+  tagID: ID!
+  targets: [ID!]
+}
+
 input RemoveTagRequest {
   tagID: ID!
   entID: ID!
@@ -270,7 +275,7 @@ type Mutation {
   # Tag Mutations
   createTag(input: CreateTagRequest): Tag!
   applyTagToTask(input: ApplyTagRequest): Task!
-  applyTagToTarget(input: ApplyTagRequest): Target!
+  applyTagToTargets(input: ApplyTagToTargetsRequest): [Target!]
   applyTagToJob(input: ApplyTagRequest): Job!
   removeTagFromTask(input: RemoveTagRequest): Task!
   removeTagFromTarget(input: RemoveTagRequest): Target!

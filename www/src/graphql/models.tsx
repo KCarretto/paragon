@@ -39,6 +39,11 @@ export type ApplyTagRequest = {
   entID: Scalars['ID'],
 };
 
+export type ApplyTagToTargetsRequest = {
+  tagID: Scalars['ID'],
+  targets?: Maybe<Array<Scalars['ID']>>,
+};
+
 export type ChangeNameRequest = {
   name: Scalars['String'],
 };
@@ -198,7 +203,7 @@ export type Mutation = {
   /** Tag Mutations */
   createTag: Tag,
   applyTagToTask: Task,
-  applyTagToTarget: Target,
+  applyTagToTargets?: Maybe<Array<Target>>,
   applyTagToJob: Job,
   removeTagFromTask: Task,
   removeTagFromTarget: Target,
@@ -250,8 +255,8 @@ export type MutationApplyTagToTaskArgs = {
 };
 
 
-export type MutationApplyTagToTargetArgs = {
-  input?: Maybe<ApplyTagRequest>
+export type MutationApplyTagToTargetsArgs = {
+  input?: Maybe<ApplyTagToTargetsRequest>
 };
 
 

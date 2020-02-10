@@ -2,8 +2,13 @@ import { useQuery } from "@apollo/react-hooks";
 import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
-import { useState } from "react";
-import { Dropdown, DropdownItemProps, Input } from "semantic-ui-react";
+import { FunctionComponent, useState } from "react";
+import {
+  Dropdown,
+  DropdownItemProps,
+  Input,
+  InputProps
+} from "semantic-ui-react";
 import { Tag, Target } from "../../graphql/models";
 
 // Suggest targets and tags, but only suggest tags that have at least one target.
@@ -30,10 +35,23 @@ type TargetsResult = {
   targets: Target[];
 };
 
+export type XTargetTypeaheadProps = {
+  onChange: (e: any, props: any) => void;
+  labeled?: boolean;
+  input?: InputProps;
+  // label?: React.ReactNode;
+  // labelPosition?: "left" | "right" | "left corner" | "right corner";
+  // iconPosition?: "left";
+};
+
 // XTargetTypeahead adds a targets field to a form, which is an array of target ids. It provides
 // tag suggestions as well, to allow the user to easily specify a set of targets with a tag.
 // NOTE: Assumes global unique ids, no conflicts from tag & target ids.
-const XTargetTypeahead = ({ onChange, labeled }) => {
+const XTargetTypeahead: FunctionComponent<XTargetTypeaheadProps> = ({
+  onChange,
+  labeled,
+  input
+}) => {
   // optMap: Map of id => { text: name, value: id }
   // tagMap: Map of tag => [targets]
   // values: [tag id | target id]
@@ -132,7 +150,14 @@ const XTargetTypeahead = ({ onChange, labeled }) => {
   );
 
   if (labeled) {
-    return <Input fluid icon="desktop" label="Targets" input={getDropdown()} />;
+    if (!input) {
+      input = {
+        fluid: true,
+        icon: "desktop",
+        label: "Targets"
+      };
+    }
+    return <Input {...input} input={getDropdown()} />;
   }
   return getDropdown();
 };
