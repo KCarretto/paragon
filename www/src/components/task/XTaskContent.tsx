@@ -11,7 +11,7 @@ const XTaskContent = ({ content }: Params) => (
       <Icon name="code" />
       <Header.Content>Content</Header.Content>
     </Header>
-    <Segment raised attached>
+    <Segment raised attached style={{ overflow: "auto" }}>
       <pre>{content !== null ? content : "No Content Available"}</pre>
     </Segment>
   </React.Fragment>
