@@ -14,7 +14,7 @@ import { XTargetHeader } from "../components/target";
 import { XTaskCard, XTaskCardDisplayType } from "../components/task";
 import { Target } from "../graphql/models";
 
-const TARGET_QUERY = gql`
+export const TARGET_QUERY = gql`
   query Target($id: ID!) {
     target(id: $id) {
       id
