@@ -1,16 +1,16 @@
 import { useMutation, useQuery } from "@apollo/react-hooks";
-import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Icon, Input, Loader, Table } from "semantic-ui-react";
+import { Button, Icon, Input, Table } from "semantic-ui-react";
 import {
   SUGGEST_TAGS_QUERY,
   SUGGEST_TARGETS_QUERY,
   XTargetTypeahead
 } from "../components/form";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XNoTagsFound } from "../components/tag";
 import { Tag, Target } from "../graphql/models";
 
@@ -54,11 +54,6 @@ const REMOVE_TAG_FROM_TARGET = gql`
   }
 `;
 
-// export const ADD_TAG_TO_TARGETS_MUTATION = gql`
-// {
-
-// }`;
-
 export type MultiTagResponse = {
   tags: Tag[];
 };
@@ -71,9 +66,8 @@ const AddTagToTargetsForm: FunctionComponent<AddTagToTargetsFormProps> = ({
   tag
 }) => {
   const [targets, setTargets] = useState<Target[]>([]);
-  const [error, setError] = useState<ApolloError>(null);
 
-  const [applyTag, { called, loading }] = useMutation(APPLY_TAG_TO_TARGET, {
+  const [applyTag, { loading, error }] = useMutation(APPLY_TAG_TO_TARGET, {
     refetchQueries: [
       { query: MULTI_TAG_QUERY },
       { query: SUGGEST_TAGS_QUERY },
@@ -89,27 +83,10 @@ const AddTagToTargetsForm: FunctionComponent<AddTagToTargetsFormProps> = ({
 
     applyTag({
       variables: vars
-    })
-      .then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setError(e);
-          return;
-        }
-      })
-      .catch(err => setError(err));
+    });
   };
 
   return (
-    // <Input
-    //   fluid
-    //   label={}
-    //   labelPosition="right"
-    // input={
     <XTargetTypeahead
       onChange={(e, { value }) => setTargets(value)}
       labeled
@@ -121,8 +98,6 @@ const AddTagToTargetsForm: FunctionComponent<AddTagToTargetsFormProps> = ({
         labelPosition: "right"
       }}
     />
-    // }
-    // />
   );
 };
 
@@ -132,9 +107,7 @@ type TargetLabelProps = {
 };
 
 const TargetLabel: FunctionComponent<TargetLabelProps> = ({ tag, target }) => {
-  const [error, setError] = useState<ApolloError>(null);
-
-  const [removeTag, { called, loading }] = useMutation(REMOVE_TAG_FROM_TARGET, {
+  const [removeTag] = useMutation(REMOVE_TAG_FROM_TARGET, {
     refetchQueries: [
       { query: MULTI_TAG_QUERY },
       { query: SUGGEST_TAGS_QUERY },
@@ -147,24 +120,12 @@ const TargetLabel: FunctionComponent<TargetLabelProps> = ({ tag, target }) => {
       tag: tag.id,
       target: target.id
     };
-    console.log("APPLY VARS", vars);
 
     removeTag({
       variables: vars
-    })
-      .then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setError(e);
-          return;
-        }
-      })
-      .catch(err => setError(err));
+    });
   };
+
   return (
     <Button.Group labeled>
       <Button compact as={Link} to={"/targets/" + target.id}>
@@ -177,9 +138,8 @@ const TargetLabel: FunctionComponent<TargetLabelProps> = ({ tag, target }) => {
 
 const AddTagForm = () => {
   const [name, setName] = useState("");
-  const [error, setError] = useState<ApolloError>(null);
 
-  const [createTag, { called, loading }] = useMutation(CREATE_TAG, {
+  const [createTag, { loading, error }] = useMutation(CREATE_TAG, {
     refetchQueries: [
       { query: MULTI_TAG_QUERY },
       { query: SUGGEST_TAGS_QUERY },
@@ -194,20 +154,7 @@ const AddTagForm = () => {
 
     createTag({
       variables: vars
-    })
-      .then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setError(e);
-          return;
-        }
-        setName("");
-      })
-      .catch(err => setError(err));
+    });
   };
 
   return (
@@ -232,6 +179,8 @@ type XTagTableRowProps = {
 };
 
 const XTagTableRow: FunctionComponent<XTagTableRowProps> = ({ tag }) => {
+  const whenEmpty = <span>No Targets</span>;
+
   return (
     <Table.Row>
       <Table.Cell width={2}>
@@ -239,11 +188,14 @@ const XTagTableRow: FunctionComponent<XTagTableRowProps> = ({ tag }) => {
         {tag.name}
       </Table.Cell>
       <Table.Cell collapsing width={8}>
-        {tag.targets && tag.targets.length > 0
-          ? tag.targets.map((target, index) => (
-              <TargetLabel key={index} tag={tag} target={target} />
-            ))
-          : "No Targets"}
+        <XBoundary
+          boundary={whenEmpty}
+          show={tag.targets && tag.targets.length > 0}
+        >
+          {tag.targets.map((target, index) => (
+            <TargetLabel key={index} tag={tag} target={target} />
+          ))}
+        </XBoundary>
       </Table.Cell>
       <Table.Cell width={4} singleLine collapsing textAlign="left">
         <AddTagToTargetsForm tag={tag} />
@@ -253,52 +205,54 @@ const XTagTableRow: FunctionComponent<XTagTableRowProps> = ({ tag }) => {
 };
 
 const XMultiTagView = () => {
-  const { called, loading, error, data } = useQuery<MultiTagResponse>(
-    MULTI_TAG_QUERY
+  const { loading, error, data: { tags = [] } = {} } = useQuery<
+    MultiTagResponse
+  >(MULTI_TAG_QUERY, {
+    pollInterval: 5000
+  });
+
+  const whenLoading = (
+    <XLoadingMessage title="Loading Tags" msg="Fetching tag info" />
   );
-
-  const showList = () => {
-    return (
-      <Table celled>
-        <Table.Header>
-          <Table.Row>
-            <Table.HeaderCell>Tag</Table.HeaderCell>
-            <Table.HeaderCell colSpan="2">Targets</Table.HeaderCell>
-          </Table.Row>
-        </Table.Header>
-
-        <Table.Body>
-          {data && data.tags && data.tags.length > 0 ? (
-            data.tags.map((tag, index) => (
-              <XTagTableRow key={index} tag={tag} />
-            ))
-          ) : (
-            <Table.Row>
-              <Table.HeaderCell colSpan="3">
-                <XNoTagsFound />
-              </Table.HeaderCell>
-            </Table.Row>
-          )}
-        </Table.Body>
-        <Table.Footer fullWidth>
-          <Table.Row>
-            <Table.HeaderCell width={12} colSpan="2" />
-            <Table.HeaderCell width={4} textAlign="right">
-              <AddTagForm />
-            </Table.HeaderCell>
-          </Table.Row>
-        </Table.Footer>
-      </Table>
-    );
-  };
+  const whenEmpty = (
+    <Table.Row>
+      <Table.HeaderCell colSpan="3">
+        <XNoTagsFound />
+      </Table.HeaderCell>
+    </Table.Row>
+  );
 
   return (
     <React.Fragment>
-      <Loader disabled={!called || !loading} />
-
-      {showList()}
-
       <XErrorMessage title="Error Loading Tags" err={error} />
+
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <Table celled style={{ overflow: "auto" }}>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Tag</Table.HeaderCell>
+              <Table.HeaderCell colSpan="2">Targets</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+
+          <Table.Body>
+            <XBoundary boundary={whenEmpty} show={tags.length > 0}>
+              {tags.map((tag, index) => (
+                <XTagTableRow key={index} tag={tag} />
+              ))}
+            </XBoundary>
+          </Table.Body>
+
+          <Table.Footer fullWidth>
+            <Table.Row>
+              <Table.HeaderCell width={12} colSpan="2" />
+              <Table.HeaderCell width={4} textAlign="right">
+                <AddTagForm />
+              </Table.HeaderCell>
+            </Table.Row>
+          </Table.Footer>
+        </Table>
+      </XBoundary>
     </React.Fragment>
   );
 };

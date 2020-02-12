@@ -1,12 +1,19 @@
 import { useMutation, useQuery } from "@apollo/react-hooks";
-import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import { Accordion, Card, Divider, Header, Icon, Image, Loader, Radio } from "semantic-ui-react";
+import {
+  Accordion,
+  Card,
+  Divider,
+  Header,
+  Icon,
+  Image,
+  Radio
+} from "semantic-ui-react";
 import XClipboard from "../components/form/XClipboard";
-import { XCardGroup } from "../components/layout";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary, XCardGroup } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { Service, User } from "../graphql/models";
 
 export const ADMIN_USERS_QUERY = gql`
@@ -106,37 +113,58 @@ export type UsersResponse = {
 export type ServicesResponse = {
   services: Service[];
 };
+
 const XAdminView = () => {
   const [openUsers, setOpenUsers] = useState<boolean>(false);
   const [openServices, setOpenServices] = useState<boolean>(false);
-  const [servicesError, setServicesError] = useState<ApolloError>(null);
-  const [usersError, setUsersError] = useState<ApolloError>(null);
 
-  const usersQuery = useQuery<UsersResponse>(ADMIN_USERS_QUERY, {
-    onError: err => setUsersError(err)
-  });
-  const servicesQuery = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY, {
-    onError: err => setServicesError(err)
-  });
+  const {
+    loading: userLoading,
+    error: userError,
+    data: { users = [] } = {}
+  } = useQuery<UsersResponse>(ADMIN_USERS_QUERY);
+  const {
+    loading: svcLoading,
+    error: svcError,
+    data: { services = [] } = {}
+  } = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY);
 
-  const [activateUser] = useMutation(ACTIVATE_USER_MUTATION, {
-    refetchQueries: [{ query: ADMIN_USERS_QUERY }]
-  });
-  const [deactivateUser] = useMutation(DEACTIVATE_USER_MUTATION, {
-    refetchQueries: [{ query: ADMIN_USERS_QUERY }]
-  });
-  const [activateService] = useMutation(ACTIVATE_SERVICE_MUTATION, {
-    refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
-  });
-  const [deactivateService] = useMutation(DEACTIVATE_SERVICE_MUTATION, {
-    refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
-  });
-  const [makeAdmin] = useMutation(MAKE_ADMIN_MUTATION, {
-    refetchQueries: [{ query: ADMIN_USERS_QUERY }]
-  });
-  const [removeAdmin] = useMutation(REMOVE_ADMIN_MUTATION, {
-    refetchQueries: [{ query: ADMIN_USERS_QUERY }]
-  });
+  const [activateUser, { error: activateUserError }] = useMutation(
+    ACTIVATE_USER_MUTATION,
+    {
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+    }
+  );
+  const [deactivateUser, { error: deactivateUserError }] = useMutation(
+    DEACTIVATE_USER_MUTATION,
+    {
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+    }
+  );
+  const [activateService, { error: activateServiceError }] = useMutation(
+    ACTIVATE_SERVICE_MUTATION,
+    {
+      refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
+    }
+  );
+  const [deactivateService, { error: deactivateServiceError }] = useMutation(
+    DEACTIVATE_SERVICE_MUTATION,
+    {
+      refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
+    }
+  );
+  const [makeAdmin, { error: makeAdminError }] = useMutation(
+    MAKE_ADMIN_MUTATION,
+    {
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+    }
+  );
+  const [removeAdmin, { error: removeAdminError }] = useMutation(
+    REMOVE_ADMIN_MUTATION,
+    {
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+    }
+  );
 
   const handleClick = (e, titleProps) => {
     const { index } = titleProps;
@@ -148,108 +176,30 @@ const XAdminView = () => {
   };
 
   const handleUserActivate = (e, p) => {
-    if (p.checked) {
-      activateUser({
-        variables: { id: p.value }
-      }).then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setUsersError(e);
-          return;
-        }
-      });
-    } else {
-      deactivateUser({
-        variables: { id: p.value }
-      }).then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setUsersError(e);
-          return;
-        }
-      });
-    }
+    p.checked
+      ? activateUser({
+          variables: { id: p.value }
+        })
+      : deactivateUser({
+          variables: { id: p.value }
+        });
   };
 
   const handleUserAdmin = (e, p) => {
-    if (p.checked) {
-      makeAdmin({ variables: { id: p.value } }).then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setUsersError(e);
-          return;
-        }
-      });
-    } else {
-      removeAdmin({ variables: { id: p.value } }).then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setUsersError(e);
-          return;
-        }
-      });
-    }
+    p.checked
+      ? makeAdmin({ variables: { id: p.value } })
+      : removeAdmin({ variables: { id: p.value } });
   };
 
   const handleServiceActivate = (e, p) => {
-    if (p.checked) {
-      activateService({
-        variables: { id: p.value }
-      }).then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setServicesError(e);
-          return;
-        }
-      });
-    } else {
-      deactivateService({
-        variables: { id: p.value }
-      }).then(({ data, errors }) => {
-        if (errors && errors.length > 0) {
-          let s = errors.map(e => e.message);
-          let e = new ApolloError({
-            graphQLErrors: errors,
-            errorMessage: s.join("\n")
-          });
-          setServicesError(e);
-          return;
-        }
-      });
-    }
+    p.checked
+      ? activateService({ variables: { id: p.value } })
+      : deactivateService({ variables: { id: p.value } });
   };
 
   const showUsers = () => {
-    if (
-      !usersQuery.data ||
-      !usersQuery.data.users ||
-      usersQuery.data.users.length < 1
-    ) {
-      return <span />;
-    }
     return (
       <React.Fragment>
-        <Loader disabled={!usersQuery.called || !usersQuery.loading} />
         <Accordion.Title active={openUsers} index={0} onClick={handleClick}>
           <Header icon as="h2" textAlign="center">
             <Icon name="dropdown" />
@@ -257,8 +207,9 @@ const XAdminView = () => {
           </Header>
         </Accordion.Title>
         <Accordion.Content active={openUsers}>
+          <XErrorMessage title="Error Loading Users" err={userError} />
           <XCardGroup>
-            {usersQuery.data.users.map(u => {
+            {users.map(u => {
               return (
                 <Card key={u.id}>
                   {u.photoURL !== "" ? (
@@ -287,6 +238,14 @@ const XAdminView = () => {
                         type="radio"
                         style={{ marginTop: "5px" }}
                       />
+                      <XErrorMessage
+                        title="Error Updating User"
+                        err={activateUserError || deactivateUserError}
+                      />
+                      <XErrorMessage
+                        title="Error Updating Admin"
+                        err={makeAdminError || removeAdminError}
+                      />
                     </Card.Description>
                   </Card.Content>
                 </Card>
@@ -294,23 +253,14 @@ const XAdminView = () => {
             })}
           </XCardGroup>
         </Accordion.Content>
-        <XErrorMessage title="Error Loading Users" err={usersError} />
         <Divider />
       </React.Fragment>
     );
   };
 
   const showServices = () => {
-    if (
-      !servicesQuery.data ||
-      !servicesQuery.data.services ||
-      servicesQuery.data.services.length < 1
-    ) {
-      return <span />;
-    }
     return (
       <React.Fragment>
-        <Loader disabled={!servicesQuery.called || !servicesQuery.loading} />
         <Accordion.Title
           inverted
           active={openServices}
@@ -322,9 +272,11 @@ const XAdminView = () => {
             <Header.Content>Services</Header.Content>
           </Header>
         </Accordion.Title>
+
         <Accordion.Content active={openServices}>
+          <XErrorMessage title="Error Loading Services" err={svcError} />
           <XCardGroup>
-            {servicesQuery.data.services.map(s => {
+            {services.map(s => {
               return (
                 <Card key={s.id}>
                   <Image src="/app/default_profile.gif" wrapped ui={false} />
@@ -338,6 +290,10 @@ const XAdminView = () => {
                         checked={s.isActivated}
                         toggle
                         type="radio"
+                      />
+                      <XErrorMessage
+                        title="Error Updating Service"
+                        err={activateServiceError || deactivateServiceError}
                       />
                     </Card.Description>
                   </Card.Content>
@@ -354,17 +310,37 @@ const XAdminView = () => {
             })}
           </XCardGroup>
         </Accordion.Content>
-        <XErrorMessage title="Error Loading Users" err={servicesError} />
         <Divider />
       </React.Fragment>
     );
   };
 
+  const whenSVCLoading = (
+    <XLoadingMessage title="Loading Services" msg="Fetching Service Info" />
+  );
+  const whenSVCEmpty = <h1>No Services Loaded</h1>;
+
+  const whenUserLoading = (
+    <XLoadingMessage title="Loading Users" msg="Fetching User Info" />
+  );
+  const whenUserEmpty = <h1>No Users Loaded</h1>;
+
   return (
-    <Accordion>
-      {showUsers()}
-      {showServices()}
-    </Accordion>
+    <React.Fragment>
+      <Accordion>
+        <XBoundary boundary={whenUserLoading} show={!userLoading}>
+          <XBoundary boundary={whenUserEmpty} show={users.length > 0}>
+            {showUsers()}
+          </XBoundary>
+        </XBoundary>
+
+        <XBoundary boundary={whenSVCLoading} show={!svcLoading}>
+          <XBoundary boundary={whenSVCEmpty} show={services.length > 0}>
+            {showServices()}
+          </XBoundary>
+        </XBoundary>
+      </Accordion>
+    </React.Fragment>
   );
 };
 
