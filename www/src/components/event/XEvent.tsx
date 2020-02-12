@@ -40,6 +40,15 @@ const XEventNounFile = () => <span />;
 const XEventNounLink = () => <span />;
 
 const GetEventActor: (event: Event) => EventActor = (event: Event) => {
+  if (event.kind === EventKind.ACTIVATE_USER) {
+    return {
+      id: event!.user!.id || "0",
+      name: event!.user!.name || "anonymous walrus",
+      imgURL: event!.user.photoURL || "/app/default_profile.gif",
+      isUser: true
+    };
+  }
+
   if (event.owner !== null) {
     return {
       id: event!.owner!.id || "0",

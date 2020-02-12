@@ -8,7 +8,7 @@ import { Event } from "../graphql/models";
 
 export const EVENT_FEED_QUERY = gql`
   {
-    events(input: { limit: 10 }) {
+    events(input: { limit: 100 }) {
       id
       creationTime
       kind
@@ -51,6 +51,7 @@ export const EVENT_FEED_QUERY = gql`
       user {
         id
         name
+        photoURL
         isActivated
         isAdmin
       }
@@ -69,6 +70,7 @@ export const EVENT_FEED_QUERY = gql`
       owner {
         id
         name
+        photoURL
         isActivated
         isAdmin
       }
