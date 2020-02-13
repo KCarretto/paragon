@@ -13,6 +13,8 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 		return starlark.None, nil
 	}
 	switch v := value.(type) {
+	case starlark.Value:
+		return v, nil
 	case bool:
 		return starlark.Bool(v), nil
 	case int:

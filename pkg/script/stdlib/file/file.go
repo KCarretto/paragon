@@ -22,28 +22,20 @@ type File interface {
 	Remove() error
 }
 
-// file wraps a provided File implementation to implement a starlark.Value
-// type file struct {
-// 	f File
-// }
-
-// Import the sys library to enable scripts to access low level system functionality.
-func Import() script.Library {
+// Library prepares a new file library for use within a script environment.
+func Library() script.Library {
 	return script.Library{
-		// openFile
-		// exists
-		// name
-		// path
-		// content
-		// write
-		// replace
-		// copy
-		// move
-		// remove
-		// setOwner
-		// setWrite
-		// setRead
-		// setExec
-		// setSUID
+		"move":    script.Func(move),
+		"name":    script.Func(name),
+		"content": script.Func(content),
+		"write":   script.Func(write),
+		"copy":    script.Func(copy),
+		"remove":  script.Func(remove),
+		"chown":   script.Func(chown),
 	}
+}
+
+// Include the file library in a script environment.
+func Include() script.Option {
+	return script.WithLibrary("file", Library())
 }
