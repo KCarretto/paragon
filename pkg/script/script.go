@@ -52,11 +52,17 @@ func (script Script) Exec(ctx context.Context) error {
 	return nil
 }
 
-func (script Script) compilePredeclared() (builtins starlark.StringDict) {
+func (script Script) compilePredeclared() starlark.StringDict {
+	builtins := make(starlark.StringDict)
+
 	for name, fn := range script.Builtins {
 		builtins[name] = fn.builtin(name)
 	}
-	return
+	for name, lib := range script.Libraries {
+		builtins[name] = lib
+	}
+
+	return builtins
 }
 
 func (script Script) newThread() *starlark.Thread {
