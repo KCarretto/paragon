@@ -9,6 +9,7 @@ import (
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/pkg/teamserver"
+	"go.uber.org/zap"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -19,10 +20,20 @@ type Error struct {
 	Path    []string `json:"path"`
 }
 
-func TestTeamserver(t *testing.T) {
+type Authenticator struct {
+}
+
+func (a *Authenticator) Authenticate(_ http.ResponseWriter, r *http.Request) (*http.Request, error) {
+	return r, nil
+}
+
+func TestTeamserverReturnsBadRequestWhenUnauthed(t *testing.T) {
+	// should this be a 401 or 402?
 	client := testClient()
 	defer client.Close()
+	logger := zap.NewNop()
 	svc := &teamserver.Service{
+		Log:   logger,
 		Graph: client,
 	}
 	router := http.NewServeMux()
@@ -33,13 +44,38 @@ func TestTeamserver(t *testing.T) {
 
 	router.ServeHTTP(rr, req)
 
-	// fmt.Printf("%s", rr.Body.String())
-	if status := rr.Code; status != http.StatusUnprocessableEntity {
+	if status := rr.Code; status != http.StatusBadRequest {
 		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusUnprocessableEntity)
+			status, http.StatusBadRequest)
 	}
-
 }
+
+// func TestTeamserver(t *testing.T) {
+// 	// I don't know how to do the authorization
+// 	client := testClient()
+// 	defer client.Close()
+// 	logger := zap.NewNop()
+
+// 	svc := &teamserver.Service{
+// 		Log:   logger,
+// 		Graph: client,
+// 		Auth:  &Authenticator{},
+// 	}
+// 	router := http.NewServeMux()
+// 	svc.HTTP(router)
+
+// 	rr := httptest.NewRecorder()
+// 	req, _ := http.NewRequest("GET", "/graphql", nil)
+
+// 	router.ServeHTTP(rr, req)
+
+// 	fmt.Printf("%s", rr.Body.String())
+// 	if status := rr.Code; status != http.StatusUnprocessableEntity {
+// 		t.Errorf("handler returned wrong status code: got %v want %v",
+// 			status, http.StatusUnprocessableEntity)
+// 	}
+
+// }
 
 func testClient() *ent.Client {
 	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
