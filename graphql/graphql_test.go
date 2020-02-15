@@ -39,23 +39,41 @@ func (test *testResolver) newTarget(t *testing.T, options ...func(*ent.TargetCre
 	return target
 }
 
-func (test *testResolver) newTask(t *testing.T, options ...func(*ent.TaskCreate)) *ent.Task {
-	u, err := test.Client.User.Create().SetName("joe").SetOAuthID("who").SetPhotoURL("uneccsarybutfine").Save(context.Background())
+func (test *testResolver) newUser(t *testing.T, options ...func(*ent.UserCreate)) *ent.User {
+	userCreater := test.Client.User.Create().SetName("joe").SetOAuthID("who").SetPhotoURL("uneccsarybutfine")
+	for _, opt := range options {
+		opt(userCreater)
+	}
+	user, err := userCreater.Save(context.Background())
 	if err != nil {
 		t.Errorf("failed to create user: %w", err)
 	}
-	job, err := test.Client.Job.Create().SetName("test").SetOwner(u).SetContent("wat").Save(context.Background())
+	return user
+}
+
+func (test *testResolver) newJob(t *testing.T, options ...func(*ent.JobCreate)) *ent.Job {
+	u := test.newUser(t)
+	jobCreater := test.Client.Job.Create().SetName("test").SetOwner(u).SetContent("wat")
+	for _, opt := range options {
+		opt(jobCreater)
+	}
+	job, err := jobCreater.Save(context.Background())
 	if err != nil {
 		t.Errorf("failed to create job: %w", err)
 	}
+	return job
+}
+
+func (test *testResolver) newTask(t *testing.T, options ...func(*ent.TaskCreate)) *ent.Task {
+	job := test.newJob(t)
 	taskCreater := test.Client.Task.Create().SetContent("test").SetLastChangedTime(time.Now()).SetJob(job)
+	for _, opt := range options {
+		opt(taskCreater)
+	}
+	task, err := taskCreater.Save(context.Background())
 	if err != nil {
 		t.Errorf("failed to create task: %w", err)
 	}
-	for _, opt := range options {
-		opt(taskCreater)
-	} // Maybe put this before and see if we can find out if job is empty before creating our test one?
-	task, _ := taskCreater.Save(context.Background())
 	return task
 }
 
