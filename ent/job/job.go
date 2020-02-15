@@ -51,18 +51,12 @@ const (
 	OwnerColumn = "owner_id"
 )
 
-// Columns holds all SQL columns for job fields.
+// Columns holds all SQL columns are job fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldCreationTime,
 	FieldContent,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the Job type.
-var ForeignKeys = []string{
-	"prev_id",
-	"owner_id",
 }
 
 var (

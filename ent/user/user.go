@@ -42,7 +42,7 @@ const (
 	EventsColumn = "owner_id"
 )
 
-// Columns holds all SQL columns for user fields.
+// Columns holds all SQL columns are user fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
@@ -51,11 +51,6 @@ var Columns = []string{
 	FieldSessionToken,
 	FieldIsActivated,
 	FieldIsAdmin,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the User type.
-var ForeignKeys = []string{
-	"event_liker_id",
 }
 
 var (

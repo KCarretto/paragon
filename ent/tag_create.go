@@ -112,8 +112,8 @@ func (tc *TagCreate) SaveX(ctx context.Context) *Tag {
 
 func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 	var (
-		t     = &Tag{config: tc.config}
-		_spec = &sqlgraph.CreateSpec{
+		t    = &Tag{config: tc.config}
+		spec = &sqlgraph.CreateSpec{
 			Table: tag.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -122,7 +122,7 @@ func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 		}
 	)
 	if value := tc.Name; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: tag.FieldName,
@@ -146,7 +146,7 @@ func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := tc.tasks; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -165,7 +165,7 @@ func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := tc.jobs; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -184,15 +184,15 @@ func (tc *TagCreate) sqlSave(ctx context.Context) (*Tag, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, tc.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
+	id := spec.ID.Value.(int64)
 	t.ID = int(id)
 	return t, nil
 }

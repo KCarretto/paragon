@@ -29,17 +29,12 @@ const (
 	FileColumn = "file_id"
 )
 
-// Columns holds all SQL columns for link fields.
+// Columns holds all SQL columns are link fields.
 var Columns = []string{
 	FieldID,
 	FieldAlias,
 	FieldExpirationTime,
 	FieldClicks,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the Link type.
-var ForeignKeys = []string{
-	"file_id",
 }
 
 var (

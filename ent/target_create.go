@@ -200,8 +200,8 @@ func (tc *TargetCreate) SaveX(ctx context.Context) *Target {
 
 func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 	var (
-		t     = &Target{config: tc.config}
-		_spec = &sqlgraph.CreateSpec{
+		t    = &Target{config: tc.config}
+		spec = &sqlgraph.CreateSpec{
 			Table: target.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -210,7 +210,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		}
 	)
 	if value := tc.Name; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldName,
@@ -218,7 +218,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		t.Name = *value
 	}
 	if value := tc.PrimaryIP; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldPrimaryIP,
@@ -226,7 +226,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		t.PrimaryIP = *value
 	}
 	if value := tc.MachineUUID; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldMachineUUID,
@@ -234,7 +234,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		t.MachineUUID = *value
 	}
 	if value := tc.PublicIP; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldPublicIP,
@@ -242,7 +242,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		t.PublicIP = *value
 	}
 	if value := tc.PrimaryMAC; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldPrimaryMAC,
@@ -250,7 +250,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		t.PrimaryMAC = *value
 	}
 	if value := tc.Hostname; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldHostname,
@@ -258,7 +258,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		t.Hostname = *value
 	}
 	if value := tc.LastSeen; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: target.FieldLastSeen,
@@ -282,7 +282,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := tc.tags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -301,7 +301,7 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := tc.credentials; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -320,15 +320,15 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, tc.driver, _spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, tc.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
+	id := spec.ID.Value.(int64)
 	t.ID = int(id)
 	return t, nil
 }

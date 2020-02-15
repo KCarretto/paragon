@@ -111,27 +111,11 @@ const (
 	SvcOwnerColumn = "svc_owner_id"
 )
 
-// Columns holds all SQL columns for event fields.
+// Columns holds all SQL columns are event fields.
 var Columns = []string{
 	FieldID,
 	FieldCreationTime,
 	FieldKind,
-}
-
-// ForeignKeys holds the SQL foreign-keys that are owned by the Event type.
-var ForeignKeys = []string{
-	"event_job_id",
-	"event_file_id",
-	"event_credential_id",
-	"event_link_id",
-	"event_tag_id",
-	"event_target_id",
-	"event_task_id",
-	"event_user_id",
-	"event_event_id",
-	"event_service_id",
-	"svc_owner_id",
-	"owner_id",
 }
 
 var (
@@ -146,7 +130,6 @@ var (
 // Kind defines the type for the Kind enum field.
 type Kind string
 
-// Kind values.
 const (
 	KindCREATEJOB              Kind = "CREATE_JOB"
 	KindCREATETAG              Kind = "CREATE_TAG"
@@ -178,12 +161,12 @@ func (s Kind) String() string {
 	return string(s)
 }
 
-// KindValidator is a validator for the "k" field enum values. It is called by the builders before save.
-func KindValidator(k Kind) error {
-	switch k {
+// KindValidator is a validator for the "Kind" field enum values. It is called by the builders before save.
+func KindValidator(Kind Kind) error {
+	switch Kind {
 	case KindCREATEJOB, KindCREATETAG, KindAPPLYTAGTOTASK, KindAPPLYTAGTOTARGET, KindAPPLYTAGTOJOB, KindREMOVETAGFROMTASK, KindREMOVETAGFROMTARGET, KindREMOVETAGFROMJOB, KindCREATETARGET, KindSETTARGETFIELDS, KindDELETETARGET, KindADDCREDENTIALFORTARGET, KindUPLOADFILE, KindCREATELINK, KindSETLINKFIELDS, KindACTIVATEUSER, KindCREATEUSER, KindMAKEADMIN, KindREMOVEADMIN, KindCHANGENAME, KindACTIVATESERVICE, KindCREATESERVICE, KindLIKEEVENT, KindOTHER:
 		return nil
 	default:
-		return fmt.Errorf("event: invalid enum value for Kind field: %q", k)
+		return fmt.Errorf("event: invalid enum value for Kind field: %q", Kind)
 	}
 }

@@ -156,7 +156,7 @@ func (lu *LinkUpdate) ExecX(ctx context.Context) {
 }
 
 func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   link.Table,
 			Columns: link.Columns,
@@ -167,41 +167,41 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := lu.predicates; len(ps) > 0 {
-		_spec.Predicate = func(selector *sql.Selector) {
+		spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := lu.Alias; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: link.FieldAlias,
 		})
 	}
 	if value := lu.ExpirationTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: link.FieldExpirationTime,
 		})
 	}
 	if lu.clearExpirationTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: link.FieldExpirationTime,
 		})
 	}
 	if value := lu.Clicks; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: link.FieldClicks,
 		})
 	}
 	if value := lu.addClicks; value != nil {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+		spec.Fields.Add = append(spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: link.FieldClicks,
@@ -221,7 +221,7 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := lu.file; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -240,9 +240,9 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, lu.driver, _spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, lu.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -385,7 +385,7 @@ func (luo *LinkUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
-	_spec := &sqlgraph.UpdateSpec{
+	spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   link.Table,
 			Columns: link.Columns,
@@ -397,34 +397,34 @@ func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
 		},
 	}
 	if value := luo.Alias; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: link.FieldAlias,
 		})
 	}
 	if value := luo.ExpirationTime; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: link.FieldExpirationTime,
 		})
 	}
 	if luo.clearExpirationTime {
-		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
+		spec.Fields.Clear = append(spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: link.FieldExpirationTime,
 		})
 	}
 	if value := luo.Clicks; value != nil {
-		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: link.FieldClicks,
 		})
 	}
 	if value := luo.addClicks; value != nil {
-		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
+		spec.Fields.Add = append(spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: link.FieldClicks,
@@ -444,7 +444,7 @@ func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
 				},
 			},
 		}
-		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+		spec.Edges.Clear = append(spec.Edges.Clear, edge)
 	}
 	if nodes := luo.file; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -463,12 +463,12 @@ func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+		spec.Edges.Add = append(spec.Edges.Add, edge)
 	}
 	l = &Link{config: luo.config}
-	_spec.Assign = l.assignValues
-	_spec.ScanValues = l.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, luo.driver, _spec); err != nil {
+	spec.Assign = l.assignValues
+	spec.ScanValues = l.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, luo.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

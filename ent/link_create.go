@@ -111,8 +111,8 @@ func (lc *LinkCreate) SaveX(ctx context.Context) *Link {
 
 func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 	var (
-		l     = &Link{config: lc.config}
-		_spec = &sqlgraph.CreateSpec{
+		l    = &Link{config: lc.config}
+		spec = &sqlgraph.CreateSpec{
 			Table: link.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -121,7 +121,7 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 		}
 	)
 	if value := lc.Alias; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: link.FieldAlias,
@@ -129,7 +129,7 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 		l.Alias = *value
 	}
 	if value := lc.ExpirationTime; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: link.FieldExpirationTime,
@@ -137,7 +137,7 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 		l.ExpirationTime = *value
 	}
 	if value := lc.Clicks; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: link.FieldClicks,
@@ -161,15 +161,15 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, lc.driver, _spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, lc.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
+	id := spec.ID.Value.(int64)
 	l.ID = int(id)
 	return l, nil
 }

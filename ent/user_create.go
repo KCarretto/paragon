@@ -168,8 +168,8 @@ func (uc *UserCreate) SaveX(ctx context.Context) *User {
 
 func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 	var (
-		u     = &User{config: uc.config}
-		_spec = &sqlgraph.CreateSpec{
+		u    = &User{config: uc.config}
+		spec = &sqlgraph.CreateSpec{
 			Table: user.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -178,7 +178,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		}
 	)
 	if value := uc.Name; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldName,
@@ -186,7 +186,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		u.Name = *value
 	}
 	if value := uc.OAuthID; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldOAuthID,
@@ -194,7 +194,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		u.OAuthID = *value
 	}
 	if value := uc.PhotoURL; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldPhotoURL,
@@ -202,7 +202,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		u.PhotoURL = *value
 	}
 	if value := uc.SessionToken; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: user.FieldSessionToken,
@@ -210,7 +210,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		u.SessionToken = *value
 	}
 	if value := uc.IsActivated; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: user.FieldIsActivated,
@@ -218,7 +218,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		u.IsActivated = *value
 	}
 	if value := uc.IsAdmin; value != nil {
-		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: user.FieldIsAdmin,
@@ -242,7 +242,7 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
 	if nodes := uc.events; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -261,15 +261,15 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		_spec.Edges = append(_spec.Edges, edge)
+		spec.Edges = append(spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, uc.driver, _spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, uc.driver, spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := _spec.ID.Value.(int64)
+	id := spec.ID.Value.(int64)
 	u.ID = int(id)
 	return u, nil
 }

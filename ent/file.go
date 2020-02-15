@@ -30,32 +30,26 @@ type File struct {
 	Hash string `json:"Hash,omitempty"`
 	// ContentType holds the value of the "ContentType" field.
 	ContentType string `json:"ContentType,omitempty"`
-	// Edges holds the relations/edges for other nodes in the graph.
-	// The values are being populated by the FileQuery when eager-loading is set.
-	Edges struct {
-		// Links holds the value of the links edge.
-		Links []*Link
-	} `json:"edges"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*File) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // Name
-		&sql.NullTime{},   // CreationTime
-		&sql.NullTime{},   // LastModifiedTime
-		&sql.NullInt64{},  // Size
-		&[]byte{},         // Content
-		&sql.NullString{}, // Hash
-		&sql.NullString{}, // ContentType
+		&sql.NullInt64{},
+		&sql.NullString{},
+		&sql.NullTime{},
+		&sql.NullTime{},
+		&sql.NullInt64{},
+		&[]byte{},
+		&sql.NullString{},
+		&sql.NullString{},
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the File fields.
 func (f *File) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(file.Columns); m < n {
+	if m, n := len(values), len(file.Columns); m != n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
