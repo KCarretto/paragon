@@ -81,6 +81,18 @@ func (test *testResolver) newTask(t *testing.T, options ...func(*ent.TaskCreate)
 	return task
 }
 
+func (test *testResolver) newLink(t *testing.T, options ...func(*ent.LinkCreate)) *ent.Link {
+	linkCreater := test.Client.Link.Create().SetAlias("test")
+	for _, opt := range options {
+		opt(linkCreater)
+	}
+	link, err := linkCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("Failed to create link %w", err)
+	}
+	return link
+}
+
 func NewTestClient() *testResolver {
 	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	if err != nil {
@@ -188,4 +200,81 @@ func TestCredentialQuery(t *testing.T) {
 	if c.ID != queriedCredential.ID {
 		t.Errorf("Credential query failed to get the correct target \n expected: %#v \n given: %#v", c, queriedCredential)
 	}
+}
+
+func TestCredentialsQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	c1 := client.newCredential(t)
+	c2 := client.newCredential(t)
+	query := client.Resolver.Query()
+	queriedCredentials, err := query.Credentials(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Credentials query failed with %w", err)
+	}
+	if len(queriedCredentials) != 2 {
+		t.Errorf("Credentials query returned wrong length expected: %d, got: %d", 2, len(queriedCredentials))
+	}
+
+	ids := map[int]int{c1.ID: 0, c2.ID: 0}
+	for _, c := range queriedCredentials {
+		if _, ok := ids[c.ID]; ok {
+			delete(ids, c.ID)
+		}
+	}
+
+	if len(ids) != 0 {
+		idsLeft := []int{}
+		for id := range ids {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Credentials query returned missing expected credential(s) %#v", idsLeft)
+	}
+
+}
+
+func TestLinkQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	l := client.newLink(t)
+	query := client.Resolver.Query()
+	queriedLink, err := query.Link(context.Background(), l.ID)
+	if err != nil {
+		t.Errorf("Link query errored with %w", err)
+	}
+	if l.ID != queriedLink.ID {
+		t.Errorf("Link query returned wrong id expected: %d, got: %d", l.ID, queriedLink.ID)
+	}
+
+}
+
+func TestLinksQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfLinks := 2
+	links := map[int]*ent.Link{}
+	for i := 0; i < numOfLinks; i++ {
+		l := client.newLink(t)
+		links[l.ID] = l
+	}
+	query := client.Resolver.Query()
+	queriedLinks, err := query.Links(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Links query errored with %w", err)
+	}
+
+	for _, l := range queriedLinks {
+		if _, ok := links[l.ID]; ok {
+			delete(links, l.ID)
+		}
+	}
+
+	if len(links) != 0 {
+		idsLeft := []int{}
+		for id := range links {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Links query returned missing expected links(s) %#v", idsLeft)
+	}
+
 }
