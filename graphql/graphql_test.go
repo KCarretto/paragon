@@ -13,6 +13,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+// TODO (@rwhittier) need to change to require syntax
 type testResolver struct {
 	*ent.Client
 	Resolver *resolve.Resolver
@@ -53,6 +54,18 @@ func (test *testResolver) newJob(t *testing.T, options ...func(*ent.JobCreate)) 
 		t.Errorf("failed to create job: %w", err)
 	}
 	return job
+}
+
+func (test *testResolver) newCredential(t *testing.T, options ...func(*ent.CredentialCreate)) *ent.Credential {
+	credentialCreater := test.Client.Credential.Create().SetPrincipal("testdata").SetSecret("testdata").SetKind("password").SetFails(1)
+	for _, opt := range options {
+		opt(credentialCreater)
+	}
+	credential, err := credentialCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create credential: %w", err)
+	}
+	return credential
 }
 
 func (test *testResolver) newTask(t *testing.T, options ...func(*ent.TaskCreate)) *ent.Task {
@@ -160,5 +173,19 @@ func TestTasksQuery(t *testing.T) {
 	}
 	if len(queriedTasks) != 1 {
 		t.Errorf("Tasks query failed to get the correct len \n expected: %#v \n given: %#v", 1, len(queriedTasks))
+	}
+}
+
+func TestCredentialQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	c := client.newCredential(t)
+	query := client.Resolver.Query()
+	queriedCredential, err := query.Credential(context.Background(), c.ID)
+	if err != nil {
+		t.Errorf("Credential query failed with %w", err)
+	}
+	if c.ID != queriedCredential.ID {
+		t.Errorf("Credential query failed to get the correct target \n expected: %#v \n given: %#v", c, queriedCredential)
 	}
 }
