@@ -8,6 +8,7 @@ import (
 	gomock "github.com/golang/mock/gomock"
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,21 +23,27 @@ func testLib(f file.File) script.Option {
 }
 
 func execScript(t *testing.T, f file.File, name string, code string) error {
-	return script.New(name, bytes.NewBufferString(code), file.Include(), testLib(f)).
+	return script.New(name, bytes.NewBufferString(code), testLib(f),
+		file.Include(),
+		sys.Include(),
+	).
 		Exec(context.Background())
 }
 
 const codeTestMove = `
 def main():
-	f = testlib.f()
-	file.move(f, "/path/to/dst")
+	f = sys.openFile("path/to/src")
+	f2 = testlib.f()
+	file.move(f, "dst")
+	file.move(f2, "dst")
+
 `
 
 func TestMove(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	dst := "/path/to/dst"
+	dst := "dst"
 
 	f := NewMockFile(ctrl)
 	f.EXPECT().Move(gomock.Eq(dst)).Return(nil)
