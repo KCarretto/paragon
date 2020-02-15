@@ -18,15 +18,6 @@ type testResolver struct {
 	Resolver *resolve.Resolver
 }
 
-// potentially useful, but a lot of work by hand to set up so why?
-// type testTarget struct {
-// 	*ent.TargetClient
-// }
-
-// func (t *testTarget) Create() *ent.TargetCreate {
-// 	return t.TargetClient.Create().SetHostname("test").SetName("test").SetPrimaryIP("test")
-// }
-
 func (test *testResolver) newTarget(t *testing.T, options ...func(*ent.TargetCreate)) *ent.Target {
 	targetCreater := test.Client.Target.Create().SetHostname("test").SetName("test").SetPrimaryIP("test")
 	for _, opt := range options {
