@@ -1,9 +1,8 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Loader } from "semantic-ui-react";
-import { XCardGroup } from "../components/layout";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary, XCardGroup } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XNoTargetsFound } from "../components/target";
 import XTargetCard from "../components/target/XTargetCard";
 import { Target } from "../graphql/models";
@@ -44,41 +43,31 @@ type MultiTargetQueryResponse = {
 };
 
 const XMultiTargetView = () => {
-  const { called, loading, error, data } = useQuery<MultiTargetQueryResponse>(
-    MULTI_TARGET_QUERY,
-    {
-      pollInterval: 5000
-    }
-  );
+  const { loading, error, data: { targets = [] } = {} } = useQuery<
+    MultiTargetQueryResponse
+  >(MULTI_TARGET_QUERY, {
+    pollInterval: 5000
+  });
 
-  const showCards = () => {
-    if (!data || !data.targets || data.targets.length < 1) {
-      return <XNoTargetsFound />;
-    }
-    return (
-      <XCardGroup>
-        {data.targets.map(target => (
-          <XTargetCard key={target.id} {...target} />
-        ))}
-      </XCardGroup>
-    );
-  };
+  const whenLoading = (
+    <XLoadingMessage title="Loading Targets" msg="Fetching target list" />
+  );
+  const whenEmpty = <XNoTargetsFound />;
 
   return (
     <React.Fragment>
-      <Loader disabled={!called || !loading} />
       <XErrorMessage title="Error Loading Targets" err={error} />
-      {showCards()}
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <XBoundary boundary={whenEmpty} show={targets.length > 0}>
+          <XCardGroup>
+            {targets.map(target => (
+              <XTargetCard key={target.id} {...target} />
+            ))}
+          </XCardGroup>
+        </XBoundary>
+      </XBoundary>
     </React.Fragment>
   );
 };
-
-// XTargetCardGroup.propTypes = {
-//     targets: PropTypes.arrayOf(PropTypes.shape({
-//         id: PropTypes.number.isRequired,
-//         name: PropTypes.string.isRequired,
-//         tags: PropTypes.arrayOf(PropTypes.string),
-//     })).isRequired,
-// };
 
 export default XMultiTargetView;

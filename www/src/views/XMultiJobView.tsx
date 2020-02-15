@@ -1,10 +1,9 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Loader } from "semantic-ui-react";
 import { XJobCard, XNoJobsFound } from "../components/job";
-import { XCardGroup } from "../components/layout";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary, XCardGroup } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 
 export const MULTI_JOB_QUERY = gql`
   {
@@ -40,28 +39,30 @@ export const MULTI_JOB_QUERY = gql`
 `;
 
 const XMultiJobView = () => {
-  const { called, loading, error, data } = useQuery(MULTI_JOB_QUERY, {
-    pollInterval: 5000
-  });
-
-  const showCards = () => {
-    if (!data || !data.jobs || data.jobs.length < 1) {
-      return <XNoJobsFound />;
+  const { loading, error, data: { jobs = [] } = {} } = useQuery(
+    MULTI_JOB_QUERY,
+    {
+      pollInterval: 5000
     }
-    return (
-      <XCardGroup>
-        {data.jobs.map(job => (
-          <XJobCard key={job.id} {...job} />
-        ))}
-      </XCardGroup>
-    );
-  };
+  );
+
+  const whenLoading = (
+    <XLoadingMessage title="Loading Jobs" msg="Fetching job list" />
+  );
+  const whenEmpty = <XNoJobsFound />;
 
   return (
     <React.Fragment>
-      <Loader disabled={!called || !loading} />
       <XErrorMessage title="Error Loading Jobs" err={error} />
-      {showCards()}
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <XBoundary boundary={whenEmpty} show={jobs.length > 0}>
+          <XCardGroup>
+            {jobs.map(job => (
+              <XJobCard key={job.id} {...job} />
+            ))}
+          </XCardGroup>
+        </XBoundary>
+      </XBoundary>
     </React.Fragment>
   );
 };

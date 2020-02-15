@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
 import { XLayout, XPrivateRoute } from "./components/layout";
+import { XLoadingMessage } from "./components/messages";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
@@ -37,6 +38,7 @@ type StatusResult = {
 
 const App = () => {
   const [userID, setUserID] = useState<string>(null);
+  const [loaded, setLoaded] = useState<boolean>(false);
   const [authenticated, setAuthenticated] = useState(false);
   const [activated, setActivated] = useState(false);
   const [admin, setAdmin] = useState(false);
@@ -46,6 +48,7 @@ const App = () => {
       resp =>
         resp.json().then(
           (data: StatusResult) => {
+            setLoaded(true);
             setUserID(data.userid ? String(data.userid) : null);
             setAuthenticated(data.is_authenticated || false);
             setActivated(data.is_activated || false);
@@ -58,6 +61,15 @@ const App = () => {
   };
 
   useEffect(fetchUserInfo, []);
+
+  if (!loaded) {
+    return (
+      <XLoadingMessage
+        title="Paragon Loading"
+        msg="Initializing application status..."
+      />
+    );
+  }
 
   let authz = authenticated && (activated || admin);
 

@@ -14,7 +14,7 @@ import {
   Modal
 } from "semantic-ui-react";
 import { Tag, Target } from "../../graphql/models";
-import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY } from "../../views";
+import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY, TARGET_QUERY } from "../../views";
 import { useModal, XEditor, XTagTypeahead, XTargetTypeahead } from "../form";
 
 export const QUEUE_JOB_MUTATION = gql`
@@ -50,7 +50,11 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
   const [targets, setTargets] = useState<Target[]>([]);
 
   const [queueJob, { called, loading }] = useMutation(QUEUE_JOB_MUTATION, {
-    refetchQueries: [{ query: MULTI_JOB_QUERY }, { query: MULTI_TARGET_QUERY }]
+    refetchQueries: [
+      { query: MULTI_JOB_QUERY },
+      { query: MULTI_TARGET_QUERY },
+      { query: TARGET_QUERY }
+    ]
   });
 
   const handleSubmit = () => {
