@@ -2,6 +2,7 @@ package graphql_test
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
 	"time"
@@ -11,6 +12,10 @@ import (
 	"github.com/kcarretto/paragon/graphql/resolve"
 
 	_ "github.com/mattn/go-sqlite3"
+)
+
+var (
+	uniqueNumber int
 )
 
 // TODO (@rwhittier) need to change to require syntax
@@ -82,7 +87,9 @@ func (test *testResolver) newTask(t *testing.T, options ...func(*ent.TaskCreate)
 }
 
 func (test *testResolver) newLink(t *testing.T, options ...func(*ent.LinkCreate)) *ent.Link {
-	linkCreater := test.Client.Link.Create().SetAlias("test")
+	uniqueNumber++
+	uniqueData := fmt.Sprintf("test%d", uniqueNumber)
+	linkCreater := test.Client.Link.Create().SetAlias(uniqueData)
 	for _, opt := range options {
 		opt(linkCreater)
 	}
