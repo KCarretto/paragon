@@ -51,8 +51,8 @@ func (p Process) Hash() (uint32, error) {
 	return 0, fmt.Errorf("process type is unhashable")
 }
 
-// parseProcessParam from starlark input
-func parseProcessParam(parser script.ArgParser, index int) (Process, error) {
+// ParseParam from starlark input
+func ParseParam(parser script.ArgParser, index int) (Process, error) {
 	val, err := parser.GetParam(0)
 	if err != nil {
 		return Process{Pid: -1}, err

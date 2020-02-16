@@ -1,12 +1,15 @@
-package process
+package http
 
 import "github.com/kcarretto/paragon/pkg/script"
 
 // Library prepares a new process library for use within a script environment.
 func Library() script.Library {
 	return script.Library{
-		"kill": script.Func(kill),
-		"name": script.Func(name),
+		"newRequest": script.Func(newRequest),
+		"setMethod":  script.Func(setMethod),
+		"setHeader":  script.Func(setHeader),
+		"setBody":    script.Func(setBody),
+		"exec":       script.Func(exec),
 	}
 }
 

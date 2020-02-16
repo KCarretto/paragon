@@ -22,9 +22,29 @@ func Kill(proc Process) error {
 }
 
 func kill(parser script.ArgParser) (script.Retval, error) {
-	p, err := parseProcessParam(parser, 0)
+	p, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
 	return nil, Kill(p)
+}
+
+// Name gets the name of the passed process.
+//
+// @callable:	process.Name
+// @param:		proc	@Process
+// @retval:		name 	@String
+// @retval:		err 	@Error
+//
+// @usage:		proc_name = process.Name(proc)
+func Name(proc Process) string {
+	return proc.Name
+}
+
+func name(parser script.ArgParser) (script.Retval, error) {
+	p, err := ParseParam(parser, 0)
+	if err != nil {
+		return nil, err
+	}
+	return Name(p), nil
 }

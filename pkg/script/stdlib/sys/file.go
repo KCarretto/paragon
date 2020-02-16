@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-
-	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
 )
 
 // File is our impl of File.
@@ -44,29 +41,4 @@ func (f File) Move(dstPath string) error {
 func (f File) Remove() error {
 	f.Close()
 	return os.RemoveAll(f.Name())
-}
-
-// OpenFile uses os.Open to Open a file.
-func OpenFile(filePath string) (file.Type, error) {
-	dir := path.Dir(filePath)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return file.New(nil), fmt.Errorf("failed to create parent directory %q: %w", dir, err)
-	}
-
-	f, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0755)
-	if err != nil {
-		return file.New(nil), err
-	}
-	return file.New(File{
-		f,
-	}), nil
-}
-
-func openFile(parser script.ArgParser) (script.Retval, error) {
-	path, err := parser.GetString(0)
-	if err != nil {
-		return nil, err
-	}
-
-	return OpenFile(path)
 }
