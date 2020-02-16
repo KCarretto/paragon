@@ -18,12 +18,12 @@ import (
 // @retval:		err 	@Error
 //
 // @usage: 		output, err = ssh.exec("/bin/bash -c 'ls -al'")
-func (env Environment) Exec(cmd string) (string, error) {
+func (env *Environment) Exec(cmd string) (string, error) {
 	if env.Connector == nil {
 		return "", fmt.Errorf("environment has no SSH connector")
 	}
 
-	client, err := env.Connect(env.RemoteHost)
+	client, err := env.Connector.Connect(env.RemoteHost)
 	if err != nil {
 		log.Printf("[Err] Failed to connect to remote host: %v", err)
 		return "", err
@@ -33,13 +33,14 @@ func (env Environment) Exec(cmd string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	env.TrackHandle(session)
 
 	// TODO: Handle exec timeout
 	result, err := session.CombinedOutput(cmd)
 	return string(result), err
 }
 
-func (env Environment) exec(parser script.ArgParser) (script.Retval, error) {
+func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 	log.Printf("[DBG] Executing command on remote host via ssh")
 
 	cmd, err := parser.GetString(0)
@@ -60,8 +61,8 @@ func (env Environment) exec(parser script.ArgParser) (script.Retval, error) {
 // @retval:		err 	@Error
 //
 // @usage: 		f, err = ssh.openFile("/bin/implant")
-func (env Environment) OpenFile(path string) (file.Type, error) {
-	client, err := env.Connect(env.RemoteHost)
+func (env *Environment) OpenFile(path string) (file.Type, error) {
+	client, err := env.Connector.Connect(env.RemoteHost)
 	if err != nil {
 		return file.Type{}, err
 	}
@@ -70,19 +71,22 @@ func (env Environment) OpenFile(path string) (file.Type, error) {
 	if err != nil {
 		return file.Type{}, err
 	}
+	env.TrackHandle(session)
 
 	f, err := session.OpenFile(path, os.O_RDWR|os.O_CREATE)
 	if err != nil {
 		return file.Type{}, err
 	}
-
-	return file.New(File{
+	handle := &File{
 		f,
 		session,
-	}), nil
+	}
+	env.TrackHandle(handle)
+
+	return file.New(handle), nil
 }
 
-func (env Environment) openFile(parser script.ArgParser) (script.Retval, error) {
+func (env *Environment) openFile(parser script.ArgParser) (script.Retval, error) {
 	path, err := parser.GetString(0)
 	if err != nil {
 		return nil, err

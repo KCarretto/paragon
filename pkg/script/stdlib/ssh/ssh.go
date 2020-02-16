@@ -3,13 +3,19 @@
 package ssh
 
 import (
+	"io"
+
 	"github.com/kcarretto/paragon/pkg/script"
 )
 
 // Environment used to configure the behaviour of calls to the ssh library.
 type Environment struct {
+	*script.Environment
+
+	Connector  *Connector
 	RemoteHost string
-	*Connector
+
+	handles []io.Closer
 }
 
 // Library prepares a new ssh library for use within a script environment.
@@ -23,6 +29,10 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 
 	for _, opt := range options {
 		opt(env)
+	}
+
+	if env.Environment == nil {
+		env.Environment = &script.Environment{}
 	}
 
 	return script.Library{

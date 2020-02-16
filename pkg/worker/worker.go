@@ -167,6 +167,8 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		RemoteHost: target.PrimaryIP,
 		Connector:  w.SSH,
 	}
+	defer sshEnv.Close()
+
 	cdnEnv := &cdnlib.Environment{
 		Uploader:   w,
 		Downloader: w,
