@@ -21,7 +21,7 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-const ServiceTag = "svc-worker"
+const ServiceTag = "svc-pg-worker"
 
 type credStore map[int]map[int]*ent.Credential
 
