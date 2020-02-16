@@ -10,10 +10,10 @@ import (
 // string into the new strong.
 //
 // @callable:	regex.ReplaceString
-// @param:		oldString			@String
-// @param:		pattern				@String
-// @param:		newString			@String
-// @retval:		replacedString 		@String
+// @param:		oldString			@string
+// @param:		pattern				@string
+// @param:		newString			@string
+// @retval:		replacedString 		@string
 // @retval:		err 				@Error
 //
 // @usage:		new_config = regex.replace(nginx_conf, "listen[\s]*80;", "listen 81;")
@@ -39,5 +39,6 @@ func replace(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return Replace(oldStr, newStr, pattern)
+	retVal, retErr := Replace(oldStr, newStr, pattern)
+	return script.WithError(retVal, retErr), nil
 }

@@ -11,15 +11,15 @@ import (
 // NewRequest creates a new Request object to be passed around.
 //
 // @callable:	http.NewRequest
-// @param:		url	@String
-// @retval:		err @Error
+// @param:		url		@string
+// @retval:		request @Request
 //
 // @usage:		r = http.NewRequest(CDN_URL+"/l/nomnom")
-func NewRequest(url string) (Request, error) {
-	return Request{
+func NewRequest(url string) *Request {
+	return &Request{
 		Url:    url,
 		Method: "GET",
-	}, nil
+	}
 }
 
 func newRequest(parser script.ArgParser) (script.Retval, error) {
@@ -27,20 +27,18 @@ func newRequest(parser script.ArgParser) (script.Retval, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewRequest(url)
+	return NewRequest(url), nil
 }
 
 // SetMethod sets the http method on the request object.
 //
 // @callable:	http.SetMethod
 // @param:		r		@Request
-// @param:		method	@String
-// @retval:		err 	@Error
+// @param:		method	@string
 //
 // @usage:		http.SetMethod(r, "POST")
-func SetMethod(r *Request, method string) error {
+func SetMethod(r *Request, method string) {
 	r.Method = method
-	return nil
 }
 
 func setMethod(parser script.ArgParser) (script.Retval, error) {
@@ -52,21 +50,20 @@ func setMethod(parser script.ArgParser) (script.Retval, error) {
 	if err != nil {
 		return nil, err
 	}
-	return nil, SetMethod(r, method)
+	SetMethod(r, method)
+	return nil, nil
 }
 
 // SetHeader sets the http header to the value passed on the request object.
 //
 // @callable:	http.SetHeader
 // @param:		r		@Request
-// @param:		header	@String
-// @param:		value	@String
-// @retval:		err 	@Error
+// @param:		header	@string
+// @param:		value	@string
 //
 // @usage:		http.SetHeader(r, "Content-Type", "application/json")
-func SetHeader(r *Request, header string, value string) error {
+func SetHeader(r *Request, header string, value string) {
 	r.Headers[header] = value
-	return nil
 }
 
 func setHeader(parser script.ArgParser) (script.Retval, error) {
@@ -82,20 +79,19 @@ func setHeader(parser script.ArgParser) (script.Retval, error) {
 	if err != nil {
 		return nil, err
 	}
-	return nil, SetHeader(r, header, value)
+	SetHeader(r, header, value)
+	return nil, nil
 }
 
 // SetBody sets the http body to the value passed on the request object.
 //
 // @callable:	http.SetBody
 // @param:		r		@Request
-// @param:		value	@String
-// @retval:		err 	@Error
+// @param:		value	@string
 //
 // @usage:		http.SetBody(r, "{key: value}")
-func SetBody(r *Request, value string) error {
+func SetBody(r *Request, value string) {
 	r.Body = value
-	return nil
 }
 
 func setBody(parser script.ArgParser) (script.Retval, error) {
@@ -107,17 +103,18 @@ func setBody(parser script.ArgParser) (script.Retval, error) {
 	if err != nil {
 		return nil, err
 	}
-	return nil, SetBody(r, value)
+	SetBody(r, value)
+	return nil, nil
 }
 
 // Exec sends the passed request object.
 //
 // @callable:	http.Exec
 // @param:		r			@Request
-// @retval:		response	@String
+// @retval:		response	@string
 // @retval:		err 		@Error
 //
-// @usage:		resp = http.Exec(r)
+// @usage:		resp, err = http.Exec(r)
 func Exec(r *Request) (string, error) {
 	client := &http.Client{}
 	var req *http.Request
@@ -149,5 +146,6 @@ func exec(parser script.ArgParser) (script.Retval, error) {
 	if err != nil {
 		return nil, err
 	}
-	return Exec(r)
+	retVal, retErr := Exec(r)
+	return script.WithError(retVal, retErr), nil
 }

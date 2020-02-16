@@ -7,6 +7,16 @@ import (
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
 )
 
+// OpenFile that was packed into the compiled binary. The resulting file does not support many
+// operations such as Chown, Write, etc. but you may read it's contents or copy it to another file
+// i.e. one opened by ssh or sys.
+//
+// @callable:	assets.openFile
+// @param:		path 	@string
+// @retval:		file 	@File
+// @retval:		err 	@Error
+//
+// @usage:		f, err = assets.openFile("/path/to/asset")
 func (env *Environment) OpenFile(path string) (file.Type, error) {
 	if env == nil || env.Assets == nil {
 		return file.Type{}, fmt.Errorf("no assets available")
@@ -24,6 +34,6 @@ func (env *Environment) openFile(parser script.ArgParser) (script.Retval, error)
 	if err != nil {
 		return nil, err
 	}
-
-	return (*Environment).OpenFile(env, path)
+	retVal, retErr := (*Environment).OpenFile(env, path)
+	return script.WithError(retVal, retErr), nil
 }

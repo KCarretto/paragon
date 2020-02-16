@@ -41,6 +41,8 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 		return starlark.Float(v), nil
 	case string:
 		return starlark.String(v), nil
+	case error:
+		return starlark.String(v.Error()), nil
 	default:
 		reflectV := reflect.ValueOf(value)
 		switch reflectV.Kind() {

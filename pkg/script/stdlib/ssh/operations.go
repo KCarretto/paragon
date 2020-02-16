@@ -48,7 +48,8 @@ func (env Environment) exec(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return env.Exec(cmd)
+	retVal, retErr := env.Exec(cmd)
+	return script.WithError(retVal, retErr), nil
 }
 
 // OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.
@@ -87,5 +88,6 @@ func (env Environment) openFile(parser script.ArgParser) (script.Retval, error) 
 		return nil, err
 	}
 
-	return env.OpenFile(path)
+	retVal, retErr := env.OpenFile(path)
+	return script.WithError(retVal, retErr), nil
 }

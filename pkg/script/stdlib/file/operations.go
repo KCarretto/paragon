@@ -32,7 +32,7 @@ func move(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return nil, Move(f, dstPath)
+	return Move(f, dstPath), nil
 }
 
 // Name returns file's basename.
@@ -73,7 +73,8 @@ func content(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return Content(f)
+	retVal, retErr := Content(f)
+	return script.WithError(retVal, retErr), nil
 }
 
 // Write sets the file's content.
@@ -99,7 +100,7 @@ func write(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return nil, Write(f, content)
+	return Write(f, content), nil
 }
 
 // Copy the file's content into another file.
@@ -125,7 +126,7 @@ func copy(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return nil, Copy(src, dst)
+	return Copy(src, dst), nil
 }
 
 // Remove the file. It will become unuseable after calling this operation.
@@ -145,7 +146,7 @@ func remove(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return nil, Remove(f)
+	return Remove(f), nil
 }
 
 // Chown modifies the file's ownership metadata. Passing an empty string for either the username
@@ -204,5 +205,5 @@ func chown(parser script.ArgParser) (script.Retval, error) {
 	username, _ := parser.GetString(1)
 	group, _ := parser.GetString(2)
 
-	return nil, Chown(f, username, group)
+	return Chown(f, username, group), nil
 }

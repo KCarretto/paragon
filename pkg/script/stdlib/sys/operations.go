@@ -18,6 +18,13 @@ import (
 )
 
 // OpenFile uses os.Open to Open a file.
+//
+// @callable: 	sys.openFile
+// @param: 		path 	@string
+// @retval:		file 	@File
+// @retval:		err 	@Error
+//
+// @usage: 		f, err = sys.openFile("/usr/bin/malware")
 func OpenFile(filePath string) (file.Type, error) {
 	dir := path.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -39,50 +46,48 @@ func openFile(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return OpenFile(path)
+	retVal, retErr := OpenFile(path)
+	return script.WithError(retVal, retErr), nil
 }
 
 // DetectOS uses the GOOS variable to determine the OS.
 //
-// @callable:	sys.DetectOS
-// @retval:		os  	@String
-// @retval:		err 	@Error
+// @callable:	sys.detectOS
+// @retval:		os  	@string
 //
-// @usage:		os = sys.DetectOS()
-func DetectOS() (string, error) {
-	var osStr string
+// @usage:		os = sys.detectOS()
+func DetectOS() string {
 	switch runtime.GOOS {
 	case "linux":
-		osStr = "linux"
+		return "linux"
 	case "windows":
-		osStr = "windows"
+		return "windows"
 	case "darwin":
-		osStr = "darwin"
+		return "darwin"
 	case "freebsd", "netbsd", "openbsd", "dragonfly":
-		osStr = "bsd"
+		return "bsd"
 	case "android":
-		osStr = "android"
+		return "android"
 	case "solaris":
-		osStr = "solaris"
+		return "solaris"
 	default:
-		osStr = "other"
+		return "other"
 	}
-	return osStr, nil
 }
 
 func detectOS(parser script.ArgParser) (script.Retval, error) {
-	return DetectOS()
+	return DetectOS(), nil
 }
 
 // Exec uses the os/exec.command to execute the passed executable/params.
 //
-// @callable:	sys.Exec
-// @param:		executable	@String
-// @param:		disown		@?Bool
-// @retval:		output 		@String
+// @callable:	sys.exec
+// @param:		executable	@string
+// @param:		disown		@?bool
+// @retval:		output 		@string
 // @retval:		err 		@Error
 //
-// @usage:		output = sys.Exec("/usr/sbin/nginx", disown=True)
+// @usage:		output = sys.exec("/usr/sbin/nginx", disown=True)
 func Exec(executable string, disown bool) (string, error) {
 	argv := strings.Fields(executable)
 	if len(argv) == 0 {
@@ -107,7 +112,9 @@ func exec(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 	disown, _ := parser.GetBoolByName("disown")
-	return Exec(executable, disown)
+
+	retVal, retErr := Exec(executable, disown)
+	return script.WithError(retVal, retErr), nil
 }
 
 // Connections uses the gopsutil/net to get all connections created by a process (or all by default).
