@@ -5,19 +5,28 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"os"
-	"time"
+	"os/signal"
+	"syscall"
 
 	"github.com/kcarretto/paragon/graphql"
-	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
 	"github.com/kcarretto/paragon/pkg/worker"
+
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	logger = logger.Named("svc.worker")
+
+	logger.Debug("Initializing worker")
+
 	teamserverURL := "http://127.0.0.1:80"
 	if url := os.Getenv("TEAMSERVER_URL"); url != "" {
 		teamserverURL = url
@@ -33,8 +42,6 @@ func main() {
 	}
 	cdn := cdn.Client{URL: cdnURL}
 
-	log.Printf("Testing worker")
-
 	w := &worker.Worker{
 		Uploader:   cdn,
 		Downloader: cdn,
@@ -49,15 +56,15 @@ func main() {
 
 	topic := os.Getenv("PUB_TOPIC")
 	if topic == "" {
-		log.Println("[WARN] No PUB_TOPIC environment variable set to publish events, is this a mistake?")
+		logger.Warn("[WARN] No PUB_TOPIC environment variable set to publish events, is this a mistake?")
 	}
 
 	taskHandler := func(ctx context.Context, data []byte) {
-		log.Printf("[INFO] message recieved: %v\n", string(data))
+		logger.Info("Message Received", zap.String("data", string(data)))
 
 		var taskQueuedEvent event.TaskQueued
 		if err := json.Unmarshal(data, &taskQueuedEvent); err != nil {
-			log.Printf("[ERR] Failed to parse event json: %v", err)
+			logger.Error("Failed to parse event json", zap.Error(err))
 			return
 		}
 
@@ -68,35 +75,23 @@ func main() {
 		panic(err)
 	}
 
-	// w.HandleTaskQueued(context.Background(), event.TaskQueued{
-	// 	Target: &ent.Target{
-	// 		ID:        1,
-	// 		PrimaryIP: "127.0.0.1:22",
-	// 	},
-	// 	Credentials: []*ent.Credential{
-	// 		&ent.Credential{
-	// 			ID:        11,
-	// 			Principal: "root",
-	// 			Secret:    "changeme",
-	// 		},
-	// 	},
-	// 	Task: &ent.Task{
-	// 		ID:      21,
-	// 		Content: simpleTask,
-	// 	},
-	// 	Tags: []*ent.Tag{
-	// 		&ent.Tag{
-	// 			ID:   22,
-	// 			Name: worker.ServiceTag,
-	// 		},
-	// 	},
-	// })
+	logger.Info("Worker Initialized",
+		zap.String("pub_topic", topic),
+		zap.String("teamserver_url", teamserverURL),
+		zap.String("cdn_url", cdnURL),
+	)
 
-	for {
-		time.Sleep(time.Second)
-		_, err := graph.ClaimTasks(context.Background(), models.ClaimTasksRequest{
-			PrimaryIP: nil,
-		})
-		fmt.Printf("error: %v\n", err)
+	// Listen for interupts
+	sigint := make(chan os.Signal, 1)
+	sigterm := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGINT)
+	signal.Notify(sigterm, syscall.SIGTERM)
+
+	// Wait for interupt
+	select {
+	case <-sigint:
+		logger.Info("Received interupt signal")
+	case <-sigterm:
+		logger.Error("Received terminate signal")
 	}
 }
