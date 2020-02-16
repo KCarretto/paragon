@@ -3,6 +3,7 @@ package worker
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -197,6 +198,12 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	var errStr string
 	if err := code.Exec(ctx); err != nil {
 		errStr = err.Error()
+	}
+	if configs == nil {
+		errStr = fmt.Sprintf(
+			"[WARN] No SSH Configs found, ensure you added credentials for the target\n%s",
+			errStr,
+		)
 	}
 	end := time.Now()
 
