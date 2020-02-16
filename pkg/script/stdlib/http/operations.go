@@ -121,15 +121,22 @@ func setBody(parser script.ArgParser) (script.Retval, error) {
 func Exec(r *Request) (string, error) {
 	client := &http.Client{}
 	var req *http.Request
+	var err error
 	if r.Body != "" {
-		req, _ = http.NewRequest(r.Method, r.Url, bytes.NewBufferString(r.Body))
+		req, err = http.NewRequest(r.Method, r.Url, bytes.NewBufferString(r.Body))
 	} else {
-		req, _ = http.NewRequest(r.Method, r.Url, nil)
+		req, err = http.NewRequest(r.Method, r.Url, nil)
+	}
+	if err != nil {
+		return "", err
 	}
 	for k, v := range r.Headers {
 		req.Header.Add(k, v)
 	}
-	resp, _ := client.Do(req)
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
 	respBytes, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
