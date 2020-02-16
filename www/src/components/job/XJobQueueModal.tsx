@@ -13,9 +13,14 @@ import {
   Message,
   Modal
 } from "semantic-ui-react";
-import { Tag, Target } from "../../graphql/models";
+import { Target } from "../../graphql/models";
 import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY, TARGET_QUERY } from "../../views";
-import { useModal, XEditor, XTagTypeahead, XTargetTypeahead } from "../form";
+import {
+  useModal,
+  XEditor,
+  XServiceTypeahead,
+  XTargetTypeahead
+} from "../form";
 
 export const QUEUE_JOB_MUTATION = gql`
   mutation QueueJob(
@@ -46,7 +51,8 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
   const [content, setContent] = useState<string>(
     '\n# Enter your script here!\ndef main():\n\tprint("Hello World")'
   );
-  const [tags, setTags] = useState<Tag[]>([]);
+  // const [tags, setTags] = useState<Tag[]>([]);
+  const [serviceTag, setServiceTag] = useState(null);
   const [targets, setTargets] = useState<Target[]>([]);
 
   const [queueJob, { called, loading }] = useMutation(QUEUE_JOB_MUTATION, {
@@ -61,7 +67,7 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
     let vars = {
       name: name,
       content: content,
-      tags: tags,
+      tags: [serviceTag],
       targets: targets
     };
 
@@ -115,10 +121,15 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
           </Grid.Column>
 
           <Grid.Column>
-            <XTagTypeahead
+            <XServiceTypeahead
+              labeled
+              value={serviceTag}
+              onChange={(e, { value }) => setServiceTag(value)}
+            />
+            {/* <XTagTypeahead
               labeled
               onChange={(e, { value }) => setTags(value)}
-            />
+            /> */}
           </Grid.Column>
 
           <Grid.Column>
