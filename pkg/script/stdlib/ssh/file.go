@@ -46,3 +46,11 @@ func (f *File) Remove() error {
 	f.File.Close()
 	return f.session.Remove(f.Name())
 }
+
+// Close the file if open
+func (f *File) Close() error {
+	if f == nil || f.File == nil {
+		return nil
+	}
+	return f.File.Close()
+}

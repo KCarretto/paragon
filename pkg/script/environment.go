@@ -15,11 +15,17 @@ func (env *Environment) TrackHandle(handle io.Closer) {
 
 // Close all handles opened by the environment.
 func (env *Environment) Close() (err error) {
+	if env == nil || env.handles == nil {
+		return nil
+	}
+
 	for _, handle := range env.handles {
-		if handle != nil {
-			if closeErr := handle.Close(); closeErr != nil {
-				err = closeErr
-			}
+		if handle == nil {
+			continue
+		}
+
+		if closeErr := handle.Close(); closeErr != nil {
+			err = closeErr
 		}
 	}
 	return
