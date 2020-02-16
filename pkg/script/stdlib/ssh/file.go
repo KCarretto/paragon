@@ -15,7 +15,7 @@ type File struct {
 }
 
 // Move a file that is open via SFTP.
-func (f File) Move(dstPath string) error {
+func (f *File) Move(dstPath string) error {
 	dir := path.Dir(dstPath)
 
 	if err := f.session.MkdirAll(dstPath); err != nil {
@@ -42,7 +42,7 @@ func (f File) Move(dstPath string) error {
 }
 
 // Remove a file that is open via SFTP.
-func (f File) Remove() error {
+func (f *File) Remove() error {
 	f.File.Close()
 	return f.session.Remove(f.Name())
 }

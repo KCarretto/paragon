@@ -77,10 +77,7 @@ func (env *Environment) OpenFile(path string) (file.Type, error) {
 	if err != nil {
 		return file.Type{}, err
 	}
-	handle := &File{
-		f,
-		session,
-	}
+	handle := &File{f, session}
 	env.TrackHandle(handle)
 
 	return file.New(handle), nil
