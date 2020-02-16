@@ -1,6 +1,8 @@
 package cdn
 
 import (
+	"fmt"
+
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/script"
 )
@@ -12,10 +14,9 @@ type Environment struct {
 }
 
 // Library prepares a new cdn library for use within a script environment.
-func Library(uploader cdn.Uploader, downloader cdn.Downloader) script.Library {
-	env := &Environment{
-		Uploader:   uploader,
-		Downloader: downloader,
+func (env *Environment) Library(options ...func(*Environment)) script.Library {
+	if env == nil {
+		panic(fmt.Errorf("cannot include cdn library without setting non-nil environment"))
 	}
 
 	return script.Library{
@@ -24,6 +25,6 @@ func Library(uploader cdn.Uploader, downloader cdn.Downloader) script.Library {
 }
 
 // Include the cdn library in a script environment.
-func Include(uploader cdn.Uploader, downloader cdn.Downloader) script.Option {
-	return script.WithLibrary("cdn", Library(uploader, downloader))
+func (env *Environment) Include(options ...func(*Environment)) script.Option {
+	return script.WithLibrary("cdn", (*Environment).Library(env, options...))
 }

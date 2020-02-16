@@ -13,11 +13,14 @@ type Environment struct {
 }
 
 // Library prepares a new ssh library for use within a script environment.
-func Library(options ...func(*Environment)) script.Library {
-	env := &Environment{
-		RemoteHost: "127.0.0.1:22",
-		Connector:  &Connector{},
+func (env *Environment) Library(options ...func(*Environment)) script.Library {
+	if env == nil {
+		env = &Environment{
+			RemoteHost: "127.0.0.1:22",
+			Connector:  &Connector{},
+		}
 	}
+
 	for _, opt := range options {
 		opt(env)
 	}
@@ -29,6 +32,6 @@ func Library(options ...func(*Environment)) script.Library {
 }
 
 // Include the ssh library in a script environment.
-func Include(options ...func(*Environment)) script.Option {
-	return script.WithLibrary("ssh", Library(options...))
+func (env *Environment) Include(options ...func(*Environment)) script.Option {
+	return script.WithLibrary("ssh", (*Environment).Library(env, options...))
 }

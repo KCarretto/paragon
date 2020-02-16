@@ -12,8 +12,10 @@ import (
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/workerlib"
-	sshlib "github.com/kcarretto/paragon/pkg/script/workerlib/ssh"
+	cdnlib "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
+	sshlib "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
+
+	// "github.com/kcarretto/paragon/pkg/script/workerlib"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -160,21 +162,32 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 	w.SSH.SetConfigs(target.PrimaryIP, configs...)
 
-	output := new(bytes.Buffer)
+	sshEnv := &sshlib.Environment{
+		RemoteHost: target.PrimaryIP,
+		Connector:  w.SSH,
+	}
+	cdnEnv := &cdnlib.Environment{
+		Uploader:   w,
+		Downloader: w,
+	}
 
+	output := new(bytes.Buffer)
 	start := time.Now()
 	code := script.New(
 		string(task.ID),
 		bytes.NewBufferString(task.Content),
 		script.WithOutput(output),
-		workerlib.Load(
-			workerlib.WithSSH(sshlib.Environment{
-				RemoteHost: target.PrimaryIP,
-				Connector:  w.SSH,
-				Downloader: w,
-				Uploader:   w,
-			}),
-		),
+		sshEnv.Include(),
+		cdnEnv.Include(),
+		// sshlib.
+		// 	workerlib.Load(
+		// 	workerlib.WithSSH(sshlib.Environment{
+		// 		RemoteHost: target.PrimaryIP,
+		// 		Connector:  w.SSH,
+		// 		Downloader: w,
+		// 		Uploader:   w,
+		// 	}),
+		// ),
 	)
 
 	var errStr string
