@@ -67,7 +67,7 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
     let vars = {
       name: name,
       content: content,
-      tags: [serviceTag],
+      tags: serviceTag ? [serviceTag] : [],
       targets: targets
     };
 
