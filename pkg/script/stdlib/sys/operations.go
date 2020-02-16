@@ -119,13 +119,12 @@ func exec(parser script.ArgParser) (script.Retval, error) {
 
 // Connections uses the gopsutil/net to get all connections created by a process (or all by default).
 //
-// @callable:	sys.Connections
-// @param:		parent		@Process
-// @retval:		conns 		@[]Connection
-// @retval:		err 		@Error
+// @callable:	sys.connections
+// @param:		parent		@?Process
+// @retval:		connections	@[]Connection
 //
-// @usage:		connections = sys.Connections()
-func Connections(parent *proclib.Process) ([]netlib.Connection, error) {
+// @usage:		connections = sys.connections()
+func Connections(parent *proclib.Process) []netlib.Connection {
 	ppid := int32(0)
 	if parent != nil {
 		ppid = parent.Pid
@@ -133,7 +132,8 @@ func Connections(parent *proclib.Process) ([]netlib.Connection, error) {
 	connections, err := net.ConnectionsPid("all", ppid)
 	var conns []netlib.Connection
 	if err != nil {
-		return conns, err
+		// TODO: Log error
+		return []netlib.Connection{}
 	}
 	for _, conn := range connections {
 		conns = append(conns, netlib.Connection{
@@ -148,30 +148,30 @@ func Connections(parent *proclib.Process) ([]netlib.Connection, error) {
 			Status:     conn.Status,
 		})
 	}
-	return conns, nil
+	return conns
 }
 
 func connections(parser script.ArgParser) (script.Retval, error) {
 	parent, err := proclib.ParseParam(parser, 0)
 	if err != nil {
-		return Connections(nil)
+		return Connections(nil), nil
 	}
-	return Connections(&parent)
+	return Connections(&parent), nil
 }
 
 // Processes uses the gopsutil/process to get all processes.
 //
-// @callable:	sys.Processes
+// @callable:	sys.processes
 // @retval:		procs 		@[]Process
-// @retval:		err 		@Error
 //
-// @usage:		processes = sys.Processes()
-func Processes() ([]proclib.Process, error) {
+// @usage:		processes = sys.processes()
+func Processes() (procs []proclib.Process) {
 	pids, err := process.Pids()
-	var procs []proclib.Process
 	if err != nil {
-		return procs, err
+		// TODO: Log error
+		return
 	}
+
 	for _, pid := range pids {
 		proc, err := process.NewProcess(pid)
 		if err != nil {
@@ -197,9 +197,9 @@ func Processes() ([]proclib.Process, error) {
 			TTY:     procTerminal,
 		})
 	}
-	return procs, nil
+	return
 }
 
 func processes(parser script.ArgParser) (script.Retval, error) {
-	return Processes()
+	return Processes(), nil
 }
