@@ -3,10 +3,12 @@
 package auth
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/service"
 )
 
 // DevAuthenticator is only available when run in developer mode. It inserts users into the request
@@ -24,6 +26,34 @@ func (auth DevAuthenticator) Authenticate(w http.ResponseWriter, req *http.Reque
 		if err == nil && user != nil {
 			return CreateUserSession(w, req, user), nil
 		}
+	}
+
+	// If a service was provided, upsert the service and allow it.
+	if svcName := req.Header.Get(HeaderService); svcName != "" {
+		svc, err := auth.Graph.Service.Query().
+			Where(service.Name(svcName)).
+			First(req.Context())
+
+		// Upsert the service if not found
+		if err != nil || svc == nil {
+			tag, err := auth.Graph.Tag.Create().
+				SetName(svcTagPrefix + svcName).
+				Save(req.Context())
+			if err != nil {
+				return nil, err
+			}
+
+			svc, err = auth.Graph.Service.Create().
+				SetName(svcName).
+				SetPubKey(svcName).
+				SetTag(tag).
+				SetIsActivated(true).
+				Save(req.Context())
+			if err != nil {
+				return nil, err
+			}
+		}
+		return req.WithContext(context.WithValue(req.Context(), serviceContextKey, svc)), nil
 	}
 
 	// Invalid or no user id provided, assign the session to the first user

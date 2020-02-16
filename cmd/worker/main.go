@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/kcarretto/paragon/graphql"
+	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
@@ -35,6 +36,10 @@ func main() {
 		URL:     fmt.Sprintf("%s/%s", teamserverURL, "graphql"),
 		Service: "pg-worker",
 	}
+	// TODO: Fix this, but this initial call is to register the service
+	graph.ClaimTasks(context.Background(), models.ClaimTasksRequest{
+		PrimaryIP: nil,
+	})
 
 	cdnURL := teamserverURL
 	if url := os.Getenv("CDN_URL"); url != "" {
