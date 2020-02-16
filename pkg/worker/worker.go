@@ -13,6 +13,7 @@ import (
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script"
 	cdnlib "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
+	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	sshlib "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
 
 	// "github.com/kcarretto/paragon/pkg/script/workerlib"
@@ -179,6 +180,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		script.WithOutput(output),
 		sshEnv.Include(),
 		cdnEnv.Include(),
+		filelib.Include(),
 		// sshlib.
 		// 	workerlib.Load(
 		// 	workerlib.WithSSH(sshlib.Environment{
