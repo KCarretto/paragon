@@ -100,6 +100,21 @@ func (test *testResolver) newLink(t *testing.T, options ...func(*ent.LinkCreate)
 	return link
 }
 
+func (test *testResolver) newFile(t *testing.T, options ...func(*ent.FileCreate)) *ent.File {
+	l := test.newLink(t)
+	uniqueNumber++
+	uniqueData := fmt.Sprintf("test%d", uniqueNumber)
+	fileCreater := test.Client.File.Create().SetName(uniqueData).SetLastModifiedTime(time.Now()).SetContent([]byte("test")).SetHash("test").SetContentType("test").AddLinks(l)
+	for _, opt := range options {
+		opt(fileCreater)
+	}
+	file, err := fileCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("Failed to create file %w", err)
+	}
+	return file
+}
+
 func NewTestClient() *testResolver {
 	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	if err != nil {
@@ -282,6 +297,21 @@ func TestLinksQuery(t *testing.T) {
 			idsLeft = append(idsLeft, id)
 		}
 		t.Errorf("Links query returned missing expected links(s) %#v", idsLeft)
+	}
+
+}
+
+func TestFileQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	f := client.newFile(t)
+	query := client.Resolver.Query()
+	queriedFile, err := query.Link(context.Background(), f.ID)
+	if err != nil {
+		t.Errorf("Link query errored with %w", err)
+	}
+	if f.ID != queriedFile.ID {
+		t.Errorf("Link query returned wrong id expected: %d, got: %d", f.ID, queriedFile.ID)
 	}
 
 }
