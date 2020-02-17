@@ -28,12 +28,19 @@ const XServiceTypeahead = ({ value, onChange, labeled }) => {
     ServicesResult
   >(SUGGEST_SERVICES_QUERY);
 
-  let options = services.map(svc => {
-    return {
-      text: svc.name || "unknown-service",
-      value: svc.tag ? svc.tag.id : null
-    };
-  });
+  let options = Array.from(
+    new Map(
+      services.map(svc => {
+        return [
+          svc.tag ? svc.tag.id : null,
+          {
+            text: svc.name || "unknown-service",
+            value: svc.tag ? svc.tag.id : null
+          }
+        ];
+      })
+    ).values()
+  );
 
   const getDropdown = () => (
     <Dropdown
@@ -42,6 +49,7 @@ const XServiceTypeahead = ({ value, onChange, labeled }) => {
       fluid
       search
       selection
+      clearable
       error={error !== null && error !== undefined}
       loading={loading}
       options={options}
