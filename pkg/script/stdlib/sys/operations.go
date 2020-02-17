@@ -35,7 +35,7 @@ func OpenFile(filePath string) (file.Type, error) {
 	if err != nil {
 		return file.New(nil), err
 	}
-	return file.New(File{
+	return file.New(&File{
 		f,
 	}), nil
 }

@@ -32,7 +32,7 @@ func (f *File) Move(dstPath string) error {
 		return err
 	}
 
-	newF, err := f.session.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE)
+	newF, err := f.session.OpenFile(dstPath, os.O_RDWR|os.O_CREATE)
 	if err != nil {
 		return err
 	}
@@ -57,12 +57,13 @@ func (f *File) Close() error {
 
 // Sync closes and then reopens the file.
 func (f *File) Sync() error {
-	err := f.File.Close()
-	if err != nil {
-		return err
+	if f == nil || f.File == nil {
+		return nil
 	}
 
-	newF, err := f.session.OpenFile(f.Name(), os.O_WRONLY)
+	f.File.Close()
+
+	newF, err := f.session.OpenFile(f.Name(), os.O_RDWR)
 	if err != nil {
 		return err
 	}

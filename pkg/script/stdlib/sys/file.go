@@ -12,7 +12,7 @@ type File struct {
 }
 
 // Move uses os.Rename to move a file/folder
-func (f File) Move(dstPath string) error {
+func (f *File) Move(dstPath string) error {
 	dir := path.Dir(dstPath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create parent directory %q: %w", dir, err)
@@ -38,17 +38,17 @@ func (f File) Move(dstPath string) error {
 }
 
 // Remove uses os.Remove to remove a file/folder. WARNING: basically works like rm -rf
-func (f File) Remove() error {
+func (f *File) Remove() error {
 	f.Close()
 	return os.RemoveAll(f.Name())
 }
 
 // Sync closes and then reopens the file.
-func (f File) Sync() error {
-	err := f.File.Close()
-	if err != nil {
-		return err
+func (f *File) Sync() error {
+	if f == nil || f.File == nil {
+		return nil
 	}
+	f.File.Close()
 
 	newF, err := os.Open(f.Name())
 	if err != nil {

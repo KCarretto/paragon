@@ -133,6 +133,20 @@ func (mr *MockFileMockRecorder) Stat() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stat", reflect.TypeOf((*MockFile)(nil).Stat))
 }
 
+// Sync mocks base method
+func (m *MockFile) Sync() error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Sync")
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Sync indicates an expected call of Sync
+func (mr *MockFileMockRecorder) Sync() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sync", reflect.TypeOf((*MockFile)(nil).Sync))
+}
+
 // Write mocks base method
 func (m *MockFile) Write(arg0 []byte) (int, error) {
 	m.ctrl.T.Helper()
