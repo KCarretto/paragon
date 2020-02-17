@@ -3,6 +3,7 @@ package file
 import (
 	"io"
 	"io/ioutil"
+	"os"
 	"os/user"
 	"strconv"
 
@@ -216,4 +217,38 @@ func chown(parser script.ArgParser) (script.Retval, error) {
 	group, _ := parser.GetString(2)
 
 	return Chown(f, username, group), nil
+}
+
+// Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation
+// of what os.FileMode you wish to set file to have.
+//
+// @callable: 	file.chmod
+// @param: 		file 		@File
+// @param:		mode		@String
+// @retval:		err 		@Error
+//
+// @usage: 		err = file.chmod(f, "0777")
+func Chmod(file Type, mode string) error {
+	modeInt, err := strconv.ParseInt(mode, 8, 32)
+	if err != nil {
+		return err
+	}
+	err = Type.Chmod(file, os.FileMode(modeInt))
+	if err != nil {
+		return err
+	}
+	return file.Sync()
+}
+
+func chmod(parser script.ArgParser) (script.Retval, error) {
+	f, err := parseFileParam(parser, 0)
+	if err != nil {
+		return nil, err
+	}
+	modeStr, err := parser.GetString(1)
+	if err != nil {
+		return nil, err
+	}
+
+	return Chmod(f, modeStr), nil
 }

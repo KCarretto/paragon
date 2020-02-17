@@ -33,6 +33,7 @@ func Library() script.Library {
 		"copy":    script.Func(copy),
 		"remove":  script.Func(remove),
 		"chown":   script.Func(chown),
+		"chmod":   script.Func(chmod),
 	}
 }
 
