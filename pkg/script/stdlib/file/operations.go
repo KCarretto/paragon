@@ -87,7 +87,10 @@ func content(parser script.ArgParser) (script.Retval, error) {
 // @usage: 		err = file.write(f, "New\n\tFile\n\t\tContent")
 func Write(file Type, content string) error {
 	_, err := Type.Write(file, []byte(content))
-	return err
+	if err != nil {
+		return err
+	}
+	return file.Sync()
 }
 
 func write(parser script.ArgParser) (script.Retval, error) {
@@ -113,7 +116,10 @@ func write(parser script.ArgParser) (script.Retval, error) {
 // @usage: 		err = file.copy(f1, f2)
 func Copy(src Type, dst Type) error {
 	_, err := io.Copy(dst, src)
-	return err
+	if err != nil {
+		return err
+	}
+	return dst.Sync()
 }
 
 func copy(parser script.ArgParser) (script.Retval, error) {
@@ -193,7 +199,11 @@ func Chown(file Type, username, group string) error {
 		return nil
 	}
 
-	return Type.Chown(file, int(uid), int(gid))
+	err := Type.Chown(file, int(uid), int(gid))
+	if err != nil {
+		return err
+	}
+	return file.Sync()
 }
 
 func chown(parser script.ArgParser) (script.Retval, error) {

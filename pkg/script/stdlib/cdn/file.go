@@ -69,3 +69,8 @@ func (f *File) Move(dstPath string) error {
 func (f *File) Remove() error {
 	return fmt.Errorf("CDN does not support remove")
 }
+
+// Sync does nothing.
+func (f *File) Sync() error {
+	return nil
+}

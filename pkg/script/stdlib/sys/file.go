@@ -42,3 +42,19 @@ func (f File) Remove() error {
 	f.Close()
 	return os.RemoveAll(f.Name())
 }
+
+// Sync closes and then reopens the file.
+func (f File) Sync() error {
+	err := f.File.Close()
+	if err != nil {
+		return err
+	}
+
+	newF, err := os.Open(f.Name())
+	if err != nil {
+		return err
+	}
+
+	f.File = newF
+	return nil
+}

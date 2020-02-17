@@ -105,7 +105,7 @@ func (f Type) Hash() (uint32, error) {
 
 // parseFileParam from starlark input
 func parseFileParam(parser script.ArgParser, index int) (Type, error) {
-	val, err := parser.GetParam(0)
+	val, err := parser.GetParam(index)
 	if err != nil {
 		return Type{}, err
 	}

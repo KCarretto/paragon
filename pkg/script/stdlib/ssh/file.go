@@ -54,3 +54,19 @@ func (f *File) Close() error {
 	}
 	return f.File.Close()
 }
+
+// Sync closes and then reopens the file.
+func (f *File) Sync() error {
+	err := f.File.Close()
+	if err != nil {
+		return err
+	}
+
+	newF, err := f.session.OpenFile(f.Name(), os.O_WRONLY)
+	if err != nil {
+		return err
+	}
+
+	f.File = newF
+	return nil
+}

@@ -20,6 +20,7 @@ type File interface {
 
 	Move(dstPath string) error
 	Remove() error
+	Sync() error
 }
 
 // Library prepares a new file library for use within a script environment.

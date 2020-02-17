@@ -43,3 +43,8 @@ func (f File) Move(dstPath string) error {
 func (f File) Remove() error {
 	return ErrUnsupported
 }
+
+// Sync does nothing.
+func (f File) Sync() error {
+	return nil
+}
