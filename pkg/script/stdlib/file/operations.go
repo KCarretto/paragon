@@ -169,10 +169,10 @@ func remove(parser script.ArgParser) (script.Retval, error) {
 }
 
 // Chown modifies the file's ownership metadata. Passing an empty string for either the username
-// or group parameter will result in a no-op. For example, file.chown(f, "", "new_group") will
-// change the file's group ownership to "new_group" but will not affect the file's user ownership.
+// or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will
+// change the file's group ownership to 'new_group' but will not affect the file's user ownership.
 //
-//go:generate go run ../gendoc.go -lib file -func chown -param file@File -param username@String -param group@String -retval err@Error -doc "Chown modifies the file's ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, "", "new_group") will change the file's group ownership to "new_group" but will not affect the file's user ownership."
+//go:generate go run ../gendoc.go -lib file -func chown -param file@File -param username@String -param group@String -retval err@Error -doc "Chown modifies the file's ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will change the file's group ownership to 'new_group' but will not affect the file's user ownership."
 //
 // @callable: 	file.chown
 // @param: 		file 		@File
