@@ -37,7 +37,9 @@ func (test *testResolver) newTarget(t *testing.T, options ...func(*ent.TargetCre
 }
 
 func (test *testResolver) newUser(t *testing.T, options ...func(*ent.UserCreate)) *ent.User {
-	userCreater := test.Client.User.Create().SetName("joe").SetOAuthID("who").SetPhotoURL("uneccsarybutfine")
+	uniqueNumber++
+	uniqueData := fmt.Sprintf("test%d", uniqueNumber)
+	userCreater := test.Client.User.Create().SetName("joe").SetOAuthID(uniqueData).SetPhotoURL("uneccsarybutfine")
 	for _, opt := range options {
 		opt(userCreater)
 	}
@@ -312,6 +314,83 @@ func TestFileQuery(t *testing.T) {
 	}
 	if f.ID != queriedFile.ID {
 		t.Errorf("Link query returned wrong id expected: %d, got: %d", f.ID, queriedFile.ID)
+	}
+
+}
+
+func TestFilesQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfFiles := 2
+	files := map[int]*ent.File{}
+	for i := 0; i < numOfFiles; i++ {
+		f := client.newFile(t)
+		files[f.ID] = f
+	}
+	query := client.Resolver.Query()
+	queriedFiles, err := query.Links(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Links query errored with %w", err)
+	}
+
+	for _, f := range queriedFiles {
+		if _, ok := files[f.ID]; ok {
+			delete(files, f.ID)
+		}
+	}
+
+	if len(files) != 0 {
+		idsLeft := []int{}
+		for id := range files {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Files query returned missing expected file(s) %#v", idsLeft)
+	}
+
+}
+
+func TestJobQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	j := client.newJob(t)
+	query := client.Resolver.Query()
+	queriedJob, err := query.Job(context.Background(), j.ID)
+	if err != nil {
+		t.Errorf("Job query errored with %w", err)
+	}
+	if j.ID != queriedJob.ID {
+		t.Errorf("Job query returned wrong id expected: %d, got: %d", j.ID, queriedJob.ID)
+	}
+
+}
+
+func TestJobsQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfJobs := 2
+	jobs := map[int]*ent.Job{}
+	for i := 0; i < numOfJobs; i++ {
+		j := client.newJob(t)
+		jobs[j.ID] = j
+	}
+	query := client.Resolver.Query()
+	queriedJobs, err := query.Jobs(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Jobs query errored with %w", err)
+	}
+
+	for _, j := range queriedJobs {
+		if _, ok := jobs[j.ID]; ok {
+			delete(jobs, j.ID)
+		}
+	}
+
+	if len(jobs) != 0 {
+		idsLeft := []int{}
+		for id := range jobs {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Jobs query returned missing expected job(s) %#v", idsLeft)
 	}
 
 }
