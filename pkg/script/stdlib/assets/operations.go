@@ -11,8 +11,10 @@ import (
 // operations such as Chown, Write, etc. but you may read it's contents or copy it to another file
 // i.e. one opened by ssh or sys.
 //
+//go:generate go run ../gendoc.go -lib assets -func openFile -param path@String -retval file@File -retval err@Error -doc "OpenFile that was packed into the compiled binary. The resulting file does not support many operations such as Chown, Write, etc. but you may read it's contents or copy it to another file i.e. one opened by ssh or sys."
+//
 // @callable:	assets.openFile
-// @param:		path 	@string
+// @param:		path 	@String
 // @retval:		file 	@File
 // @retval:		err 	@Error
 //

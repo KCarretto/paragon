@@ -19,6 +19,8 @@ import (
 
 // OpenFile uses os.Open to Open a file.
 //
+//go:generate go run ../gendoc.go -lib sys -func openFile -param path@String -retval file@File -retval err@Error -doc "OpenFile uses os.Open to Open a file."
+//
 // @callable: 	sys.openFile
 // @param: 		path 	@string
 // @retval:		file 	@File
@@ -52,6 +54,8 @@ func openFile(parser script.ArgParser) (script.Retval, error) {
 
 // DetectOS uses the GOOS variable to determine the OS.
 //
+//go:generate go run ../gendoc.go -lib sys -func detectOS -retval os@String -doc "DetectOS uses the GOOS variable to determine the OS."
+//
 // @callable:	sys.detectOS
 // @retval:		os  	@string
 //
@@ -81,10 +85,12 @@ func detectOS(parser script.ArgParser) (script.Retval, error) {
 
 // Exec uses the os/exec.command to execute the passed executable/params.
 //
+//go:generate go run ../gendoc.go -lib sys -func exec -param executable@String -param disown@?Bool -retval output@String -retval err@Error -doc "Exec uses the os/exec.command to execute the passed executable/params."
+//
 // @callable:	sys.exec
-// @param:		executable	@string
-// @param:		disown		@?bool
-// @retval:		output 		@string
+// @param:		executable	@String
+// @param:		disown		@?Bool
+// @retval:		output 		@String
 // @retval:		err 		@Error
 //
 // @usage:		output = sys.exec("/usr/sbin/nginx", disown=True)
@@ -118,6 +124,8 @@ func exec(parser script.ArgParser) (script.Retval, error) {
 }
 
 // Connections uses the gopsutil/net to get all connections created by a process (or all by default).
+//
+//go:generate go run ../gendoc.go -lib sys -func connections -param parent@?Process -retval connections@[]Connection -doc "Connections uses the gopsutil/net to get all connections created by a process (or all by default)."
 //
 // @callable:	sys.connections
 // @param:		parent		@?Process
@@ -160,6 +168,8 @@ func connections(parser script.ArgParser) (script.Retval, error) {
 }
 
 // Processes uses the gopsutil/process to get all processes.
+//
+//go:generate go run ../gendoc.go -lib sys -func processes -retval procs@[]Process -doc "Processes uses the gopsutil/process to get all processes."
 //
 // @callable:	sys.processes
 // @retval:		procs 		@[]Process

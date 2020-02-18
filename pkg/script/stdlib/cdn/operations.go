@@ -9,8 +9,10 @@ import (
 // previously stored contents. Reading the file will download it from the CDN. Since operations are
 // performed lazily, openFile will never error however reading from or writing to the file may.
 //
+//go:generate go run ../gendoc.go -lib cdn -func openFile -param name@String -retval file@File -doc "OpenFile stored on the CDN. Writing to the file will cause an upload to the CDN, overwriting any previously stored contents. Reading the file will download it from the CDN. Since operations are performed lazily, openFile will never error however reading from or writing to the file may."
+//
 // @callable:	cdn.openFile
-// @param:		name 	@string
+// @param:		name 	@String
 // @retval:		file 	@File
 //
 // @usage:		f = cdn.openFile("file_name")

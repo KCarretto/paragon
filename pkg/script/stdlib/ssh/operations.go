@@ -12,6 +12,8 @@ import (
 
 // Exec a command on the remote system using an underlying ssh session.
 //
+//go:generate go run ../gendoc.go -lib ssh -func exec -param cmd@String -retval output@String -retval err@Error -doc "Exec a command on the remote system using an underlying ssh session."
+//
 // @callable: 	ssh.exec
 // @param: 		cmd 	@string
 // @retval:		output 	@string
@@ -54,6 +56,8 @@ func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 }
 
 // OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.
+//
+//go:generate go run ../gendoc.go -lib ssh -func openFile -param path@String -retval file@File -retval err@Error -doc "OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist."
 //
 // @callable: 	ssh.openFile
 // @param: 		path 	@string

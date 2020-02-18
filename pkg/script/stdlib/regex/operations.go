@@ -9,11 +9,13 @@ import (
 // Replace uses the golang regex lib to replace all occurences of the pattern in the old
 // string into the new strong.
 //
+//go:generate go run ../gendoc.go -lib regex -func replaceString -param oldString@String -param pattern@String -param newString@String -retval replacedString@String -retval err@Error -doc "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong."
+//
 // @callable:	regex.ReplaceString
-// @param:		oldString			@string
-// @param:		pattern				@string
-// @param:		newString			@string
-// @retval:		replacedString 		@string
+// @param:		oldString			@String
+// @param:		pattern				@String
+// @param:		newString			@String
+// @retval:		replacedString 		@String
 // @retval:		err 				@Error
 //
 // @usage:		new_config = regex.replace(nginx_conf, "listen[\s]*80;", "listen 81;")

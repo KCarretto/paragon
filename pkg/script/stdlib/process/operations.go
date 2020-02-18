@@ -8,6 +8,8 @@ import (
 
 // Kill a process (using SIGKILL).
 //
+//go:generate go run ../gendoc.go -lib process -func kill -param proc@Process -retval err@Error -doc "Kill a process (using SIGKILL)."
+//
 // @callable:	process.Kill
 // @param:		proc	@Process
 // @retval:		err 	@Error
@@ -31,9 +33,11 @@ func kill(parser script.ArgParser) (script.Retval, error) {
 
 // Name gets the name of the passed process.
 //
+//go:generate go run ../gendoc.go -lib process -func name -param proc@Process -retval name@String -retval err@Error -doc "Name gets the name of the passed process."
+//
 // @callable:	process.Name
 // @param:		proc	@Process
-// @retval:		name 	@string
+// @retval:		name 	@String
 // @retval:		err 	@Error
 //
 // @usage:		proc_name = process.Name(proc)

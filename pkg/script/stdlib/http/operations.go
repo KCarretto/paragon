@@ -10,8 +10,10 @@ import (
 
 // NewRequest creates a new Request object to be passed around.
 //
+//go:generate go run ../gendoc.go -lib http -func newRequest -param url@String -retval request@Request -doc "NewRequest creates a new Request object to be passed around."
+//
 // @callable:	http.NewRequest
-// @param:		url		@string
+// @param:		url		@String
 // @retval:		request @Request
 //
 // @usage:		r = http.NewRequest(CDN_URL+"/l/nomnom")
@@ -31,6 +33,8 @@ func newRequest(parser script.ArgParser) (script.Retval, error) {
 }
 
 // SetMethod sets the http method on the request object.
+//
+//go:generate go run ../gendoc.go -lib http -func setMethod -param r@Request -param method@String -doc "SetMethod sets the http method on the request object."
 //
 // @callable:	http.SetMethod
 // @param:		r		@Request
@@ -55,6 +59,8 @@ func setMethod(parser script.ArgParser) (script.Retval, error) {
 }
 
 // SetHeader sets the http header to the value passed on the request object.
+//
+//go:generate go run ../gendoc.go -lib http -func setHeader -param r@Request -param header@String -param value@String -doc "SetHeader sets the http header to the value passed on the request object."
 //
 // @callable:	http.SetHeader
 // @param:		r		@Request
@@ -85,6 +91,8 @@ func setHeader(parser script.ArgParser) (script.Retval, error) {
 
 // SetBody sets the http body to the value passed on the request object.
 //
+//go:generate go run ../gendoc.go -lib http -func setBody -param r@Request -param value@String -doc "SetBody sets the http body to the value passed on the request object."
+//
 // @callable:	http.SetBody
 // @param:		r		@Request
 // @param:		value	@string
@@ -108,6 +116,8 @@ func setBody(parser script.ArgParser) (script.Retval, error) {
 }
 
 // Exec sends the passed request object.
+//
+//go:generate go run ../gendoc.go -lib http -func exec -param r@Request -retval response@String -retval err@Error -doc "Exec sends the passed request object."
 //
 // @callable:	http.Exec
 // @param:		r			@Request
