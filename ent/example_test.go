@@ -63,6 +63,7 @@ func ExampleEvent() {
 		SetName("string").
 		SetCreationTime(time.Now()).
 		SetContent("string").
+		SetStaged(true).
 		SaveX(ctx)
 	log.Println("job created:", j0)
 	f1 := client.File.
@@ -320,6 +321,7 @@ func ExampleJob() {
 		SetName("string").
 		SetCreationTime(time.Now()).
 		SetContent("string").
+		SetStaged(true).
 		SaveX(ctx)
 	log.Println("job created:", j3)
 
@@ -329,6 +331,7 @@ func ExampleJob() {
 		SetName("string").
 		SetCreationTime(time.Now()).
 		SetContent("string").
+		SetStaged(true).
 		AddTasks(t0).
 		AddTags(t1).
 		SetNext(j3).
@@ -592,6 +595,7 @@ func ExampleUser() {
 		SetName("string").
 		SetCreationTime(time.Now()).
 		SetContent("string").
+		SetStaged(true).
 		SaveX(ctx)
 	log.Println("job created:", j0)
 	e1 := client.Event.

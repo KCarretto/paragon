@@ -127,6 +127,14 @@ func Content(v string) predicate.Job {
 	)
 }
 
+// Staged applies equality check predicate on the "Staged" field. It's identical to StagedEQ.
+func Staged(v bool) predicate.Job {
+	return predicate.Job(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldStaged), v))
+	},
+	)
+}
+
 // NameEQ applies the EQ predicate on the "Name" field.
 func NameEQ(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
@@ -455,6 +463,22 @@ func ContentEqualFold(v string) predicate.Job {
 func ContentContainsFold(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldContent), v))
+	},
+	)
+}
+
+// StagedEQ applies the EQ predicate on the "Staged" field.
+func StagedEQ(v bool) predicate.Job {
+	return predicate.Job(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldStaged), v))
+	},
+	)
+}
+
+// StagedNEQ applies the NEQ predicate on the "Staged" field.
+func StagedNEQ(v bool) predicate.Job {
+	return predicate.Job(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldStaged), v))
 	},
 	)
 }

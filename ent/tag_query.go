@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -26,6 +27,10 @@ type TagQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.Tag
+	// eager-loading edges.
+	withTargets *TargetQuery
+	withTasks   *TaskQuery
+	withJobs    *JobQuery
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -259,6 +264,39 @@ func (tq *TagQuery) Clone() *TagQuery {
 	}
 }
 
+//  WithTargets tells the query-builder to eager-loads the nodes that are connected to
+// the "targets" edge. The optional arguments used to configure the query builder of the edge.
+func (tq *TagQuery) WithTargets(opts ...func(*TargetQuery)) *TagQuery {
+	query := &TargetQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withTargets = query
+	return tq
+}
+
+//  WithTasks tells the query-builder to eager-loads the nodes that are connected to
+// the "tasks" edge. The optional arguments used to configure the query builder of the edge.
+func (tq *TagQuery) WithTasks(opts ...func(*TaskQuery)) *TagQuery {
+	query := &TaskQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withTasks = query
+	return tq
+}
+
+//  WithJobs tells the query-builder to eager-loads the nodes that are connected to
+// the "jobs" edge. The optional arguments used to configure the query builder of the edge.
+func (tq *TagQuery) WithJobs(opts ...func(*JobQuery)) *TagQuery {
+	query := &JobQuery{config: tq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	tq.withJobs = query
+	return tq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -303,29 +341,224 @@ func (tq *TagQuery) Select(field string, fields ...string) *TagSelect {
 func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 	var (
 		nodes []*Tag
-		spec  = tq.querySpec()
+		_spec = tq.querySpec()
 	)
-	spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func() []interface{} {
 		node := &Tag{config: tq.config}
 		nodes = append(nodes, node)
-		return node.scanValues()
+		values := node.scanValues()
+		return values
 	}
-	spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(values ...interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
 		return node.assignValues(values...)
 	}
-	if err := sqlgraph.QueryNodes(ctx, tq.driver, spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
+
+	if len(nodes) == 0 {
+		return nodes, nil
+	}
+
+	if query := tq.withTargets; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Tag, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Tag)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   tag.TargetsTable,
+				Columns: tag.TargetsPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(tag.TargetsPrimaryKey[1], fks...))
+			},
+
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{&sql.NullInt64{}, &sql.NullInt64{}}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(eout.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				edgeids = append(edgeids, inValue)
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, tq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "targets": %v`, err)
+		}
+		query.Where(target.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "targets" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Targets = append(nodes[i].Edges.Targets, n)
+			}
+		}
+	}
+
+	if query := tq.withTasks; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Tag, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Tag)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   tag.TasksTable,
+				Columns: tag.TasksPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(tag.TasksPrimaryKey[1], fks...))
+			},
+
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{&sql.NullInt64{}, &sql.NullInt64{}}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(eout.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				edgeids = append(edgeids, inValue)
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, tq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "tasks": %v`, err)
+		}
+		query.Where(task.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "tasks" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Tasks = append(nodes[i].Edges.Tasks, n)
+			}
+		}
+	}
+
+	if query := tq.withJobs; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		ids := make(map[int]*Tag, len(nodes))
+		for _, node := range nodes {
+			ids[node.ID] = node
+			fks = append(fks, node.ID)
+		}
+		var (
+			edgeids []int
+			edges   = make(map[int][]*Tag)
+		)
+		_spec := &sqlgraph.EdgeQuerySpec{
+			Edge: &sqlgraph.EdgeSpec{
+				Inverse: true,
+				Table:   tag.JobsTable,
+				Columns: tag.JobsPrimaryKey,
+			},
+			Predicate: func(s *sql.Selector) {
+				s.Where(sql.InValues(tag.JobsPrimaryKey[1], fks...))
+			},
+
+			ScanValues: func() [2]interface{} {
+				return [2]interface{}{&sql.NullInt64{}, &sql.NullInt64{}}
+			},
+			Assign: func(out, in interface{}) error {
+				eout, ok := out.(*sql.NullInt64)
+				if !ok || eout == nil {
+					return fmt.Errorf("unexpected id value for edge-out")
+				}
+				ein, ok := in.(*sql.NullInt64)
+				if !ok || ein == nil {
+					return fmt.Errorf("unexpected id value for edge-in")
+				}
+				outValue := int(eout.Int64)
+				inValue := int(eout.Int64)
+				node, ok := ids[outValue]
+				if !ok {
+					return fmt.Errorf("unexpected node id in edges: %v", outValue)
+				}
+				edgeids = append(edgeids, inValue)
+				edges[inValue] = append(edges[inValue], node)
+				return nil
+			},
+		}
+		if err := sqlgraph.QueryEdges(ctx, tq.driver, _spec); err != nil {
+			return nil, fmt.Errorf(`query edges "jobs": %v`, err)
+		}
+		query.Where(job.IDIn(edgeids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := edges[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected "jobs" node returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Jobs = append(nodes[i].Edges.Jobs, n)
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
 func (tq *TagQuery) sqlCount(ctx context.Context) (int, error) {
-	spec := tq.querySpec()
-	return sqlgraph.CountNodes(ctx, tq.driver, spec)
+	_spec := tq.querySpec()
+	return sqlgraph.CountNodes(ctx, tq.driver, _spec)
 }
 
 func (tq *TagQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -337,7 +570,7 @@ func (tq *TagQuery) sqlExist(ctx context.Context) (bool, error) {
 }
 
 func (tq *TagQuery) querySpec() *sqlgraph.QuerySpec {
-	spec := &sqlgraph.QuerySpec{
+	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   tag.Table,
 			Columns: tag.Columns,
@@ -350,26 +583,26 @@ func (tq *TagQuery) querySpec() *sqlgraph.QuerySpec {
 		Unique: true,
 	}
 	if ps := tq.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if limit := tq.limit; limit != nil {
-		spec.Limit = *limit
+		_spec.Limit = *limit
 	}
 	if offset := tq.offset; offset != nil {
-		spec.Offset = *offset
+		_spec.Offset = *offset
 	}
 	if ps := tq.order; len(ps) > 0 {
-		spec.Order = func(selector *sql.Selector) {
+		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return spec
+	return _spec
 }
 
 func (tq *TagQuery) sqlQuery() *sql.Selector {

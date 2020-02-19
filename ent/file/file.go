@@ -39,7 +39,7 @@ const (
 	LinksColumn = "file_id"
 )
 
-// Columns holds all SQL columns are file fields.
+// Columns holds all SQL columns for file fields.
 var Columns = []string{
 	FieldID,
 	FieldName,

@@ -24,6 +24,9 @@ type CredentialQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.Credential
+	// eager-loading edges.
+	withTarget *TargetQuery
+	withFKs    bool
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -233,6 +236,17 @@ func (cq *CredentialQuery) Clone() *CredentialQuery {
 	}
 }
 
+//  WithTarget tells the query-builder to eager-loads the nodes that are connected to
+// the "target" edge. The optional arguments used to configure the query builder of the edge.
+func (cq *CredentialQuery) WithTarget(opts ...func(*TargetQuery)) *CredentialQuery {
+	query := &TargetQuery{config: cq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	cq.withTarget = query
+	return cq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -276,30 +290,71 @@ func (cq *CredentialQuery) Select(field string, fields ...string) *CredentialSel
 
 func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	var (
-		nodes []*Credential
-		spec  = cq.querySpec()
+		nodes   []*Credential
+		withFKs = cq.withFKs
+		_spec   = cq.querySpec()
 	)
-	spec.ScanValues = func() []interface{} {
+	if cq.withTarget != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, credential.ForeignKeys...)
+	}
+	_spec.ScanValues = func() []interface{} {
 		node := &Credential{config: cq.config}
 		nodes = append(nodes, node)
-		return node.scanValues()
+		values := node.scanValues()
+		if withFKs {
+			values = append(values, node.fkValues()...)
+		}
+		return values
 	}
-	spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(values ...interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
 		return node.assignValues(values...)
 	}
-	if err := sqlgraph.QueryNodes(ctx, cq.driver, spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, cq.driver, _spec); err != nil {
 		return nil, err
 	}
+
+	if len(nodes) == 0 {
+		return nodes, nil
+	}
+
+	if query := cq.withTarget; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Credential)
+		for i := range nodes {
+			if fk := nodes[i].target_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(target.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Target = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
 func (cq *CredentialQuery) sqlCount(ctx context.Context) (int, error) {
-	spec := cq.querySpec()
-	return sqlgraph.CountNodes(ctx, cq.driver, spec)
+	_spec := cq.querySpec()
+	return sqlgraph.CountNodes(ctx, cq.driver, _spec)
 }
 
 func (cq *CredentialQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -311,7 +366,7 @@ func (cq *CredentialQuery) sqlExist(ctx context.Context) (bool, error) {
 }
 
 func (cq *CredentialQuery) querySpec() *sqlgraph.QuerySpec {
-	spec := &sqlgraph.QuerySpec{
+	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   credential.Table,
 			Columns: credential.Columns,
@@ -324,26 +379,26 @@ func (cq *CredentialQuery) querySpec() *sqlgraph.QuerySpec {
 		Unique: true,
 	}
 	if ps := cq.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if limit := cq.limit; limit != nil {
-		spec.Limit = *limit
+		_spec.Limit = *limit
 	}
 	if offset := cq.offset; offset != nil {
-		spec.Offset = *offset
+		_spec.Offset = *offset
 	}
 	if ps := cq.order; len(ps) > 0 {
-		spec.Order = func(selector *sql.Selector) {
+		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return spec
+	return _spec
 }
 
 func (cq *CredentialQuery) sqlQuery() *sql.Selector {

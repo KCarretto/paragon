@@ -36,12 +36,17 @@ const (
 	EventsColumn = "svc_owner_id"
 )
 
-// Columns holds all SQL columns are service fields.
+// Columns holds all SQL columns for service fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldPubKey,
 	FieldIsActivated,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Service type.
+var ForeignKeys = []string{
+	"service_tag_id",
 }
 
 var (
