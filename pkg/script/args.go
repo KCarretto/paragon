@@ -13,6 +13,8 @@ import (
 type ArgParser interface {
 	RestrictKwargs(kwargs ...string) error
 
+	GetParam(index int) (starlark.Value, error)
+
 	GetString(index int) (string, error)
 	GetStringByName(name string) (string, error)
 

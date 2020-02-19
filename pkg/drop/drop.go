@@ -9,7 +9,12 @@ import (
 	"strings"
 
 	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/stdlib"
+	assetslib "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
+	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	httplib "github.com/kcarretto/paragon/pkg/script/stdlib/http"
+	processlib "github.com/kcarretto/paragon/pkg/script/stdlib/process"
+	regexlib "github.com/kcarretto/paragon/pkg/script/stdlib/regex"
+	syslib "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 
 	"github.com/shurcooL/httpfs/vfsutil"
 )
@@ -41,10 +46,21 @@ func TheBase(ctx context.Context, assets http.FileSystem) {
 			return nil
 		}
 
+		assetsEnv := &assetslib.Environment{
+			Assets: assets,
+		}
+
+		// TODO: Restructure cdn lib so that client can be used without requiring all of ent
+
 		// Initialize script
 		dropScript := script.New(fi.Name(), content,
 			script.WithOutput(os.Stdout), // TODO: Output to stdout?
-			stdlib.Load(stdlib.WithAssets(assets)),
+			assetsEnv.Include(),
+			filelib.Include(),
+			httplib.Include(),
+			processlib.Include(),
+			regexlib.Include(),
+			syslib.Include(),
 		)
 
 		// Run script

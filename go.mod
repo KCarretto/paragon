@@ -22,6 +22,7 @@ require (
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
 	github.com/stretchr/testify v1.4.0
+	github.com/urfave/cli v1.20.0
 	github.com/vektah/gqlparser v1.2.0
 	go.starlark.net v0.0.0-20191018214235-58de16fb0ee7
 	go.uber.org/atomic v1.4.0 // indirect
