@@ -340,8 +340,8 @@ func (tq *TargetQuery) Select(field string, fields ...string) *TargetSelect {
 
 func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 	var (
-		nodes []*Target = []*Target{}
-		_spec           = tq.querySpec()
+		nodes []*Target
+		_spec = tq.querySpec()
 	)
 	_spec.ScanValues = func() []interface{} {
 		node := &Target{config: tq.config}
@@ -359,6 +359,7 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

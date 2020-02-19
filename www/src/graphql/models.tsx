@@ -60,6 +60,7 @@ export type CreateJobRequest = {
   name: Scalars['String'],
   content: Scalars['String'],
   sessionID?: Maybe<Scalars['String']>,
+  stage?: Maybe<Scalars['Boolean']>,
   targets?: Maybe<Array<Scalars['ID']>>,
   tags?: Maybe<Array<Scalars['ID']>>,
   prev?: Maybe<Scalars['ID']>,
@@ -160,6 +161,7 @@ export type Job = {
   name?: Maybe<Scalars['String']>,
   creationTime?: Maybe<Scalars['Time']>,
   content?: Maybe<Scalars['String']>,
+  staged?: Maybe<Scalars['Boolean']>,
   tasks?: Maybe<Array<Maybe<Task>>>,
   tags?: Maybe<Array<Maybe<Tag>>>,
   next?: Maybe<Job>,
@@ -200,6 +202,7 @@ export type Mutation = {
   failCredential: Credential,
   /** Job Mutations */
   createJob: Job,
+  queueJob: Job,
   /** Tag Mutations */
   createTag: Tag,
   applyTagToTask: Task,
@@ -242,6 +245,11 @@ export type MutationFailCredentialArgs = {
 
 export type MutationCreateJobArgs = {
   input?: Maybe<CreateJobRequest>
+};
+
+
+export type MutationQueueJobArgs = {
+  input?: Maybe<QueueJobRequest>
 };
 
 
@@ -492,6 +500,10 @@ export type QueryEventArgs = {
 
 export type QueryEventsArgs = {
   input?: Maybe<Filter>
+};
+
+export type QueueJobRequest = {
+  id: Scalars['ID'],
 };
 
 export type RemoveAdminRequest = {

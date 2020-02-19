@@ -22,6 +22,8 @@ type Job struct {
 	CreationTime time.Time `json:"CreationTime,omitempty"`
 	// Content holds the value of the "Content" field.
 	Content string `json:"Content,omitempty"`
+	// Staged holds the value of the "Staged" field.
+	Staged bool `json:"Staged,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the JobQuery when eager-loading is set.
 	Edges struct {
@@ -47,6 +49,7 @@ func (*Job) scanValues() []interface{} {
 		&sql.NullString{}, // Name
 		&sql.NullTime{},   // CreationTime
 		&sql.NullString{}, // Content
+		&sql.NullBool{},   // Staged
 	}
 }
 
@@ -85,7 +88,12 @@ func (j *Job) assignValues(values ...interface{}) error {
 	} else if value.Valid {
 		j.Content = value.String
 	}
-	values = values[3:]
+	if value, ok := values[3].(*sql.NullBool); !ok {
+		return fmt.Errorf("unexpected type %T for field Staged", values[3])
+	} else if value.Valid {
+		j.Staged = value.Bool
+	}
+	values = values[4:]
 	if len(values) == len(job.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
 			return fmt.Errorf("unexpected type %T for edge-field prev_id", value)
@@ -157,6 +165,8 @@ func (j *Job) String() string {
 	builder.WriteString(j.CreationTime.Format(time.ANSIC))
 	builder.WriteString(", Content=")
 	builder.WriteString(j.Content)
+	builder.WriteString(", Staged=")
+	builder.WriteString(fmt.Sprintf("%v", j.Staged))
 	builder.WriteByte(')')
 	return builder.String()
 }

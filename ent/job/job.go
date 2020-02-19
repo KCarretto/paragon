@@ -19,6 +19,8 @@ const (
 	FieldCreationTime = "creation_time"
 	// FieldContent holds the string denoting the content vertex property in the database.
 	FieldContent = "content"
+	// FieldStaged holds the string denoting the staged vertex property in the database.
+	FieldStaged = "staged"
 
 	// Table holds the table name of the job in the database.
 	Table = "jobs"
@@ -57,6 +59,7 @@ var Columns = []string{
 	FieldName,
 	FieldCreationTime,
 	FieldContent,
+	FieldStaged,
 }
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the Job type.

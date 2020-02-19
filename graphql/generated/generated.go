@@ -101,6 +101,7 @@ type ComplexityRoot struct {
 		Next         func(childComplexity int) int
 		Owner        func(childComplexity int) int
 		Prev         func(childComplexity int) int
+		Staged       func(childComplexity int) int
 		Tags         func(childComplexity int, input *models.Filter) int
 		Tasks        func(childComplexity int, input *models.Filter) int
 	}
@@ -134,6 +135,7 @@ type ComplexityRoot struct {
 		FailCredential          func(childComplexity int, input *models.FailCredentialRequest) int
 		LikeEvent               func(childComplexity int, input *models.LikeEventRequest) int
 		MakeAdmin               func(childComplexity int, input *models.MakeAdminRequest) int
+		QueueJob                func(childComplexity int, input *models.QueueJobRequest) int
 		RemoveAdmin             func(childComplexity int, input *models.RemoveAdminRequest) int
 		RemoveTagFromJob        func(childComplexity int, input *models.RemoveTagRequest) int
 		RemoveTagFromTarget     func(childComplexity int, input *models.RemoveTagRequest) int
@@ -258,6 +260,7 @@ type LinkResolver interface {
 type MutationResolver interface {
 	FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error)
 	CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error)
+	QueueJob(ctx context.Context, input *models.QueueJobRequest) (*ent.Job, error)
 	CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error)
 	ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (*ent.Task, error)
 	ApplyTagToTargets(ctx context.Context, input *models.ApplyTagToTargetsRequest) ([]*ent.Target, error)
@@ -605,6 +608,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Job.Prev(childComplexity), true
 
+	case "Job.staged":
+		if e.complexity.Job.Staged == nil {
+			break
+		}
+
+		return e.complexity.Job.Staged(childComplexity), true
+
 	case "Job.tags":
 		if e.complexity.Job.Tags == nil {
 			break
@@ -903,6 +913,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.MakeAdmin(childComplexity, args["input"].(*models.MakeAdminRequest)), true
+
+	case "Mutation.queueJob":
+		if e.complexity.Mutation.QueueJob == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_queueJob_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.QueueJob(childComplexity, args["input"].(*models.QueueJobRequest)), true
 
 	case "Mutation.removeAdmin":
 		if e.complexity.Mutation.RemoveAdmin == nil {
@@ -1677,6 +1699,7 @@ type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
   name: String
   creationTime: Time
   content: String
+  staged: Boolean
 
   tasks(input: Filter): [Task]
   tags(input: Filter): [Tag]
@@ -1762,6 +1785,7 @@ input CreateJobRequest {
   name: String!
   content: String!
   sessionID: String
+  stage: Boolean
 
   targets: [ID!]
   tags: [ID!]
@@ -1879,12 +1903,17 @@ input LikeEventRequest {
   id: ID!
 }
 
+input QueueJobRequest {
+  id: ID!
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
 
   # Job Mutations
   createJob(input: CreateJobRequest): Job!
+  queueJob(input: QueueJobRequest): Job!
 
   # Tag Mutations
   createTag(input: CreateTagRequest): Tag!
@@ -2293,6 +2322,20 @@ func (ec *executionContext) field_Mutation_makeAdmin_args(ctx context.Context, r
 	var arg0 *models.MakeAdminRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOMakeAdminRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐMakeAdminRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_queueJob_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.QueueJobRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOQueueJobRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐQueueJobRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3975,6 +4018,40 @@ func (ec *executionContext) _Job_content(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Job_staged(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Job",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Staged, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOBoolean2bool(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Job_tasks(ctx context.Context, field graphql.CollectedField, obj *ent.Job) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -4403,6 +4480,50 @@ func (ec *executionContext) _Mutation_createJob(ctx context.Context, field graph
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return ec.resolvers.Mutation().CreateJob(rctx, args["input"].(*models.CreateJobRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Job)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNJob2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐJob(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_queueJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_queueJob_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().QueueJob(rctx, args["input"].(*models.QueueJobRequest))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9252,6 +9373,12 @@ func (ec *executionContext) unmarshalInputCreateJobRequest(ctx context.Context, 
 			if err != nil {
 				return it, err
 			}
+		case "stage":
+			var err error
+			it.Stage, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "targets":
 			var err error
 			it.Targets, err = ec.unmarshalOID2ᚕintᚄ(ctx, v)
@@ -9476,6 +9603,24 @@ func (ec *executionContext) unmarshalInputLikeEventRequest(ctx context.Context, 
 
 func (ec *executionContext) unmarshalInputMakeAdminRequest(ctx context.Context, obj interface{}) (models.MakeAdminRequest, error) {
 	var it models.MakeAdminRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputQueueJobRequest(ctx context.Context, obj interface{}) (models.QueueJobRequest, error) {
+	var it models.QueueJobRequest
 	var asMap = obj.(map[string]interface{})
 
 	for k, v := range asMap {
@@ -9973,6 +10118,8 @@ func (ec *executionContext) _Job(ctx context.Context, sel ast.SelectionSet, obj 
 			out.Values[i] = ec._Job_creationTime(ctx, field, obj)
 		case "content":
 			out.Values[i] = ec._Job_content(ctx, field, obj)
+		case "staged":
+			out.Values[i] = ec._Job_staged(ctx, field, obj)
 		case "tasks":
 			field := field
 			out.Concurrently(i, func() (res graphql.Marshaler) {
@@ -10105,6 +10252,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			}
 		case "createJob":
 			out.Values[i] = ec._Mutation_createJob(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "queueJob":
+			out.Values[i] = ec._Mutation_queueJob(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -12008,6 +12160,18 @@ func (ec *executionContext) unmarshalOMakeAdminRequest2ᚖgithubᚗcomᚋkcarret
 		return nil, nil
 	}
 	res, err := ec.unmarshalOMakeAdminRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐMakeAdminRequest(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalOQueueJobRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐQueueJobRequest(ctx context.Context, v interface{}) (models.QueueJobRequest, error) {
+	return ec.unmarshalInputQueueJobRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOQueueJobRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐQueueJobRequest(ctx context.Context, v interface{}) (*models.QueueJobRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOQueueJobRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐQueueJobRequest(ctx, v)
 	return &res, err
 }
 

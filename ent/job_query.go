@@ -389,9 +389,9 @@ func (jq *JobQuery) Select(field string, fields ...string) *JobSelect {
 
 func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 	var (
-		nodes   []*Job = []*Job{}
-		withFKs        = jq.withFKs
-		_spec          = jq.querySpec()
+		nodes   []*Job
+		withFKs = jq.withFKs
+		_spec   = jq.querySpec()
 	)
 	if jq.withPrev != nil || jq.withOwner != nil {
 		withFKs = true
@@ -418,6 +418,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 	if err := sqlgraph.QueryNodes(ctx, jq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

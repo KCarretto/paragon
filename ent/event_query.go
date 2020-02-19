@@ -587,9 +587,9 @@ func (eq *EventQuery) Select(field string, fields ...string) *EventSelect {
 
 func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 	var (
-		nodes   []*Event = []*Event{}
-		withFKs          = eq.withFKs
-		_spec            = eq.querySpec()
+		nodes   []*Event
+		withFKs = eq.withFKs
+		_spec   = eq.querySpec()
 	)
 	if eq.withJob != nil || eq.withFile != nil || eq.withCredential != nil || eq.withLink != nil || eq.withTag != nil || eq.withTarget != nil || eq.withTask != nil || eq.withUser != nil || eq.withEvent != nil || eq.withService != nil || eq.withOwner != nil || eq.withSvcOwner != nil {
 		withFKs = true
@@ -616,6 +616,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 	if err := sqlgraph.QueryNodes(ctx, eq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

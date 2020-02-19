@@ -24,6 +24,7 @@ type JobUpdate struct {
 	Name         *string
 	CreationTime *time.Time
 	Content      *string
+	Staged       *bool
 	tasks        map[int]struct{}
 	tags         map[int]struct{}
 	prev         map[int]struct{}
@@ -66,6 +67,12 @@ func (ju *JobUpdate) SetNillableCreationTime(t *time.Time) *JobUpdate {
 // SetContent sets the Content field.
 func (ju *JobUpdate) SetContent(s string) *JobUpdate {
 	ju.Content = &s
+	return ju
+}
+
+// SetStaged sets the Staged field.
+func (ju *JobUpdate) SetStaged(b bool) *JobUpdate {
+	ju.Staged = &b
 	return ju
 }
 
@@ -313,6 +320,13 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: job.FieldContent,
 		})
 	}
+	if value := ju.Staged; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: job.FieldStaged,
+		})
+	}
 	if nodes := ju.removedTasks; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
@@ -510,6 +524,7 @@ type JobUpdateOne struct {
 	Name         *string
 	CreationTime *time.Time
 	Content      *string
+	Staged       *bool
 	tasks        map[int]struct{}
 	tags         map[int]struct{}
 	prev         map[int]struct{}
@@ -545,6 +560,12 @@ func (juo *JobUpdateOne) SetNillableCreationTime(t *time.Time) *JobUpdateOne {
 // SetContent sets the Content field.
 func (juo *JobUpdateOne) SetContent(s string) *JobUpdateOne {
 	juo.Content = &s
+	return juo
+}
+
+// SetStaged sets the Staged field.
+func (juo *JobUpdateOne) SetStaged(b bool) *JobUpdateOne {
+	juo.Staged = &b
 	return juo
 }
 
@@ -784,6 +805,13 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldContent,
+		})
+	}
+	if value := juo.Staged; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: job.FieldStaged,
 		})
 	}
 	if nodes := juo.removedTasks; len(nodes) > 0 {

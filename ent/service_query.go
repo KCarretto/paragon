@@ -316,9 +316,9 @@ func (sq *ServiceQuery) Select(field string, fields ...string) *ServiceSelect {
 
 func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 	var (
-		nodes   []*Service = []*Service{}
-		withFKs            = sq.withFKs
-		_spec              = sq.querySpec()
+		nodes   []*Service
+		withFKs = sq.withFKs
+		_spec   = sq.querySpec()
 	)
 	if sq.withTag != nil {
 		withFKs = true
@@ -345,6 +345,7 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 	if err := sqlgraph.QueryNodes(ctx, sq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

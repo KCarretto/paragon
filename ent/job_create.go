@@ -22,6 +22,7 @@ type JobCreate struct {
 	Name         *string
 	CreationTime *time.Time
 	Content      *string
+	Staged       *bool
 	tasks        map[int]struct{}
 	tags         map[int]struct{}
 	prev         map[int]struct{}
@@ -52,6 +53,12 @@ func (jc *JobCreate) SetNillableCreationTime(t *time.Time) *JobCreate {
 // SetContent sets the Content field.
 func (jc *JobCreate) SetContent(s string) *JobCreate {
 	jc.Content = &s
+	return jc
+}
+
+// SetStaged sets the Staged field.
+func (jc *JobCreate) SetStaged(b bool) *JobCreate {
+	jc.Staged = &b
 	return jc
 }
 
@@ -171,6 +178,9 @@ func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	if err := job.ContentValidator(*jc.Content); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
+	if jc.Staged == nil {
+		return nil, errors.New("ent: missing required field \"Staged\"")
+	}
 	if len(jc.prev) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
 	}
@@ -229,6 +239,14 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 			Column: job.FieldContent,
 		})
 		j.Content = *value
+	}
+	if value := jc.Staged; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: job.FieldStaged,
+		})
+		j.Staged = *value
 	}
 	if nodes := jc.tasks; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{

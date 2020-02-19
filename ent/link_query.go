@@ -290,9 +290,9 @@ func (lq *LinkQuery) Select(field string, fields ...string) *LinkSelect {
 
 func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 	var (
-		nodes   []*Link = []*Link{}
-		withFKs         = lq.withFKs
-		_spec           = lq.querySpec()
+		nodes   []*Link
+		withFKs = lq.withFKs
+		_spec   = lq.querySpec()
 	)
 	if lq.withFile != nil {
 		withFKs = true
@@ -319,6 +319,7 @@ func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 	if err := sqlgraph.QueryNodes(ctx, lq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}

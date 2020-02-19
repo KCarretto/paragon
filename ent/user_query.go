@@ -316,9 +316,9 @@ func (uq *UserQuery) Select(field string, fields ...string) *UserSelect {
 
 func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
-		nodes   []*User = []*User{}
-		withFKs         = uq.withFKs
-		_spec           = uq.querySpec()
+		nodes   []*User
+		withFKs = uq.withFKs
+		_spec   = uq.querySpec()
 	)
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, user.ForeignKeys...)
@@ -342,6 +342,7 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	if err := sqlgraph.QueryNodes(ctx, uq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
