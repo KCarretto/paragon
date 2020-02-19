@@ -22,22 +22,36 @@ type Link struct {
 	ExpirationTime time.Time `json:"ExpirationTime,omitempty"`
 	// Clicks holds the value of the "Clicks" field.
 	Clicks int `json:"Clicks,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the LinkQuery when eager-loading is set.
+	Edges struct {
+		// File holds the value of the file edge.
+		File *File
+	} `json:"edges"`
+	file_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Link) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullString{},
-		&sql.NullTime{},
-		&sql.NullInt64{},
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Alias
+		&sql.NullTime{},   // ExpirationTime
+		&sql.NullInt64{},  // Clicks
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Link) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // file_id
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Link fields.
 func (l *Link) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(link.Columns); m != n {
+	if m, n := len(values), len(link.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -60,6 +74,15 @@ func (l *Link) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field Clicks", values[2])
 	} else if value.Valid {
 		l.Clicks = int(value.Int64)
+	}
+	values = values[3:]
+	if len(values) == len(link.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field file_id", value)
+		} else if value.Valid {
+			l.file_id = new(int)
+			*l.file_id = int(value.Int64)
+		}
 	}
 	return nil
 }

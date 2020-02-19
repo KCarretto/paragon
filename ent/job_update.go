@@ -24,6 +24,7 @@ type JobUpdate struct {
 	Name         *string
 	CreationTime *time.Time
 	Content      *string
+	Staged       *bool
 	tasks        map[int]struct{}
 	tags         map[int]struct{}
 	prev         map[int]struct{}
@@ -66,6 +67,20 @@ func (ju *JobUpdate) SetNillableCreationTime(t *time.Time) *JobUpdate {
 // SetContent sets the Content field.
 func (ju *JobUpdate) SetContent(s string) *JobUpdate {
 	ju.Content = &s
+	return ju
+}
+
+// SetStaged sets the Staged field.
+func (ju *JobUpdate) SetStaged(b bool) *JobUpdate {
+	ju.Staged = &b
+	return ju
+}
+
+// SetNillableStaged sets the Staged field if the given value is not nil.
+func (ju *JobUpdate) SetNillableStaged(b *bool) *JobUpdate {
+	if b != nil {
+		ju.SetStaged(*b)
+	}
 	return ju
 }
 
@@ -275,7 +290,7 @@ func (ju *JobUpdate) ExecX(ctx context.Context) {
 }
 
 func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	spec := &sqlgraph.UpdateSpec{
+	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   job.Table,
 			Columns: job.Columns,
@@ -286,31 +301,38 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := ju.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := ju.Name; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldName,
 		})
 	}
 	if value := ju.CreationTime; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: job.FieldCreationTime,
 		})
 	}
 	if value := ju.Content; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldContent,
+		})
+	}
+	if value := ju.Staged; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: job.FieldStaged,
 		})
 	}
 	if nodes := ju.removedTasks; len(nodes) > 0 {
@@ -330,7 +352,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ju.tasks; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -349,7 +371,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if nodes := ju.removedTags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -368,7 +390,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ju.tags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -387,7 +409,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ju.clearedPrev {
 		edge := &sqlgraph.EdgeSpec{
@@ -403,7 +425,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ju.prev; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -422,7 +444,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ju.clearedNext {
 		edge := &sqlgraph.EdgeSpec{
@@ -438,7 +460,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ju.next; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -457,7 +479,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if ju.clearedOwner {
 		edge := &sqlgraph.EdgeSpec{
@@ -473,7 +495,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := ju.owner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -492,9 +514,9 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, ju.driver, spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, ju.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -510,6 +532,7 @@ type JobUpdateOne struct {
 	Name         *string
 	CreationTime *time.Time
 	Content      *string
+	Staged       *bool
 	tasks        map[int]struct{}
 	tags         map[int]struct{}
 	prev         map[int]struct{}
@@ -545,6 +568,20 @@ func (juo *JobUpdateOne) SetNillableCreationTime(t *time.Time) *JobUpdateOne {
 // SetContent sets the Content field.
 func (juo *JobUpdateOne) SetContent(s string) *JobUpdateOne {
 	juo.Content = &s
+	return juo
+}
+
+// SetStaged sets the Staged field.
+func (juo *JobUpdateOne) SetStaged(b bool) *JobUpdateOne {
+	juo.Staged = &b
+	return juo
+}
+
+// SetNillableStaged sets the Staged field if the given value is not nil.
+func (juo *JobUpdateOne) SetNillableStaged(b *bool) *JobUpdateOne {
+	if b != nil {
+		juo.SetStaged(*b)
+	}
 	return juo
 }
 
@@ -754,7 +791,7 @@ func (juo *JobUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
-	spec := &sqlgraph.UpdateSpec{
+	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   job.Table,
 			Columns: job.Columns,
@@ -766,24 +803,31 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		},
 	}
 	if value := juo.Name; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldName,
 		})
 	}
 	if value := juo.CreationTime; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: job.FieldCreationTime,
 		})
 	}
 	if value := juo.Content; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldContent,
+		})
+	}
+	if value := juo.Staged; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: job.FieldStaged,
 		})
 	}
 	if nodes := juo.removedTasks; len(nodes) > 0 {
@@ -803,7 +847,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := juo.tasks; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -822,7 +866,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if nodes := juo.removedTags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -841,7 +885,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := juo.tags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -860,7 +904,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if juo.clearedPrev {
 		edge := &sqlgraph.EdgeSpec{
@@ -876,7 +920,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := juo.prev; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -895,7 +939,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if juo.clearedNext {
 		edge := &sqlgraph.EdgeSpec{
@@ -911,7 +955,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := juo.next; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -930,7 +974,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if juo.clearedOwner {
 		edge := &sqlgraph.EdgeSpec{
@@ -946,7 +990,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := juo.owner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -965,12 +1009,12 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	j = &Job{config: juo.config}
-	spec.Assign = j.assignValues
-	spec.ScanValues = j.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, juo.driver, spec); err != nil {
+	_spec.Assign = j.assignValues
+	_spec.ScanValues = j.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, juo.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

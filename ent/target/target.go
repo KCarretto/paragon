@@ -49,7 +49,7 @@ const (
 	CredentialsColumn = "target_id"
 )
 
-// Columns holds all SQL columns are target fields.
+// Columns holds all SQL columns for target fields.
 var Columns = []string{
 	FieldID,
 	FieldName,

@@ -24,6 +24,9 @@ type LinkQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.Link
+	// eager-loading edges.
+	withFile *FileQuery
+	withFKs  bool
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -233,6 +236,17 @@ func (lq *LinkQuery) Clone() *LinkQuery {
 	}
 }
 
+//  WithFile tells the query-builder to eager-loads the nodes that are connected to
+// the "file" edge. The optional arguments used to configure the query builder of the edge.
+func (lq *LinkQuery) WithFile(opts ...func(*FileQuery)) *LinkQuery {
+	query := &FileQuery{config: lq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	lq.withFile = query
+	return lq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -276,30 +290,71 @@ func (lq *LinkQuery) Select(field string, fields ...string) *LinkSelect {
 
 func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 	var (
-		nodes []*Link
-		spec  = lq.querySpec()
+		nodes   []*Link
+		withFKs = lq.withFKs
+		_spec   = lq.querySpec()
 	)
-	spec.ScanValues = func() []interface{} {
+	if lq.withFile != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, link.ForeignKeys...)
+	}
+	_spec.ScanValues = func() []interface{} {
 		node := &Link{config: lq.config}
 		nodes = append(nodes, node)
-		return node.scanValues()
+		values := node.scanValues()
+		if withFKs {
+			values = append(values, node.fkValues()...)
+		}
+		return values
 	}
-	spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(values ...interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
 		return node.assignValues(values...)
 	}
-	if err := sqlgraph.QueryNodes(ctx, lq.driver, spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, lq.driver, _spec); err != nil {
 		return nil, err
 	}
+
+	if len(nodes) == 0 {
+		return nodes, nil
+	}
+
+	if query := lq.withFile; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Link)
+		for i := range nodes {
+			if fk := nodes[i].file_id; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(file.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "file_id" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.File = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
 func (lq *LinkQuery) sqlCount(ctx context.Context) (int, error) {
-	spec := lq.querySpec()
-	return sqlgraph.CountNodes(ctx, lq.driver, spec)
+	_spec := lq.querySpec()
+	return sqlgraph.CountNodes(ctx, lq.driver, _spec)
 }
 
 func (lq *LinkQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -311,7 +366,7 @@ func (lq *LinkQuery) sqlExist(ctx context.Context) (bool, error) {
 }
 
 func (lq *LinkQuery) querySpec() *sqlgraph.QuerySpec {
-	spec := &sqlgraph.QuerySpec{
+	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   link.Table,
 			Columns: link.Columns,
@@ -324,26 +379,26 @@ func (lq *LinkQuery) querySpec() *sqlgraph.QuerySpec {
 		Unique: true,
 	}
 	if ps := lq.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if limit := lq.limit; limit != nil {
-		spec.Limit = *limit
+		_spec.Limit = *limit
 	}
 	if offset := lq.offset; offset != nil {
-		spec.Offset = *offset
+		_spec.Offset = *offset
 	}
 	if ps := lq.order; len(ps) > 0 {
-		spec.Order = func(selector *sql.Selector) {
+		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return spec
+	return _spec
 }
 
 func (lq *LinkQuery) sqlQuery() *sql.Selector {

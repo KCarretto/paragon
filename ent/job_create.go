@@ -22,6 +22,7 @@ type JobCreate struct {
 	Name         *string
 	CreationTime *time.Time
 	Content      *string
+	Staged       *bool
 	tasks        map[int]struct{}
 	tags         map[int]struct{}
 	prev         map[int]struct{}
@@ -52,6 +53,20 @@ func (jc *JobCreate) SetNillableCreationTime(t *time.Time) *JobCreate {
 // SetContent sets the Content field.
 func (jc *JobCreate) SetContent(s string) *JobCreate {
 	jc.Content = &s
+	return jc
+}
+
+// SetStaged sets the Staged field.
+func (jc *JobCreate) SetStaged(b bool) *JobCreate {
+	jc.Staged = &b
+	return jc
+}
+
+// SetNillableStaged sets the Staged field if the given value is not nil.
+func (jc *JobCreate) SetNillableStaged(b *bool) *JobCreate {
+	if b != nil {
+		jc.SetStaged(*b)
+	}
 	return jc
 }
 
@@ -171,6 +186,10 @@ func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 	if err := job.ContentValidator(*jc.Content); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
+	if jc.Staged == nil {
+		v := job.DefaultStaged
+		jc.Staged = &v
+	}
 	if len(jc.prev) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
 	}
@@ -197,8 +216,8 @@ func (jc *JobCreate) SaveX(ctx context.Context) *Job {
 
 func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 	var (
-		j    = &Job{config: jc.config}
-		spec = &sqlgraph.CreateSpec{
+		j     = &Job{config: jc.config}
+		_spec = &sqlgraph.CreateSpec{
 			Table: job.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -207,7 +226,7 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		}
 	)
 	if value := jc.Name; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldName,
@@ -215,7 +234,7 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		j.Name = *value
 	}
 	if value := jc.CreationTime; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: job.FieldCreationTime,
@@ -223,12 +242,20 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		j.CreationTime = *value
 	}
 	if value := jc.Content; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: job.FieldContent,
 		})
 		j.Content = *value
+	}
+	if value := jc.Staged; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeBool,
+			Value:  *value,
+			Column: job.FieldStaged,
+		})
+		j.Staged = *value
 	}
 	if nodes := jc.tasks; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -247,7 +274,7 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := jc.tags; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -266,7 +293,7 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := jc.prev; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -285,7 +312,7 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := jc.next; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -304,7 +331,7 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := jc.owner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -323,15 +350,15 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, jc.driver, spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, jc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := spec.ID.Value.(int64)
+	id := _spec.ID.Value.(int64)
 	j.ID = int(id)
 	return j, nil
 }

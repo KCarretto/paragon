@@ -19,6 +19,8 @@ const (
 	FieldCreationTime = "creation_time"
 	// FieldContent holds the string denoting the content vertex property in the database.
 	FieldContent = "content"
+	// FieldStaged holds the string denoting the staged vertex property in the database.
+	FieldStaged = "staged"
 
 	// Table holds the table name of the job in the database.
 	Table = "jobs"
@@ -51,12 +53,19 @@ const (
 	OwnerColumn = "owner_id"
 )
 
-// Columns holds all SQL columns are job fields.
+// Columns holds all SQL columns for job fields.
 var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldCreationTime,
 	FieldContent,
+	FieldStaged,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Job type.
+var ForeignKeys = []string{
+	"prev_id",
+	"owner_id",
 }
 
 var (
@@ -82,4 +91,9 @@ var (
 	descContent = fields[2].Descriptor()
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
 	ContentValidator = descContent.Validators[0].(func(string) error)
+
+	// descStaged is the schema descriptor for Staged field.
+	descStaged = fields[3].Descriptor()
+	// DefaultStaged holds the default value on creation for the Staged field.
+	DefaultStaged = descStaged.Default.(bool)
 )

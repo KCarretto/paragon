@@ -5,6 +5,7 @@ package migrate
 import (
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/user"
@@ -172,6 +173,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "creation_time", Type: field.TypeTime},
 		{Name: "content", Type: field.TypeString},
+		{Name: "staged", Type: field.TypeBool, Default: job.DefaultStaged},
 		{Name: "prev_id", Type: field.TypeInt, Unique: true, Nullable: true},
 		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
 	}
@@ -183,14 +185,14 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:  "jobs_jobs_next",
-				Columns: []*schema.Column{JobsColumns[4]},
+				Columns: []*schema.Column{JobsColumns[5]},
 
 				RefColumns: []*schema.Column{JobsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:  "jobs_users_jobs",
-				Columns: []*schema.Column{JobsColumns[5]},
+				Columns: []*schema.Column{JobsColumns[6]},
 
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,

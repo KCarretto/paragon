@@ -20,21 +20,81 @@ type Event struct {
 	CreationTime time.Time `json:"CreationTime,omitempty"`
 	// Kind holds the value of the "Kind" field.
 	Kind event.Kind `json:"Kind,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the EventQuery when eager-loading is set.
+	Edges struct {
+		// Job holds the value of the job edge.
+		Job *Job
+		// File holds the value of the file edge.
+		File *File
+		// Credential holds the value of the credential edge.
+		Credential *Credential
+		// Link holds the value of the link edge.
+		Link *Link
+		// Tag holds the value of the tag edge.
+		Tag *Tag
+		// Target holds the value of the target edge.
+		Target *Target
+		// Task holds the value of the task edge.
+		Task *Task
+		// User holds the value of the user edge.
+		User *User
+		// Event holds the value of the event edge.
+		Event *Event
+		// Service holds the value of the service edge.
+		Service *Service
+		// Likers holds the value of the likers edge.
+		Likers []*User
+		// Owner holds the value of the owner edge.
+		Owner *User
+		// SvcOwner holds the value of the svcOwner edge.
+		SvcOwner *Service
+	} `json:"edges"`
+	event_job_id        *int
+	event_file_id       *int
+	event_credential_id *int
+	event_link_id       *int
+	event_tag_id        *int
+	event_target_id     *int
+	event_task_id       *int
+	event_user_id       *int
+	event_event_id      *int
+	event_service_id    *int
+	svc_owner_id        *int
+	owner_id            *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Event) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullTime{},
-		&sql.NullString{},
+		&sql.NullInt64{},  // id
+		&sql.NullTime{},   // CreationTime
+		&sql.NullString{}, // Kind
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Event) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // event_job_id
+		&sql.NullInt64{}, // event_file_id
+		&sql.NullInt64{}, // event_credential_id
+		&sql.NullInt64{}, // event_link_id
+		&sql.NullInt64{}, // event_tag_id
+		&sql.NullInt64{}, // event_target_id
+		&sql.NullInt64{}, // event_task_id
+		&sql.NullInt64{}, // event_user_id
+		&sql.NullInt64{}, // event_event_id
+		&sql.NullInt64{}, // event_service_id
+		&sql.NullInt64{}, // svc_owner_id
+		&sql.NullInt64{}, // owner_id
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Event fields.
 func (e *Event) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(event.Columns); m != n {
+	if m, n := len(values), len(event.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -52,6 +112,81 @@ func (e *Event) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field Kind", values[1])
 	} else if value.Valid {
 		e.Kind = event.Kind(value.String)
+	}
+	values = values[2:]
+	if len(values) == len(event.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_job_id", value)
+		} else if value.Valid {
+			e.event_job_id = new(int)
+			*e.event_job_id = int(value.Int64)
+		}
+		if value, ok := values[1].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_file_id", value)
+		} else if value.Valid {
+			e.event_file_id = new(int)
+			*e.event_file_id = int(value.Int64)
+		}
+		if value, ok := values[2].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_credential_id", value)
+		} else if value.Valid {
+			e.event_credential_id = new(int)
+			*e.event_credential_id = int(value.Int64)
+		}
+		if value, ok := values[3].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_link_id", value)
+		} else if value.Valid {
+			e.event_link_id = new(int)
+			*e.event_link_id = int(value.Int64)
+		}
+		if value, ok := values[4].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_tag_id", value)
+		} else if value.Valid {
+			e.event_tag_id = new(int)
+			*e.event_tag_id = int(value.Int64)
+		}
+		if value, ok := values[5].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_target_id", value)
+		} else if value.Valid {
+			e.event_target_id = new(int)
+			*e.event_target_id = int(value.Int64)
+		}
+		if value, ok := values[6].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_task_id", value)
+		} else if value.Valid {
+			e.event_task_id = new(int)
+			*e.event_task_id = int(value.Int64)
+		}
+		if value, ok := values[7].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_user_id", value)
+		} else if value.Valid {
+			e.event_user_id = new(int)
+			*e.event_user_id = int(value.Int64)
+		}
+		if value, ok := values[8].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_event_id", value)
+		} else if value.Valid {
+			e.event_event_id = new(int)
+			*e.event_event_id = int(value.Int64)
+		}
+		if value, ok := values[9].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field event_service_id", value)
+		} else if value.Valid {
+			e.event_service_id = new(int)
+			*e.event_service_id = int(value.Int64)
+		}
+		if value, ok := values[10].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field svc_owner_id", value)
+		} else if value.Valid {
+			e.svc_owner_id = new(int)
+			*e.svc_owner_id = int(value.Int64)
+		}
+		if value, ok := values[11].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
+		} else if value.Valid {
+			e.owner_id = new(int)
+			*e.owner_id = int(value.Int64)
+		}
 	}
 	return nil
 }

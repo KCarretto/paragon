@@ -23,23 +23,37 @@ type Credential struct {
 	Kind credential.Kind `json:"kind,omitempty"`
 	// Fails holds the value of the "fails" field.
 	Fails int `json:"fails,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the CredentialQuery when eager-loading is set.
+	Edges struct {
+		// Target holds the value of the target edge.
+		Target *Target
+	} `json:"edges"`
+	target_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Credential) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullInt64{},
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // principal
+		&sql.NullString{}, // secret
+		&sql.NullString{}, // kind
+		&sql.NullInt64{},  // fails
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Credential) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // target_id
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Credential fields.
 func (c *Credential) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(credential.Columns); m != n {
+	if m, n := len(values), len(credential.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -67,6 +81,15 @@ func (c *Credential) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field fails", values[3])
 	} else if value.Valid {
 		c.Fails = int(value.Int64)
+	}
+	values = values[4:]
+	if len(values) == len(credential.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
+		} else if value.Valid {
+			c.target_id = new(int)
+			*c.target_id = int(value.Int64)
+		}
 	}
 	return nil
 }

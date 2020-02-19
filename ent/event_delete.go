@@ -39,7 +39,7 @@ func (ed *EventDelete) ExecX(ctx context.Context) int {
 }
 
 func (ed *EventDelete) sqlExec(ctx context.Context) (int, error) {
-	spec := &sqlgraph.DeleteSpec{
+	_spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: event.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -49,13 +49,13 @@ func (ed *EventDelete) sqlExec(ctx context.Context) (int, error) {
 		},
 	}
 	if ps := ed.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return sqlgraph.DeleteNodes(ctx, ed.driver, spec)
+	return sqlgraph.DeleteNodes(ctx, ed.driver, _spec)
 }
 
 // EventDeleteOne is the builder for deleting a single Event entity.
