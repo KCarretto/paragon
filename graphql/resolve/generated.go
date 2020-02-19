@@ -312,10 +312,15 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 }
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
 	actor := auth.GetUser(ctx)
+	staged := false
+	if input.Stage != nil {
+		staged = *input.Stage
+	}
 	jobCreator := r.Graph.Job.Create().
 		SetName(input.Name).
 		SetOwner(actor).
 		SetContent(input.Content).
+		SetStaged(true). // we do this since we call queueJob later
 		AddTagIDs(input.Tags...)
 	if input.Prev != nil {
 		jobCreator.SetPrevID(*input.Prev)
@@ -340,15 +345,60 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		return nil, err
 	}
 
-	if len(targets) == 0 {
-		t, err := r.Graph.Task.Create().
+	for _, target := range targets {
+		_, err := r.Graph.Task.Create().
 			SetQueueTime(currentTime).
 			SetLastChangedTime(currentTime).
 			SetContent(input.Content).
 			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
 			SetJobID(job.ID).
+			SetTarget(target).
 			Save(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if !staged {
+		job, err = r.queueJob(ctx, job)
+	}
+	_, err = r.Graph.Event.Create().
+		SetCreationTime(currentTime).
+		SetOwner(actor).
+		SetJob(job).
+		SetKind(event.KindCREATEJOB).
+		Save(ctx)
+	if err != nil {
+		return job, err
+	}
+	return job, nil
+}
+func (r *mutationResolver) QueueJob(ctx context.Context, input *models.QueueJobRequest) (*ent.Job, error) {
+	job, err := r.Graph.Job.Get(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+	return r.queueJob(ctx, job)
+}
+func (r *mutationResolver) queueJob(ctx context.Context, job *ent.Job) (*ent.Job, error) {
+	if !job.Staged {
+		return nil, fmt.Errorf("job has already been queued")
+	}
+	job, err := job.Update().SetStaged(false).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tasks, err := job.QueryTasks().All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, t := range tasks {
+		target, err := t.QueryTarget().Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		creds, err := target.QueryCredentials().All(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -357,9 +407,9 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 			return nil, err
 		}
 		e := pub_sub.TaskQueued{
-			Target:      nil,
+			Target:      target,
 			Task:        t,
-			Credentials: nil,
+			Credentials: creds,
 			Tags:        tags,
 		}
 		d, err := json.Marshal(e)
@@ -370,57 +420,6 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		for _, target := range targets {
-			task, err := r.Graph.Task.Create().
-				SetQueueTime(currentTime).
-				SetLastChangedTime(currentTime).
-				SetContent(input.Content).
-				SetNillableSessionID(input.SessionID).
-				AddTagIDs(input.Tags...).
-				SetJobID(job.ID).
-				Save(ctx)
-			if err != nil {
-				return nil, err
-			}
-			t, err := target.Update().
-				AddTaskIDs(task.ID).
-				Save(ctx)
-			if err != nil {
-				return nil, err
-			}
-			tags, err := task.QueryTags().All(ctx)
-			if err != nil {
-				return nil, err
-			}
-			creds, err := t.QueryCredentials().All(ctx)
-			if err != nil {
-				return nil, err
-			}
-			e := pub_sub.TaskQueued{
-				Target:      t,
-				Task:        task,
-				Credentials: creds,
-				Tags:        tags,
-			}
-			d, err := json.Marshal(e)
-			if err != nil {
-				return nil, err
-			}
-			err = r.Events.Publish(ctx, d)
-			if err != nil {
-				return nil, err
-			}
-		}
-	}
-	_, err = r.Graph.Event.Create().
-		SetCreationTime(currentTime).
-		SetOwner(actor).
-		SetJob(job).
-		SetKind(event.KindCREATEJOB).
-		Save(ctx)
-	if err != nil {
-		return job, err
 	}
 	return job, nil
 }
@@ -722,8 +721,12 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	// set claimtime on all tasks
 	var updatedTasks []*ent.Task
 	for _, t := range tasks {
-		// filter by session if necessary
-		if t.SessionID == "" || t.SessionID == sessionID {
+		// filter by session if necessary and if job is not staged
+		j, err := t.QueryJob().Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if (t.SessionID == "" || t.SessionID == sessionID) && !j.Staged {
 			t, err = t.Update().
 				SetLastChangedTime(currentTime).
 				SetClaimTime(currentTime).
@@ -745,6 +748,13 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 	if err != nil {
 		return nil, err
 	}
+	j, err := task.QueryJob().Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if j.Staged {
+		return nil, fmt.Errorf("cannot claim a task where the job is staged")
+	}
 
 	currentTime := time.Now()
 	return task.Update().
@@ -756,6 +766,13 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 	taskEnt, err := r.Graph.Task.Get(ctx, input.ID)
 	if err != nil {
 		return nil, err
+	}
+	j, err := taskEnt.QueryJob().Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if j.Staged {
+		return nil, fmt.Errorf("cannot submit output to a task where the job is staged")
 	}
 	inputOutput := ""
 	if input.Output != nil {

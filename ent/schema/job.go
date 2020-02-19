@@ -28,8 +28,7 @@ func (Job) Fields() []ent.Field {
 			NotEmpty().
 			Comment("The content of the job (usually a Renegade Script)"),
 		field.Bool("Staged").
-			Default(false).
-			Comment("The boolean that represents if a job's tasks shall be emitted/returned from claimTasks"),
+			Comment("The boolean that represents if a job's tasks shall be emitted/returned from claimTasks (false means yes)"),
 	}
 }
 

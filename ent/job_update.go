@@ -76,14 +76,6 @@ func (ju *JobUpdate) SetStaged(b bool) *JobUpdate {
 	return ju
 }
 
-// SetNillableStaged sets the Staged field if the given value is not nil.
-func (ju *JobUpdate) SetNillableStaged(b *bool) *JobUpdate {
-	if b != nil {
-		ju.SetStaged(*b)
-	}
-	return ju
-}
-
 // AddTaskIDs adds the tasks edge to Task by ids.
 func (ju *JobUpdate) AddTaskIDs(ids ...int) *JobUpdate {
 	if ju.tasks == nil {
@@ -574,14 +566,6 @@ func (juo *JobUpdateOne) SetContent(s string) *JobUpdateOne {
 // SetStaged sets the Staged field.
 func (juo *JobUpdateOne) SetStaged(b bool) *JobUpdateOne {
 	juo.Staged = &b
-	return juo
-}
-
-// SetNillableStaged sets the Staged field if the given value is not nil.
-func (juo *JobUpdateOne) SetNillableStaged(b *bool) *JobUpdateOne {
-	if b != nil {
-		juo.SetStaged(*b)
-	}
 	return juo
 }
 

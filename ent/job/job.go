@@ -91,9 +91,4 @@ var (
 	descContent = fields[2].Descriptor()
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
 	ContentValidator = descContent.Validators[0].(func(string) error)
-
-	// descStaged is the schema descriptor for Staged field.
-	descStaged = fields[3].Descriptor()
-	// DefaultStaged holds the default value on creation for the Staged field.
-	DefaultStaged = descStaged.Default.(bool)
 )

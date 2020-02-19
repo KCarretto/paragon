@@ -5,7 +5,6 @@ package migrate
 import (
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/file"
-	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/user"
@@ -173,7 +172,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "creation_time", Type: field.TypeTime},
 		{Name: "content", Type: field.TypeString},
-		{Name: "staged", Type: field.TypeBool, Default: job.DefaultStaged},
+		{Name: "staged", Type: field.TypeBool},
 		{Name: "prev_id", Type: field.TypeInt, Unique: true, Nullable: true},
 		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
 	}

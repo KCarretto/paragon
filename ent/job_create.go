@@ -62,14 +62,6 @@ func (jc *JobCreate) SetStaged(b bool) *JobCreate {
 	return jc
 }
 
-// SetNillableStaged sets the Staged field if the given value is not nil.
-func (jc *JobCreate) SetNillableStaged(b *bool) *JobCreate {
-	if b != nil {
-		jc.SetStaged(*b)
-	}
-	return jc
-}
-
 // AddTaskIDs adds the tasks edge to Task by ids.
 func (jc *JobCreate) AddTaskIDs(ids ...int) *JobCreate {
 	if jc.tasks == nil {
@@ -187,8 +179,7 @@ func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
 		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
 	}
 	if jc.Staged == nil {
-		v := job.DefaultStaged
-		jc.Staged = &v
+		return nil, errors.New("ent: missing required field \"Staged\"")
 	}
 	if len(jc.prev) > 1 {
 		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
