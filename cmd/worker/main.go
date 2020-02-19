@@ -13,7 +13,6 @@ import (
 	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
 	"github.com/kcarretto/paragon/pkg/worker"
 
 	"go.uber.org/zap"
@@ -50,7 +49,6 @@ func main() {
 	w := &worker.Worker{
 		Uploader:   cdn,
 		Downloader: cdn,
-		SSH:        &ssh.Connector{},
 		Graph:      graph,
 	}
 

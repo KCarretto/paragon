@@ -6,13 +6,19 @@ import (
 	"io"
 
 	"github.com/kcarretto/paragon/pkg/script"
+	"golang.org/x/crypto/ssh"
 )
+
+// Connector provides an ssh client connected to a remote host.
+type Connector interface {
+	Connect(remoteHost string) (*ssh.Client, error)
+}
 
 // Environment used to configure the behaviour of calls to the ssh library.
 type Environment struct {
 	*script.Environment
 
-	Connector  *Connector
+	Connector  Connector
 	RemoteHost string
 
 	handles []io.Closer
@@ -23,7 +29,6 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	if env == nil {
 		env = &Environment{
 			RemoteHost: "127.0.0.1:22",
-			Connector:  &Connector{},
 		}
 	}
 
