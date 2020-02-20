@@ -23,6 +23,7 @@ export const MULTI_JOB_QUERY = gql`
         claimTime
         execStartTime
         execStopTime
+        error
 
         target {
           id
