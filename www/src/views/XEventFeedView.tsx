@@ -107,9 +107,12 @@ const XEventFeedView = () => {
       <XBoundary boundary={whenLoading} show={!loading}>
         <XBoundary boundary={whenEmpty} show={events && events.length > 0}>
           <Feed size="large">
-            {events.map((e, index) => {
-              return <XEvent key={index} event={e} kind={EventKind[e.kind]} />;
-            })}
+            {events &&
+              events.map((e, index) => {
+                return (
+                  <XEvent key={index} event={e} kind={EventKind[e.kind]} />
+                );
+              })}
           </Feed>
         </XBoundary>
       </XBoundary>

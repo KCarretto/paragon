@@ -329,14 +329,17 @@ const XAdminView = () => {
     <React.Fragment>
       <Accordion>
         <XBoundary boundary={whenUserLoading} show={!userLoading}>
-          <XBoundary boundary={whenUserEmpty} show={users.length > 0}>
-            {showUsers()}
+          <XBoundary boundary={whenUserEmpty} show={users && users.length > 0}>
+            {users && showUsers()}
           </XBoundary>
         </XBoundary>
 
         <XBoundary boundary={whenSVCLoading} show={!svcLoading}>
-          <XBoundary boundary={whenSVCEmpty} show={services.length > 0}>
-            {showServices()}
+          <XBoundary
+            boundary={whenSVCEmpty}
+            show={services && services.length > 0}
+          >
+            {services && showServices()}
           </XBoundary>
         </XBoundary>
       </Accordion>

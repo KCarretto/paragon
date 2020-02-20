@@ -58,11 +58,12 @@ const XMultiTargetView = () => {
     <React.Fragment>
       <XErrorMessage title="Error Loading Targets" err={error} />
       <XBoundary boundary={whenLoading} show={!loading}>
-        <XBoundary boundary={whenEmpty} show={targets.length > 0}>
+        <XBoundary boundary={whenEmpty} show={targets && targets.length > 0}>
           <XCardGroup>
-            {targets.map(target => (
-              <XTargetCard key={target.id} {...target} />
-            ))}
+            {targets &&
+              targets.map(target => (
+                <XTargetCard key={target.id} {...target} />
+              ))}
           </XCardGroup>
         </XBoundary>
       </XBoundary>

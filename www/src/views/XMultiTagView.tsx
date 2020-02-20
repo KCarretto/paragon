@@ -190,11 +190,13 @@ const XTagTableRow: FunctionComponent<XTagTableRowProps> = ({ tag }) => {
       <Table.Cell collapsing width={8}>
         <XBoundary
           boundary={whenEmpty}
-          show={tag.targets && tag.targets.length > 0}
+          show={tag && tag.targets && tag.targets.length > 0}
         >
-          {tag.targets.map((target, index) => (
-            <TargetLabel key={index} tag={tag} target={target} />
-          ))}
+          {tag &&
+            tag.targets &&
+            tag.targets.map((target, index) => (
+              <TargetLabel key={index} tag={tag} target={target} />
+            ))}
         </XBoundary>
       </Table.Cell>
       <Table.Cell width={4} singleLine collapsing textAlign="left">
@@ -236,10 +238,11 @@ const XMultiTagView = () => {
           </Table.Header>
 
           <Table.Body>
-            <XBoundary boundary={whenEmpty} show={tags.length > 0}>
-              {tags.map((tag, index) => (
-                <XTagTableRow key={index} tag={tag} />
-              ))}
+            <XBoundary boundary={whenEmpty} show={tags && tags.length > 0}>
+              {tags &&
+                tags.map((tag, index) => (
+                  <XTagTableRow key={index} tag={tag} />
+                ))}
             </XBoundary>
           </Table.Body>
 
