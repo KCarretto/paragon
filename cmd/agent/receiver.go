@@ -7,7 +7,12 @@ import (
 	"github.com/kcarretto/paragon/pkg/agent"
 	"github.com/kcarretto/paragon/pkg/c2"
 	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/stdlib"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/http"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/process"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/regex"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/sys"
+
 	"go.uber.org/zap"
 )
 
@@ -37,7 +42,11 @@ func (r Receiver) Receive(w agent.MessageWriter, msg agent.ServerMessage) {
 			string(task.GetId()),
 			bytes.NewBufferString(task.Content),
 			script.WithOutput(output),
-			stdlib.Load(),
+			sys.Include(),
+			http.Include(),
+			file.Include(),
+			regex.Include(),
+			process.Include(),
 		)
 
 		err := code.Exec(r)

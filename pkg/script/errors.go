@@ -26,3 +26,15 @@ var (
 	// ErrInvalidKwarg occurs when a user incorrectly passes a kwarg to a starlark function
 	ErrInvalidKwarg = errors.New("invalid kwarg was passed to the method")
 )
+
+type errTuple struct {
+	val Retval
+	err error
+}
+
+func WithError(val Retval, err error) Retval {
+	return errTuple{
+		val,
+		err,
+	}
+}

@@ -49,7 +49,11 @@ export const SignatureProvider: monaco.languages.SignatureHelpProvider = {
 
     // Find signature index
     let funcName = model.getWordUntilPosition(startPos).word;
-    let sigIndex = BuiltIns.findIndex(({ name }) => name === funcName);
+    let sigIndex = BuiltIns.findIndex(
+      ({ name }) =>
+        name.replace(/(file|sys|http|assets|cdn|ssh|process|regex)\./, "") ===
+        funcName
+    );
 
     // No signature index found
     if (sigIndex < 0 || sigIndex >= BuiltIns.length) {

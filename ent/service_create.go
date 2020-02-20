@@ -122,8 +122,8 @@ func (sc *ServiceCreate) SaveX(ctx context.Context) *Service {
 
 func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 	var (
-		s    = &Service{config: sc.config}
-		spec = &sqlgraph.CreateSpec{
+		s     = &Service{config: sc.config}
+		_spec = &sqlgraph.CreateSpec{
 			Table: service.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -132,7 +132,7 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 		}
 	)
 	if value := sc.Name; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldName,
@@ -140,7 +140,7 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 		s.Name = *value
 	}
 	if value := sc.PubKey; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldPubKey,
@@ -148,7 +148,7 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 		s.PubKey = *value
 	}
 	if value := sc.IsActivated; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
 			Value:  *value,
 			Column: service.FieldIsActivated,
@@ -172,7 +172,7 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	if nodes := sc.events; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -191,15 +191,15 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, sc.driver, spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, sc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := spec.ID.Value.(int64)
+	id := _spec.ID.Value.(int64)
 	s.ID = int(id)
 	return s, nil
 }

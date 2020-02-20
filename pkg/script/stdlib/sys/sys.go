@@ -4,23 +4,23 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 )
 
-// Import the sys library to enable scripts to access low level system functionality.
-func Import() script.Library {
+// Library prepares a new sys library for use within a script environment.
+func Library() script.Library {
 	return script.Library{
-		"move":          script.Func(Move),
-		"copy":          script.Func(Copy),
-		"remove":        script.Func(Remove),
-		"exec":          script.Func(Exec),
-		"read":          script.Func(ReadFile),
-		"write":         script.Func(WriteFile),
-		"chmod":         script.Func(Chmod),
-		"chown":         script.Func(Chown),
-		"processes":     script.Func(Processes),
-		"kill":          script.Func(Kill),
-		"connections":   script.Func(Connections),
-		"dir":           script.Func(Dir),
-		"replaceString": script.Func(ReplaceString),
-		"request":       script.Func(Request),
-		"detectOS":      script.Func(DetectOS),
+		"openFile":    script.Func(openFile),
+		"detectOS":    script.Func(detectOS),
+		"exec":        script.Func(exec),
+		"connections": script.Func(connections),
+		"processes":   script.Func(processes),
 	}
+}
+
+// @DEPRECATE Import the sys library to enable scripts to access low level system functionality.
+func Import() script.Library {
+	return Library()
+}
+
+// Include the sys library in a script environment.
+func Include() script.Option {
+	return script.WithLibrary("sys", Library())
 }

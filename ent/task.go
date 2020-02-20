@@ -34,28 +34,48 @@ type Task struct {
 	Error string `json:"Error,omitempty"`
 	// SessionID holds the value of the "SessionID" field.
 	SessionID string `json:"SessionID,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TaskQuery when eager-loading is set.
+	Edges struct {
+		// Tags holds the value of the tags edge.
+		Tags []*Tag
+		// Job holds the value of the job edge.
+		Job *Job
+		// Target holds the value of the target edge.
+		Target *Target
+	} `json:"edges"`
+	job_id    *int
+	target_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Task) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
+		&sql.NullInt64{},  // id
+		&sql.NullTime{},   // QueueTime
+		&sql.NullTime{},   // LastChangedTime
+		&sql.NullTime{},   // ClaimTime
+		&sql.NullTime{},   // ExecStartTime
+		&sql.NullTime{},   // ExecStopTime
+		&sql.NullString{}, // Content
+		&sql.NullString{}, // Output
+		&sql.NullString{}, // Error
+		&sql.NullString{}, // SessionID
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Task) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // job_id
+		&sql.NullInt64{}, // target_id
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Task fields.
 func (t *Task) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(task.Columns); m != n {
+	if m, n := len(values), len(task.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -108,6 +128,21 @@ func (t *Task) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field SessionID", values[8])
 	} else if value.Valid {
 		t.SessionID = value.String
+	}
+	values = values[9:]
+	if len(values) == len(task.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field job_id", value)
+		} else if value.Valid {
+			t.job_id = new(int)
+			*t.job_id = int(value.Int64)
+		}
+		if value, ok := values[1].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
+		} else if value.Valid {
+			t.target_id = new(int)
+			*t.target_id = int(value.Int64)
+		}
 	}
 	return nil
 }

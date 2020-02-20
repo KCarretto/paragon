@@ -10,6 +10,7 @@ export const CompletionProvider: monaco.languages.CompletionItemProvider = {
       endLineNumber: position.lineNumber,
       endColumn: word.endColumn
     };
+
     return {
       suggestions: BuiltIns.map(func => {
         return {

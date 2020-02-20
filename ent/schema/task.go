@@ -1,16 +1,12 @@
 package schema
 
 import (
-	"math"
 	"time"
 
 	"github.com/facebookincubator/ent"
 	"github.com/facebookincubator/ent/schema/edge"
 	"github.com/facebookincubator/ent/schema/field"
 )
-
-const MaxTaskContentSize = 65535
-const MaxTaskOutputSize = math.MaxUint32
 
 // Task holds the schema definition for the Task entity.
 type Task struct {

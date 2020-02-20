@@ -39,7 +39,7 @@ func (cd *CredentialDelete) ExecX(ctx context.Context) int {
 }
 
 func (cd *CredentialDelete) sqlExec(ctx context.Context) (int, error) {
-	spec := &sqlgraph.DeleteSpec{
+	_spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: credential.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -49,13 +49,13 @@ func (cd *CredentialDelete) sqlExec(ctx context.Context) (int, error) {
 		},
 	}
 	if ps := cd.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return sqlgraph.DeleteNodes(ctx, cd.driver, spec)
+	return sqlgraph.DeleteNodes(ctx, cd.driver, _spec)
 }
 
 // CredentialDeleteOne is the builder for deleting a single Credential entity.

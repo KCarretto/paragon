@@ -21,22 +21,38 @@ type Service struct {
 	PubKey string `json:"PubKey,omitempty"`
 	// IsActivated holds the value of the "IsActivated" field.
 	IsActivated bool `json:"IsActivated,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ServiceQuery when eager-loading is set.
+	Edges struct {
+		// Tag holds the value of the tag edge.
+		Tag *Tag
+		// Events holds the value of the events edge.
+		Events []*Event
+	} `json:"edges"`
+	service_tag_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Service) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullBool{},
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Name
+		&sql.NullString{}, // PubKey
+		&sql.NullBool{},   // IsActivated
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Service) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // service_tag_id
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Service fields.
 func (s *Service) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(service.Columns); m != n {
+	if m, n := len(values), len(service.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -59,6 +75,15 @@ func (s *Service) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field IsActivated", values[2])
 	} else if value.Valid {
 		s.IsActivated = value.Bool
+	}
+	values = values[3:]
+	if len(values) == len(service.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field service_tag_id", value)
+		} else if value.Valid {
+			s.service_tag_id = new(int)
+			*s.service_tag_id = int(value.Int64)
+		}
 	}
 	return nil
 }
