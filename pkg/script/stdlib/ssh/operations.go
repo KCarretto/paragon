@@ -57,7 +57,7 @@ func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 
 // OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.
 //
-//go:generate go run ../gendoc.go -lib ssh -func openFile -param path@String -retval file@File -retval err@Error -doc "OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist."
+//go:generate go run ../gendoc.go -lib ssh -func openFile -param path@String -retval f@File -retval err@Error -doc "OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist."
 //
 // @callable: 	ssh.openFile
 // @param: 		path 	@string
