@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
@@ -57,15 +58,15 @@ func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 
 // OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.
 //
-//go:generate go run ../gendoc.go -lib ssh -func openFile -param path@String -retval file@File -retval err@Error -doc "OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist."
+//go:generate go run ../gendoc.go -lib ssh -func openFile -param filePath@String -retval file@File -retval err@Error -doc "OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist."
 //
 // @callable: 	ssh.openFile
-// @param: 		path 	@string
-// @retval:		file 	@File
-// @retval:		err 	@Error
+// @param: 		filePath 	@string
+// @retval:		file 		@File
+// @retval:		err 		@Error
 //
 // @usage: 		f, err = ssh.openFile("/bin/implant")
-func (env *Environment) OpenFile(path string) (file.Type, error) {
+func (env *Environment) OpenFile(filePath string) (file.Type, error) {
 	client, err := env.Connector.Connect(env.RemoteHost)
 	if err != nil {
 		return file.Type{}, err
@@ -76,8 +77,12 @@ func (env *Environment) OpenFile(path string) (file.Type, error) {
 		return file.Type{}, err
 	}
 	env.TrackHandle(session)
+	dir := path.Dir(filePath)
+	if err := session.MkdirAll(dir); err != nil {
+		return file.New(nil), fmt.Errorf("failed to create parent directory %q: %w", dir, err)
+	}
 
-	f, err := session.OpenFile(path, os.O_RDWR|os.O_CREATE)
+	f, err := session.OpenFile(filePath, os.O_RDWR|os.O_CREATE)
 	if err != nil {
 		return file.Type{}, err
 	}
@@ -88,11 +93,11 @@ func (env *Environment) OpenFile(path string) (file.Type, error) {
 }
 
 func (env *Environment) openFile(parser script.ArgParser) (script.Retval, error) {
-	path, err := parser.GetString(0)
+	filePath, err := parser.GetString(0)
 	if err != nil {
 		return nil, err
 	}
 
-	retVal, retErr := env.OpenFile(path)
+	retVal, retErr := env.OpenFile(filePath)
 	return script.WithError(retVal, retErr), nil
 }
