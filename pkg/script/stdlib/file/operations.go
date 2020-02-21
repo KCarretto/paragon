@@ -12,7 +12,7 @@ import (
 
 // Move a file to the desired location.
 //
-//go:generate go run ../gendoc.go -lib file -func move -param file@File -param dstPath@String -retval err@Error -doc "Move a file to the desired location."
+//go:generate go run ../gendoc.go -lib file -func move -param f@File -param dstPath@String -retval err@Error -doc "Move a file to the desired location."
 //
 // @callable:	file.move
 // @param:		file	@File
@@ -40,7 +40,7 @@ func move(parser script.ArgParser) (script.Retval, error) {
 
 // Name returns file's basename.
 //
-//go:generate go run ../gendoc.go -lib file -func name -param file@File -retval name@String -doc "Name returns file's basename."
+//go:generate go run ../gendoc.go -lib file -func name -param f@File -retval name@String -doc "Name returns file's basename."
 //
 // @callable: 	file.name
 // @param: 		file @File
@@ -61,7 +61,7 @@ func name(parser script.ArgParser) (script.Retval, error) {
 
 // Content returns the file's content.
 //
-//go:generate go run ../gendoc.go -lib file -func content -param file@File -retval content@String -retval err@Error -doc "Content returns the file's content."
+//go:generate go run ../gendoc.go -lib file -func content -param f@File -retval content@String -retval err@Error -doc "Content returns the file's content."
 //
 // @callable: 	file.content
 // @param: 		file 	@File
@@ -86,7 +86,7 @@ func content(parser script.ArgParser) (script.Retval, error) {
 
 // Write sets the file's content.
 //
-//go:generate go run ../gendoc.go -lib file -func write -param file@File -param content@String -retval err@Error -doc "Write sets the file's content."
+//go:generate go run ../gendoc.go -lib file -func write -param f@File -param content@String -retval err@Error -doc "Write sets the file's content."
 //
 // @callable: 	file.write
 // @param: 		file 	@File
@@ -148,7 +148,7 @@ func copy(parser script.ArgParser) (script.Retval, error) {
 
 // Remove the file. It will become unuseable after calling this operation.
 //
-//go:generate go run ../gendoc.go -lib file -func remove -param file@File -retval err@Error -doc "Remove the file. It will become unuseable after calling this operation."
+//go:generate go run ../gendoc.go -lib file -func remove -param f@File -retval err@Error -doc "Remove the file. It will become unuseable after calling this operation."
 //
 // @callable: 	file.remove
 // @param: 		file 	@File
@@ -172,7 +172,7 @@ func remove(parser script.ArgParser) (script.Retval, error) {
 // or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will
 // change the file's group ownership to 'new_group' but will not affect the file's user ownership.
 //
-//go:generate go run ../gendoc.go -lib file -func chown -param file@File -param username@String -param group@String -retval err@Error -doc "Chown modifies the file's ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will change the file's group ownership to 'new_group' but will not affect the file's user ownership."
+//go:generate go run ../gendoc.go -lib file -func chown -param f@File -param username@String -param group@String -retval err@Error -doc "Chown modifies the file's ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will change the file's group ownership to 'new_group' but will not affect the file's user ownership."
 //
 // @callable: 	file.chown
 // @param: 		file 		@File
@@ -236,7 +236,7 @@ func chown(parser script.ArgParser) (script.Retval, error) {
 // Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation
 // of what os.FileMode you wish to set file to have.
 //
-//go:generate go run ../gendoc.go -lib file -func chmod -param file@File -param mode@String -retval err@Error -doc "Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have."
+//go:generate go run ../gendoc.go -lib file -func chmod -param f@File -param mode@String -retval err@Error -doc "Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have."
 //
 // @callable: 	file.chmod
 // @param: 		file 		@File

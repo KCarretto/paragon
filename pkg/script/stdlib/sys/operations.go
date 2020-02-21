@@ -19,7 +19,7 @@ import (
 
 // OpenFile uses os.Open to Open a file.
 //
-//go:generate go run ../gendoc.go -lib sys -func openFile -param path@String -retval file@File -retval err@Error -doc "OpenFile uses os.Open to Open a file."
+//go:generate go run ../gendoc.go -lib sys -func openFile -param path@String -retval f@File -retval err@Error -doc "OpenFile uses os.Open to Open a file."
 //
 // @callable: 	sys.openFile
 // @param: 		path 	@string
