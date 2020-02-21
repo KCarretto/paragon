@@ -44,7 +44,12 @@ func (test *testResolver) newUser(t *testing.T, options ...func(*ent.UserCreate)
 
 func (test *testResolver) newJob(t *testing.T, options ...func(*ent.JobCreate)) *ent.Job {
 	u := test.newUser(t)
-	jobCreater := test.Client.Job.Create().SetName("test").SetOwner(u).SetContent("wat")
+	jobCreater := test.Client.Job.Create().
+		SetName("test").
+		SetOwner(u).
+		SetContent("wat").
+		SetStaged(false)
+
 	for _, opt := range options {
 		opt(jobCreater)
 	}
