@@ -18,7 +18,7 @@ type File struct {
 func (f *File) Move(dstPath string) error {
 	dir := path.Dir(dstPath)
 
-	if err := f.session.MkdirAll(dstPath); err != nil {
+	if err := f.session.MkdirAll(dir); err != nil {
 		return fmt.Errorf("failed to create parent directory %q: %w", dir, err)
 	}
 
