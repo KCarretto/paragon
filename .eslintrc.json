@@ -1,6 +1,7 @@
 {
   "parser": "@typescript-eslint/parser",
   "plugins": ["@typescript-eslint"],
+  "ignorePatterns": ["temp.js", "node_modules/"],
   "rules": {
     "semi": ["error", "never"],
     "quotes": [2, "single"]
