@@ -188,6 +188,165 @@ func (client *Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTa
 	return nil
 }
 
+// CreateTarget creates a target, but may error if it already exists.
+func (client *Client) CreateTarget(ctx context.Context, vars models.CreateTargetRequest) (*ent.Target, error) {
+	// Build request
+	req := Request{
+		Operation: "CreateTarget",
+		Query: `
+		mutation CreateTarget($params: CreateTargetRequest!) {
+			target: createTarget(input: $params) {
+				id
+				name
+				primaryIP
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"params": vars,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Target *ent.Target `json:"target"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+	if resp.Data.Target == nil {
+		return nil, fmt.Errorf("no target data returned from mutation")
+	}
+
+	return resp.Data.Target, nil
+}
+
+// ListTags provides a map of name to tag for all existing tags.
+func (client *Client) ListTags(ctx context.Context) (map[string]*ent.Tag, error) {
+	// Build request
+	req := Request{
+		Operation: "ListTags",
+		Query: `
+		query ListTags {
+			tags {
+			  id
+			  name
+			}
+		}`,
+		Variables: map[string]interface{}{},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Tags []*ent.Tag `json:"tags"`
+		} `json:"data"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Collect non-nil tags into map
+	tags := make(map[string]*ent.Tag, len(resp.Data.Tags))
+	for _, tag := range resp.Data.Tags {
+		if tag == nil {
+			continue
+		}
+
+		tags[tag.Name] = tag
+	}
+
+	return tags, nil
+}
+
+// CreateTag will create a tag, but may error if the tag already exists.
+func (client *Client) CreateTag(ctx context.Context, vars models.CreateTagRequest) (*ent.Tag, error) {
+	// Build request
+	req := Request{
+		Operation: "CreateTag",
+		Query: `
+		mutation CreateTag($params: CreateTagRequest!) {
+			tag: createTag(input: $params) {
+			  id
+			  name
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"params": vars,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Tag *ent.Tag `json:"tag"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+	if resp.Data.Tag == nil {
+		return nil, fmt.Errorf("no tag data returned from mutation")
+	}
+
+	return resp.Data.Tag, nil
+}
+
+// CreateTags ensures that the provided set of tags exists and creates any that do not yet exist. If
+// duplicate tag names are provided, the tag will only be created once.
+func (client *Client) CreateTags(ctx context.Context, names ...string) (map[string]*ent.Tag, error) {
+	// Prevent query if no names are specified
+	if len(names) < 1 {
+		return make(map[string]*ent.Tag, 0), nil
+	}
+
+	// Get a map of existing tags
+	tagMap, err := client.ListTags(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create tags that don't exist yet
+	for _, name := range names {
+		// Skip if the tag already exists
+		if _, exists := tagMap[name]; exists {
+			continue
+		}
+
+		// Otherwise, create it
+		tag, err := client.CreateTag(ctx, models.CreateTagRequest{
+			Name: name,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tag %q: %w", name, err)
+		}
+
+		// Prevent it from being created again
+		tagMap[name] = tag
+	}
+
+	return tagMap, nil
+}
+
 func (client *Client) sign(msg []byte) ([]byte, error) {
 	if client.PublicKey == nil || client.PrivateKey == nil {
 		pubKey, privKey, err := ed25519.GenerateKey(nil)

@@ -430,8 +430,11 @@ func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTa
 	if err != nil {
 		return nil, err
 	}
+
+	userID, svcID := resolveEventOwners(ctx)
 	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
+		SetNillableOwnerID(userID).
+		SetNillableSvcOwnerID(svcID).
 		SetTag(tag).
 		SetKind(event.KindCREATETAG).
 		Save(ctx)
@@ -538,8 +541,11 @@ func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.Creat
 	if err != nil {
 		return nil, err
 	}
+
+	userID, svcID := resolveEventOwners(ctx)
 	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
+		SetNillableSvcOwnerID(svcID).
+		SetNillableOwnerID(userID).
 		SetTarget(target).
 		SetKind(event.KindCREATETARGET).
 		Save(ctx)
@@ -1289,4 +1295,14 @@ func (r *userResolver) Jobs(ctx context.Context, obj *ent.User, input *models.Fi
 		}
 	}
 	return q.All(ctx)
+}
+
+func resolveEventOwners(ctx context.Context) (userID, svcID *int) {
+	if user := auth.GetUser(ctx); user != nil {
+		userID = &user.ID
+	}
+	if svc := auth.GetService(ctx); svc != nil {
+		svcID = &svc.ID
+	}
+	return
 }
