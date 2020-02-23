@@ -5,7 +5,7 @@ import { useState } from "react";
 import { Button, Form, Grid, Input, Modal } from "semantic-ui-react";
 import { Target } from "../../graphql/models";
 import { MULTI_TARGET_QUERY } from "../../views";
-import { useModal, XTargetTypeahead } from "../form";
+import { useModal, XCredentialKindDropdown, XTargetTypeahead } from "../form";
 import { XErrorMessage } from "../messages";
 
 export const BULK_ADD_CREDS_MUTATION = gql`
@@ -40,6 +40,7 @@ const XBulkAddCredentialsModal = () => {
   // Form params
   const [principal, setPrincipal] = useState<string>("");
   const [secret, setSecret] = useState<string>("");
+  const [kind, setKind] = useState<string>("password");
   const [targets, setTargets] = useState<Target[]>([]);
 
   const [addCredentials, { called, loading, error }] = useMutation(
@@ -53,6 +54,7 @@ const XBulkAddCredentialsModal = () => {
     let vars = {
       principal: principal,
       secret: secret,
+      kind: kind,
       targets: targets
     };
 
@@ -75,37 +77,46 @@ const XBulkAddCredentialsModal = () => {
     >
       <Modal.Header>{"Add Credentials for Targets"}</Modal.Header>
       <Modal.Content>
-        <Grid verticalAlign="middle" stackable container columns={"equal"}>
-          <Grid.Column>
-            <Input
-              label="Principal"
-              icon="user"
-              fluid
-              placeholder="Enter principal (i.e. username)"
-              name="principal"
-              value={principal}
-              onChange={(e, { value }) => setPrincipal(value)}
-            />
-          </Grid.Column>
-          <Grid.Column>
-            <Input
-              label="Secret"
-              icon="key"
-              fluid
-              placeholder="Enter secret (i.e. password)"
-              name="secret"
-              value={secret}
-              onChange={(e, { value }) => setSecret(value)}
-            />
-          </Grid.Column>
-          <Grid.Column>
-            <XTargetTypeahead
-              labeled
-              onChange={(e, { value }) => setTargets(value)}
-            />
-          </Grid.Column>
+        <Grid verticalAlign="middle" stackable container>
+          <Grid.Row columns={3}>
+            <Grid.Column>
+              <Input
+                label="Principal"
+                icon="user"
+                fluid
+                placeholder="Enter principal (i.e. username)"
+                name="principal"
+                value={principal}
+                onChange={(e, { value }) => setPrincipal(value)}
+              />
+            </Grid.Column>
+            <Grid.Column>
+              <Input
+                label="Secret"
+                icon="key"
+                fluid
+                placeholder="Enter secret (i.e. password)"
+                name="secret"
+                value={secret}
+                onChange={(e, { value }) => setSecret(value)}
+              />
+            </Grid.Column>
+            <Grid.Column>
+              <XCredentialKindDropdown
+                value={kind}
+                onChange={(e, { value }) => setKind(value)}
+              />
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row>
+            <Grid.Column>
+              <XTargetTypeahead
+                labeled
+                onChange={(e, { value }) => setTargets(value)}
+              />
+            </Grid.Column>
+          </Grid.Row>
         </Grid>
-
         <XErrorMessage title="Failed to Add Credentials" err={error} />
       </Modal.Content>
       <Modal.Actions>
