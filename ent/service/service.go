@@ -26,14 +26,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagInverseTable = "tags"
 	// TagColumn is the table column denoting the tag relation/edge.
-	TagColumn = "service_tag_id"
+	TagColumn = "service_tag"
 	// EventsTable is the table the holds the events relation/edge.
 	EventsTable = "events"
 	// EventsInverseTable is the table name for the Event entity.
 	// It exists in this package in order to avoid circular dependency with the "event" package.
 	EventsInverseTable = "events"
 	// EventsColumn is the table column denoting the events relation/edge.
-	EventsColumn = "svc_owner_id"
+	EventsColumn = "service_events"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -46,7 +46,7 @@ var Columns = []string{
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the Service type.
 var ForeignKeys = []string{
-	"service_tag_id",
+	"service_tag",
 }
 
 var (

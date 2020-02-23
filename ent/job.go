@@ -9,6 +9,7 @@ import (
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // Job is the model entity for the Job schema.
@@ -26,20 +27,86 @@ type Job struct {
 	Staged bool `json:"Staged,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the JobQuery when eager-loading is set.
-	Edges struct {
-		// Tasks holds the value of the tasks edge.
-		Tasks []*Task
-		// Tags holds the value of the tags edge.
-		Tags []*Tag
-		// Prev holds the value of the prev edge.
-		Prev *Job
-		// Next holds the value of the next edge.
-		Next *Job
-		// Owner holds the value of the owner edge.
-		Owner *User
-	} `json:"edges"`
-	prev_id  *int
-	owner_id *int
+	Edges     JobEdges `json:"edges"`
+	job_next  *int
+	user_jobs *int
+}
+
+// JobEdges holds the relations/edges for other nodes in the graph.
+type JobEdges struct {
+	// Tasks holds the value of the tasks edge.
+	Tasks []*Task
+	// Tags holds the value of the tags edge.
+	Tags []*Tag
+	// Prev holds the value of the prev edge.
+	Prev *Job
+	// Next holds the value of the next edge.
+	Next *Job
+	// Owner holds the value of the owner edge.
+	Owner *User
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [5]bool
+}
+
+// TasksOrErr returns the Tasks value or an error if the edge
+// was not loaded in eager-loading.
+func (e JobEdges) TasksOrErr() ([]*Task, error) {
+	if e.loadedTypes[0] {
+		return e.Tasks, nil
+	}
+	return nil, &NotLoadedError{edge: "tasks"}
+}
+
+// TagsOrErr returns the Tags value or an error if the edge
+// was not loaded in eager-loading.
+func (e JobEdges) TagsOrErr() ([]*Tag, error) {
+	if e.loadedTypes[1] {
+		return e.Tags, nil
+	}
+	return nil, &NotLoadedError{edge: "tags"}
+}
+
+// PrevOrErr returns the Prev value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e JobEdges) PrevOrErr() (*Job, error) {
+	if e.loadedTypes[2] {
+		if e.Prev == nil {
+			// The edge prev was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: job.Label}
+		}
+		return e.Prev, nil
+	}
+	return nil, &NotLoadedError{edge: "prev"}
+}
+
+// NextOrErr returns the Next value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e JobEdges) NextOrErr() (*Job, error) {
+	if e.loadedTypes[3] {
+		if e.Next == nil {
+			// The edge next was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: job.Label}
+		}
+		return e.Next, nil
+	}
+	return nil, &NotLoadedError{edge: "next"}
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e JobEdges) OwnerOrErr() (*User, error) {
+	if e.loadedTypes[4] {
+		if e.Owner == nil {
+			// The edge owner was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Owner, nil
+	}
+	return nil, &NotLoadedError{edge: "owner"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -56,8 +123,8 @@ func (*Job) scanValues() []interface{} {
 // fkValues returns the types for scanning foreign-keys values from sql.Rows.
 func (*Job) fkValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{}, // prev_id
-		&sql.NullInt64{}, // owner_id
+		&sql.NullInt64{}, // job_next
+		&sql.NullInt64{}, // user_jobs
 	}
 }
 
@@ -96,16 +163,16 @@ func (j *Job) assignValues(values ...interface{}) error {
 	values = values[4:]
 	if len(values) == len(job.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field prev_id", value)
+			return fmt.Errorf("unexpected type %T for edge-field job_next", value)
 		} else if value.Valid {
-			j.prev_id = new(int)
-			*j.prev_id = int(value.Int64)
+			j.job_next = new(int)
+			*j.job_next = int(value.Int64)
 		}
 		if value, ok := values[1].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
+			return fmt.Errorf("unexpected type %T for edge-field user_jobs", value)
 		} else if value.Valid {
-			j.owner_id = new(int)
-			*j.owner_id = int(value.Int64)
+			j.user_jobs = new(int)
+			*j.user_jobs = int(value.Int64)
 		}
 	}
 	return nil

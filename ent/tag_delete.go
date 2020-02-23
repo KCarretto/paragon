@@ -70,7 +70,7 @@ func (tdo *TagDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{tag.Label}
+		return &NotFoundError{tag.Label}
 	default:
 		return nil
 	}

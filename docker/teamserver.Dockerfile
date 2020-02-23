@@ -24,7 +24,7 @@ RUN go build -tags=dev,profile_cpu,nats -o /app/build/teamserver ./cmd/teamserve
 
 # Production Build
 FROM build-cache as prod-build
-RUN go build -o /app/build/teamserver ./cmd/teamserver
+RUN go build -tags=gcp -o /app/build/teamserver ./cmd/teamserver
 
 # Production
 FROM alpine:3.10.2 as production

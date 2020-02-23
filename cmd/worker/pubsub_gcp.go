@@ -36,8 +36,8 @@ func (sub *GCPSubscriber) Subscribe(topic string, handler func(context.Context, 
 		return fmt.Errorf("must set GCP_PROJECT environment variable to use GCP pubsub")
 	}
 
-	topic_uri := fmt.Sprintf("gcppubsub://projects/%s/topics/%s", project, topic)
-	s, err := pubsub.OpenSubscription(ctx, topic_uri)
+	topic_uri := fmt.Sprintf("gcppubsub://projects/%s/subscriptions/%s", project, topic)
+	s, err := pubsub.OpenSubscription(sub.ctx, topic_uri)
 	if err != nil {
 		return fmt.Errorf("failed to subscribe to the topic passed")
 	}

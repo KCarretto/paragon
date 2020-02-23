@@ -74,7 +74,7 @@
     "go.gotoSymbol.includeImports": true,
     "go.lintOnSave": "workspace",
     "go.vetOnSave": "workspace",
-    "go.buildOnSave": "workspace",
+    "go.buildOnSave": "off",
     "go.buildTags": "dev",
     "go.generateTestsFlags": ["-exported"],
     "go.languageServerFlags": [
@@ -83,9 +83,11 @@
     ],
     "gopls": {
       "usePlaceholders": true, // add parameter placeholders when completing a function
+      "staticcheck": false,
       // Experimental settings
       "completeUnimported": true, // autocomplete unimported packages
-      "deepCompletion": true // enable deep completion
+      "deepCompletion": true, // enable deep completion
+
     },
     "eslint.validate": ["typescript", "typescriptreact"]
   },
