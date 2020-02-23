@@ -12,6 +12,7 @@ func Library() script.Library {
 		"exec":        script.Func(exec),
 		"connections": script.Func(connections),
 		"processes":   script.Func(processes),
+		"files":       script.Func(files),
 	}
 }
 
