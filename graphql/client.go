@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -348,6 +349,12 @@ func (client *Client) CreateTags(ctx context.Context, names ...string) (map[stri
 }
 
 func (client *Client) sign(msg []byte) ([]byte, error) {
+	// If nil, try loading from the environment
+	if client.PublicKey == nil || client.PrivateKey == nil {
+		client.PublicKey, client.PrivateKey = client.keyFromEnv()
+	}
+
+	// Still nil, generate a keypair
 	if client.PublicKey == nil || client.PrivateKey == nil {
 		pubKey, privKey, err := ed25519.GenerateKey(nil)
 		if err != nil {
@@ -356,5 +363,26 @@ func (client *Client) sign(msg []byte) ([]byte, error) {
 		client.PublicKey = pubKey
 		client.PrivateKey = privKey
 	}
+
+	// Sign the message using the client's private key
 	return client.PrivateKey.Sign(nil, msg, crypto.Hash(0))
+}
+
+func (client *Client) keyFromEnv() (ed25519.PublicKey, ed25519.PrivateKey) {
+	if key := os.Getenv("PG_SVC_KEY"); key != "" {
+		parts := strings.Split(key, ":")
+		if len(parts) != 2 {
+			panic(fmt.Errorf("invalid format for PG_SVC_KEY, expected b64PubKey:b64PrivKey"))
+		}
+		pubKey, err := base64.StdEncoding.DecodeString(parts[0])
+		if err != nil {
+			panic(fmt.Errorf("invalid base64 provided for PubKey in PG_SVC_KEY: %w", err))
+		}
+		privKey, err := base64.StdEncoding.DecodeString(parts[1])
+		if err != nil {
+			panic(fmt.Errorf("invalid base64 provided for PrivKey in PG_SVC_KEY: %w", err))
+		}
+		return pubKey, privKey
+	}
+	return nil, nil
 }
