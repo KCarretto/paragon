@@ -250,6 +250,12 @@
           "doc": "Processes uses the gopsutil/process to get all processes.",
           "params": null,
           "retvals": [{ "name": "procs", "type": "[]Process" }]
+        },
+        {
+          "name": "files",
+          "doc": "Files uses the ioutil.ReadDir to get all files in a given path.",
+          "params": null,
+          "retvals": [{ "name": "files", "type": "[]File" }]
         }
       ]
     },
