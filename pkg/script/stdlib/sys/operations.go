@@ -101,8 +101,7 @@ func Exec(executable string, disown bool) (string, error) {
 	}
 	bin := os_exec.Command(argv[0], argv[1:]...)
 	if disown {
-		bin.Start()
-		return "", nil
+		return "", bin.Start()
 	}
 	result, err := bin.CombinedOutput()
 	return string(result), err
