@@ -63,6 +63,12 @@ func main() {
 	}
 
 	taskHandler := func(ctx context.Context, data []byte) {
+		defer func() {
+			if fatalErr := recover(); fatalErr != nil {
+				logger.Error("Recovered from panic!", zap.Reflect("err", fatalErr))
+			}
+		}()
+
 		logger.Info("Message Received", zap.String("data", string(data)))
 
 		var taskQueuedEvent event.TaskQueued
