@@ -58,6 +58,7 @@ export const GetInsertText = (libName: string, fn: IFunc): string => {
   let params =
     fn.params && fn.params.length > 0
       ? fn.params
+          .filter(param => !param.type.startsWith("?"))
           .map((param, index) => {
             switch (param.type) {
               case "string":
