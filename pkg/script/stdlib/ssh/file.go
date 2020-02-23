@@ -22,7 +22,7 @@ func (f *File) Move(dstPath string) error {
 		return fmt.Errorf("failed to create parent directory %q: %w", dir, err)
 	}
 
-	err := f.session.Rename(f.Name(), dstPath)
+	err := f.session.PosixRename(f.Name(), dstPath)
 	if err != nil {
 		return err
 	}
