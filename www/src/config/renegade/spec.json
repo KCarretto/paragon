@@ -175,7 +175,10 @@
         {
           "name": "exec",
           "doc": "Exec a command on the remote system using an underlying ssh session.",
-          "params": [{ "name": "cmd", "type": "String" }],
+          "params": [
+            { "name": "cmd", "type": "String" },
+            { "name": "disown", "type": "?Bool" }
+          ],
           "retvals": [
             { "name": "output", "type": "String" },
             { "name": "err", "type": "Error" }
