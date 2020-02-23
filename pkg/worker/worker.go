@@ -10,6 +10,7 @@ import (
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	cdnlib "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
 	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	sshlib "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
@@ -110,6 +111,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		sshEnv.Include(),
 		cdnEnv.Include(),
 		filelib.Include(),
+		assert.Include(),
 	)
 	execErr = code.Exec(ctx)
 }

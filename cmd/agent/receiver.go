@@ -7,6 +7,7 @@ import (
 	"github.com/kcarretto/paragon/pkg/agent"
 	"github.com/kcarretto/paragon/pkg/c2"
 	"github.com/kcarretto/paragon/pkg/script"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/http"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/process"
@@ -47,6 +48,7 @@ func (r Receiver) Receive(w agent.MessageWriter, msg agent.ServerMessage) {
 			file.Include(),
 			regex.Include(),
 			process.Include(),
+			assert.Include(),
 		)
 
 		err := code.Exec(r)
