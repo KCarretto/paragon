@@ -46,10 +46,10 @@ const XServiceTypeahead = ({ value, onChange, labeled }) => {
 
   const getDropdown = () => (
     <Dropdown
-      placeholder="Select Service"
+      placeholder="Default Service"
       icon=""
       fluid
-      search
+      // search
       selection
       clearable
       error={error !== null && error !== undefined}
