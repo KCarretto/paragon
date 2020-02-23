@@ -117,6 +117,20 @@ func (test *testResolver) newFile(t *testing.T, options ...func(*ent.FileCreate)
 	return file
 }
 
+func (test *testResolver) newTag(t *testing.T, options ...func(*ent.TagCreate)) *ent.Tag {
+	uniqueNumber++
+	uniqueData := fmt.Sprintf("test%d", uniqueNumber)
+	tagCreater := test.Client.Tag.Create().SetName(uniqueData)
+	for _, opt := range options {
+		opt(tagCreater)
+	}
+	tag, err := tagCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create tag: %w", err)
+	}
+	return tag
+}
+
 func NewTestClient() *testResolver {
 	client, err := ent.Open("sqlite3", "file:ent?mode=memory&cache=shared&_fk=1")
 	if err != nil {
@@ -391,6 +405,51 @@ func TestJobsQuery(t *testing.T) {
 			idsLeft = append(idsLeft, id)
 		}
 		t.Errorf("Jobs query returned missing expected job(s) %#v", idsLeft)
+	}
+
+}
+
+func TestTagQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	tag := client.newTag(t)
+	query := client.Resolver.Query()
+	queriedTag, err := query.Tag(context.Background(), tag.ID)
+	if err != nil {
+		t.Errorf("Tag query errored with %w", err)
+	}
+	if tag.ID != queriedTag.ID {
+		t.Errorf("Tag query returned wrong id expected: %d, got: %d", tag.ID, queriedTag.ID)
+	}
+}
+
+func TestTagsQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfTags := 2
+	tags := map[int]*ent.Tag{}
+	for i := 0; i < numOfTags; i++ {
+		tag := client.newTag(t)
+		tags[tag.ID] = tag
+	}
+	query := client.Resolver.Query()
+	queriedTags, err := query.Tags(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Jobs query errored with %w", err)
+	}
+
+	for _, tag := range queriedTags {
+		if _, ok := tags[tag.ID]; ok {
+			delete(tags, tag.ID)
+		}
+	}
+
+	if len(tags) != 0 {
+		idsLeft := []int{}
+		for id := range tags {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Tags query returned missing expected tag(s) %#v", idsLeft)
 	}
 
 }
