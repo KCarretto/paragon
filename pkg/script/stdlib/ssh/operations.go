@@ -13,15 +13,16 @@ import (
 
 // Exec a command on the remote system using an underlying ssh session.
 //
-//go:generate go run ../gendoc.go -lib ssh -func exec -param cmd@String -retval output@String -retval err@Error -doc "Exec a command on the remote system using an underlying ssh session."
+//go:generate go run ../gendoc.go -lib ssh -func exec -param cmd@String -param disown@?Bool -retval output@String -retval err@Error -doc "Exec a command on the remote system using an underlying ssh session."
 //
 // @callable: 	ssh.exec
 // @param: 		cmd 	@string
+// @param: 		disown 	@?string
 // @retval:		output 	@string
 // @retval:		err 	@Error
 //
 // @usage: 		output, err = ssh.exec("/bin/bash -c 'ls -al'")
-func (env *Environment) Exec(cmd string) (string, error) {
+func (env *Environment) Exec(cmd string, disown bool) (string, error) {
 	if env.Connector == nil {
 		return "", fmt.Errorf("environment has no SSH connector")
 	}
@@ -38,6 +39,10 @@ func (env *Environment) Exec(cmd string) (string, error) {
 	}
 	env.TrackHandle(session)
 
+	if disown {
+		return "", session.Start(cmd)
+	}
+
 	// TODO: Handle exec timeout
 	result, err := session.CombinedOutput(cmd)
 	return string(result), err
@@ -46,13 +51,20 @@ func (env *Environment) Exec(cmd string) (string, error) {
 func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 	log.Printf("[DBG] Executing command on remote host via ssh")
 
+	err := parser.RestrictKwargs("disown")
+	if err != nil {
+		return nil, err
+	}
+
 	cmd, err := parser.GetString(0)
 	if err != nil {
 		log.Printf("[Err] Exec param error: %v", err)
 		return nil, err
 	}
 
-	retVal, retErr := env.Exec(cmd)
+	disown, _ := parser.GetBoolByName("disown")
+
+	retVal, retErr := env.Exec(cmd, disown)
 	return script.WithError(retVal, retErr), nil
 }
 
