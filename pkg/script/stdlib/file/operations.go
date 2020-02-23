@@ -68,7 +68,7 @@ func name(parser script.ArgParser) (script.Retval, error) {
 // @retval:		content @String
 // @retval:		err 	@Error
 //
-// @usage:		content = file.content(f)
+// @usage:		content, err = file.content(f)
 func Content(file Type) (string, error) {
 	content, err := ioutil.ReadAll(file)
 	return string(content), err
