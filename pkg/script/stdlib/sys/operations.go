@@ -3,14 +3,16 @@ package sys
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"os"
 	os_exec "os/exec"
-	"path"
+	os_path "path"
 	"runtime"
 	"strings"
 
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	netlib "github.com/kcarretto/paragon/pkg/script/stdlib/net"
 	proclib "github.com/kcarretto/paragon/pkg/script/stdlib/process"
 	"github.com/shirou/gopsutil/net"
@@ -28,7 +30,7 @@ import (
 //
 // @usage: 		f, err = sys.openFile("/usr/bin/malware")
 func OpenFile(filePath string) (file.Type, error) {
-	dir := path.Dir(filePath)
+	dir := os_path.Dir(filePath)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return file.New(nil), fmt.Errorf("failed to create parent directory %q: %w", dir, err)
 	}
@@ -211,4 +213,37 @@ func Processes() (procs []proclib.Process) {
 
 func processes(parser script.ArgParser) (script.Retval, error) {
 	return Processes(), nil
+}
+
+// Files uses the ioutil.ReadDir to get all files in a given path.
+//
+//go:generate go run ../gendoc.go -lib sys -func files -retval files@[]File -doc "Files uses the ioutil.ReadDir to get all files in a given path."
+//
+// @callable:	sys.files
+// @retval:		files 		@[]File
+//
+// @usage:		files = sys.files()
+func Files(path string) (files []filelib.File, err error) {
+	fileInfos, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, info := range fileInfos {
+		if !info.IsDir() {
+			f, err := OpenFile(os_path.Join(path, info.Name()))
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, f)
+		}
+	}
+	return files, nil
+}
+
+func files(parser script.ArgParser) (script.Retval, error) {
+	path, err := parser.GetString(0)
+	if err != nil {
+		return nil, err
+	}
+	return script.WithError(Files(path)), nil
 }
