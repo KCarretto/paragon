@@ -232,14 +232,14 @@ func (eq *EventQuery) QuerySvcOwner() *ServiceQuery {
 	return query
 }
 
-// First returns the first Event entity in the query. Returns *ErrNotFound when no event was found.
+// First returns the first Event entity in the query. Returns *NotFoundError when no event was found.
 func (eq *EventQuery) First(ctx context.Context) (*Event, error) {
 	es, err := eq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(es) == 0 {
-		return nil, &ErrNotFound{event.Label}
+		return nil, &NotFoundError{event.Label}
 	}
 	return es[0], nil
 }
@@ -253,14 +253,14 @@ func (eq *EventQuery) FirstX(ctx context.Context) *Event {
 	return e
 }
 
-// FirstID returns the first Event id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Event id in the query. Returns *NotFoundError when no id was found.
 func (eq *EventQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = eq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{event.Label}
+		err = &NotFoundError{event.Label}
 		return
 	}
 	return ids[0], nil
@@ -285,9 +285,9 @@ func (eq *EventQuery) Only(ctx context.Context) (*Event, error) {
 	case 1:
 		return es[0], nil
 	case 0:
-		return nil, &ErrNotFound{event.Label}
+		return nil, &NotFoundError{event.Label}
 	default:
-		return nil, &ErrNotSingular{event.Label}
+		return nil, &NotSingularError{event.Label}
 	}
 }
 
@@ -310,9 +310,9 @@ func (eq *EventQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{event.Label}
+		err = &NotFoundError{event.Label}
 	default:
-		err = &ErrNotSingular{event.Label}
+		err = &NotSingularError{event.Label}
 	}
 	return
 }
@@ -587,9 +587,24 @@ func (eq *EventQuery) Select(field string, fields ...string) *EventSelect {
 
 func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 	var (
-		nodes   []*Event
-		withFKs = eq.withFKs
-		_spec   = eq.querySpec()
+		nodes       = []*Event{}
+		withFKs     = eq.withFKs
+		_spec       = eq.querySpec()
+		loadedTypes = [13]bool{
+			eq.withJob != nil,
+			eq.withFile != nil,
+			eq.withCredential != nil,
+			eq.withLink != nil,
+			eq.withTag != nil,
+			eq.withTarget != nil,
+			eq.withTask != nil,
+			eq.withUser != nil,
+			eq.withEvent != nil,
+			eq.withService != nil,
+			eq.withLikers != nil,
+			eq.withOwner != nil,
+			eq.withSvcOwner != nil,
+		}
 	)
 	if eq.withJob != nil || eq.withFile != nil || eq.withCredential != nil || eq.withLink != nil || eq.withTag != nil || eq.withTarget != nil || eq.withTask != nil || eq.withUser != nil || eq.withEvent != nil || eq.withService != nil || eq.withOwner != nil || eq.withSvcOwner != nil {
 		withFKs = true
@@ -611,12 +626,12 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, eq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -625,7 +640,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_job_id; fk != nil {
+			if fk := nodes[i].event_job; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -638,7 +653,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_job_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_job" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Job = n
@@ -650,7 +665,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_file_id; fk != nil {
+			if fk := nodes[i].event_file; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -663,7 +678,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_file_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_file" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.File = n
@@ -675,7 +690,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_credential_id; fk != nil {
+			if fk := nodes[i].event_credential; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -688,7 +703,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_credential_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_credential" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Credential = n
@@ -700,7 +715,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_link_id; fk != nil {
+			if fk := nodes[i].event_link; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -713,7 +728,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_link_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_link" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Link = n
@@ -725,7 +740,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_tag_id; fk != nil {
+			if fk := nodes[i].event_tag; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -738,7 +753,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_tag_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_tag" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Tag = n
@@ -750,7 +765,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_target_id; fk != nil {
+			if fk := nodes[i].event_target; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -763,7 +778,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_target_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_target" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Target = n
@@ -775,7 +790,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_task_id; fk != nil {
+			if fk := nodes[i].event_task; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -788,7 +803,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_task_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_task" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Task = n
@@ -800,7 +815,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_user_id; fk != nil {
+			if fk := nodes[i].event_user; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -813,7 +828,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_user_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_user" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.User = n
@@ -825,7 +840,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_event_id; fk != nil {
+			if fk := nodes[i].event_event; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -838,7 +853,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_event_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_event" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Event = n
@@ -850,7 +865,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].event_service_id; fk != nil {
+			if fk := nodes[i].event_service; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -863,7 +878,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_service_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_service" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Service = n
@@ -887,13 +902,13 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.event_liker_id
+			fk := n.event_likers
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "event_liker_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "event_likers" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "event_liker_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "event_likers" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Likers = append(node.Edges.Likers, n)
 		}
@@ -903,7 +918,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].owner_id; fk != nil {
+			if fk := nodes[i].user_events; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -916,7 +931,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "user_events" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Owner = n
@@ -928,7 +943,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Event)
 		for i := range nodes {
-			if fk := nodes[i].svc_owner_id; fk != nil {
+			if fk := nodes[i].service_events; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -941,7 +956,7 @@ func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "svc_owner_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "service_events" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.SvcOwner = n

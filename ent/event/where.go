@@ -12,27 +12,23 @@ import (
 
 // ID filters vertices based on their identifier.
 func ID(id int) predicate.Event {
-	return predicate.Event(
-		func(s *sql.Selector) {
-			s.Where(sql.EQ(s.C(FieldID), id))
-		},
-	)
+	return predicate.Event(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldID), id))
+	})
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id int) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
-	},
-	)
+	})
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id int) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
-	},
-	)
+	})
 }
 
 // IDIn applies the In predicate on the ID field.
@@ -49,8 +45,7 @@ func IDIn(ids ...int) predicate.Event {
 			v[i] = ids[i]
 		}
 		s.Where(sql.In(s.C(FieldID), v...))
-	},
-	)
+	})
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
@@ -67,64 +62,56 @@ func IDNotIn(ids ...int) predicate.Event {
 			v[i] = ids[i]
 		}
 		s.Where(sql.NotIn(s.C(FieldID), v...))
-	},
-	)
+	})
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id int) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
-	},
-	)
+	})
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id int) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
-	},
-	)
+	})
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id int) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
-	},
-	)
+	})
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id int) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
-	},
-	)
+	})
 }
 
 // CreationTime applies equality check predicate on the "CreationTime" field. It's identical to CreationTimeEQ.
 func CreationTime(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // CreationTimeEQ applies the EQ predicate on the "CreationTime" field.
 func CreationTimeEQ(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // CreationTimeNEQ applies the NEQ predicate on the "CreationTime" field.
 func CreationTimeNEQ(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // CreationTimeIn applies the In predicate on the "CreationTime" field.
@@ -141,8 +128,7 @@ func CreationTimeIn(vs ...time.Time) predicate.Event {
 			return
 		}
 		s.Where(sql.In(s.C(FieldCreationTime), v...))
-	},
-	)
+	})
 }
 
 // CreationTimeNotIn applies the NotIn predicate on the "CreationTime" field.
@@ -159,56 +145,49 @@ func CreationTimeNotIn(vs ...time.Time) predicate.Event {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldCreationTime), v...))
-	},
-	)
+	})
 }
 
 // CreationTimeGT applies the GT predicate on the "CreationTime" field.
 func CreationTimeGT(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // CreationTimeGTE applies the GTE predicate on the "CreationTime" field.
 func CreationTimeGTE(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // CreationTimeLT applies the LT predicate on the "CreationTime" field.
 func CreationTimeLT(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // CreationTimeLTE applies the LTE predicate on the "CreationTime" field.
 func CreationTimeLTE(v time.Time) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCreationTime), v))
-	},
-	)
+	})
 }
 
 // KindEQ applies the EQ predicate on the "Kind" field.
 func KindEQ(v Kind) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldKind), v))
-	},
-	)
+	})
 }
 
 // KindNEQ applies the NEQ predicate on the "Kind" field.
 func KindNEQ(v Kind) predicate.Event {
 	return predicate.Event(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldKind), v))
-	},
-	)
+	})
 }
 
 // KindIn applies the In predicate on the "Kind" field.
@@ -225,8 +204,7 @@ func KindIn(vs ...Kind) predicate.Event {
 			return
 		}
 		s.Where(sql.In(s.C(FieldKind), v...))
-	},
-	)
+	})
 }
 
 // KindNotIn applies the NotIn predicate on the "Kind" field.
@@ -243,8 +221,7 @@ func KindNotIn(vs ...Kind) predicate.Event {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldKind), v...))
-	},
-	)
+	})
 }
 
 // HasJob applies the HasEdge predicate on the "job" edge.
@@ -256,8 +233,7 @@ func HasJob() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, JobTable, JobColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasJobWith applies the HasEdge predicate on the "job" edge with a given conditions (other predicates).
@@ -273,8 +249,7 @@ func HasJobWith(preds ...predicate.Job) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasFile applies the HasEdge predicate on the "file" edge.
@@ -286,8 +261,7 @@ func HasFile() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, FileTable, FileColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasFileWith applies the HasEdge predicate on the "file" edge with a given conditions (other predicates).
@@ -303,8 +277,7 @@ func HasFileWith(preds ...predicate.File) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasCredential applies the HasEdge predicate on the "credential" edge.
@@ -316,8 +289,7 @@ func HasCredential() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, CredentialTable, CredentialColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasCredentialWith applies the HasEdge predicate on the "credential" edge with a given conditions (other predicates).
@@ -333,8 +305,7 @@ func HasCredentialWith(preds ...predicate.Credential) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasLink applies the HasEdge predicate on the "link" edge.
@@ -346,8 +317,7 @@ func HasLink() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, LinkTable, LinkColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasLinkWith applies the HasEdge predicate on the "link" edge with a given conditions (other predicates).
@@ -363,8 +333,7 @@ func HasLinkWith(preds ...predicate.Link) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasTag applies the HasEdge predicate on the "tag" edge.
@@ -376,8 +345,7 @@ func HasTag() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, TagTable, TagColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasTagWith applies the HasEdge predicate on the "tag" edge with a given conditions (other predicates).
@@ -393,8 +361,7 @@ func HasTagWith(preds ...predicate.Tag) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasTarget applies the HasEdge predicate on the "target" edge.
@@ -406,8 +373,7 @@ func HasTarget() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, TargetTable, TargetColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasTargetWith applies the HasEdge predicate on the "target" edge with a given conditions (other predicates).
@@ -423,8 +389,7 @@ func HasTargetWith(preds ...predicate.Target) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasTask applies the HasEdge predicate on the "task" edge.
@@ -436,8 +401,7 @@ func HasTask() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, TaskTable, TaskColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasTaskWith applies the HasEdge predicate on the "task" edge with a given conditions (other predicates).
@@ -453,8 +417,7 @@ func HasTaskWith(preds ...predicate.Task) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasUser applies the HasEdge predicate on the "user" edge.
@@ -466,8 +429,7 @@ func HasUser() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, UserTable, UserColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasUserWith applies the HasEdge predicate on the "user" edge with a given conditions (other predicates).
@@ -483,8 +445,7 @@ func HasUserWith(preds ...predicate.User) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasEvent applies the HasEdge predicate on the "event" edge.
@@ -496,8 +457,7 @@ func HasEvent() predicate.Event {
 			sqlgraph.Edge(sqlgraph.O2O, false, EventTable, EventColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasEventWith applies the HasEdge predicate on the "event" edge with a given conditions (other predicates).
@@ -513,8 +473,7 @@ func HasEventWith(preds ...predicate.Event) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasService applies the HasEdge predicate on the "service" edge.
@@ -526,8 +485,7 @@ func HasService() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, false, ServiceTable, ServiceColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasServiceWith applies the HasEdge predicate on the "service" edge with a given conditions (other predicates).
@@ -543,8 +501,7 @@ func HasServiceWith(preds ...predicate.Service) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasLikers applies the HasEdge predicate on the "likers" edge.
@@ -556,8 +513,7 @@ func HasLikers() predicate.Event {
 			sqlgraph.Edge(sqlgraph.O2M, false, LikersTable, LikersColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasLikersWith applies the HasEdge predicate on the "likers" edge with a given conditions (other predicates).
@@ -573,8 +529,7 @@ func HasLikersWith(preds ...predicate.User) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.
@@ -586,8 +541,7 @@ func HasOwner() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasOwnerWith applies the HasEdge predicate on the "owner" edge with a given conditions (other predicates).
@@ -603,8 +557,7 @@ func HasOwnerWith(preds ...predicate.User) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // HasSvcOwner applies the HasEdge predicate on the "svcOwner" edge.
@@ -616,8 +569,7 @@ func HasSvcOwner() predicate.Event {
 			sqlgraph.Edge(sqlgraph.M2O, true, SvcOwnerTable, SvcOwnerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	},
-	)
+	})
 }
 
 // HasSvcOwnerWith applies the HasEdge predicate on the "svcOwner" edge with a given conditions (other predicates).
@@ -633,44 +585,37 @@ func HasSvcOwnerWith(preds ...predicate.Service) predicate.Event {
 				p(s)
 			}
 		})
-	},
-	)
+	})
 }
 
 // And groups list of predicates with the AND operator between them.
 func And(predicates ...predicate.Event) predicate.Event {
-	return predicate.Event(
-		func(s *sql.Selector) {
-			s1 := s.Clone().SetP(nil)
-			for _, p := range predicates {
-				p(s1)
-			}
-			s.Where(s1.P())
-		},
-	)
+	return predicate.Event(func(s *sql.Selector) {
+		s1 := s.Clone().SetP(nil)
+		for _, p := range predicates {
+			p(s1)
+		}
+		s.Where(s1.P())
+	})
 }
 
 // Or groups list of predicates with the OR operator between them.
 func Or(predicates ...predicate.Event) predicate.Event {
-	return predicate.Event(
-		func(s *sql.Selector) {
-			s1 := s.Clone().SetP(nil)
-			for i, p := range predicates {
-				if i > 0 {
-					s1.Or()
-				}
-				p(s1)
+	return predicate.Event(func(s *sql.Selector) {
+		s1 := s.Clone().SetP(nil)
+		for i, p := range predicates {
+			if i > 0 {
+				s1.Or()
 			}
-			s.Where(s1.P())
-		},
-	)
+			p(s1)
+		}
+		s.Where(s1.P())
+	})
 }
 
 // Not applies the not operator on the given predicate.
 func Not(p predicate.Event) predicate.Event {
-	return predicate.Event(
-		func(s *sql.Selector) {
-			p(s.Not())
-		},
-	)
+	return predicate.Event(func(s *sql.Selector) {
+		p(s.Not())
+	})
 }

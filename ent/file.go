@@ -32,10 +32,25 @@ type File struct {
 	ContentType string `json:"ContentType,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the FileQuery when eager-loading is set.
-	Edges struct {
-		// Links holds the value of the links edge.
-		Links []*Link
-	} `json:"edges"`
+	Edges FileEdges `json:"edges"`
+}
+
+// FileEdges holds the relations/edges for other nodes in the graph.
+type FileEdges struct {
+	// Links holds the value of the links edge.
+	Links []*Link
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// LinksOrErr returns the Links value or an error if the edge
+// was not loaded in eager-loading.
+func (e FileEdges) LinksOrErr() ([]*Link, error) {
+	if e.loadedTypes[0] {
+		return e.Links, nil
+	}
+	return nil, &NotLoadedError{edge: "links"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.

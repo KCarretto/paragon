@@ -30,7 +30,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "job_id"
+	TasksColumn = "job_tasks"
 	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
 	TagsTable = "job_tags"
 	// TagsInverseTable is the table name for the Tag entity.
@@ -39,18 +39,18 @@ const (
 	// PrevTable is the table the holds the prev relation/edge.
 	PrevTable = "jobs"
 	// PrevColumn is the table column denoting the prev relation/edge.
-	PrevColumn = "prev_id"
+	PrevColumn = "job_next"
 	// NextTable is the table the holds the next relation/edge.
 	NextTable = "jobs"
 	// NextColumn is the table column denoting the next relation/edge.
-	NextColumn = "prev_id"
+	NextColumn = "job_next"
 	// OwnerTable is the table the holds the owner relation/edge.
 	OwnerTable = "jobs"
 	// OwnerInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
-	OwnerColumn = "owner_id"
+	OwnerColumn = "user_jobs"
 )
 
 // Columns holds all SQL columns for job fields.
@@ -64,8 +64,8 @@ var Columns = []string{
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the Job type.
 var ForeignKeys = []string{
-	"prev_id",
-	"owner_id",
+	"job_next",
+	"user_jobs",
 }
 
 var (
