@@ -2,7 +2,16 @@ import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import { Button, Form, Grid, Input, Modal } from "semantic-ui-react";
+import {
+  Button,
+  Form,
+  Grid,
+  Header,
+  Icon,
+  Input,
+  Modal,
+  TextArea
+} from "semantic-ui-react";
 import { Target } from "../../graphql/models";
 import { MULTI_TARGET_QUERY } from "../../views";
 import { useModal, XCredentialKindDropdown, XTargetTypeahead } from "../form";
@@ -78,42 +87,59 @@ const XBulkAddCredentialsModal = () => {
       <Modal.Header>{"Add Credentials for Targets"}</Modal.Header>
       <Modal.Content>
         <Grid verticalAlign="middle" stackable container>
-          <Grid.Row columns={3}>
-            <Grid.Column>
-              <Input
-                label="Principal"
-                icon="user"
-                fluid
-                placeholder="Enter principal (i.e. username)"
-                name="principal"
-                value={principal}
-                onChange={(e, { value }) => setPrincipal(value)}
-              />
-            </Grid.Column>
-            <Grid.Column>
-              <Input
-                label="Secret"
-                icon="key"
-                fluid
-                placeholder="Enter secret (i.e. password)"
-                name="secret"
-                value={secret}
-                onChange={(e, { value }) => setSecret(value)}
-              />
-            </Grid.Column>
+          <Grid.Row columns="equal">
             <Grid.Column>
               <XCredentialKindDropdown
                 value={kind}
                 onChange={(e, { value }) => setKind(value)}
               />
             </Grid.Column>
-          </Grid.Row>
-          <Grid.Row>
-            <Grid.Column>
+            <Grid.Column width={12}>
               <XTargetTypeahead
                 labeled
                 onChange={(e, { value }) => setTargets(value)}
               />
+            </Grid.Column>
+          </Grid.Row>
+
+          <Grid.Row columns="equal">
+            <Grid.Column>
+              <Input
+                label="Principal"
+                placeholder="Enter principal (i.e. username)"
+                name="principal"
+                value={principal}
+                onChange={(e, { value }) => setPrincipal(value)}
+              />
+            </Grid.Column>
+            {/* <Grid.Column>
+
+            </Grid.Column> */}
+          </Grid.Row>
+          <Grid.Row>
+            <Grid.Column>
+              {kind === "password" ? (
+                <Input
+                  label="Password"
+                  placeholder="Enter password"
+                  name="secret"
+                  value={secret}
+                  onChange={(e, { value }) => setSecret(value)}
+                />
+              ) : (
+                <Form>
+                  <Header block>
+                    <Icon name="key" />
+                    <Header.Content>SSH Private Key</Header.Content>
+                  </Header>
+                  <TextArea
+                    placeholder="Paste an SSH private key here"
+                    onChange={(e, { value }) => setSecret(value.toString())}
+                    rows={27}
+                    value={secret}
+                  />
+                </Form>
+              )}
             </Grid.Column>
           </Grid.Row>
         </Grid>
