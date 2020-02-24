@@ -264,9 +264,9 @@
       "functions": [
         {
           "name": "noError",
-          "doc": "NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.",
-          "params": [{ "name": "errVal", "type": "starlark.Value" }],
-          "retvals": [{ "name": "err", "type": "Error" }]
+          "doc": "NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect.",
+          "params": [{ "name": "err", "type": "starlark.Value" }],
+          "retvals": null
         }
       ]
     }
