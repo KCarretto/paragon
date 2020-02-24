@@ -8,13 +8,12 @@ import (
 )
 
 // NoError will check if the passed value is a starlark.NoneType, if not it will error out the
-// script.
+// script. This function may cause a fatal error if the assertion is incorrect.
 //
-//go:generate go run ../gendoc.go -lib assert -func noError -param errVal@starlark.Value -retval err@Error -doc "NoError will check if the passed value is a starlark.NoneType, if not it will error out the script."
+//go:generate go run ../gendoc.go -lib assert -func noError -param errVal@starlark.Value -doc "NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect."
 //
 // @callable:	assert.noError
 // @param:		errVal	@starlark.Value
-// @retval:		err 	@Error
 //
 // @usage:		assert.noError(err)
 func NoError(errVal starlark.Value) error {
