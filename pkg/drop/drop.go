@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/kcarretto/paragon/pkg/script"
+	assertlib "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	assetslib "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
 	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	httplib "github.com/kcarretto/paragon/pkg/script/stdlib/http"
@@ -67,6 +68,7 @@ func TheBase(ctx context.Context, assets http.FileSystem) {
 			processlib.Include(),
 			regexlib.Include(),
 			syslib.Include(),
+			assertlib.Include(),
 		)
 
 		// Run script
