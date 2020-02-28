@@ -100,8 +100,7 @@ func (t *ServerTransport) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Provide the agent message to the server for handling
 	if err := t.Server.WriteAgentMessage(req.Context(), resp, msg); err != nil {
-		t.Log.Error("failed to write response to agent", zap.Error(err))
-		http.Error(w, "failed to write response", http.StatusInternalServerError)
+		t.Log.Error("failed to handle agent message", zap.Error(err))
 		return
 	}
 	t.Log.Debug("successfully responded to agent", zap.String("agent_ip", req.RemoteAddr))

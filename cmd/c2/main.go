@@ -62,7 +62,6 @@ func main() {
 		Server: srv,
 	}
 
-	logger.Info("Starting HTTP Server", zap.String("addr", httpAddr))
 	if err := httpSvc.ListenAndServe(httpAddr); err != nil {
 		panic(err)
 	}

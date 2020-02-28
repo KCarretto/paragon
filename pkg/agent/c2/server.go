@@ -29,6 +29,11 @@ type Server struct {
 
 // WriteAgentMessage is a transport-agnostic method for handling communications from an agent.
 func (srv Server) WriteAgentMessage(ctx context.Context, w transport.ServerMessageWriter, msg transport.AgentMessage) error {
+	var srvMsg transport.ServerMessage
+	defer func() {
+		w.WriteServerMessage(ctx, srvMsg)
+	}()
+
 	// Submit task results
 	for _, result := range msg.Results {
 		if result == nil {
@@ -58,11 +63,8 @@ func (srv Server) WriteAgentMessage(ctx context.Context, w transport.ServerMessa
 		return fmt.Errorf("failed to claim tasks from teamserver: %w", err)
 	}
 
-	srvMsg := transport.ServerMessage{
-		Tasks: convertTasks(tasks),
-	}
+	srvMsg.Tasks = convertTasks(tasks)
 
-	w.WriteServerMessage(ctx, srvMsg)
 	return nil
 }
 
