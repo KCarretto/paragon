@@ -9,7 +9,7 @@ import (
 // Replace uses the golang regex lib to replace all occurences of the pattern in the old
 // string into the new strong.
 //
-//go:generate go run ../gendoc.go -lib regex -func replaceString -param oldString@String -param pattern@String -param newString@String -retval replacedString@String -retval err@Error -doc "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong."
+//go:generate go run ../gendoc.go -lib regex -func replace -param oldString@String -param pattern@String -param newString@String -retval replacedString@String -retval err@Error -doc "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong."
 //
 // @callable:	regex.ReplaceString
 // @param:		oldString			@String
@@ -41,6 +41,6 @@ func replace(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	retVal, retErr := Replace(oldStr, newStr, pattern)
+	retVal, retErr := Replace(oldStr, pattern, newStr)
 	return script.WithError(retVal, retErr), nil
 }
