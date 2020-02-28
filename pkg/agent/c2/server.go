@@ -10,9 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
-//go:generate protoc -I=./proto -I=${GOPATH}/pkg/mod/github.com/gogo/googleapis@v1.3.0/ -I=${GOPATH}/pkg/mod/github.com/gogo/protobuf@v1.3.1/ --gogoslick_out=plugins=grpc,Mgoogle/protobuf/duration.proto=github.com/gogo/protobuf/types,Mgoogle/protobuf/timestamp.proto=github.com/gogo/protobuf/types,Mgoogle/api/annotations.proto=github.com/gogo/googleapis/google/api:. transport.proto
-//go:generate mockgen -destination=mocks/io.gen.go -package=mocks io Writer,WriteCloser
-//go:generate mockgen -destination=mocks/teamserver.gen.go -package=mocks github.com/kcarretto/paragon/pkg/c2 Teamserver
+//go:generate mockgen -destination=mockgen_teamserver_test.go -package=c2_test github.com/kcarretto/paragon/pkg/agent/c2 Teamserver
+//go:generate mockgen -destination=mockgen_transport_test.go -package=c2_test github.com/kcarretto/paragon/pkg/agent/transport ServerMessageWriter
 
 // Teamserver provides client methods used to interact with a teamserver.
 type Teamserver interface {
@@ -35,21 +34,7 @@ func (srv Server) WriteAgentMessage(ctx context.Context, w transport.ServerMessa
 	}()
 
 	// Submit task results
-	for _, result := range msg.Results {
-		if result == nil {
-			continue
-		}
-
-		if err := srv.SubmitTaskResult(ctx, models.SubmitTaskResultRequest{
-			ID:            int(result.Id),
-			Output:        &result.Output,
-			Error:         &result.Error,
-			ExecStartTime: result.CoerceStartTime(),
-			ExecStopTime:  result.CoerceStopTime(),
-		}); err != nil {
-			srv.Log.Error("failed to submit task result", zap.Error(err), zap.Int64("task_id", result.Id))
-		}
-	}
+	srv.submitResults(ctx, msg.Results...)
 
 	// Determine target criteria based on reported agent metadata
 	target, err := resolveTarget(msg.Metadata)
@@ -64,8 +49,28 @@ func (srv Server) WriteAgentMessage(ctx context.Context, w transport.ServerMessa
 	}
 
 	srvMsg.Tasks = convertTasks(tasks)
-
+	srv.Log.Error("HERE ARE THE TASKS", zap.Int("length", len(srvMsg.Tasks)), zap.Reflect("tasks", srvMsg.Tasks))
+	fmt.Printf("TASKS: %d\n", len(srvMsg.Tasks))
 	return nil
+}
+
+// Submit task results
+func (srv Server) submitResults(ctx context.Context, results ...*transport.TaskResult) {
+	for _, result := range results {
+		if result == nil {
+			continue
+		}
+
+		if err := srv.SubmitTaskResult(ctx, models.SubmitTaskResultRequest{
+			ID:            int(result.Id),
+			Output:        &result.Output,
+			Error:         &result.Error,
+			ExecStartTime: result.CoerceStartTime(),
+			ExecStopTime:  result.CoerceStopTime(),
+		}); err != nil {
+			srv.Log.Error("failed to submit task result", zap.Error(err), zap.Int64("task_id", result.Id))
+		}
+	}
 }
 
 // convertTasks coerces an array of ent.Task to an array of transport.Task
