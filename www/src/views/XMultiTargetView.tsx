@@ -32,6 +32,7 @@ export const MULTI_TARGET_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
     }

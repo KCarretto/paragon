@@ -10,6 +10,7 @@ export const MULTI_JOB_QUERY = gql`
     jobs {
       id
       name
+      staged
 
       tags {
         id
@@ -33,6 +34,7 @@ export const MULTI_JOB_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
     }

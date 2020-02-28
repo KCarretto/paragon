@@ -37,6 +37,7 @@ export const TARGET_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
       tags {
