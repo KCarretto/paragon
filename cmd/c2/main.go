@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/kcarretto/paragon/graphql"
-	"github.com/kcarretto/paragon/pkg/c2"
+	"github.com/kcarretto/paragon/pkg/agent/c2"
+	"github.com/kcarretto/paragon/pkg/agent/transport/http"
 
 	"go.uber.org/zap"
 )
@@ -57,16 +57,12 @@ func main() {
 			URL:     teamserverURL,
 		},
 	}
-
-	// Setup routes
-	router := http.NewServeMux()
-	router.Handle("/", srv)
-	router.HandleFunc("/status", srv.ServeStatus)
-
-	handler := withLogging(logger.Named("http"), router)
+	httpSvc := http.ServerTransport{
+		Server: srv,
+	}
 
 	logger.Info("Starting HTTP Server", zap.String("addr", httpAddr))
-	if err := http.ListenAndServe(httpAddr, handler); err != nil {
+	if err := httpSvc.ListenAndServe(httpAddr); err != nil {
 		panic(err)
 	}
 }
