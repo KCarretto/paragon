@@ -36,7 +36,7 @@ func getLogger() (logger *zap.Logger) {
 }
 
 func main() {
-	logger := getLogger()
+	logger := getLogger().Named("c2")
 
 	// C2 Server Address
 	httpAddr := "127.0.0.1:8080"
@@ -52,6 +52,7 @@ func main() {
 
 	// Initialize Server
 	srv := &c2.Server{
+		Log: logger,
 		Teamserver: &graphql.Client{
 			Service: "pg-c2",
 			URL:     teamserverURL,

@@ -19,7 +19,7 @@ type Agent struct {
 	transport.AgentMessageWriter
 
 	Log         *zap.Logger
-	Metadata    *transport.AgentMetadata
+	Metadata    transport.AgentMetadata
 	MaxIdleTime time.Duration
 
 	wg sync.WaitGroup
@@ -38,7 +38,7 @@ func (agent *Agent) Run(ctx context.Context) {
 			agent.wg.Wait()
 			return
 		case <-checkinTicker.C:
-			agent.sendMessage(ctx, transport.AgentMessage{Metadata: agent.Metadata})
+			agent.sendMessage(ctx, transport.AgentMessage{Metadata: &agent.Metadata})
 			break
 		}
 	}
@@ -58,7 +58,7 @@ func (agent *Agent) WriteServerMessage(ctx context.Context, msg transport.Server
 			result := agent.runTask(ctx, task)
 
 			agent.sendMessage(ctx, transport.AgentMessage{
-				Metadata: agent.Metadata,
+				Metadata: &agent.Metadata,
 				Results: []*transport.TaskResult{
 					&result,
 				},
