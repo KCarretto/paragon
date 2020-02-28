@@ -7,7 +7,7 @@ import (
 // Library prepares a new regex library for use within a script environment.
 func Library() script.Library {
 	return script.Library{
-		"replaceString": script.Func(replace),
+		"replace": script.Func(replace),
 	}
 }
 
