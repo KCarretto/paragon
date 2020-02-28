@@ -1,18 +1,17 @@
-// +build !dev,!debug
+// +build !dev
 
 package main
 
 import (
 	"net/url"
 	"os"
-	"time"
 
-	"github.com/kcarretto/paragon/pkg/agent"
-	"github.com/kcarretto/paragon/pkg/agent/http"
+	"github.com/kcarretto/paragon/pkg/agent/transport"
+	"github.com/kcarretto/paragon/pkg/agent/transport/http"
 	"go.uber.org/zap"
 )
 
-func transports(logger *zap.Logger) (transports []agent.Transport) {
+func transports(logger *zap.Logger) (transports []transport.AgentMessageWriter) {
 	httpURL := &url.URL{
 		Scheme: "http",
 		Host:   "127.0.0.1:8080",
@@ -26,13 +25,8 @@ func transports(logger *zap.Logger) (transports []agent.Transport) {
 		}
 	}
 
-	transports = append(transports, agent.Transport{
-		Sender:   http.Sender{URL: httpURL},
-		Log:      logger.Named("http").With(zap.String("http_url", httpURL.String())),
-		Name:     "http",
-		Interval: time.Second * 10,
-		Jitter:   time.Second * 5,
-	},
-	)
+	transports = append(transports, &http.AgentTransport{
+		URL: httpURL,
+	})
 	return
 }

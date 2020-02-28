@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/pkg/agent"
+	"github.com/kcarretto/paragon/pkg/agent/transport"
 	"go.uber.org/zap"
 )
 
@@ -21,16 +22,13 @@ func run() bool {
 
 	// Initialize Agent
 	paragon := &agent.Agent{
-		Log:         logger,
-		MaxIdleTime: 30 * time.Second,
-		Receiver: Receiver{
-			ctx,
-			logger.Named("exec"),
+		Log:          logger,
+		MaxIdleTime:  30 * time.Second,
+		TaskExecutor: Executor{},
+		AgentMessageWriter: &transport.AgentMessageMultiWriter{
+			Transports: transports(logger.Named("transport")),
 		},
-		Transports: transports(logger.Named("transport")),
 	}
-
-	agent.CollectMetadata(paragon)
 
 	// Handle panic
 	defer func() {
@@ -45,16 +43,11 @@ func run() bool {
 	go func() {
 		defer wg.Done()
 		for {
-			select {
-			case <-ctx.Done():
+			if err := ctx.Err(); err != nil {
 				return
-			default:
 			}
-			// TODO: Handle ErrNoTransports
-			if err := paragon.Run(ctx); err != nil {
-				paragon.Log.Error("All transports failed to send message", zap.Error(err))
-				time.Sleep(5 * time.Second)
-			}
+
+			paragon.Run(ctx)
 		}
 	}()
 
