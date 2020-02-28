@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/kcarretto/paragon/pkg/agent/transport"
+	"go.uber.org/zap"
 )
 
 // AgentTransport provides an HTTP transport for the agent to communicate with a server.
@@ -70,11 +71,13 @@ func (t *AgentTransport) WriteAgentMessage(ctx context.Context, w transport.Serv
 // ServerTransport provides a transport for the server to handle HTTP communications from an agent.
 type ServerTransport struct {
 	transport.Transport
-
+	Log    *zap.Logger
 	Server transport.AgentMessageWriter
 }
 
+// ListenAndServe will begin serving the http transport on the provided address.
 func (t *ServerTransport) ListenAndServe(addr string) error {
+	t.Log.Info("Started HTTP transport", zap.String("listen_on", addr))
 	return http.ListenAndServe(addr, t)
 }
 
@@ -83,6 +86,7 @@ func (t *ServerTransport) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Decode agent message
 	msg, err := t.DecodeAgentMessage(req.Body)
 	if err != nil {
+		t.Log.Error("failed to decode request from agent", zap.Error(err))
 		http.Error(w, "failed to decode request", http.StatusBadRequest)
 		return
 	}
@@ -90,26 +94,31 @@ func (t *ServerTransport) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// Prepare response
 	resp := &response{
 		t.Transport,
+		t.Log,
 		w,
 	}
 
 	// Provide the agent message to the server for handling
 	if err := t.Server.WriteAgentMessage(req.Context(), resp, msg); err != nil {
+		t.Log.Error("failed to write response to agent", zap.Error(err))
 		http.Error(w, "failed to write response", http.StatusInternalServerError)
 		return
 	}
+	t.Log.Debug("successfully responded to agent", zap.String("agent_ip", req.RemoteAddr))
 }
 
 // response is a helper implementation of transport.ServerMessageWriter to enable writing server
 // messages to an http.ResponseWriter.
 type response struct {
 	transport.Transport
+	Log *zap.Logger
 
 	w http.ResponseWriter
 }
 
 func (resp *response) WriteServerMessage(ctx context.Context, msg transport.ServerMessage) {
 	if err := resp.EncodeServerMessage(msg, resp.w); err != nil {
+		resp.Log.Error("failed to encode response to agent", zap.Error(err))
 		http.Error(resp.w, "failed to encode response", http.StatusInternalServerError)
 		return
 	}

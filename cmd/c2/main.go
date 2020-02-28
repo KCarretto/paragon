@@ -57,7 +57,8 @@ func main() {
 			URL:     teamserverURL,
 		},
 	}
-	httpSvc := http.ServerTransport{
+	httpSvc := &http.ServerTransport{
+		Log:    logger.Named("transport.http"),
 		Server: srv,
 	}
 
