@@ -45,7 +45,10 @@ func main() {
 	if url := os.Getenv("CDN_URL"); url != "" {
 		cdnURL = url
 	}
-	cdn := cdn.Client{URL: cdnURL}
+	cdn := cdn.Client{
+		URL:     cdnURL,
+		Service: "pg-worker",
+	}
 
 	w := &worker.Worker{
 		Uploader:   cdn,
