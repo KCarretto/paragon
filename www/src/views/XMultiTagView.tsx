@@ -3,7 +3,7 @@ import gql from "graphql-tag";
 import * as React from "react";
 import { FunctionComponent, useState } from "react";
 import { Link } from "react-router-dom";
-import { Button, Icon, Input, Table } from "semantic-ui-react";
+import { Button, Icon, Input, Label, Table } from "semantic-ui-react";
 import {
   SUGGEST_TAGS_QUERY,
   SUGGEST_TARGETS_QUERY,
@@ -192,11 +192,13 @@ const XTagTableRow: FunctionComponent<XTagTableRowProps> = ({ tag }) => {
           boundary={whenEmpty}
           show={tag && tag.targets && tag.targets.length > 0}
         >
-          {tag &&
-            tag.targets &&
-            tag.targets.map((target, index) => (
-              <TargetLabel key={index} tag={tag} target={target} />
-            ))}
+          {tag && tag.targets && (
+            <Label.Group style={{ maxWidth: "55vw", overflowX: "auto" }}>
+              {tag.targets.map((target, index) => (
+                <TargetLabel key={index} tag={tag} target={target} />
+              ))}
+            </Label.Group>
+          )}
         </XBoundary>
       </Table.Cell>
       <Table.Cell width={4} singleLine collapsing textAlign="left">
