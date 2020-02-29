@@ -26,7 +26,7 @@ type Client struct {
 }
 
 // Upload a file to the CDN.
-func (cdn Client) Upload(name string, file io.Reader) error {
+func (cdn *Client) Upload(name string, file io.Reader) error {
 	url := fmt.Sprintf("%s/%s", cdn.URL, "cdn/upload")
 
 	body := &bytes.Buffer{}
@@ -77,7 +77,7 @@ func (cdn Client) Upload(name string, file io.Reader) error {
 }
 
 // Download a file from the CDN.
-func (cdn Client) Download(name string) (io.Reader, error) {
+func (cdn *Client) Download(name string) (io.Reader, error) {
 	url := fmt.Sprintf("%s/%s/%s", cdn.URL, "cdn/download", name)
 	if cdn.HTTP == nil {
 		cdn.HTTP = http.DefaultClient
@@ -107,7 +107,7 @@ func (cdn Client) Download(name string) (io.Reader, error) {
 	return resp.Body, nil
 }
 
-func (cdn Client) sign(msg []byte) ([]byte, error) {
+func (cdn *Client) sign(msg []byte) ([]byte, error) {
 	// If nil, try loading from the environment
 	if cdn.PublicKey == nil || cdn.PrivateKey == nil {
 		cdn.PublicKey, cdn.PrivateKey = cdn.keyFromEnv()
@@ -127,7 +127,7 @@ func (cdn Client) sign(msg []byte) ([]byte, error) {
 	return cdn.PrivateKey.Sign(nil, msg, crypto.Hash(0))
 }
 
-func (cdn Client) keyFromEnv() (ed25519.PublicKey, ed25519.PrivateKey) {
+func (cdn *Client) keyFromEnv() (ed25519.PublicKey, ed25519.PrivateKey) {
 	if key := os.Getenv("PG_SVC_KEY"); key != "" {
 		parts := strings.Split(key, ":")
 		if len(parts) != 2 {
