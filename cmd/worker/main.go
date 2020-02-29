@@ -7,6 +7,7 @@ import (
 	"io"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/kcarretto/paragon/graphql"
@@ -62,6 +63,9 @@ func main() {
 		logger.Warn("[WARN] No PUB_TOPIC environment variable set to publish events, is this a mistake?")
 	}
 
+	var wg sync.WaitGroup
+	defer wg.Wait()
+
 	taskHandler := func(ctx context.Context, data []byte) {
 		defer func() {
 			if fatalErr := recover(); fatalErr != nil {
@@ -77,7 +81,11 @@ func main() {
 			return
 		}
 
-		w.HandleTaskQueued(ctx, taskQueuedEvent)
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			w.HandleTaskQueued(ctx, taskQueuedEvent)
+		}()
 	}
 
 	if err := sub.Subscribe(topic, taskHandler); err != nil {
