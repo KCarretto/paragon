@@ -24,7 +24,7 @@ func (Job) Fields() []ent.Field {
 				return time.Now()
 			}).
 			Comment("The timestamp for when the Job was created"),
-		field.String("Content").
+		field.Text("Content").
 			NotEmpty().
 			Comment("The content of the job (usually a Renegade Script)"),
 		field.Bool("Staged").

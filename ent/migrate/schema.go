@@ -171,7 +171,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "creation_time", Type: field.TypeTime},
-		{Name: "content", Type: field.TypeString},
+		{Name: "content", Type: field.TypeString, Size: 2147483647},
 		{Name: "staged", Type: field.TypeBool},
 		{Name: "job_next", Type: field.TypeInt, Unique: true, Nullable: true},
 		{Name: "user_jobs", Type: field.TypeInt, Nullable: true},
