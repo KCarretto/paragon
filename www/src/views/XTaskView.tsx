@@ -35,6 +35,8 @@ const TASK_QUERY = gql`
       job {
         id
         name
+        staged
+
         tags {
           id
           name

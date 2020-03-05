@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+package transport;
+
+import "google/protobuf/timestamp.proto";
+
+/*
+ * Golang Options
+ */
+// Install: go get -u github.com/gogo/protobuf
+import "gogoproto/gogo.proto";
+
+// Tests
+option (gogoproto.equal_all) = true;
+option (gogoproto.populate_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// Performance
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+
+message ServerMessage {
+    repeated Task tasks = 1;
+}
+
+message AgentMessage {
+    AgentMetadata metadata = 1;
+    repeated TaskResult results = 2;
+    repeated string logs = 3;
+}
+
+message Task {
+    int64 id = 1;
+    string content = 2;
+}
+
+message TaskResult {
+    int64 id = 1;
+    string output = 2;
+    string error = 3;
+    google.protobuf.Timestamp execStartTime = 4; // TODO: [(gogoproto.stdtime) = true];
+    google.protobuf.Timestamp execStopTime = 5;  // TODO: [(gogoproto.stdtime) = true];
+}
+
+message AgentMetadata {
+  string agentID = 1;
+  string machineUUID = 2;
+  string sessionID = 3;
+  string hostname = 4;
+  string primaryIP = 5;
+  string primaryMAC = 6;
+}
+

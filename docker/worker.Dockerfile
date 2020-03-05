@@ -23,7 +23,7 @@ RUN go build -tags=debug,profile_cpu,nats -o /app/build/worker ./cmd/worker
 
 # Production Build
 FROM build-cache as prod-build
-RUN go build -o /app/build/worker ./cmd/worker
+RUN go build -tags=gcp -o /app/build/worker ./cmd/worker
 
 # Production
 FROM alpine:3.10.2 as production

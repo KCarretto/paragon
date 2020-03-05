@@ -30,16 +30,21 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "target" package.
 	TargetInverseTable = "targets"
 	// TargetColumn is the table column denoting the target relation/edge.
-	TargetColumn = "target_id"
+	TargetColumn = "target_credentials"
 )
 
-// Columns holds all SQL columns are credential fields.
+// Columns holds all SQL columns for credential fields.
 var Columns = []string{
 	FieldID,
 	FieldPrincipal,
 	FieldSecret,
 	FieldKind,
 	FieldFails,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Credential type.
+var ForeignKeys = []string{
+	"target_credentials",
 }
 
 var (
@@ -61,6 +66,7 @@ var (
 // Kind defines the type for the kind enum field.
 type Kind string
 
+// Kind values.
 const (
 	KindPassword    Kind = "password"
 	KindKey         Kind = "key"
@@ -71,12 +77,12 @@ func (s Kind) String() string {
 	return string(s)
 }
 
-// KindValidator is a validator for the "kind" field enum values. It is called by the builders before save.
-func KindValidator(kind Kind) error {
-	switch kind {
+// KindValidator is a validator for the "k" field enum values. It is called by the builders before save.
+func KindValidator(k Kind) error {
+	switch k {
 	case KindPassword, KindKey, KindCertificate:
 		return nil
 	default:
-		return fmt.Errorf("credential: invalid enum value for kind field: %q", kind)
+		return fmt.Errorf("credential: invalid enum value for kind field: %q", k)
 	}
 }

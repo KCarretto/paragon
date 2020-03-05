@@ -34,7 +34,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "target_id"
+	TasksColumn = "target_tasks"
 	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
 	TagsTable = "target_tags"
 	// TagsInverseTable is the table name for the Tag entity.
@@ -46,10 +46,10 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "credential" package.
 	CredentialsInverseTable = "credentials"
 	// CredentialsColumn is the table column denoting the credentials relation/edge.
-	CredentialsColumn = "target_id"
+	CredentialsColumn = "target_credentials"
 )
 
-// Columns holds all SQL columns are target fields.
+// Columns holds all SQL columns for target fields.
 var Columns = []string{
 	FieldID,
 	FieldName,

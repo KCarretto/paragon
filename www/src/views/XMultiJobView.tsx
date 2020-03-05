@@ -10,6 +10,7 @@ export const MULTI_JOB_QUERY = gql`
     jobs {
       id
       name
+      staged
 
       tags {
         id
@@ -23,6 +24,7 @@ export const MULTI_JOB_QUERY = gql`
         claimTime
         execStartTime
         execStopTime
+        error
 
         target {
           id
@@ -32,6 +34,7 @@ export const MULTI_JOB_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
     }
@@ -55,11 +58,9 @@ const XMultiJobView = () => {
     <React.Fragment>
       <XErrorMessage title="Error Loading Jobs" err={error} />
       <XBoundary boundary={whenLoading} show={!loading}>
-        <XBoundary boundary={whenEmpty} show={jobs.length > 0}>
+        <XBoundary boundary={whenEmpty} show={jobs && jobs.length > 0}>
           <XCardGroup>
-            {jobs.map(job => (
-              <XJobCard key={job.id} {...job} />
-            ))}
+            {jobs && jobs.map(job => <XJobCard key={job.id} {...job} />)}
           </XCardGroup>
         </XBoundary>
       </XBoundary>

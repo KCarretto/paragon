@@ -30,7 +30,9 @@ func (script Script) Exec(ctx context.Context) error {
 
 	symbols, err := starlark.ExecFile(thread, script.ID, script.Reader, builtins)
 	if err != nil {
-		// TODO: Better error type
+		if evalErr, ok := err.(*starlark.EvalError); ok {
+			return fmt.Errorf("%s", evalErr.Backtrace())
+		}
 		return err
 	}
 
@@ -41,7 +43,9 @@ func (script Script) Exec(ctx context.Context) error {
 
 	res, err := starlark.Call(thread, fn, starlark.Tuple{}, []starlark.Tuple{})
 	if err != nil {
-		// TODO: Better error type
+		if evalErr, ok := err.(*starlark.EvalError); ok {
+			return fmt.Errorf("%s", evalErr.Backtrace())
+		}
 		return err
 	}
 
@@ -52,16 +56,26 @@ func (script Script) Exec(ctx context.Context) error {
 	return nil
 }
 
-func (script Script) compilePredeclared() (builtins starlark.StringDict) {
+func (script Script) compilePredeclared() starlark.StringDict {
+	builtins := make(starlark.StringDict)
+
 	for name, fn := range script.Builtins {
 		builtins[name] = fn.builtin(name)
 	}
-	return
+	for name, lib := range script.Libraries {
+		builtins[name] = lib
+	}
+
+	return builtins
 }
 
 func (script Script) newThread() *starlark.Thread {
+	name := "Renegade"
+	if script.ID != "" {
+		name = script.ID
+	}
 	return &starlark.Thread{
-		Name: script.ID,
+		Name: name,
 		Print: func(_ *starlark.Thread, msg string) {
 			// TODO: Handle error
 			fmt.Fprintf(script.Writer, "%s\n", msg)

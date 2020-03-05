@@ -39,7 +39,7 @@ func (td *TagDelete) ExecX(ctx context.Context) int {
 }
 
 func (td *TagDelete) sqlExec(ctx context.Context) (int, error) {
-	spec := &sqlgraph.DeleteSpec{
+	_spec := &sqlgraph.DeleteSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table: tag.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -49,13 +49,13 @@ func (td *TagDelete) sqlExec(ctx context.Context) (int, error) {
 		},
 	}
 	if ps := td.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return sqlgraph.DeleteNodes(ctx, td.driver, spec)
+	return sqlgraph.DeleteNodes(ctx, td.driver, _spec)
 }
 
 // TagDeleteOne is the builder for deleting a single Tag entity.
@@ -70,7 +70,7 @@ func (tdo *TagDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{tag.Label}
+		return &NotFoundError{tag.Label}
 	default:
 		return nil
 	}

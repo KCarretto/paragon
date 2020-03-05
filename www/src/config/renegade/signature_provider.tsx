@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor";
-import { BuiltIns } from "./grammar";
+import { FunctionSignatures } from "./grammar";
 
 export const SignatureProvider: monaco.languages.SignatureHelpProvider = {
   signatureHelpTriggerCharacters: ["(", ","],
@@ -49,24 +49,20 @@ export const SignatureProvider: monaco.languages.SignatureHelpProvider = {
 
     // Find signature index
     let funcName = model.getWordUntilPosition(startPos).word;
-    let sigIndex = BuiltIns.findIndex(({ name }) => name === funcName);
+    let sig = FunctionSignatures.get(funcName);
 
-    // No signature index found
-    if (sigIndex < 0 || sigIndex >= BuiltIns.length) {
+    // No signature found
+    if (!sig) {
       console.log(
         "NO SIG INDEX",
         startPos,
         endPos,
         startMatch,
         endMatch,
-        funcName,
-        sigIndex
+        funcName
       );
       return noSignatures;
     }
-
-    // Compute the signature
-    let sig = BuiltIns[sigIndex].getSignature();
 
     // Get all param characters within the function call
     let funcBody = model.getValueInRange({
@@ -94,7 +90,6 @@ export const SignatureProvider: monaco.languages.SignatureHelpProvider = {
       startMatch,
       endMatch,
       funcName,
-      sigIndex,
       sig,
       funcBody,
       funcBodyTokens,

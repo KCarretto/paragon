@@ -312,10 +312,15 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 }
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
 	actor := auth.GetUser(ctx)
+	staged := false
+	if input.Stage != nil {
+		staged = *input.Stage
+	}
 	jobCreator := r.Graph.Job.Create().
 		SetName(input.Name).
 		SetOwner(actor).
 		SetContent(input.Content).
+		SetStaged(true). // we do this since we call queueJob later
 		AddTagIDs(input.Tags...)
 	if input.Prev != nil {
 		jobCreator.SetPrevID(*input.Prev)
@@ -340,78 +345,23 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		return nil, err
 	}
 
-	if len(targets) == 0 {
-		t, err := r.Graph.Task.Create().
+	for _, target := range targets {
+		_, err := r.Graph.Task.Create().
 			SetQueueTime(currentTime).
 			SetLastChangedTime(currentTime).
 			SetContent(input.Content).
 			SetNillableSessionID(input.SessionID).
 			AddTagIDs(input.Tags...).
 			SetJobID(job.ID).
+			SetTarget(target).
 			Save(ctx)
 		if err != nil {
 			return nil, err
 		}
-		tags, err := t.QueryTags().All(ctx)
-		if err != nil {
-			return nil, err
-		}
-		e := pub_sub.TaskQueued{
-			Target:      nil,
-			Task:        t,
-			Credentials: nil,
-			Tags:        tags,
-		}
-		d, err := json.Marshal(e)
-		if err != nil {
-			return nil, err
-		}
-		err = r.Events.Publish(ctx, d)
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		for _, target := range targets {
-			task, err := r.Graph.Task.Create().
-				SetQueueTime(currentTime).
-				SetLastChangedTime(currentTime).
-				SetContent(input.Content).
-				SetNillableSessionID(input.SessionID).
-				AddTagIDs(input.Tags...).
-				SetJobID(job.ID).
-				Save(ctx)
-			if err != nil {
-				return nil, err
-			}
-			t, err := target.Update().
-				AddTaskIDs(task.ID).
-				Save(ctx)
-			if err != nil {
-				return nil, err
-			}
-			tags, err := task.QueryTags().All(ctx)
-			if err != nil {
-				return nil, err
-			}
-			creds, err := t.QueryCredentials().All(ctx)
-			if err != nil {
-				return nil, err
-			}
-			e := pub_sub.TaskQueued{
-				Target:      t,
-				Task:        task,
-				Credentials: creds,
-				Tags:        tags,
-			}
-			d, err := json.Marshal(e)
-			if err != nil {
-				return nil, err
-			}
-			err = r.Events.Publish(ctx, d)
-			if err != nil {
-				return nil, err
-			}
-		}
+	}
+
+	if !staged {
+		job, err = r.queueJob(ctx, job)
 	}
 	_, err = r.Graph.Event.Create().
 		SetCreationTime(currentTime).
@@ -424,6 +374,55 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 	}
 	return job, nil
 }
+func (r *mutationResolver) QueueJob(ctx context.Context, input *models.QueueJobRequest) (*ent.Job, error) {
+	job, err := r.Graph.Job.Get(ctx, input.ID)
+	if err != nil {
+		return nil, err
+	}
+	return r.queueJob(ctx, job)
+}
+func (r *mutationResolver) queueJob(ctx context.Context, job *ent.Job) (*ent.Job, error) {
+	if !job.Staged {
+		return nil, fmt.Errorf("job has already been queued")
+	}
+	job, err := job.Update().SetStaged(false).Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+	tasks, err := job.QueryTasks().All(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, t := range tasks {
+		target, err := t.QueryTarget().Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		creds, err := target.QueryCredentials().All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		tags, err := t.QueryTags().All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		e := pub_sub.TaskQueued{
+			Target:      target,
+			Task:        t,
+			Credentials: creds,
+			Tags:        tags,
+		}
+		d, err := json.Marshal(e)
+		if err != nil {
+			return nil, err
+		}
+		err = r.Events.Publish(ctx, d)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return job, nil
+}
 func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error) {
 	tag, err := r.Graph.Tag.Create().
 		SetName(input.Name).
@@ -431,29 +430,12 @@ func (r *mutationResolver) CreateTag(ctx context.Context, input *models.CreateTa
 	if err != nil {
 		return nil, err
 	}
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetTag(tag).
-		SetKind(event.KindCREATETAG).
-		Save(ctx)
-	if err != nil {
-		return tag, err
-	}
 	return tag, nil
 }
 func (r *mutationResolver) ApplyTagToTask(ctx context.Context, input *models.ApplyTagRequest) (*ent.Task, error) {
-	task, err := r.Graph.Task.UpdateOneID(input.EntID).
+	return r.Graph.Task.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetTask(task).
-		SetKind(event.KindAPPLYTAGTOTASK).
-		Save(ctx)
-	if err != nil {
-		return task, err
-	}
-	return task, err
 }
 func (r *mutationResolver) ApplyTagToTargets(ctx context.Context, input *models.ApplyTagToTargetsRequest) ([]*ent.Target, error) {
 	var targets []*ent.Target
@@ -465,70 +447,29 @@ func (r *mutationResolver) ApplyTagToTargets(ctx context.Context, input *models.
 			return targets, err
 		}
 		targets = append(targets, t)
-		r.Graph.Event.Create().
-			SetOwner(auth.GetUser(ctx)).
-			SetTarget(t).
-			SetTagID(input.TagID).
-			SetKind(event.KindAPPLYTAGTOTARGET).
-			Save(ctx)
 	}
 	return targets, nil
 }
 func (r *mutationResolver) ApplyTagToJob(ctx context.Context, input *models.ApplyTagRequest) (*ent.Job, error) {
-	job, err := r.Graph.Job.UpdateOneID(input.EntID).
+	return r.Graph.Job.UpdateOneID(input.EntID).
 		AddTagIDs(input.TagID).
 		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetJob(job).
-		SetKind(event.KindAPPLYTAGTOJOB).
-		Save(ctx)
-	if err != nil {
-		return job, err
-	}
-	return job, err
 }
 func (r *mutationResolver) RemoveTagFromTask(ctx context.Context, input *models.RemoveTagRequest) (*ent.Task, error) {
-	task, err := r.Graph.Task.UpdateOneID(input.EntID).
+
+	return r.Graph.Task.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetTask(task).
-		SetKind(event.KindREMOVETAGFROMTASK).
-		Save(ctx)
-	if err != nil {
-		return task, err
-	}
-	return task, err
 }
 func (r *mutationResolver) RemoveTagFromTarget(ctx context.Context, input *models.RemoveTagRequest) (*ent.Target, error) {
-	target, err := r.Graph.Target.UpdateOneID(input.EntID).
+	return r.Graph.Target.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetTarget(target).
-		SetKind(event.KindREMOVETAGFROMTARGET).
-		Save(ctx)
-	if err != nil {
-		return target, err
-	}
-	return target, err
 }
 func (r *mutationResolver) RemoveTagFromJob(ctx context.Context, input *models.RemoveTagRequest) (*ent.Job, error) {
-	job, err := r.Graph.Job.UpdateOneID(input.EntID).
+	return r.Graph.Job.UpdateOneID(input.EntID).
 		RemoveTagIDs(input.TagID).
 		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetJob(job).
-		SetKind(event.KindREMOVETAGFROMJOB).
-		Save(ctx)
-	if err != nil {
-		return job, err
-	}
-	return job, err
 }
 func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (*ent.Target, error) {
 	target, err := r.Graph.Target.Create().
@@ -539,8 +480,11 @@ func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.Creat
 	if err != nil {
 		return nil, err
 	}
+
+	userID, svcID := resolveEventOwners(ctx)
 	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
+		SetNillableSvcOwnerID(svcID).
+		SetNillableOwnerID(userID).
 		SetTarget(target).
 		SetKind(event.KindCREATETARGET).
 		Save(ctx)
@@ -557,32 +501,16 @@ func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.Se
 	if input.PrimaryIP != nil {
 		targetUpdater.SetPrimaryIP(*input.PrimaryIP)
 	}
-	target, err := targetUpdater.
+	return targetUpdater.
 		SetNillableHostname(input.Hostname).
 		SetNillableMachineUUID(input.MachineUUID).
 		SetNillablePrimaryMAC(input.PrimaryMac).
 		SetNillablePublicIP(input.PublicIP).
 		Save(ctx)
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetTarget(target).
-		SetKind(event.KindSETTARGETFIELDS).
-		Save(ctx)
-	if err != nil {
-		return target, err
-	}
-	return target, err
 }
 func (r *mutationResolver) DeleteTarget(ctx context.Context, input *models.DeleteTargetRequest) (bool, error) {
 	delErr := r.Graph.Target.DeleteOneID(input.ID).Exec(ctx)
-	_, err := r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetKind(event.KindDELETETARGET).
-		Save(ctx)
-	if err != nil {
-		return delErr != nil, err
-	}
-	return delErr != nil, err
+	return delErr != nil, nil
 }
 func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error) {
 	kind := credential.KindPassword
@@ -722,8 +650,12 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	// set claimtime on all tasks
 	var updatedTasks []*ent.Task
 	for _, t := range tasks {
-		// filter by session if necessary
-		if t.SessionID == "" || t.SessionID == sessionID {
+		// filter by session if necessary and if job is not staged
+		j, err := t.QueryJob().Only(ctx)
+		if err != nil {
+			return nil, err
+		}
+		if (t.SessionID == "" || t.SessionID == sessionID) && !j.Staged {
 			t, err = t.Update().
 				SetLastChangedTime(currentTime).
 				SetClaimTime(currentTime).
@@ -745,6 +677,13 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 	if err != nil {
 		return nil, err
 	}
+	j, err := task.QueryJob().Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if j.Staged {
+		return nil, fmt.Errorf("cannot claim a task where the job is staged")
+	}
 
 	currentTime := time.Now()
 	return task.Update().
@@ -756,6 +695,13 @@ func (r *mutationResolver) SubmitTaskResult(ctx context.Context, input *models.S
 	taskEnt, err := r.Graph.Task.Get(ctx, input.ID)
 	if err != nil {
 		return nil, err
+	}
+	j, err := taskEnt.QueryJob().Only(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if j.Staged {
+		return nil, fmt.Errorf("cannot submit output to a task where the job is staged")
 	}
 	inputOutput := ""
 	if input.Output != nil {
@@ -815,19 +761,7 @@ func (r *mutationResolver) SetLinkFields(ctx context.Context, input *models.SetL
 	if input.Clicks != nil {
 		linkUpdater.SetClicks(*input.Clicks)
 	}
-	link, err := linkUpdater.Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetLink(link).
-		SetKind(event.KindSETLINKFIELDS).
-		Save(ctx)
-	if err != nil {
-		return link, err
-	}
-	return link, nil
+	return linkUpdater.Save(ctx)
 }
 func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.ActivateUserRequest) (*ent.User, error) {
 	err := auth.NewAuthorizer().
@@ -879,22 +813,10 @@ func (r *mutationResolver) MakeAdmin(ctx context.Context, input *models.MakeAdmi
 	if err != nil {
 		return nil, err
 	}
-	user, err := r.Graph.User.UpdateOneID(input.ID).
+	return r.Graph.User.UpdateOneID(input.ID).
 		SetIsActivated(true).
 		SetIsAdmin(true).
 		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetUser(user).
-		SetKind(event.KindMAKEADMIN).
-		Save(ctx)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
 }
 func (r *mutationResolver) RemoveAdmin(ctx context.Context, input *models.RemoveAdminRequest) (*ent.User, error) {
 	err := auth.NewAuthorizer().
@@ -904,41 +826,20 @@ func (r *mutationResolver) RemoveAdmin(ctx context.Context, input *models.Remove
 	if err != nil {
 		return nil, err
 	}
-	user, err := r.Graph.User.UpdateOneID(input.ID).
+
+	return r.Graph.User.UpdateOneID(input.ID).
 		SetIsAdmin(false).
 		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetUser(user).
-		SetKind(event.KindREMOVEADMIN).
-		Save(ctx)
-	if err != nil {
-		return user, err
-	}
-	return user, nil
 }
 func (r *mutationResolver) ChangeName(ctx context.Context, input *models.ChangeNameRequest) (*ent.User, error) {
 	actor := auth.GetUser(ctx)
 	if actor == nil {
 		return nil, fmt.Errorf("to use this mutation you must be authenticated")
 	}
-	actor, err := actor.Update().
+
+	return actor.Update().
 		SetName(input.Name).
 		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetKind(event.KindCHANGENAME).
-		Save(ctx)
-	if err != nil {
-		return actor, err
-	}
-	return actor, nil
 }
 func (r *mutationResolver) ActivateService(ctx context.Context, input *models.ActivateServiceRequest) (*ent.Service, error) {
 	err := auth.NewAuthorizer().
@@ -985,21 +886,9 @@ func (r *mutationResolver) DeactivateService(ctx context.Context, input *models.
 }
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
 	actor := auth.GetUser(ctx)
-	e, err := r.Graph.Event.UpdateOneID(input.ID).
+	return r.Graph.Event.UpdateOneID(input.ID).
 		AddLikers(actor).
 		Save(ctx)
-	if err != nil {
-		return nil, err
-	}
-	_, err = r.Graph.Event.Create().
-		SetOwner(auth.GetUser(ctx)).
-		SetEvent(e).
-		SetKind(event.KindLIKEEVENT).
-		Save(ctx)
-	if err != nil {
-		return e, err
-	}
-	return e, nil
 }
 
 type queryResolver struct{ *Resolver }
@@ -1272,4 +1161,14 @@ func (r *userResolver) Jobs(ctx context.Context, obj *ent.User, input *models.Fi
 		}
 	}
 	return q.All(ctx)
+}
+
+func resolveEventOwners(ctx context.Context) (userID, svcID *int) {
+	if user := auth.GetUser(ctx); user != nil {
+		userID = &user.ID
+	}
+	if svc := auth.GetService(ctx); svc != nil {
+		svcID = &svc.ID
+	}
+	return
 }

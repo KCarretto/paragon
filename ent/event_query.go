@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -32,6 +33,21 @@ type EventQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.Event
+	// eager-loading edges.
+	withJob        *JobQuery
+	withFile       *FileQuery
+	withCredential *CredentialQuery
+	withLink       *LinkQuery
+	withTag        *TagQuery
+	withTarget     *TargetQuery
+	withTask       *TaskQuery
+	withUser       *UserQuery
+	withEvent      *EventQuery
+	withService    *ServiceQuery
+	withLikers     *UserQuery
+	withOwner      *UserQuery
+	withSvcOwner   *ServiceQuery
+	withFKs        bool
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -216,14 +232,14 @@ func (eq *EventQuery) QuerySvcOwner() *ServiceQuery {
 	return query
 }
 
-// First returns the first Event entity in the query. Returns *ErrNotFound when no event was found.
+// First returns the first Event entity in the query. Returns *NotFoundError when no event was found.
 func (eq *EventQuery) First(ctx context.Context) (*Event, error) {
 	es, err := eq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(es) == 0 {
-		return nil, &ErrNotFound{event.Label}
+		return nil, &NotFoundError{event.Label}
 	}
 	return es[0], nil
 }
@@ -237,14 +253,14 @@ func (eq *EventQuery) FirstX(ctx context.Context) *Event {
 	return e
 }
 
-// FirstID returns the first Event id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Event id in the query. Returns *NotFoundError when no id was found.
 func (eq *EventQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = eq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{event.Label}
+		err = &NotFoundError{event.Label}
 		return
 	}
 	return ids[0], nil
@@ -269,9 +285,9 @@ func (eq *EventQuery) Only(ctx context.Context) (*Event, error) {
 	case 1:
 		return es[0], nil
 	case 0:
-		return nil, &ErrNotFound{event.Label}
+		return nil, &NotFoundError{event.Label}
 	default:
-		return nil, &ErrNotSingular{event.Label}
+		return nil, &NotSingularError{event.Label}
 	}
 }
 
@@ -294,9 +310,9 @@ func (eq *EventQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{event.Label}
+		err = &NotFoundError{event.Label}
 	default:
-		err = &ErrNotSingular{event.Label}
+		err = &NotSingularError{event.Label}
 	}
 	return
 }
@@ -385,6 +401,149 @@ func (eq *EventQuery) Clone() *EventQuery {
 	}
 }
 
+//  WithJob tells the query-builder to eager-loads the nodes that are connected to
+// the "job" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithJob(opts ...func(*JobQuery)) *EventQuery {
+	query := &JobQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withJob = query
+	return eq
+}
+
+//  WithFile tells the query-builder to eager-loads the nodes that are connected to
+// the "file" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithFile(opts ...func(*FileQuery)) *EventQuery {
+	query := &FileQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withFile = query
+	return eq
+}
+
+//  WithCredential tells the query-builder to eager-loads the nodes that are connected to
+// the "credential" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithCredential(opts ...func(*CredentialQuery)) *EventQuery {
+	query := &CredentialQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withCredential = query
+	return eq
+}
+
+//  WithLink tells the query-builder to eager-loads the nodes that are connected to
+// the "link" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithLink(opts ...func(*LinkQuery)) *EventQuery {
+	query := &LinkQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withLink = query
+	return eq
+}
+
+//  WithTag tells the query-builder to eager-loads the nodes that are connected to
+// the "tag" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithTag(opts ...func(*TagQuery)) *EventQuery {
+	query := &TagQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withTag = query
+	return eq
+}
+
+//  WithTarget tells the query-builder to eager-loads the nodes that are connected to
+// the "target" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithTarget(opts ...func(*TargetQuery)) *EventQuery {
+	query := &TargetQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withTarget = query
+	return eq
+}
+
+//  WithTask tells the query-builder to eager-loads the nodes that are connected to
+// the "task" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithTask(opts ...func(*TaskQuery)) *EventQuery {
+	query := &TaskQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withTask = query
+	return eq
+}
+
+//  WithUser tells the query-builder to eager-loads the nodes that are connected to
+// the "user" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithUser(opts ...func(*UserQuery)) *EventQuery {
+	query := &UserQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withUser = query
+	return eq
+}
+
+//  WithEvent tells the query-builder to eager-loads the nodes that are connected to
+// the "event" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithEvent(opts ...func(*EventQuery)) *EventQuery {
+	query := &EventQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withEvent = query
+	return eq
+}
+
+//  WithService tells the query-builder to eager-loads the nodes that are connected to
+// the "service" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithService(opts ...func(*ServiceQuery)) *EventQuery {
+	query := &ServiceQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withService = query
+	return eq
+}
+
+//  WithLikers tells the query-builder to eager-loads the nodes that are connected to
+// the "likers" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithLikers(opts ...func(*UserQuery)) *EventQuery {
+	query := &UserQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withLikers = query
+	return eq
+}
+
+//  WithOwner tells the query-builder to eager-loads the nodes that are connected to
+// the "owner" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithOwner(opts ...func(*UserQuery)) *EventQuery {
+	query := &UserQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withOwner = query
+	return eq
+}
+
+//  WithSvcOwner tells the query-builder to eager-loads the nodes that are connected to
+// the "svcOwner" edge. The optional arguments used to configure the query builder of the edge.
+func (eq *EventQuery) WithSvcOwner(opts ...func(*ServiceQuery)) *EventQuery {
+	query := &ServiceQuery{config: eq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	eq.withSvcOwner = query
+	return eq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -428,30 +587,389 @@ func (eq *EventQuery) Select(field string, fields ...string) *EventSelect {
 
 func (eq *EventQuery) sqlAll(ctx context.Context) ([]*Event, error) {
 	var (
-		nodes []*Event
-		spec  = eq.querySpec()
+		nodes       = []*Event{}
+		withFKs     = eq.withFKs
+		_spec       = eq.querySpec()
+		loadedTypes = [13]bool{
+			eq.withJob != nil,
+			eq.withFile != nil,
+			eq.withCredential != nil,
+			eq.withLink != nil,
+			eq.withTag != nil,
+			eq.withTarget != nil,
+			eq.withTask != nil,
+			eq.withUser != nil,
+			eq.withEvent != nil,
+			eq.withService != nil,
+			eq.withLikers != nil,
+			eq.withOwner != nil,
+			eq.withSvcOwner != nil,
+		}
 	)
-	spec.ScanValues = func() []interface{} {
+	if eq.withJob != nil || eq.withFile != nil || eq.withCredential != nil || eq.withLink != nil || eq.withTag != nil || eq.withTarget != nil || eq.withTask != nil || eq.withUser != nil || eq.withEvent != nil || eq.withService != nil || eq.withOwner != nil || eq.withSvcOwner != nil {
+		withFKs = true
+	}
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, event.ForeignKeys...)
+	}
+	_spec.ScanValues = func() []interface{} {
 		node := &Event{config: eq.config}
 		nodes = append(nodes, node)
-		return node.scanValues()
+		values := node.scanValues()
+		if withFKs {
+			values = append(values, node.fkValues()...)
+		}
+		return values
 	}
-	spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(values ...interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
-	if err := sqlgraph.QueryNodes(ctx, eq.driver, spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, eq.driver, _spec); err != nil {
 		return nil, err
 	}
+	if len(nodes) == 0 {
+		return nodes, nil
+	}
+
+	if query := eq.withJob; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_job; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(job.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_job" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Job = n
+			}
+		}
+	}
+
+	if query := eq.withFile; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_file; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(file.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_file" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.File = n
+			}
+		}
+	}
+
+	if query := eq.withCredential; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_credential; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(credential.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_credential" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Credential = n
+			}
+		}
+	}
+
+	if query := eq.withLink; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_link; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(link.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_link" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Link = n
+			}
+		}
+	}
+
+	if query := eq.withTag; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_tag; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(tag.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_tag" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Tag = n
+			}
+		}
+	}
+
+	if query := eq.withTarget; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_target; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(target.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_target" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Target = n
+			}
+		}
+	}
+
+	if query := eq.withTask; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_task; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(task.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_task" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Task = n
+			}
+		}
+	}
+
+	if query := eq.withUser; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_user; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_user" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.User = n
+			}
+		}
+	}
+
+	if query := eq.withEvent; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_event; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(event.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_event" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Event = n
+			}
+		}
+	}
+
+	if query := eq.withService; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].event_service; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(service.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_service" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Service = n
+			}
+		}
+	}
+
+	if query := eq.withLikers; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*Event)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.User(func(s *sql.Selector) {
+			s.Where(sql.InValues(event.LikersColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.event_likers
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "event_likers" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "event_likers" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Likers = append(node.Edges.Likers, n)
+		}
+	}
+
+	if query := eq.withOwner; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].user_events; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(user.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "user_events" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.Owner = n
+			}
+		}
+	}
+
+	if query := eq.withSvcOwner; query != nil {
+		ids := make([]int, 0, len(nodes))
+		nodeids := make(map[int][]*Event)
+		for i := range nodes {
+			if fk := nodes[i].service_events; fk != nil {
+				ids = append(ids, *fk)
+				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			}
+		}
+		query.Where(service.IDIn(ids...))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			nodes, ok := nodeids[n.ID]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "service_events" returned %v`, n.ID)
+			}
+			for i := range nodes {
+				nodes[i].Edges.SvcOwner = n
+			}
+		}
+	}
+
 	return nodes, nil
 }
 
 func (eq *EventQuery) sqlCount(ctx context.Context) (int, error) {
-	spec := eq.querySpec()
-	return sqlgraph.CountNodes(ctx, eq.driver, spec)
+	_spec := eq.querySpec()
+	return sqlgraph.CountNodes(ctx, eq.driver, _spec)
 }
 
 func (eq *EventQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -463,7 +981,7 @@ func (eq *EventQuery) sqlExist(ctx context.Context) (bool, error) {
 }
 
 func (eq *EventQuery) querySpec() *sqlgraph.QuerySpec {
-	spec := &sqlgraph.QuerySpec{
+	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   event.Table,
 			Columns: event.Columns,
@@ -476,26 +994,26 @@ func (eq *EventQuery) querySpec() *sqlgraph.QuerySpec {
 		Unique: true,
 	}
 	if ps := eq.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if limit := eq.limit; limit != nil {
-		spec.Limit = *limit
+		_spec.Limit = *limit
 	}
 	if offset := eq.offset; offset != nil {
-		spec.Offset = *offset
+		_spec.Offset = *offset
 	}
 	if ps := eq.order; len(ps) > 0 {
-		spec.Order = func(selector *sql.Selector) {
+		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return spec
+	return _spec
 }
 
 func (eq *EventQuery) sqlQuery() *sql.Selector {

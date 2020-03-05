@@ -8,6 +8,7 @@ import (
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/service"
+	"github.com/kcarretto/paragon/ent/tag"
 )
 
 // Service is the model entity for the Service schema.
@@ -21,22 +22,67 @@ type Service struct {
 	PubKey string `json:"PubKey,omitempty"`
 	// IsActivated holds the value of the "IsActivated" field.
 	IsActivated bool `json:"IsActivated,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the ServiceQuery when eager-loading is set.
+	Edges       ServiceEdges `json:"edges"`
+	service_tag *int
+}
+
+// ServiceEdges holds the relations/edges for other nodes in the graph.
+type ServiceEdges struct {
+	// Tag holds the value of the tag edge.
+	Tag *Tag
+	// Events holds the value of the events edge.
+	Events []*Event
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [2]bool
+}
+
+// TagOrErr returns the Tag value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e ServiceEdges) TagOrErr() (*Tag, error) {
+	if e.loadedTypes[0] {
+		if e.Tag == nil {
+			// The edge tag was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: tag.Label}
+		}
+		return e.Tag, nil
+	}
+	return nil, &NotLoadedError{edge: "tag"}
+}
+
+// EventsOrErr returns the Events value or an error if the edge
+// was not loaded in eager-loading.
+func (e ServiceEdges) EventsOrErr() ([]*Event, error) {
+	if e.loadedTypes[1] {
+		return e.Events, nil
+	}
+	return nil, &NotLoadedError{edge: "events"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Service) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullBool{},
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Name
+		&sql.NullString{}, // PubKey
+		&sql.NullBool{},   // IsActivated
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Service) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // service_tag
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Service fields.
 func (s *Service) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(service.Columns); m != n {
+	if m, n := len(values), len(service.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -59,6 +105,15 @@ func (s *Service) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field IsActivated", values[2])
 	} else if value.Valid {
 		s.IsActivated = value.Bool
+	}
+	values = values[3:]
+	if len(values) == len(service.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field service_tag", value)
+		} else if value.Valid {
+			s.service_tag = new(int)
+			*s.service_tag = int(value.Int64)
+		}
 	}
 	return nil
 }

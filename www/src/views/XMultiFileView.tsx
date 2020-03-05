@@ -47,11 +47,9 @@ const XMultiFileView = () => {
     <React.Fragment>
       <XErrorMessage title="Error Loading Files" err={error} />
       <XBoundary boundary={whenLoading} show={!loading}>
-        <XBoundary boundary={whenEmpty} show={files.length > 0}>
+        <XBoundary boundary={whenEmpty} show={files && files.length > 0}>
           <XCardGroup>
-            {files.map(file => (
-              <XFileCard key={file.id} {...file} />
-            ))}
+            {files && files.map(file => <XFileCard key={file.id} {...file} />)}
           </XCardGroup>
         </XBoundary>
       </XBoundary>

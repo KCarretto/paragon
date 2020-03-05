@@ -153,8 +153,8 @@ func (fc *FileCreate) SaveX(ctx context.Context) *File {
 
 func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 	var (
-		f    = &File{config: fc.config}
-		spec = &sqlgraph.CreateSpec{
+		f     = &File{config: fc.config}
+		_spec = &sqlgraph.CreateSpec{
 			Table: file.Table,
 			ID: &sqlgraph.FieldSpec{
 				Type:   field.TypeInt,
@@ -163,7 +163,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		}
 	)
 	if value := fc.Name; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: file.FieldName,
@@ -171,7 +171,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		f.Name = *value
 	}
 	if value := fc.CreationTime; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: file.FieldCreationTime,
@@ -179,7 +179,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		f.CreationTime = *value
 	}
 	if value := fc.LastModifiedTime; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: file.FieldLastModifiedTime,
@@ -187,7 +187,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		f.LastModifiedTime = *value
 	}
 	if value := fc.Size; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
 			Value:  *value,
 			Column: file.FieldSize,
@@ -195,7 +195,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		f.Size = *value
 	}
 	if value := fc.Content; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBytes,
 			Value:  *value,
 			Column: file.FieldContent,
@@ -203,7 +203,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		f.Content = *value
 	}
 	if value := fc.Hash; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: file.FieldHash,
@@ -211,7 +211,7 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		f.Hash = *value
 	}
 	if value := fc.ContentType; value != nil {
-		spec.Fields = append(spec.Fields, &sqlgraph.FieldSpec{
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: file.FieldContentType,
@@ -235,15 +235,15 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges = append(spec.Edges, edge)
+		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, fc.driver, spec); err != nil {
+	if err := sqlgraph.CreateNode(ctx, fc.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
 		return nil, err
 	}
-	id := spec.ID.Value.(int64)
+	id := _spec.ID.Value.(int64)
 	f.ID = int(id)
 	return f, nil
 }

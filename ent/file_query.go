@@ -4,6 +4,7 @@ package ent
 
 import (
 	"context"
+	"database/sql/driver"
 	"errors"
 	"fmt"
 	"math"
@@ -24,6 +25,8 @@ type FileQuery struct {
 	order      []Order
 	unique     []string
 	predicates []predicate.File
+	// eager-loading edges.
+	withLinks *LinkQuery
 	// intermediate query.
 	sql *sql.Selector
 }
@@ -64,14 +67,14 @@ func (fq *FileQuery) QueryLinks() *LinkQuery {
 	return query
 }
 
-// First returns the first File entity in the query. Returns *ErrNotFound when no file was found.
+// First returns the first File entity in the query. Returns *NotFoundError when no file was found.
 func (fq *FileQuery) First(ctx context.Context) (*File, error) {
 	fs, err := fq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(fs) == 0 {
-		return nil, &ErrNotFound{file.Label}
+		return nil, &NotFoundError{file.Label}
 	}
 	return fs[0], nil
 }
@@ -85,14 +88,14 @@ func (fq *FileQuery) FirstX(ctx context.Context) *File {
 	return f
 }
 
-// FirstID returns the first File id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first File id in the query. Returns *NotFoundError when no id was found.
 func (fq *FileQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = fq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{file.Label}
+		err = &NotFoundError{file.Label}
 		return
 	}
 	return ids[0], nil
@@ -117,9 +120,9 @@ func (fq *FileQuery) Only(ctx context.Context) (*File, error) {
 	case 1:
 		return fs[0], nil
 	case 0:
-		return nil, &ErrNotFound{file.Label}
+		return nil, &NotFoundError{file.Label}
 	default:
-		return nil, &ErrNotSingular{file.Label}
+		return nil, &NotSingularError{file.Label}
 	}
 }
 
@@ -142,9 +145,9 @@ func (fq *FileQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{file.Label}
+		err = &NotFoundError{file.Label}
 	default:
-		err = &ErrNotSingular{file.Label}
+		err = &NotSingularError{file.Label}
 	}
 	return
 }
@@ -233,6 +236,17 @@ func (fq *FileQuery) Clone() *FileQuery {
 	}
 }
 
+//  WithLinks tells the query-builder to eager-loads the nodes that are connected to
+// the "links" edge. The optional arguments used to configure the query builder of the edge.
+func (fq *FileQuery) WithLinks(opts ...func(*LinkQuery)) *FileQuery {
+	query := &LinkQuery{config: fq.config}
+	for _, opt := range opts {
+		opt(query)
+	}
+	fq.withLinks = query
+	return fq
+}
+
 // GroupBy used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
@@ -276,30 +290,67 @@ func (fq *FileQuery) Select(field string, fields ...string) *FileSelect {
 
 func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 	var (
-		nodes []*File
-		spec  = fq.querySpec()
+		nodes       = []*File{}
+		_spec       = fq.querySpec()
+		loadedTypes = [1]bool{
+			fq.withLinks != nil,
+		}
 	)
-	spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func() []interface{} {
 		node := &File{config: fq.config}
 		nodes = append(nodes, node)
-		return node.scanValues()
+		values := node.scanValues()
+		return values
 	}
-	spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(values ...interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
-	if err := sqlgraph.QueryNodes(ctx, fq.driver, spec); err != nil {
+	if err := sqlgraph.QueryNodes(ctx, fq.driver, _spec); err != nil {
 		return nil, err
 	}
+	if len(nodes) == 0 {
+		return nodes, nil
+	}
+
+	if query := fq.withLinks; query != nil {
+		fks := make([]driver.Value, 0, len(nodes))
+		nodeids := make(map[int]*File)
+		for i := range nodes {
+			fks = append(fks, nodes[i].ID)
+			nodeids[nodes[i].ID] = nodes[i]
+		}
+		query.withFKs = true
+		query.Where(predicate.Link(func(s *sql.Selector) {
+			s.Where(sql.InValues(file.LinksColumn, fks...))
+		}))
+		neighbors, err := query.All(ctx)
+		if err != nil {
+			return nil, err
+		}
+		for _, n := range neighbors {
+			fk := n.file_links
+			if fk == nil {
+				return nil, fmt.Errorf(`foreign-key "file_links" is nil for node %v`, n.ID)
+			}
+			node, ok := nodeids[*fk]
+			if !ok {
+				return nil, fmt.Errorf(`unexpected foreign-key "file_links" returned %v for node %v`, *fk, n.ID)
+			}
+			node.Edges.Links = append(node.Edges.Links, n)
+		}
+	}
+
 	return nodes, nil
 }
 
 func (fq *FileQuery) sqlCount(ctx context.Context) (int, error) {
-	spec := fq.querySpec()
-	return sqlgraph.CountNodes(ctx, fq.driver, spec)
+	_spec := fq.querySpec()
+	return sqlgraph.CountNodes(ctx, fq.driver, _spec)
 }
 
 func (fq *FileQuery) sqlExist(ctx context.Context) (bool, error) {
@@ -311,7 +362,7 @@ func (fq *FileQuery) sqlExist(ctx context.Context) (bool, error) {
 }
 
 func (fq *FileQuery) querySpec() *sqlgraph.QuerySpec {
-	spec := &sqlgraph.QuerySpec{
+	_spec := &sqlgraph.QuerySpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   file.Table,
 			Columns: file.Columns,
@@ -324,26 +375,26 @@ func (fq *FileQuery) querySpec() *sqlgraph.QuerySpec {
 		Unique: true,
 	}
 	if ps := fq.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if limit := fq.limit; limit != nil {
-		spec.Limit = *limit
+		_spec.Limit = *limit
 	}
 	if offset := fq.offset; offset != nil {
-		spec.Offset = *offset
+		_spec.Offset = *offset
 	}
 	if ps := fq.order; len(ps) > 0 {
-		spec.Order = func(selector *sql.Selector) {
+		_spec.Order = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	return spec
+	return _spec
 }
 
 func (fq *FileQuery) sqlQuery() *sql.Selector {

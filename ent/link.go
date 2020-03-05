@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 )
 
@@ -22,22 +23,56 @@ type Link struct {
 	ExpirationTime time.Time `json:"ExpirationTime,omitempty"`
 	// Clicks holds the value of the "Clicks" field.
 	Clicks int `json:"Clicks,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the LinkQuery when eager-loading is set.
+	Edges      LinkEdges `json:"edges"`
+	file_links *int
+}
+
+// LinkEdges holds the relations/edges for other nodes in the graph.
+type LinkEdges struct {
+	// File holds the value of the file edge.
+	File *File
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// FileOrErr returns the File value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LinkEdges) FileOrErr() (*File, error) {
+	if e.loadedTypes[0] {
+		if e.File == nil {
+			// The edge file was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: file.Label}
+		}
+		return e.File, nil
+	}
+	return nil, &NotLoadedError{edge: "file"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Link) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullString{},
-		&sql.NullTime{},
-		&sql.NullInt64{},
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Alias
+		&sql.NullTime{},   // ExpirationTime
+		&sql.NullInt64{},  // Clicks
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Link) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // file_links
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Link fields.
 func (l *Link) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(link.Columns); m != n {
+	if m, n := len(values), len(link.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -60,6 +95,15 @@ func (l *Link) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field Clicks", values[2])
 	} else if value.Valid {
 		l.Clicks = int(value.Int64)
+	}
+	values = values[3:]
+	if len(values) == len(link.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field file_links", value)
+		} else if value.Valid {
+			l.file_links = new(int)
+			*l.file_links = int(value.Int64)
+		}
 	}
 	return nil
 }

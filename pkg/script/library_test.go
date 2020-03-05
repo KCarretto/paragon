@@ -1,16 +1,18 @@
 package script_test
 
 import (
+	"bytes"
+	"context"
 	"testing"
 
 	"github.com/kcarretto/paragon/pkg/script"
+	"github.com/stretchr/testify/require"
 )
 
 const testLibraryScriptContent = `
-load("testlib", "do")
-print(do())
+print(testlib.do())
 `
-const testLibraryScriptOutput = "[test_library] Success!\n"
+const testLibraryScriptOutput = "Success!\n"
 
 func getDo() script.Func {
 	return script.Func(func(args script.ArgParser) (script.Retval, error) {
@@ -24,23 +26,13 @@ func getDo() script.Func {
 	})
 }
 func TestLibraryMethod(t *testing.T) {
-	// py := script.NewInterpreter()
-	// code := script.New("test_library", []byte(testLibraryScriptContent))
+	lib := script.Library(map[string]script.Func{
+		"do": getDo(),
+	})
 
-	// py.AddLibrary("testlib", script.Library{
-	// 	"do": getDo(),
-	// })
-
-	// // reader, writer := io.Pipe()
-	// // go func() {
-	// // 	defer writer.Close()
-
-	// err := py.Exec(context.Background(), zap.NewNop(), code)
-	// require.NoError(t, err)
-	// // }()
-
-	// // result, err := ioutil.ReadAll(reader)
-	// // require.NoError(t, err)
-
-	// // require.Equal(t, testLibraryScriptOutput, string(result))
+	var output bytes.Buffer
+	code := script.New("test_library", bytes.NewBufferString(testLibraryScriptContent), script.WithLibrary("testlib", lib), script.WithOutput(&output))
+	err := code.Exec(context.Background())
+	require.NoError(t, err)
+	require.Equal(t, testLibraryScriptOutput, output.String())
 }

@@ -81,15 +81,16 @@ const XJobView = () => {
           <Icon name="tasks" />
           <Header.Content>Tasks</Header.Content>
         </Header>
-        <XBoundary boundary={whenEmpty} show={tasks.length > 0}>
+        <XBoundary boundary={whenEmpty} show={tasks && tasks.length > 0}>
           <XCardGroup>
-            {tasks.map(task => (
-              <XTaskCard
-                key={task.id}
-                display={XTaskCardDisplayType.TARGET}
-                task={task}
-              />
-            ))}
+            {tasks &&
+              tasks.map(task => (
+                <XTaskCard
+                  key={task.id}
+                  display={XTaskCardDisplayType.TARGET}
+                  task={task}
+                />
+              ))}
           </XCardGroup>
         </XBoundary>
       </XBoundary>

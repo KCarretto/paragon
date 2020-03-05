@@ -47,3 +47,24 @@ func CreateUserSession(w http.ResponseWriter, req *http.Request, user *ent.User)
 	// Add user to request context
 	return req.WithContext(context.WithValue(req.Context(), userContextKey, user))
 }
+
+// ClearUserSession clears any user session associated with the request. It is a no-op if no user
+// session is associated with the request.
+func ClearUserSession(w http.ResponseWriter) {
+	// Expire session token cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:     SessionCookieName,
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		Expires:  time.Unix(0, 0),
+	})
+
+	// Expire user id cookie
+	http.SetCookie(w, &http.Cookie{
+		Name:    UserCookieName,
+		Value:   "",
+		Path:    "/",
+		Expires: time.Unix(0, 0),
+	})
+}

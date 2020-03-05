@@ -37,6 +37,7 @@ export const TARGET_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
       tags {
@@ -184,15 +185,16 @@ const XTargetView = () => {
           <Header.Content>Tasks</Header.Content>
         </Header>
 
-        <XBoundary boundary={whenTasksEmpty} show={tasks.length > 0}>
+        <XBoundary boundary={whenTasksEmpty} show={tasks && tasks.length > 0}>
           <XCardGroup>
-            {tasks.map(task => (
-              <XTaskCard
-                key={task.id}
-                display={XTaskCardDisplayType.JOB}
-                task={task}
-              />
-            ))}
+            {tasks &&
+              tasks.map(task => (
+                <XTaskCard
+                  key={task.id}
+                  display={XTaskCardDisplayType.JOB}
+                  task={task}
+                />
+              ))}
           </XCardGroup>
         </XBoundary>
       </XBoundary>

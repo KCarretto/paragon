@@ -30,26 +30,69 @@ type Target struct {
 	Hostname string `json:"Hostname,omitempty"`
 	// LastSeen holds the value of the "LastSeen" field.
 	LastSeen time.Time `json:"LastSeen,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TargetQuery when eager-loading is set.
+	Edges TargetEdges `json:"edges"`
+}
+
+// TargetEdges holds the relations/edges for other nodes in the graph.
+type TargetEdges struct {
+	// Tasks holds the value of the tasks edge.
+	Tasks []*Task
+	// Tags holds the value of the tags edge.
+	Tags []*Tag
+	// Credentials holds the value of the credentials edge.
+	Credentials []*Credential
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// TasksOrErr returns the Tasks value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) TasksOrErr() ([]*Task, error) {
+	if e.loadedTypes[0] {
+		return e.Tasks, nil
+	}
+	return nil, &NotLoadedError{edge: "tasks"}
+}
+
+// TagsOrErr returns the Tags value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) TagsOrErr() ([]*Tag, error) {
+	if e.loadedTypes[1] {
+		return e.Tags, nil
+	}
+	return nil, &NotLoadedError{edge: "tags"}
+}
+
+// CredentialsOrErr returns the Credentials value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) CredentialsOrErr() ([]*Credential, error) {
+	if e.loadedTypes[2] {
+		return e.Credentials, nil
+	}
+	return nil, &NotLoadedError{edge: "credentials"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Target) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullTime{},
+		&sql.NullInt64{},  // id
+		&sql.NullString{}, // Name
+		&sql.NullString{}, // PrimaryIP
+		&sql.NullString{}, // MachineUUID
+		&sql.NullString{}, // PublicIP
+		&sql.NullString{}, // PrimaryMAC
+		&sql.NullString{}, // Hostname
+		&sql.NullTime{},   // LastSeen
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Target fields.
 func (t *Target) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(target.Columns); m != n {
+	if m, n := len(values), len(target.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)

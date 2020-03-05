@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/facebookincubator/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -34,28 +36,91 @@ type Task struct {
 	Error string `json:"Error,omitempty"`
 	// SessionID holds the value of the "SessionID" field.
 	SessionID string `json:"SessionID,omitempty"`
+	// Edges holds the relations/edges for other nodes in the graph.
+	// The values are being populated by the TaskQuery when eager-loading is set.
+	Edges        TaskEdges `json:"edges"`
+	job_tasks    *int
+	target_tasks *int
+}
+
+// TaskEdges holds the relations/edges for other nodes in the graph.
+type TaskEdges struct {
+	// Tags holds the value of the tags edge.
+	Tags []*Tag
+	// Job holds the value of the job edge.
+	Job *Job
+	// Target holds the value of the target edge.
+	Target *Target
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// TagsOrErr returns the Tags value or an error if the edge
+// was not loaded in eager-loading.
+func (e TaskEdges) TagsOrErr() ([]*Tag, error) {
+	if e.loadedTypes[0] {
+		return e.Tags, nil
+	}
+	return nil, &NotLoadedError{edge: "tags"}
+}
+
+// JobOrErr returns the Job value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TaskEdges) JobOrErr() (*Job, error) {
+	if e.loadedTypes[1] {
+		if e.Job == nil {
+			// The edge job was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: job.Label}
+		}
+		return e.Job, nil
+	}
+	return nil, &NotLoadedError{edge: "job"}
+}
+
+// TargetOrErr returns the Target value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TaskEdges) TargetOrErr() (*Target, error) {
+	if e.loadedTypes[2] {
+		if e.Target == nil {
+			// The edge target was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: target.Label}
+		}
+		return e.Target, nil
+	}
+	return nil, &NotLoadedError{edge: "target"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
 func (*Task) scanValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullTime{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
-		&sql.NullString{},
+		&sql.NullInt64{},  // id
+		&sql.NullTime{},   // QueueTime
+		&sql.NullTime{},   // LastChangedTime
+		&sql.NullTime{},   // ClaimTime
+		&sql.NullTime{},   // ExecStartTime
+		&sql.NullTime{},   // ExecStopTime
+		&sql.NullString{}, // Content
+		&sql.NullString{}, // Output
+		&sql.NullString{}, // Error
+		&sql.NullString{}, // SessionID
+	}
+}
+
+// fkValues returns the types for scanning foreign-keys values from sql.Rows.
+func (*Task) fkValues() []interface{} {
+	return []interface{}{
+		&sql.NullInt64{}, // job_tasks
+		&sql.NullInt64{}, // target_tasks
 	}
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Task fields.
 func (t *Task) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(task.Columns); m != n {
+	if m, n := len(values), len(task.Columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
 	value, ok := values[0].(*sql.NullInt64)
@@ -108,6 +173,21 @@ func (t *Task) assignValues(values ...interface{}) error {
 		return fmt.Errorf("unexpected type %T for field SessionID", values[8])
 	} else if value.Valid {
 		t.SessionID = value.String
+	}
+	values = values[9:]
+	if len(values) == len(task.ForeignKeys) {
+		if value, ok := values[0].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field job_tasks", value)
+		} else if value.Valid {
+			t.job_tasks = new(int)
+			*t.job_tasks = int(value.Int64)
+		}
+		if value, ok := values[1].(*sql.NullInt64); !ok {
+			return fmt.Errorf("unexpected type %T for edge-field target_tasks", value)
+		} else if value.Valid {
+			t.target_tasks = new(int)
+			*t.target_tasks = int(value.Int64)
+		}
 	}
 	return nil
 }

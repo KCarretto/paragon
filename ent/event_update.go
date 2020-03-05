@@ -529,7 +529,7 @@ func (eu *EventUpdate) ExecX(ctx context.Context) {
 }
 
 func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
-	spec := &sqlgraph.UpdateSpec{
+	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   event.Table,
 			Columns: event.Columns,
@@ -540,21 +540,21 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		},
 	}
 	if ps := eu.predicates; len(ps) > 0 {
-		spec.Predicate = func(selector *sql.Selector) {
+		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
 	if value := eu.CreationTime; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: event.FieldCreationTime,
 		})
 	}
 	if value := eu.Kind; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
 			Value:  *value,
 			Column: event.FieldKind,
@@ -574,7 +574,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.job; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -593,7 +593,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedFile {
 		edge := &sqlgraph.EdgeSpec{
@@ -609,7 +609,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.file; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -628,7 +628,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedCredential {
 		edge := &sqlgraph.EdgeSpec{
@@ -644,7 +644,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.credential; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -663,7 +663,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedLink {
 		edge := &sqlgraph.EdgeSpec{
@@ -679,7 +679,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.link; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -698,7 +698,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedTag {
 		edge := &sqlgraph.EdgeSpec{
@@ -714,7 +714,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.tag; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -733,7 +733,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedTarget {
 		edge := &sqlgraph.EdgeSpec{
@@ -749,7 +749,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -768,7 +768,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedTask {
 		edge := &sqlgraph.EdgeSpec{
@@ -784,7 +784,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.task; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -803,7 +803,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedUser {
 		edge := &sqlgraph.EdgeSpec{
@@ -819,7 +819,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.user; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -838,7 +838,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedEvent {
 		edge := &sqlgraph.EdgeSpec{
@@ -854,7 +854,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.event; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -873,7 +873,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedService {
 		edge := &sqlgraph.EdgeSpec{
@@ -889,7 +889,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.service; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -908,7 +908,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if nodes := eu.removedLikers; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -927,7 +927,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.likers; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -946,7 +946,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedOwner {
 		edge := &sqlgraph.EdgeSpec{
@@ -962,7 +962,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.owner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -981,7 +981,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if eu.clearedSvcOwner {
 		edge := &sqlgraph.EdgeSpec{
@@ -997,7 +997,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := eu.svcOwner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1016,9 +1016,9 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, spec); err != nil {
+	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}
@@ -1526,7 +1526,7 @@ func (euo *EventUpdateOne) ExecX(ctx context.Context) {
 }
 
 func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
-	spec := &sqlgraph.UpdateSpec{
+	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   event.Table,
 			Columns: event.Columns,
@@ -1538,14 +1538,14 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		},
 	}
 	if value := euo.CreationTime; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Value:  *value,
 			Column: event.FieldCreationTime,
 		})
 	}
 	if value := euo.Kind; value != nil {
-		spec.Fields.Set = append(spec.Fields.Set, &sqlgraph.FieldSpec{
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
 			Value:  *value,
 			Column: event.FieldKind,
@@ -1565,7 +1565,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.job; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1584,7 +1584,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedFile {
 		edge := &sqlgraph.EdgeSpec{
@@ -1600,7 +1600,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.file; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1619,7 +1619,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedCredential {
 		edge := &sqlgraph.EdgeSpec{
@@ -1635,7 +1635,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.credential; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1654,7 +1654,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedLink {
 		edge := &sqlgraph.EdgeSpec{
@@ -1670,7 +1670,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.link; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1689,7 +1689,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedTag {
 		edge := &sqlgraph.EdgeSpec{
@@ -1705,7 +1705,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.tag; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1724,7 +1724,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedTarget {
 		edge := &sqlgraph.EdgeSpec{
@@ -1740,7 +1740,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.target; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1759,7 +1759,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedTask {
 		edge := &sqlgraph.EdgeSpec{
@@ -1775,7 +1775,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.task; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1794,7 +1794,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedUser {
 		edge := &sqlgraph.EdgeSpec{
@@ -1810,7 +1810,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.user; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1829,7 +1829,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedEvent {
 		edge := &sqlgraph.EdgeSpec{
@@ -1845,7 +1845,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.event; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1864,7 +1864,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedService {
 		edge := &sqlgraph.EdgeSpec{
@@ -1880,7 +1880,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.service; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1899,7 +1899,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if nodes := euo.removedLikers; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1918,7 +1918,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.likers; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1937,7 +1937,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedOwner {
 		edge := &sqlgraph.EdgeSpec{
@@ -1953,7 +1953,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.owner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -1972,7 +1972,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if euo.clearedSvcOwner {
 		edge := &sqlgraph.EdgeSpec{
@@ -1988,7 +1988,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		spec.Edges.Clear = append(spec.Edges.Clear, edge)
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
 	if nodes := euo.svcOwner; len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
@@ -2007,12 +2007,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		for k, _ := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
-		spec.Edges.Add = append(spec.Edges.Add, edge)
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	e = &Event{config: euo.config}
-	spec.Assign = e.assignValues
-	spec.ScanValues = e.scanValues()
-	if err = sqlgraph.UpdateNode(ctx, euo.driver, spec); err != nil {
+	_spec.Assign = e.assignValues
+	_spec.ScanValues = e.scanValues()
+	if err = sqlgraph.UpdateNode(ctx, euo.driver, _spec); err != nil {
 		if cerr, ok := isSQLConstraintError(err); ok {
 			err = cerr
 		}

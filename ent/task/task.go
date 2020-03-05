@@ -45,17 +45,17 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "job" package.
 	JobInverseTable = "jobs"
 	// JobColumn is the table column denoting the job relation/edge.
-	JobColumn = "job_id"
+	JobColumn = "job_tasks"
 	// TargetTable is the table the holds the target relation/edge.
 	TargetTable = "tasks"
 	// TargetInverseTable is the table name for the Target entity.
 	// It exists in this package in order to avoid circular dependency with the "target" package.
 	TargetInverseTable = "targets"
 	// TargetColumn is the table column denoting the target relation/edge.
-	TargetColumn = "target_id"
+	TargetColumn = "target_tasks"
 )
 
-// Columns holds all SQL columns are task fields.
+// Columns holds all SQL columns for task fields.
 var Columns = []string{
 	FieldID,
 	FieldQueueTime,
@@ -67,6 +67,12 @@ var Columns = []string{
 	FieldOutput,
 	FieldError,
 	FieldSessionID,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Task type.
+var ForeignKeys = []string{
+	"job_tasks",
+	"target_tasks",
 }
 
 var (

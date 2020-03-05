@@ -1,5 +1,5 @@
 import * as monaco from "monaco-editor";
-import { BuiltIns } from "./grammar";
+import * as spec from "./spec.json";
 
 interface ILanguage extends monaco.languages.IMonarchLanguage {
   keywords: string[];
@@ -82,7 +82,7 @@ export const Language: ILanguage = {
 
     "True",
     "False",
-    ...BuiltIns.map(({ name }) => name)
+    ...spec.libraries.map(({ name }) => name)
     // "load",
     // "move",
     // "copy",

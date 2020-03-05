@@ -27,95 +27,111 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "job" package.
 	JobInverseTable = "jobs"
 	// JobColumn is the table column denoting the job relation/edge.
-	JobColumn = "event_job_id"
+	JobColumn = "event_job"
 	// FileTable is the table the holds the file relation/edge.
 	FileTable = "events"
 	// FileInverseTable is the table name for the File entity.
 	// It exists in this package in order to avoid circular dependency with the "file" package.
 	FileInverseTable = "files"
 	// FileColumn is the table column denoting the file relation/edge.
-	FileColumn = "event_file_id"
+	FileColumn = "event_file"
 	// CredentialTable is the table the holds the credential relation/edge.
 	CredentialTable = "events"
 	// CredentialInverseTable is the table name for the Credential entity.
 	// It exists in this package in order to avoid circular dependency with the "credential" package.
 	CredentialInverseTable = "credentials"
 	// CredentialColumn is the table column denoting the credential relation/edge.
-	CredentialColumn = "event_credential_id"
+	CredentialColumn = "event_credential"
 	// LinkTable is the table the holds the link relation/edge.
 	LinkTable = "events"
 	// LinkInverseTable is the table name for the Link entity.
 	// It exists in this package in order to avoid circular dependency with the "link" package.
 	LinkInverseTable = "links"
 	// LinkColumn is the table column denoting the link relation/edge.
-	LinkColumn = "event_link_id"
+	LinkColumn = "event_link"
 	// TagTable is the table the holds the tag relation/edge.
 	TagTable = "events"
 	// TagInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagInverseTable = "tags"
 	// TagColumn is the table column denoting the tag relation/edge.
-	TagColumn = "event_tag_id"
+	TagColumn = "event_tag"
 	// TargetTable is the table the holds the target relation/edge.
 	TargetTable = "events"
 	// TargetInverseTable is the table name for the Target entity.
 	// It exists in this package in order to avoid circular dependency with the "target" package.
 	TargetInverseTable = "targets"
 	// TargetColumn is the table column denoting the target relation/edge.
-	TargetColumn = "event_target_id"
+	TargetColumn = "event_target"
 	// TaskTable is the table the holds the task relation/edge.
 	TaskTable = "events"
 	// TaskInverseTable is the table name for the Task entity.
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TaskInverseTable = "tasks"
 	// TaskColumn is the table column denoting the task relation/edge.
-	TaskColumn = "event_task_id"
+	TaskColumn = "event_task"
 	// UserTable is the table the holds the user relation/edge.
 	UserTable = "events"
 	// UserInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	UserInverseTable = "users"
 	// UserColumn is the table column denoting the user relation/edge.
-	UserColumn = "event_user_id"
+	UserColumn = "event_user"
 	// EventTable is the table the holds the event relation/edge.
 	EventTable = "events"
 	// EventColumn is the table column denoting the event relation/edge.
-	EventColumn = "event_event_id"
+	EventColumn = "event_event"
 	// ServiceTable is the table the holds the service relation/edge.
 	ServiceTable = "events"
 	// ServiceInverseTable is the table name for the Service entity.
 	// It exists in this package in order to avoid circular dependency with the "service" package.
 	ServiceInverseTable = "services"
 	// ServiceColumn is the table column denoting the service relation/edge.
-	ServiceColumn = "event_service_id"
+	ServiceColumn = "event_service"
 	// LikersTable is the table the holds the likers relation/edge.
 	LikersTable = "users"
 	// LikersInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	LikersInverseTable = "users"
 	// LikersColumn is the table column denoting the likers relation/edge.
-	LikersColumn = "event_liker_id"
+	LikersColumn = "event_likers"
 	// OwnerTable is the table the holds the owner relation/edge.
 	OwnerTable = "events"
 	// OwnerInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
-	OwnerColumn = "owner_id"
+	OwnerColumn = "user_events"
 	// SvcOwnerTable is the table the holds the svcOwner relation/edge.
 	SvcOwnerTable = "events"
 	// SvcOwnerInverseTable is the table name for the Service entity.
 	// It exists in this package in order to avoid circular dependency with the "service" package.
 	SvcOwnerInverseTable = "services"
 	// SvcOwnerColumn is the table column denoting the svcOwner relation/edge.
-	SvcOwnerColumn = "svc_owner_id"
+	SvcOwnerColumn = "service_events"
 )
 
-// Columns holds all SQL columns are event fields.
+// Columns holds all SQL columns for event fields.
 var Columns = []string{
 	FieldID,
 	FieldCreationTime,
 	FieldKind,
+}
+
+// ForeignKeys holds the SQL foreign-keys that are owned by the Event type.
+var ForeignKeys = []string{
+	"event_job",
+	"event_file",
+	"event_credential",
+	"event_link",
+	"event_tag",
+	"event_target",
+	"event_task",
+	"event_user",
+	"event_event",
+	"event_service",
+	"service_events",
+	"user_events",
 }
 
 var (
@@ -130,6 +146,7 @@ var (
 // Kind defines the type for the Kind enum field.
 type Kind string
 
+// Kind values.
 const (
 	KindCREATEJOB              Kind = "CREATE_JOB"
 	KindCREATETAG              Kind = "CREATE_TAG"
@@ -161,12 +178,12 @@ func (s Kind) String() string {
 	return string(s)
 }
 
-// KindValidator is a validator for the "Kind" field enum values. It is called by the builders before save.
-func KindValidator(Kind Kind) error {
-	switch Kind {
+// KindValidator is a validator for the "k" field enum values. It is called by the builders before save.
+func KindValidator(k Kind) error {
+	switch k {
 	case KindCREATEJOB, KindCREATETAG, KindAPPLYTAGTOTASK, KindAPPLYTAGTOTARGET, KindAPPLYTAGTOJOB, KindREMOVETAGFROMTASK, KindREMOVETAGFROMTARGET, KindREMOVETAGFROMJOB, KindCREATETARGET, KindSETTARGETFIELDS, KindDELETETARGET, KindADDCREDENTIALFORTARGET, KindUPLOADFILE, KindCREATELINK, KindSETLINKFIELDS, KindACTIVATEUSER, KindCREATEUSER, KindMAKEADMIN, KindREMOVEADMIN, KindCHANGENAME, KindACTIVATESERVICE, KindCREATESERVICE, KindLIKEEVENT, KindOTHER:
 		return nil
 	default:
-		return fmt.Errorf("event: invalid enum value for Kind field: %q", Kind)
+		return fmt.Errorf("event: invalid enum value for Kind field: %q", k)
 	}
 }

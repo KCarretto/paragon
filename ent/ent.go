@@ -10,6 +10,7 @@ import (
 	"github.com/facebookincubator/ent/dialect"
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"golang.org/x/xerrors"
 )
 
 // Order applies an ordering on either graph traversal or sql selector.
@@ -83,20 +84,23 @@ func Sum(field string) Aggregate {
 	}
 }
 
-// ErrNotFound returns when trying to fetch a specific entity and it was not found in the database.
-type ErrNotFound struct {
+// NotFoundError returns when trying to fetch a specific entity and it was not found in the database.
+type NotFoundError struct {
 	label string
 }
 
 // Error implements the error interface.
-func (e *ErrNotFound) Error() string {
-	return fmt.Sprintf("ent: %s not found", e.label)
+func (e *NotFoundError) Error() string {
+	return "ent: " + e.label + " not found"
 }
 
 // IsNotFound returns a boolean indicating whether the error is a not found error.
 func IsNotFound(err error) bool {
-	_, ok := err.(*ErrNotFound)
-	return ok
+	if err == nil {
+		return false
+	}
+	var e *NotFoundError
+	return xerrors.As(err, &e)
 }
 
 // MaskNotFound masks nor found error.
@@ -107,20 +111,42 @@ func MaskNotFound(err error) error {
 	return err
 }
 
-// ErrNotSingular returns when trying to fetch a singular entity and more then one was found in the database.
-type ErrNotSingular struct {
+// NotSingularError returns when trying to fetch a singular entity and more then one was found in the database.
+type NotSingularError struct {
 	label string
 }
 
 // Error implements the error interface.
-func (e *ErrNotSingular) Error() string {
-	return fmt.Sprintf("ent: %s not singular", e.label)
+func (e *NotSingularError) Error() string {
+	return "ent: " + e.label + " not singular"
 }
 
 // IsNotSingular returns a boolean indicating whether the error is a not singular error.
 func IsNotSingular(err error) bool {
-	_, ok := err.(*ErrNotSingular)
-	return ok
+	if err == nil {
+		return false
+	}
+	var e *NotSingularError
+	return xerrors.As(err, &e)
+}
+
+// NotLoadedError returns when trying to get a node that was not loaded by the query.
+type NotLoadedError struct {
+	edge string
+}
+
+// Error implements the error interface.
+func (e *NotLoadedError) Error() string {
+	return "ent: " + e.edge + " edge was not loaded"
+}
+
+// IsNotLoaded returns a boolean indicating whether the error is a not loaded error.
+func IsNotLoaded(err error) bool {
+	if err == nil {
+		return false
+	}
+	var e *NotLoadedError
+	return xerrors.As(err, &e)
 }
 
 // ConstraintError returns when trying to create/update one or more entities and
@@ -133,7 +159,7 @@ type ConstraintError struct {
 
 // Error implements the error interface.
 func (e ConstraintError) Error() string {
-	return fmt.Sprintf("ent: constraint failed: %s", e.msg)
+	return "ent: constraint failed: " + e.msg
 }
 
 // Unwrap implements the errors.Wrapper interface.
@@ -143,8 +169,11 @@ func (e *ConstraintError) Unwrap() error {
 
 // IsConstraintError returns a boolean indicating whether the error is a constraint failure.
 func IsConstraintError(err error) bool {
-	_, ok := err.(*ConstraintError)
-	return ok
+	if err == nil {
+		return false
+	}
+	var e *ConstraintError
+	return xerrors.As(err, &e)
 }
 
 func isSQLConstraintError(err error) (*ConstraintError, bool) {
