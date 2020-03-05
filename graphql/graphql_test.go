@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/graphql/resolve"
+	"github.com/kcarretto/paragon/pkg/auth"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -129,6 +132,33 @@ func (test *testResolver) newTag(t *testing.T, options ...func(*ent.TagCreate)) 
 		t.Errorf("failed to create tag: %w", err)
 	}
 	return tag
+}
+
+func (test *testResolver) newService(t *testing.T, options ...func(*ent.ServiceCreate)) *ent.Service {
+	tag := test.newTag(t)
+	uniqueNumber++
+	uniqueData := fmt.Sprintf("test%d", uniqueNumber)
+	serviceCreater := test.Client.Service.Create().SetName("test").SetPubKey(uniqueData).SetTag(tag)
+	for _, opt := range options {
+		opt(serviceCreater)
+	}
+	service, err := serviceCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create service: %w", err)
+	}
+	return service
+}
+
+func (test *testResolver) newEvent(t *testing.T, options ...func(*ent.EventCreate)) *ent.Event {
+	eventCreater := test.Client.Event.Create().SetKind("OTHER")
+	for _, opt := range options {
+		opt(eventCreater)
+	}
+	service, err := eventCreater.Save(context.Background())
+	if err != nil {
+		t.Errorf("failed to create event: %w", err)
+	}
+	return service
 }
 
 func NewTestClient() *testResolver {
@@ -435,7 +465,7 @@ func TestTagsQuery(t *testing.T) {
 	query := client.Resolver.Query()
 	queriedTags, err := query.Tags(context.Background(), &models.Filter{})
 	if err != nil {
-		t.Errorf("Jobs query errored with %w", err)
+		t.Errorf("Tags query errored with %w", err)
 	}
 
 	for _, tag := range queriedTags {
@@ -450,6 +480,172 @@ func TestTagsQuery(t *testing.T) {
 			idsLeft = append(idsLeft, id)
 		}
 		t.Errorf("Tags query returned missing expected tag(s) %#v", idsLeft)
+	}
+
+}
+
+func TestUserQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	u := client.newUser(t)
+	query := client.Resolver.Query()
+	queriedUser, err := query.User(context.Background(), u.ID)
+	if err != nil {
+		t.Errorf("User query errored with %w", err)
+	}
+	if u.ID != queriedUser.ID {
+		t.Errorf("User query returned wrong id expected: %d, got: %d", u.ID, queriedUser.ID)
+	}
+}
+
+func TestUsersQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfUsers := 2
+	users := map[int]*ent.User{}
+	for i := 0; i < numOfUsers; i++ {
+		u := client.newUser(t)
+		users[u.ID] = u
+	}
+	query := client.Resolver.Query()
+	queriedUsers, err := query.Users(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Users query errored with %w", err)
+	}
+
+	for _, u := range queriedUsers {
+		if _, ok := users[u.ID]; ok {
+			delete(users, u.ID)
+		}
+	}
+
+	if len(users) != 0 {
+		idsLeft := []int{}
+		for id := range users {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Users query returned missing expected user(s) %#v", idsLeft)
+	}
+
+}
+
+func TestServiceQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	s := client.newService(t)
+	query := client.Resolver.Query()
+	queriedService, err := query.Service(context.Background(), s.ID)
+	if err != nil {
+		t.Errorf("Service query errored with %w", err)
+	}
+	if s.ID != queriedService.ID {
+		t.Errorf("Service query returned wrong id expected: %d, got: %d", s.ID, queriedService.ID)
+	}
+}
+
+func TestServicesQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfServices := 2
+	services := map[int]*ent.Service{}
+	for i := 0; i < numOfServices; i++ {
+		s := client.newService(t)
+		services[s.ID] = s
+	}
+	query := client.Resolver.Query()
+	queriedServices, err := query.Services(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Services query errored with %w", err)
+	}
+
+	for _, s := range queriedServices {
+		if _, ok := services[s.ID]; ok {
+			delete(services, s.ID)
+		}
+	}
+
+	if len(services) != 0 {
+		idsLeft := []int{}
+		for id := range services {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Services query returned missing expected service(s) %#v", idsLeft)
+	}
+
+}
+
+func TestEventQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	e := client.newEvent(t)
+	query := client.Resolver.Query()
+	queriedEvent, err := query.Event(context.Background(), e.ID)
+	if err != nil {
+		t.Errorf("Event query errored with %w", err)
+	}
+	if e.ID != queriedEvent.ID {
+		t.Errorf("Event query returned wrong id expected: %d, got: %d", e.ID, queriedEvent.ID)
+	}
+}
+
+func TestEventsQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	numOfEvents := 2
+	events := map[int]*ent.Event{}
+	for i := 0; i < numOfEvents; i++ {
+		e := client.newEvent(t)
+		events[e.ID] = e
+	}
+	query := client.Resolver.Query()
+	queriedEvents, err := query.Events(context.Background(), &models.Filter{})
+	if err != nil {
+		t.Errorf("Services query errored with %w", err)
+	}
+
+	for _, e := range queriedEvents {
+		if _, ok := events[e.ID]; ok {
+			delete(events, e.ID)
+		}
+	}
+
+	if len(events) != 0 {
+		idsLeft := []int{}
+		for id := range events {
+			idsLeft = append(idsLeft, id)
+		}
+		t.Errorf("Services query returned missing expected service(s) %#v", idsLeft)
+	}
+
+}
+
+func TestMeQuery(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	u := client.newUser(t, func(user *ent.UserCreate) { user.SetName("testuser101") })
+	query := client.Resolver.Query()
+	
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/graphql", nil)
+	authedReq := auth.CreateUserSession(rr, req, u)
+	queriedUser, err := query.Me(authedReq.Context())
+	if err != nil {
+		t.Errorf("Me query failed with %w", err)
+	}
+	if "testuser101" != queriedUser.Name {
+		t.Errorf("Me query returned wrong id expected: %s, got: %s", "testuser101", queriedUser.Name)
+	}
+}
+
+// mutations
+func TestFailCredentialMutation(t *testing.T) {
+	client := NewTestClient()
+	defer client.Close()
+	mutation := client.Resolver.Mutation()
+	c := client.newCredential(t)
+	c, err := mutation.FailCredential(context.Background(), &models.FailCredentialRequest{ID: c.ID})
+	if err != nil {
+		t.Errorf("FailCredentials mutation failed with %w", err)
 	}
 
 }
