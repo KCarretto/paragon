@@ -66,8 +66,7 @@ def test_copy(f1, dstPath):
 
 	return f2
 
-def test_remove(path):
-	f = test_sys_openFile(path)
+def test_remove(f):
 	err = file.remove(f)
 	assert.noError(err)
 
@@ -109,7 +108,7 @@ def main():
 	f2 = test_copy(f1, newNewPath)
 	test_content(f2, fileContent)
 
-	test_remove(newPath)
+	test_remove(f1)
 	#test_content(f1, fileContent)
 	#test_chown(f1)
 
