@@ -1,27 +1,26 @@
 name: Review Dog
 on: [pull_request]
 jobs:
-
   grammar-check:
     name: Grammar Check
     runs-on: ubuntu-latest
-      steps:
-        - name: Checkout Code
-          uses: actions/checkout@v1
-        - name: Check Gramar
-          uses: reviewdog/action-misspell@v1
-          with:
-            github_token: ${{ secrets.github_token }}
-            locale: "US"
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: Check Gramar
+        uses: reviewdog/action-misspell@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          locale: "US"
 
   golangci-lint:
     name: GolangCI Lint
     runs-on: ubuntu-latest
     steps:
-        - name: Checkout Code
-          uses: actions/checkout@v1
-        - name: golangci-lint
-          uses: reviewdog/action-golangci-lint@v1
-          with:
-            github_token: ${{ secrets.github_token }}
-            reporter: github-pr-review
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v1
+        with:
+          github_token: ${{ secrets.github_token }}
+          reporter: github-pr-review
