@@ -58,7 +58,8 @@ jobs:
           name: binaries
           path: build/
 
-  docker:
+  docker-agent:
+    name: Docker (agent)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -69,4 +70,46 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          dockerfile: ./docker/agent
+          dockerfile: ./docker/agent.Dockerfile
+
+  docker-c2:
+    name: Docker (c2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/c2
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/c2.Dockerfile
+
+  docker-teamserver:
+    name: Docker (teamserver)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/teamserver
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/teamserver.Dockerfile
+
+  docker-worker:
+    name: Docker (worker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/worker
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/worker.Dockerfile
