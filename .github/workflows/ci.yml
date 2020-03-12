@@ -57,3 +57,16 @@ jobs:
         with:
           name: binaries
           path: build/
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/agent
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/agent
