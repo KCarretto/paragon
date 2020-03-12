@@ -2,6 +2,7 @@ on: [push, pull_request]
 name: CI
 jobs:
   test:
+    name: Go Test
     strategy:
       matrix:
         go-version: [1.13.x, 1.14.x]
@@ -25,6 +26,7 @@ jobs:
           $(go env GOPATH)/bin/goveralls -coverprofile=coverage.out -service=github
 
   build:
+    name: Go Build
     needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -71,6 +73,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
           dockerfile: ./docker/agent.Dockerfile
+          tag_names: true
 
   docker-c2:
     name: Docker (c2)
