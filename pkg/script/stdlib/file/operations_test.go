@@ -80,6 +80,7 @@ def test_remove(path):
 def test_chmod(f):
 	if sys.detectOS() == "windows":
 		print("Skipping chmod test since windows is not yet supported")
+		return
 
 	err = file.chmod(f, "777")
 	assert.noError(err)
