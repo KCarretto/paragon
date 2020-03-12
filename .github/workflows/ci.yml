@@ -2,6 +2,7 @@ on: [push, pull_request]
 name: CI
 jobs:
   test:
+    name: Go Test
     strategy:
       matrix:
         go-version: [1.13.x, 1.14.x]
@@ -25,6 +26,7 @@ jobs:
           $(go env GOPATH)/bin/goveralls -coverprofile=coverage.out -service=github
 
   build:
+    name: Go Build
     needs: [test]
     runs-on: ubuntu-latest
     steps:
@@ -58,7 +60,8 @@ jobs:
           name: binaries
           path: build/
 
-  docker:
+  docker-agent:
+    name: Docker (agent)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
@@ -69,4 +72,47 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: docker.pkg.github.com
-          dockerfile: ./docker/agent
+          dockerfile: ./docker/agent.Dockerfile
+          tag_names: true
+
+  docker-c2:
+    name: Docker (c2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/c2
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/c2.Dockerfile
+
+  docker-teamserver:
+    name: Docker (teamserver)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/teamserver
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/teamserver.Dockerfile
+
+  docker-worker:
+    name: Docker (worker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/worker
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/worker.Dockerfile

@@ -1,20 +1,52 @@
 name: Review Dog
 on: [pull_request]
 jobs:
-  reviewdog:
-    name: Review Dog
+  grammar-check:
+    name: Grammar Check
     runs-on: ubuntu-latest
     steps:
-      # ...
-      - name: Setup Review Dog
-        run: |
-          mkdir -p $HOME/bin && curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh| sh -s -- -b $HOME/bin
-          echo ::add-path::$HOME/bin
-          echo ::add-path::$(go env GOPATH)/bin # for Go projects
-      - name: Run reviewdog
-        env:
-          REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          reviewdog -reporter=github-pr-check -runners=golint,govet
-          # or
-          reviewdog -reporter=github-pr-review -runners=golint,govet
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: Check Gramar
+        uses: reviewdog/action-misspell@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          locale: "US"
+
+  golangci-lint:
+    name: GolangCI Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+
+  es-lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v1
+      - name: Configure
+        run: cd www
+      - name: ESLint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+
+  docker-lint:
+    name: Docker Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: Docker Lint
+        uses: reviewdog/action-hadolint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
