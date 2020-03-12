@@ -40,48 +40,30 @@ def test_sys_exec(cmd):
 	print("============= ---- =============")
 
 def test_write(f, fileContent):
-	path = file.name(f)
-
 	err = file.write(f, fileContent)
 	assert.noError(err)
 
-	f2 = test_sys_openFile(path)
-
-	content, err = file.content(f2)
+def test_move(f, dstPath):
+	err = file.move(f, dstPath)
 	assert.noError(err)
 
-	if content != fileContent:
-		fail("Failed to write expected content to file", fileContent, content)
+	path = file.name(f)
+	if path != dstPath:
+		fail("File name did not update after moving", "Expected: '"+dstPath+"'", "Got: '"+path+"'")
 
-def test_move(f1, dstPath):
-	content1, err = file.content(f1)
+
+def test_content(f, expected):
+	content, err = file.content(f)
 	assert.noError(err)
 
-	err = file.move(f1, dstPath)
-	assert.noError(err)
-
-	f2 = test_sys_openFile(dstPath)
-	content2, err = file.content(f2)
-	assert.noError(err)
-
-	if content1 != content2:
-		fail("Moved file content differed from original content", "Expected Content: '" + content1 + "'", "New Content: '" + content2 + "'")
-	return f2
+	if content != expected:
+		fail("Moved file content differed from original content", "Expected Content: '" + expected + "'", "New Content: '" + content + "'")
 
 def test_copy(f1, dstPath):
-	srcPath = file.name(f1)
-	content1, err = file.content(f1)
-	assert.noError(err)
-
 	f2 = test_sys_openFile(dstPath)
 	err = file.copy(f1, f2)
 	assert.noError(err)
 
-	content2, err = file.content(f2)
-	assert.noError(err)
-
-	if content1 != content2:
-		fail("Copied file content differed from original content", content1, content2)
 	return f2
 
 def test_remove(path):
@@ -110,17 +92,23 @@ def main():
 	newNewPath = prefix + "new_new_path/to/file"
 	fileContent = "boop"
 
+	test_sys_exec(cmd)
+
 	f1 = test_sys_openFile(fileName)
 
 	test_write(f1, fileContent)
-
-	f1 = test_move(f1, newPath)
-	f2 = test_copy(f1, newNewPath)
-
-	#test_chown(f1)
+	test_content(f1, fileContent)
 	test_chmod(f1)
+
+	test_move(f1, newPath)
+
+	f2 = test_copy(f1, newNewPath)
+	test_content(f2, fileContent)
+
 	test_remove(newPath)
-	test_sys_exec(cmd)
+	#test_content(f1, fileContent)
+	#test_chown(f1)
+
 `
 
 func TestOperations(t *testing.T) {
