@@ -25,6 +25,10 @@ const codeTestOperations = `
 def test_sys_openFile(fileName):
 	f, err = sys.openFile(fileName)
 	assert.noError(err)
+	name = file.name(f)
+	if name != fileName:
+		fail("Opened file but got invalid name", "Expected: '"+fileName+"'", "Got: '"+name+"'")
+
 	return f
 
 def test_sys_exec(cmd):
@@ -33,11 +37,6 @@ def test_sys_exec(cmd):
 	print("============= Exec =============")
 	print("Ran Command: "+cmd)
 	print(out)
-	print("============= ---- =============")
-
-def test_name(f):
-	print("============= Name =============")
-	print(file.name(f))
 	print("============= ---- =============")
 
 def test_write(f, fileContent):
@@ -54,24 +53,20 @@ def test_write(f, fileContent):
 	if content != fileContent:
 		fail("Failed to write expected content to file", fileContent, content)
 
-def test_content(f, fileContent):
-	print("============= Content =============")
-	content, err = file.content(f)
-	assert.noError(err)
-	print(content)
-	print("============= ---- =============")
-
-def test_move(f, dstPath):
-	srcPath = file.name(f)
-	err = file.move(f, dstPath)
+def test_move(f1, dstPath):
+	content1, err = file.content(f1)
 	assert.noError(err)
 
-	oldF = test_sys_openFile(srcPath)
-	content, err = file.content(f)
+	err = file.move(f1, dstPath)
 	assert.noError(err)
 
-	oldContent, err = file.content(oldF)
+	f2 = test_sys_openFile(dstPath)
+	content2, err = file.content(f2)
 	assert.noError(err)
+
+	if content1 != content2:
+		fail("Moved file content differed from original content", "Expected Content: '" + content1 + "'", "New Content: '" + content2 + "'")
+	return f2
 
 def test_copy(f1, dstPath):
 	srcPath = file.name(f1)
@@ -115,16 +110,16 @@ def main():
 	newNewPath = prefix + "new_new_path/to/file"
 	fileContent = "boop"
 
-	print("Opening File: "+fileName)
-	f = test_sys_openFile(fileName)
-	test_name(f)
-	test_write(f, fileContent)
-	test_content(f, fileContent)
-	test_move(f, newPath)
-	f = test_copy(f, newNewPath)
+	f1 = test_sys_openFile(fileName)
+
+	test_write(f1, fileContent)
+
+	f1 = test_move(f1, newPath)
+	f2 = test_copy(f1, newNewPath)
+
+	#test_chown(f1)
+	test_chmod(f1)
 	test_remove(newPath)
-	#test_chown(f)
-	test_chmod(f)
 	test_sys_exec(cmd)
 `
 
