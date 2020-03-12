@@ -1,5 +1,5 @@
 on: [push, pull_request]
-name: Test
+name: CI
 jobs:
   test:
     strategy:
@@ -12,7 +12,47 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: ${{ matrix.go-version }}
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Run Tests
+        run: go test -v -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Send Test Coverage
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          GO111MODULE=off go get github.com/mattn/goveralls
+          $(go env GOPATH)/bin/goveralls -coverprofile=coverage.out -service=github
+
+  build:
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14.x
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Test
-        run: go test -v ./...
+      - name: Build Artifacts
+        run: |
+          export GO111MODULE=on
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-linux-amd64 ./cmd/bundle
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-darwin-amd64 ./cmd/bundle
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-windows-amd64.exe ./cmd/bundle
+
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/c2-linux-amd64 ./cmd/c2
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/c2-darwin-amd64 ./cmd/c2
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/c2-windows-amd64.exe ./cmd/c2
+
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/worker-linux-amd64 ./cmd/worker
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/worker-darwin-amd64 ./cmd/worker
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/worker-windows-amd64.exe ./cmd/worker
+
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/teamserver-linux-amd64 ./cmd/teamserver
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/teamserver-darwin-amd64 ./cmd/teamserver
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/teamserver-windows-amd64.exe ./cmd/teamserver
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: binaries
+          path: build/
