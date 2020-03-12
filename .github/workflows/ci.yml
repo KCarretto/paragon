@@ -17,6 +17,7 @@ jobs:
       - name: Run Tests
         run: go test -v -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
       - name: Send Test Coverage
+        if: matrix.platform == ubuntu-latest
         env:
           COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
