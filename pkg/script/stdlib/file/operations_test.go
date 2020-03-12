@@ -94,13 +94,14 @@ def test_remove(path):
 	err = file.remove(f)
 	assert.noError(err)
 
-def test_chown(f):
-
-	err = file.chown(f, "root", "root")
-	assert.noError(err)
+# TODO: Requires root / to know what the operating user is
+#def test_chown(f):
+#	pass
+#	err = file.chown(f, "root", "root")
+#	assert.noError(err)
 
 def test_chmod(f):
-	err = file.chmod(f, "123")
+	err = file.chmod(f, "777")
 	assert.noError(err)
 
 def main():
