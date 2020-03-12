@@ -123,7 +123,7 @@ def main():
 	test_move(f, newPath)
 	f = test_copy(f, newNewPath)
 	test_remove(newPath)
-	test_chown(f)
+	#test_chown(f)
 	test_chmod(f)
 	test_sys_exec(cmd)
 `
