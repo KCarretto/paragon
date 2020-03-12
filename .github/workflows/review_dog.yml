@@ -28,14 +28,14 @@ jobs:
         if: steps.cache.outputs.cache-hit != 'true'
         run: go mod download
 
-      - name: Install linters
-        run: "( cd linters && go get golang.org/x/lint/golint )"
-
-      - name: Setup reviewdog
+      - name: Install Linters
         run: |
-          # mkdir -p $HOME/bin && curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh| sh -s -- -b $HOME/bin
-          # echo ::add-path::$HOME/bin
-          go install ./cmd/reviewdog
+          GO111MODULE=off go get golang.org/x/lint/golint
+
+      - name: Setup Review Dog
+        run: |
+          mkdir -p $HOME/bin && curl -sfL https://raw.githubusercontent.com/reviewdog/reviewdog/master/install.sh| sh -s -- -b $HOME/bin
+          echo ::add-path::$HOME/bin
       - name: Run reviewdog (github-pr-check)
         continue-on-error: true
         env:
