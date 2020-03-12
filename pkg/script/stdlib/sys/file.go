@@ -18,16 +18,16 @@ func (f *File) Move(dstPath string) error {
 		return fmt.Errorf("failed to create parent directory %q: %w", dir, err)
 	}
 
+	// Must first close file, otherwise on windows the following error occurs:
+	// The process cannot access the file because it is being used by another process.
+	f.File.Close()
+
 	err := os.Rename(f.Name(), dstPath)
 	if err != nil {
 		return err
 	}
 
-	err = f.File.Close()
-	if err != nil {
-		return err
-	}
-
+	// Re-open destination file after moving
 	newF, err := os.Open(dstPath)
 	if err != nil {
 		return err
