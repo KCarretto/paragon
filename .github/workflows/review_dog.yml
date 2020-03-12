@@ -31,8 +31,9 @@ jobs:
     steps:
       - name: Code Checkout
         uses: actions/checkout@v1
-      - name: ESLint
+      - name: Configure
         run: cd www
+      - name: ESLint
         uses: reviewdog/action-eslint@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
