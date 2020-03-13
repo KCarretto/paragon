@@ -5,49 +5,116 @@ import (
 	"context"
 	"testing"
 
-	gomock "github.com/golang/mock/gomock"
 	"github.com/kcarretto/paragon/pkg/script"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 	"github.com/stretchr/testify/require"
 )
 
-//go:generate mockgen -destination=operations.gen_test.go -package=file_test github.com/kcarretto/paragon/pkg/script/stdlib/file File
-
-func testLib(f file.File) script.Option {
-	return script.WithLibrary("testlib", script.Library(map[string]script.Func{
-		"f": script.Func(func(parser script.ArgParser) (script.Retval, error) {
-			return file.New(f), nil
-		})}),
-	)
-}
-
-func execScript(t *testing.T, f file.File, name string, code string) error {
-	return script.New(name, bytes.NewBufferString(code), testLib(f),
+func execScript(t *testing.T, name string, code string) error {
+	return script.New(name, bytes.NewBufferString(code),
+		assert.Include(),
 		file.Include(),
 		sys.Include(),
 	).
 		Exec(context.Background())
 }
 
-const codeTestMove = `
+const codeTestOperations = `
+def test_sys_openFile(fileName):
+	f, err = sys.openFile(fileName)
+	assert.noError(err)
+	name = file.name(f)
+	if name != fileName:
+		fail("Opened file but got invalid name", "Expected: '"+fileName+"'", "Got: '"+name+"'")
+
+	return f
+
+def test_sys_exec(cmd):
+	out, err = sys.exec(cmd)
+	assert.noError(err)
+	print("============= Exec =============")
+	print("Ran Command: "+cmd)
+	print(out)
+	print("============= ---- =============")
+
+def test_write(f, fileContent):
+	err = file.write(f, fileContent)
+	assert.noError(err)
+
+def test_move(f, dstPath):
+	err = file.move(f, dstPath)
+	assert.noError(err)
+
+	path = file.name(f)
+	if path != dstPath:
+		fail("File name did not update after moving", "Expected: '"+dstPath+"'", "Got: '"+path+"'")
+
+
+def test_content(f, expected):
+	content, err = file.content(f)
+	assert.noError(err)
+
+	if content != expected:
+		fail("Moved file content differed from original content", "Expected Content: '" + expected + "'", "New Content: '" + content + "'")
+
+def test_copy(f1, dstPath):
+	f2 = test_sys_openFile(dstPath)
+	err = file.copy(f1, f2)
+	assert.noError(err)
+
+	return f2
+
+def test_remove(f):
+	err = file.remove(f)
+	assert.noError(err)
+
+# TODO: Requires root / to know what the operating user is
+#def test_chown(f):
+#	pass
+#	err = file.chown(f, "root", "root")
+#	assert.noError(err)
+
+def test_chmod(f):
+	if sys.detectOS() == "windows":
+		print("Skipping chmod test since windows is not yet supported")
+		return
+
+	err = file.chmod(f, "777")
+	assert.noError(err)
+
 def main():
-	f = sys.openFile("path/to/src")
-	f2 = testlib.f()
-	file.move(f, "dst")
-	file.move(f2, "dst")
+	os = sys.detectOS()
+
+	prefix = "/tmp/paragon_test/" if os != "windows" else "C:\\Windows\\"
+	cmd = "ls -al /" if os != "windows" else "dir"
+
+	fileName = prefix + "path/to/file"
+	newPath = prefix + "new_path/to/file"
+	newNewPath = prefix + "new_new_path/to/file"
+	fileContent = "boop"
+
+	test_sys_exec(cmd)
+
+	f1 = test_sys_openFile(fileName)
+
+	test_write(f1, fileContent)
+	test_content(f1, fileContent)
+	test_chmod(f1)
+
+	test_move(f1, newPath)
+
+	f2 = test_copy(f1, newNewPath)
+	test_content(f2, fileContent)
+
+	test_remove(f1)
+	#test_content(f1, fileContent)
+	#test_chown(f1)
 
 `
 
-func TestMove(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	dst := "dst"
-
-	f := NewMockFile(ctrl)
-	f.EXPECT().Move(gomock.Eq(dst)).Return(nil)
-
-	err := execScript(t, f, "move_test", codeTestMove)
+func TestOperations(t *testing.T) {
+	err := execScript(t, "operations_test_script", codeTestOperations)
 	require.NoError(t, err, "script failed execution")
 }

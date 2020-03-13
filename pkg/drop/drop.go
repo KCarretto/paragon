@@ -110,7 +110,7 @@ func deleteUsingCWD() {
 	if !filepath.IsAbs(path) {
 		dir, err := os.Getwd()
 		if err != nil {
-			log.Printf("[ERROR][DELETION] unable to resolve current directory: %w", err)
+			log.Printf("[ERROR][DELETION] unable to resolve current directory: %v", err)
 			return
 		}
 		path = filepath.Join(dir, filepath.Base(path))

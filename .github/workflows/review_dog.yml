@@ -1,0 +1,52 @@
+name: Review Dog
+on: [pull_request]
+jobs:
+  grammar-check:
+    name: Grammar Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: Check Gramar
+        uses: reviewdog/action-misspell@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          locale: "US"
+
+  golangci-lint:
+    name: GolangCI Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: golangci-lint
+        uses: reviewdog/action-golangci-lint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+
+  es-lint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Code Checkout
+        uses: actions/checkout@v1
+      - name: Configure
+        run: cd www
+      - name: ESLint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
+
+  docker-lint:
+    name: Docker Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v1
+      - name: Docker Lint
+        uses: reviewdog/action-hadolint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          reporter: github-pr-review
