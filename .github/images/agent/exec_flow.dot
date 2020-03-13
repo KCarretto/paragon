@@ -1,35 +1,66 @@
 digraph execFlow {
+    ranksep=1
     nodesep=1
+    node [width=2 height=1]
+    compound=true
+    newrank=true
+    // rankdir="LR"
 
-    node [width=1 height=.75]
-
-    Start [label=<Start> shape=parallelogram]
-
-    C2 [shape=cylinder height=1 width=.5]
-    Buffer [shape=component label=<Output Buffer>]
-
-
-    Init [label=<Initialize>]
+    /*
+     * Processes
+     */
+    CollectMetadata
     {rank=same
-        Run [label=<Run>]
-        Stop [label=<Stop> shape=parallelogram]
+        Run
+        Sleep [label=<Sleep>]
+    }
+    ExecuteTask
+
+    /*
+     * Components
+     */
+    subgraph cluster_transports {
+        label=<<FONT POINT-SIZE="22"><B>Transports</B></FONT>>
+        style=dotted
+
+        {rank=same
+        WriteAgentMessage
+        WriteServerMessage
+        }
+
+        {rank=same
+        SendAgentMessage
+        SendServerMessage
+        }
+
+    }
+    Server [shape=rect]
+
+    {rank=same
+        ExecuteTask
+        TaskExecutor [shape=rect]
     }
 
-    {rank=same
-        Exec [label=<Exec>]
-        Send [label=<Send>]
-    }
 
+    /*
+     * Flow
+     */
+    CollectMetadata -> Run
 
-    Start -> Init -> Run
-    Run -> Stop [label=<<I>Interupted</I>> style=dashed]
+    // Idle Loop
+    Run -> Sleep
+    Run -> Sleep [dir=back]
+    Sleep -> WriteAgentMessage [label=<goroutine     > color=blue constraint=false]
+    WriteAgentMessage -> SendAgentMessage
 
-    Run -> Send
-    Buffer -> Send [label=<<I>Read</I>> style=dashed arrowhead=empty]
+    // Transports
+    SendAgentMessage -> Server [style=dashed]
+    Server -> SendServerMessage [style=dashed]
+    SendServerMessage -> WriteServerMessage
 
-    Send -> Exec
-    Send -> C2 [style=dotted arrowhead=empty]
-    Exec -> Buffer [label=<<I>    Write</I>> style=dashed arrowhead=empty]
-
-    Run -> Exec [dir=back constraint=false]
+    // Task Execution
+    WriteServerMessage -> TaskExecutor  [label=<    Tasks> ]
+    TaskExecutor  -> ExecuteTask [constraint=false]
+    // WriteAgentMessage -> ExecuteTask [dir=back]
+    ExecuteTask -> WriteAgentMessage
 }
