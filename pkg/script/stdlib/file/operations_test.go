@@ -48,16 +48,13 @@ def test_move(f, dstPath):
 	assert.noError(err)
 
 	path = file.name(f)
-	if path != dstPath:
-		fail("File name did not update after moving", "Expected: '"+dstPath+"'", "Got: '"+path+"'")
-
+	assert.equal(dstPath, path)
 
 def test_content(f, expected):
 	content, err = file.content(f)
 	assert.noError(err)
 
-	if content != expected:
-		fail("Moved file content differed from original content", "Expected Content: '" + expected + "'", "New Content: '" + content + "'")
+	assert.equal(expected, content)
 
 def test_copy(f1, dstPath):
 	f2 = test_sys_openFile(dstPath)
