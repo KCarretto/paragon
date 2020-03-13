@@ -36,7 +36,7 @@ jobs:
         with:
           node-version: "10"
       - name: Prepare NPM
-        run: npm ci
+        run: cd www && npm ci
 
       - name: ESLint
         uses: reviewdog/action-eslint@v1
