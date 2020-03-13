@@ -43,7 +43,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          eslint_flags: -c .eslintrc.json ./www
+          eslint_flags: ./www
 
   docker-lint:
     name: Docker Lint
