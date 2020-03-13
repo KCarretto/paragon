@@ -31,8 +31,13 @@ jobs:
     steps:
       - name: Code Checkout
         uses: actions/checkout@v1
-      - name: Configure
-        run: cd www
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "10"
+      - name: Prepare NPM
+        run: npm ci
+
       - name: ESLint
         uses: reviewdog/action-eslint@v1
         with:
