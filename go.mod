@@ -5,12 +5,14 @@ go 1.13
 require (
 	github.com/99designs/gqlgen v0.10.2
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/facebookincubator/ent v0.0.0-20200122095037-28b9ef193fb3
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-sql-driver/mysql v1.4.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.3.1
+	github.com/google/skylark v0.0.0-20181101142754-a5f7082aabed
 	github.com/google/uuid v1.1.1
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/nats-io/nats.go v1.9.1

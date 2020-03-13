@@ -43,6 +43,10 @@ jobs:
           GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-darwin-amd64 ./cmd/bundle
           GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-windows-amd64.exe ./cmd/bundle
 
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-linux-amd64 ./cmd/renegade
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-darwin-amd64 ./cmd/renegade
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/bundle-windows-amd64.exe ./cmd/renegade
+
           GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/c2-linux-amd64 ./cmd/c2
           GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/c2-darwin-amd64 ./cmd/c2
           GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/c2-windows-amd64.exe ./cmd/c2
