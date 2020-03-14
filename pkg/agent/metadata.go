@@ -78,10 +78,11 @@ func (agent *Agent) collectMetadata() {
 			agent.Log.Error("Failed to collect machine primary IP", zap.Error(err))
 			continue
 		}
-		if !ip.IsLoopback() && !ip.IsLinkLocalUnicast() && !ip.IsGlobalUnicast() {
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsGlobalUnicast() {
 			continue
 		}
 		agent.Metadata.PrimaryIP = ip.String()
+		break
 	}
 
 }
