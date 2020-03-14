@@ -16,15 +16,15 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 	case starlark.Value:
 		return v, nil
 	case errTuple:
+		var starlarkErr starlark.Value = starlark.None
 		if v.err != nil {
-			return starlark.Tuple{starlark.None, starlark.String(v.err.Error())}, nil
+			starlarkErr = starlark.String(v.err.Error())
 		}
-
 		retVal, err := convertToStarlark(v.val)
 		if err != nil {
 			return starlark.None, fmt.Errorf("failed to convert contained value: %w", err)
 		}
-		return starlark.Tuple{retVal, starlark.None}, nil
+		return starlark.Tuple{retVal, starlarkErr}, nil
 	case bool:
 		return starlark.Bool(v), nil
 	case int:
