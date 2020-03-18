@@ -8,6 +8,12 @@ import (
 	"go.starlark.net/starlark"
 )
 
+// ConvertToStarlark provides an exported function for converting starlark values
+func ConvertToStarlark(value interface{}) (starlark.Value, error) {
+	return convertToStarlark(value)
+}
+
+
 func convertToStarlark(value interface{}) (starlark.Value, error) {
 	if value == nil {
 		return starlark.None, nil
