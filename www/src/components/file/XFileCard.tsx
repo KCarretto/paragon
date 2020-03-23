@@ -81,7 +81,7 @@ const XFileCard = (f: File) => {
                       </Feed.Date>
                     </Feed.Summary>
                     <Feed.Meta>
-                      {link.clicks && link.clicks >= 0
+                      {link.clicks && link.clicks > 0
                         ? link.clicks + " Clicks left"
                         : "Unlimited clicks"}
                     </Feed.Meta>

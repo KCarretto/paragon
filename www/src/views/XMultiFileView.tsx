@@ -1,9 +1,9 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader } from "semantic-ui-react";
 import { XFileCard, XNoFilesFound } from "../components/file";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary, XCardGroup } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { File } from "../graphql/models";
 
 export const MULTI_FILE_QUERY = gql`
@@ -31,41 +31,30 @@ type MultiFile = {
 };
 
 const XMultiFileView = () => {
-  const { called, loading, error, data } = useQuery<MultiFile>(
+  const { loading, error, data: { files = [] } = {} } = useQuery<MultiFile>(
     MULTI_FILE_QUERY,
     {
       pollInterval: 5000
     }
   );
 
-  const showCards = () => {
-    if (!data || !data.files || data.files.length < 1) {
-      return <XNoFilesFound />;
-    }
-    return (
-      <Card.Group centered itemsPerRow={4}>
-        {data.files.map(file => (
-          <XFileCard key={file.id} {...file} />
-        ))}
-      </Card.Group>
-    );
-  };
+  const whenLoading = (
+    <XLoadingMessage title="Loading Files" msg="Fetching file list" />
+  );
+  const whenEmpty = <XNoFilesFound />;
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
-      <Loader disabled={!called || !loading} />
+    <React.Fragment>
       <XErrorMessage title="Error Loading Files" err={error} />
-      {showCards()}
-    </Container>
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <XBoundary boundary={whenEmpty} show={files && files.length > 0}>
+          <XCardGroup>
+            {files && files.map(file => <XFileCard key={file.id} {...file} />)}
+          </XCardGroup>
+        </XBoundary>
+      </XBoundary>
+    </React.Fragment>
   );
 };
-
-// XTargetCardGroup.propTypes = {
-//     targets: PropTypes.arrayOf(PropTypes.shape({
-//         id: PropTypes.number.isRequired,
-//         name: PropTypes.string.isRequired,
-//         tags: PropTypes.arrayOf(PropTypes.string),
-//     })).isRequired,
-// };
 
 export default XMultiFileView;

@@ -1,11 +1,10 @@
 import { useQuery } from "@apollo/react-hooks";
-import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
-import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Button, Container, Icon, Label } from "semantic-ui-react";
+import { Button, Icon, Label } from "semantic-ui-react";
 import { XJobHeader } from "../components/job";
+import { XBoundary } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import {
   XTaskContent,
@@ -13,7 +12,7 @@ import {
   XTaskOutput,
   XTaskStatus
 } from "../components/task";
-import { Tag, Target, Task } from "../graphql/models";
+import { Task } from "../graphql/models";
 
 const TASK_QUERY = gql`
   query Task($id: ID!) {
@@ -36,6 +35,8 @@ const TASK_QUERY = gql`
       job {
         id
         name
+        staged
+
         tags {
           id
           name
@@ -51,63 +52,29 @@ type TaskQueryResponse = {
 
 const XTaskView = () => {
   let { id } = useParams();
-  const [loadingError, setLoadingError] = useState<ApolloError>(null);
 
-  const [queueTime, setQueueTime] = useState<string>(null);
-  const [claimTime, setClaimTime] = useState<string>(null);
-  const [execStartTime, setExecStartTime] = useState<string>(null);
-  const [execStopTime, setExecStopTime] = useState<string>(null);
-  const [content, setContent] = useState<string>(null);
-  const [output, setOutput] = useState<string>(null);
-  const [error, setError] = useState<string>(null);
-  const [sessionID, setSessionID] = useState<string>(null);
-  const [target, setTarget] = useState<Target>({});
-  const [jobID, setJobID] = useState<string>(null);
-  const [name, setName] = useState<string>("");
-  const [tags, setTags] = useState<Tag[]>([]);
-
-  const { called, loading } = useQuery<TaskQueryResponse>(TASK_QUERY, {
-    variables: { id },
-    onCompleted: data => {
-      setLoadingError(null);
-
-      if (!data || !data.task) {
-        data = {
-          task: {
-            id: null,
-            queueTime: null,
-            claimTime: null,
-            execStartTime: null,
-            execStopTime: null,
-            content: null,
-            output: null,
-            error: null,
-            sessionID: null
-          }
-        };
-      }
-      if (!data.task.target) {
-        data.task.target = {};
-      }
-      if (!data.task.job) {
-        data.task.job = { id: null, name: "", tags: [] };
-      }
-
-      setQueueTime(data.task.queueTime);
-      setClaimTime(data.task.claimTime);
-      setExecStartTime(data.task.execStartTime);
-      setExecStopTime(data.task.execStopTime);
-      setContent(data.task.content);
-      setOutput(data.task.output);
-      setError(data.task.error);
-      setSessionID(data.task.sessionID);
-      setTarget(data.task.target);
-      setJobID(data.task.job.id);
-      setTags(data.task.job.tags);
-      setName(data.task.job.name);
-    },
-    onError: err => setLoadingError(err)
+  const {
+    loading,
+    error,
+    data: {
+      task: {
+        queueTime = null,
+        claimTime = null,
+        execStartTime = null,
+        execStopTime = null,
+        content = null,
+        output = null,
+        error: outputErr = null,
+        sessionID = "",
+        target: targetData = { id: null, name: null },
+        job: jobData = { id: null, name: "", tags: [] }
+      } = {}
+    } = {}
+  } = useQuery<TaskQueryResponse>(TASK_QUERY, {
+    variables: { id }
   });
+  const target = targetData || { id: null, name: null };
+  const job = jobData || { id: null, name: "", tags: [] };
 
   let status = new XTaskStatus().getStatus({
     id: id,
@@ -115,51 +82,53 @@ const XTaskView = () => {
     claimTime: claimTime,
     execStartTime: execStartTime,
     execStopTime: execStopTime,
-    error: error
+    error: outputErr
   }).icon;
 
+  const whenLoading = (
+    <XLoadingMessage title="Loading Task" msg="Fetching task info" />
+  );
+
   return (
-    <Container fluid style={{ padding: "20px" }}>
-      <Link to={"/jobs/" + jobID}>
-        <XJobHeader
-          name={name}
-          tags={tags}
-          icon={React.createElement(Icon, { size: "large", ...status })}
-        />
-      </Link>
-      {!target || !target.id ? (
-        <span />
-      ) : (
-        <Button
-          basic
-          animated
-          color="blue"
-          size="small"
-          style={{ margin: "15px" }}
-          as={Link}
-          to={"/targets/" + target.id}
-        >
-          <Button.Content visible>
-            {target.name || "View Target"}
-          </Button.Content>
-          <Button.Content hidden>
-            <Icon name="arrow right" />
-          </Button.Content>
-        </Button>
-      )}
-      {!sessionID ? <span /> : <Label>SessionID: {sessionID}</Label>}
+    <React.Fragment>
+      <XErrorMessage title="Error Loading Task" err={error} />
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <Link to={"/jobs/" + job.id || "0"}>
+          <XJobHeader
+            name={job.name}
+            tags={job.tags}
+            icon={React.createElement(Icon, { size: "large", ...status })}
+          />
+        </Link>
 
-      <XErrorMessage title="Error Loading Task" err={loadingError} />
-      <XLoadingMessage
-        title="Loading Task"
-        msg="Fetching task information..."
-        hidden={called && !loading}
-      />
+        <XBoundary boundary={<span />} show={target.id !== null}>
+          <Button
+            basic
+            animated
+            color="blue"
+            size="small"
+            style={{ margin: "15px" }}
+            as={Link}
+            to={"/targets/" + target.id || "0"}
+          >
+            <Button.Content visible>
+              {target.name || "View Target"}
+            </Button.Content>
+            <Button.Content hidden>
+              <Icon name="arrow right" />
+            </Button.Content>
+          </Button>
+        </XBoundary>
 
-      <XTaskContent content={content} />
-      <XTaskOutput output={output} />
-      <XTaskError error={error} />
-    </Container>
+        <XBoundary boundary={<span />} show={sessionID !== ""}>
+          <Label>SessionID: {sessionID}</Label>
+        </XBoundary>
+
+        <XTaskContent content={content} />
+        <XTaskOutput output={output} />
+        <XTaskError error={outputErr} />
+      </XBoundary>
+    </React.Fragment>
   );
 };
 

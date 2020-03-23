@@ -11,7 +11,7 @@ const XTaskOutput = ({ output }: Params) => (
       <Icon name="envelope open outline" />
       <Header.Content>Output</Header.Content>
     </Header>
-    <Segment raised attached>
+    <Segment raised attached style={{ overflow: 'auto' }}>
       <pre>{output !== null ? output : "No Output Available"}</pre>
     </Segment>
   </React.Fragment>

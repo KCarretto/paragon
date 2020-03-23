@@ -63,6 +63,7 @@ type Job @goModel(model: "github.com/kcarretto/paragon/ent.Job") {
   name: String
   creationTime: Time
   content: String
+  staged: Boolean
 
   tasks(input: Filter): [Task]
   tags(input: Filter): [Tag]
@@ -148,6 +149,7 @@ input CreateJobRequest {
   name: String!
   content: String!
   sessionID: String
+  stage: Boolean
 
   targets: [ID!]
   tags: [ID!]
@@ -161,6 +163,11 @@ input CreateTagRequest {
 input ApplyTagRequest {
   tagID: ID!
   entID: ID!
+}
+
+input ApplyTagToTargetsRequest {
+  tagID: ID!
+  targets: [ID!]
 }
 
 input RemoveTagRequest {
@@ -260,17 +267,22 @@ input LikeEventRequest {
   id: ID!
 }
 
+input QueueJobRequest {
+  id: ID!
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
 
   # Job Mutations
   createJob(input: CreateJobRequest): Job!
+  queueJob(input: QueueJobRequest): Job!
 
   # Tag Mutations
   createTag(input: CreateTagRequest): Tag!
   applyTagToTask(input: ApplyTagRequest): Task!
-  applyTagToTarget(input: ApplyTagRequest): Target!
+  applyTagToTargets(input: ApplyTagToTargetsRequest): [Target!]
   applyTagToJob(input: ApplyTagRequest): Job!
   removeTagFromTask(input: RemoveTagRequest): Task!
   removeTagFromTarget(input: RemoveTagRequest): Target!

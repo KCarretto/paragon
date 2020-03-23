@@ -8,11 +8,11 @@ RUN apt-get update \
     && mkdir /tmp/goinstall \
     && cd /tmp/goinstall \
     && go mod init goinstall \
+    && GOPATH=/go/tools go get golang.org/x/tools/gopls@latest \
     && GOPATH=/go/tools go get -u -v \
-    golang.org/x/tools/gopls@master \
     github.com/ramya-rao-a/go-outline \
     github.com/acroca/go-symbols \
-    github.com/uudashr/gopkgs/cmd/gopkgs \
+    github.com/uudashr/gopkgs/... \
     golang.org/x/tools/cmd/guru \
     golang.org/x/tools/cmd/gorename \
     github.com/cweill/gotests/... \

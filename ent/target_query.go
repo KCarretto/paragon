@@ -95,14 +95,14 @@ func (tq *TargetQuery) QueryCredentials() *CredentialQuery {
 	return query
 }
 
-// First returns the first Target entity in the query. Returns *ErrNotFound when no target was found.
+// First returns the first Target entity in the query. Returns *NotFoundError when no target was found.
 func (tq *TargetQuery) First(ctx context.Context) (*Target, error) {
 	ts, err := tq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(ts) == 0 {
-		return nil, &ErrNotFound{target.Label}
+		return nil, &NotFoundError{target.Label}
 	}
 	return ts[0], nil
 }
@@ -116,14 +116,14 @@ func (tq *TargetQuery) FirstX(ctx context.Context) *Target {
 	return t
 }
 
-// FirstID returns the first Target id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Target id in the query. Returns *NotFoundError when no id was found.
 func (tq *TargetQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = tq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{target.Label}
+		err = &NotFoundError{target.Label}
 		return
 	}
 	return ids[0], nil
@@ -148,9 +148,9 @@ func (tq *TargetQuery) Only(ctx context.Context) (*Target, error) {
 	case 1:
 		return ts[0], nil
 	case 0:
-		return nil, &ErrNotFound{target.Label}
+		return nil, &NotFoundError{target.Label}
 	default:
-		return nil, &ErrNotSingular{target.Label}
+		return nil, &NotSingularError{target.Label}
 	}
 }
 
@@ -173,9 +173,9 @@ func (tq *TargetQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{target.Label}
+		err = &NotFoundError{target.Label}
 	default:
-		err = &ErrNotSingular{target.Label}
+		err = &NotSingularError{target.Label}
 	}
 	return
 }
@@ -340,8 +340,13 @@ func (tq *TargetQuery) Select(field string, fields ...string) *TargetSelect {
 
 func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 	var (
-		nodes []*Target = []*Target{}
-		_spec           = tq.querySpec()
+		nodes       = []*Target{}
+		_spec       = tq.querySpec()
+		loadedTypes = [3]bool{
+			tq.withTasks != nil,
+			tq.withTags != nil,
+			tq.withCredentials != nil,
+		}
 	)
 	_spec.ScanValues = func() []interface{} {
 		node := &Target{config: tq.config}
@@ -354,6 +359,7 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
+		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
@@ -379,13 +385,13 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.target_id
+			fk := n.target_tasks
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "target_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "target_tasks" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_tasks" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Tasks = append(node.Edges.Tasks, n)
 		}
@@ -425,7 +431,7 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -470,13 +476,13 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.target_id
+			fk := n.target_credentials
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "target_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "target_credentials" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_credentials" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Credentials = append(node.Edges.Credentials, n)
 		}

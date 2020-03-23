@@ -1,11 +1,11 @@
 package main
 
 import (
-	"net/http"
 	"os"
 
 	"github.com/kcarretto/paragon/graphql"
-	"github.com/kcarretto/paragon/pkg/c2"
+	"github.com/kcarretto/paragon/pkg/agent/c2"
+	"github.com/kcarretto/paragon/pkg/agent/transport/http"
 
 	"go.uber.org/zap"
 )
@@ -36,7 +36,7 @@ func getLogger() (logger *zap.Logger) {
 }
 
 func main() {
-	logger := getLogger()
+	logger := getLogger().Named("c2")
 
 	// C2 Server Address
 	httpAddr := "127.0.0.1:8080"
@@ -52,21 +52,18 @@ func main() {
 
 	// Initialize Server
 	srv := &c2.Server{
+		Log: logger,
 		Teamserver: &graphql.Client{
 			Service: "pg-c2",
 			URL:     teamserverURL,
 		},
 	}
+	httpSvc := &http.ServerTransport{
+		Log:    logger.Named("transport.http"),
+		Server: srv,
+	}
 
-	// Setup routes
-	router := http.NewServeMux()
-	router.Handle("/", srv)
-	router.HandleFunc("/status", srv.ServeStatus)
-
-	handler := withLogging(logger.Named("http"), router)
-
-	logger.Info("Starting HTTP Server", zap.String("addr", httpAddr))
-	if err := http.ListenAndServe(httpAddr, handler); err != nil {
+	if err := httpSvc.ListenAndServe(httpAddr); err != nil {
 		panic(err)
 	}
 }

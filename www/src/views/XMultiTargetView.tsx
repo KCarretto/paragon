@@ -1,8 +1,8 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader } from "semantic-ui-react";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary, XCardGroup } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XNoTargetsFound } from "../components/target";
 import XTargetCard from "../components/target/XTargetCard";
 import { Target } from "../graphql/models";
@@ -32,6 +32,7 @@ export const MULTI_TARGET_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
     }
@@ -43,41 +44,32 @@ type MultiTargetQueryResponse = {
 };
 
 const XMultiTargetView = () => {
-  const { called, loading, error, data } = useQuery<MultiTargetQueryResponse>(
-    MULTI_TARGET_QUERY,
-    {
-      pollInterval: 5000
-    }
-  );
+  const { loading, error, data: { targets = [] } = {} } = useQuery<
+    MultiTargetQueryResponse
+  >(MULTI_TARGET_QUERY, {
+    pollInterval: 5000
+  });
 
-  const showCards = () => {
-    if (!data || !data.targets || data.targets.length < 1) {
-      return <XNoTargetsFound />;
-    }
-    return (
-      <Card.Group centered itemsPerRow={4}>
-        {data.targets.map(target => (
-          <XTargetCard key={target.id} {...target} />
-        ))}
-      </Card.Group>
-    );
-  };
+  const whenLoading = (
+    <XLoadingMessage title="Loading Targets" msg="Fetching target list" />
+  );
+  const whenEmpty = <XNoTargetsFound />;
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
-      <Loader disabled={!called || !loading} />
+    <React.Fragment>
       <XErrorMessage title="Error Loading Targets" err={error} />
-      {showCards()}
-    </Container>
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <XBoundary boundary={whenEmpty} show={targets && targets.length > 0}>
+          <XCardGroup>
+            {targets &&
+              targets.map(target => (
+                <XTargetCard key={target.id} {...target} />
+              ))}
+          </XCardGroup>
+        </XBoundary>
+      </XBoundary>
+    </React.Fragment>
   );
 };
-
-// XTargetCardGroup.propTypes = {
-//     targets: PropTypes.arrayOf(PropTypes.shape({
-//         id: PropTypes.number.isRequired,
-//         name: PropTypes.string.isRequired,
-//         tags: PropTypes.arrayOf(PropTypes.string),
-//     })).isRequired,
-// };
 
 export default XMultiTargetView;

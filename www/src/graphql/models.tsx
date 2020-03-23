@@ -39,6 +39,11 @@ export type ApplyTagRequest = {
   entID: Scalars['ID'],
 };
 
+export type ApplyTagToTargetsRequest = {
+  tagID: Scalars['ID'],
+  targets?: Maybe<Array<Scalars['ID']>>,
+};
+
 export type ChangeNameRequest = {
   name: Scalars['String'],
 };
@@ -55,6 +60,7 @@ export type CreateJobRequest = {
   name: Scalars['String'],
   content: Scalars['String'],
   sessionID?: Maybe<Scalars['String']>,
+  stage?: Maybe<Scalars['Boolean']>,
   targets?: Maybe<Array<Scalars['ID']>>,
   tags?: Maybe<Array<Scalars['ID']>>,
   prev?: Maybe<Scalars['ID']>,
@@ -155,6 +161,7 @@ export type Job = {
   name?: Maybe<Scalars['String']>,
   creationTime?: Maybe<Scalars['Time']>,
   content?: Maybe<Scalars['String']>,
+  staged?: Maybe<Scalars['Boolean']>,
   tasks?: Maybe<Array<Maybe<Task>>>,
   tags?: Maybe<Array<Maybe<Tag>>>,
   next?: Maybe<Job>,
@@ -195,10 +202,11 @@ export type Mutation = {
   failCredential: Credential,
   /** Job Mutations */
   createJob: Job,
+  queueJob: Job,
   /** Tag Mutations */
   createTag: Tag,
   applyTagToTask: Task,
-  applyTagToTarget: Target,
+  applyTagToTargets?: Maybe<Array<Target>>,
   applyTagToJob: Job,
   removeTagFromTask: Task,
   removeTagFromTarget: Target,
@@ -240,6 +248,11 @@ export type MutationCreateJobArgs = {
 };
 
 
+export type MutationQueueJobArgs = {
+  input?: Maybe<QueueJobRequest>
+};
+
+
 export type MutationCreateTagArgs = {
   input?: Maybe<CreateTagRequest>
 };
@@ -250,8 +263,8 @@ export type MutationApplyTagToTaskArgs = {
 };
 
 
-export type MutationApplyTagToTargetArgs = {
-  input?: Maybe<ApplyTagRequest>
+export type MutationApplyTagToTargetsArgs = {
+  input?: Maybe<ApplyTagToTargetsRequest>
 };
 
 
@@ -487,6 +500,10 @@ export type QueryEventArgs = {
 
 export type QueryEventsArgs = {
   input?: Maybe<Filter>
+};
+
+export type QueueJobRequest = {
+  id: Scalars['ID'],
 };
 
 export type RemoveAdminRequest = {

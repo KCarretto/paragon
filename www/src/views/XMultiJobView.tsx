@@ -1,15 +1,16 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { Card, Container, Loader } from "semantic-ui-react";
 import { XJobCard, XNoJobsFound } from "../components/job";
-import { XErrorMessage } from "../components/messages";
+import { XBoundary, XCardGroup } from "../components/layout";
+import { XErrorMessage, XLoadingMessage } from "../components/messages";
 
 export const MULTI_JOB_QUERY = gql`
   {
     jobs {
       id
       name
+      staged
 
       tags {
         id
@@ -23,6 +24,7 @@ export const MULTI_JOB_QUERY = gql`
         claimTime
         execStartTime
         execStopTime
+        error
 
         target {
           id
@@ -32,6 +34,7 @@ export const MULTI_JOB_QUERY = gql`
         job {
           id
           name
+          staged
         }
       }
     }
@@ -39,29 +42,29 @@ export const MULTI_JOB_QUERY = gql`
 `;
 
 const XMultiJobView = () => {
-  const { called, loading, error, data } = useQuery(MULTI_JOB_QUERY, {
-    pollInterval: 5000
-  });
-
-  const showCards = () => {
-    if (!data || !data.jobs || data.jobs.length < 1) {
-      return <XNoJobsFound />;
+  const { loading, error, data: { jobs = [] } = {} } = useQuery(
+    MULTI_JOB_QUERY,
+    {
+      pollInterval: 5000
     }
-    return (
-      <Card.Group centered itemsPerRow={4}>
-        {data.jobs.map(job => (
-          <XJobCard key={job.id} {...job} />
-        ))}
-      </Card.Group>
-    );
-  };
+  );
+
+  const whenLoading = (
+    <XLoadingMessage title="Loading Jobs" msg="Fetching job list" />
+  );
+  const whenEmpty = <XNoJobsFound />;
 
   return (
-    <Container fluid style={{ padding: "20px" }}>
-      <Loader disabled={!called || !loading} />
+    <React.Fragment>
       <XErrorMessage title="Error Loading Jobs" err={error} />
-      {showCards()}
-    </Container>
+      <XBoundary boundary={whenLoading} show={!loading}>
+        <XBoundary boundary={whenEmpty} show={jobs && jobs.length > 0}>
+          <XCardGroup>
+            {jobs && jobs.map(job => <XJobCard key={job.id} {...job} />)}
+          </XCardGroup>
+        </XBoundary>
+      </XBoundary>
+    </React.Fragment>
   );
 };
 

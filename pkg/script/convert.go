@@ -8,11 +8,29 @@ import (
 	"go.starlark.net/starlark"
 )
 
+// ConvertToStarlark provides an exported function for converting starlark values
+func ConvertToStarlark(value interface{}) (starlark.Value, error) {
+	return convertToStarlark(value)
+}
+
+
 func convertToStarlark(value interface{}) (starlark.Value, error) {
 	if value == nil {
 		return starlark.None, nil
 	}
 	switch v := value.(type) {
+	case starlark.Value:
+		return v, nil
+	case errTuple:
+		var starlarkErr starlark.Value = starlark.None
+		if v.err != nil {
+			starlarkErr = starlark.String(v.err.Error())
+		}
+		retVal, err := convertToStarlark(v.val)
+		if err != nil {
+			return starlark.None, fmt.Errorf("failed to convert contained value: %w", err)
+		}
+		return starlark.Tuple{retVal, starlarkErr}, nil
 	case bool:
 		return starlark.Bool(v), nil
 	case int:
@@ -29,6 +47,8 @@ func convertToStarlark(value interface{}) (starlark.Value, error) {
 		return starlark.Float(v), nil
 	case string:
 		return starlark.String(v), nil
+	case error:
+		return starlark.String(v.Error()), nil
 	default:
 		reflectV := reflect.ValueOf(value)
 		switch reflectV.Kind() {

@@ -1,91 +1,120 @@
 package agent
 
 import (
+	"bytes"
 	"context"
+	"fmt"
+	"sync"
 	"time"
 
-	"github.com/kcarretto/paragon/pkg/c2"
+	"github.com/kcarretto/paragon/pkg/agent/transport"
 
+	types "github.com/gogo/protobuf/types"
 	"go.uber.org/zap"
 )
 
-// A Sender is responsible for transporting messages to a server.
-type Sender interface {
-	Send(ServerMessageWriter, Message) error
-}
-
-// A Receiver is responsible for handling messages received from a server.
-type Receiver interface {
-	Receive(MessageWriter, ServerMessage)
-}
-
-// An Agent communicates with server(s) using the configured transport.
+// Agent provides a standard flow for receiving tasks, writing results, and sending output.
 type Agent struct {
-	Receiver
-	Log        *zap.Logger
-	Metadata   *c2.AgentMetadata
-	Transports []Transport
+	transport.TaskExecutor
+	transport.AgentMessageWriter
 
+	Log         *zap.Logger
+	Metadata    transport.AgentMetadata
 	MaxIdleTime time.Duration
-	lastSend    time.Time
+
+	wg sync.WaitGroup
 }
 
-// Send messages to a server using the configured transports. Returns ErrNoTransports if all fail or
-// if none are configured.
-func (agent Agent) Send(w ServerMessageWriter, msg Message) error {
-	// Don't send empty messages unless it has been at least MaxIdleTime since the last send.
-	if msg.IsEmpty() && time.Since(agent.lastSend) <= agent.MaxIdleTime {
-		return nil
-	}
+// Run the agent, which will block until the provided context has been canceled.
+func (agent *Agent) Run(ctx context.Context) {
+	agent.collectMetadata()
 
-	agent.Log.Debug("Agent sending message", zap.Reflect("agent_msg", msg))
-
-	// Attempt to send using available transports.
-	for _, transport := range agent.Transports {
-		if err := transport.Send(w, msg); err != nil {
-			transport.Log.Error(
-				"Failed to send message using transport",
-				zap.Error(err),
-				zap.Reflect("transport", transport),
-			)
-			continue
-		}
-
-		// When send is successful, update the timestamp
-		agent.lastSend = time.Now()
-
-		// Sleep the transport's interval on success
-		transport.Sleep()
-
-		return nil
-	}
-
-	return ErrNoTransports
-}
-
-// Run the agent, sending agent messages to a server using configured transports.
-func (agent Agent) Run(ctx context.Context) error {
-	agent.Log.Debug("Starting agent execution")
-	agentMsg := Message{
-		Metadata: agent.Metadata,
-	}
+	checkinTicker := time.NewTicker(agent.MaxIdleTime)
+	defer checkinTicker.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			var srvMsg ServerMessage
-
-			if err := agent.Send(&srvMsg, agentMsg); err != nil {
-				return err
-			}
-			agent.Log.Debug("Agent received message", zap.Reflect("srv_msg", srvMsg))
-
-			agentMsg = Message{
-				Metadata: agent.Metadata,
-			}
-			agent.Receive(&agentMsg, srvMsg)
+			agent.wg.Wait()
+			return
+		case <-checkinTicker.C:
+			agent.sendMessage(ctx, transport.AgentMessage{Metadata: &agent.Metadata})
+			break
 		}
 	}
+}
+
+// WriteServerMessage will spawn go routines to execute each task provided by the server.
+func (agent *Agent) WriteServerMessage(ctx context.Context, msg transport.ServerMessage) {
+	for _, t := range msg.Tasks {
+		if t == nil {
+			continue
+		}
+
+		agent.wg.Add(1)
+		go func(task *transport.Task) {
+			defer agent.wg.Done()
+
+			result := agent.runTask(ctx, task)
+
+			agent.sendMessage(ctx, transport.AgentMessage{
+				Metadata: &agent.Metadata,
+				Results: []*transport.TaskResult{
+					&result,
+				},
+			})
+		}(t)
+	}
+}
+
+func (agent *Agent) sendMessage(ctx context.Context, msg transport.AgentMessage) {
+	if err := agent.WriteAgentMessage(ctx, agent, msg); err != nil {
+		agent.Log.Error("failed to send agent message",
+			zap.Error(err),
+		)
+		return
+	}
+	agent.Log.Debug("successfully sent agent message")
+}
+
+func (agent *Agent) runTask(ctx context.Context, task *transport.Task) (result transport.TaskResult) {
+	// Set result ID
+	result.Id = task.Id
+
+	// Set execution start time
+	start := time.Now()
+	result.ExecStartTime = &types.Timestamp{
+		Seconds: start.Unix(),
+		Nanos:   int32(start.Nanosecond()),
+	}
+
+	// Set error if task execution causes panic
+	defer func() {
+		if err := recover(); err != nil {
+			result.Error = fmt.Sprintf("task execution resulting in panic: %v", err)
+		}
+	}()
+
+	// Set output after task execution is finished
+	output := new(bytes.Buffer)
+	defer func() {
+		result.Output = output.String()
+	}()
+
+	// Set execution stop time after task execution is finished
+	defer func() {
+		stop := time.Now()
+		result.ExecStopTime = &types.Timestamp{
+			Seconds: stop.Unix(),
+			Nanos:   int32(stop.Nanosecond()),
+		}
+	}()
+
+	// Execute the task, setting the error if necessary
+	if err := agent.ExecuteTask(ctx, output, task); err != nil {
+		result.Error = err.Error()
+	}
+
+	agent.Log.Debug("Agent completed task execution", zap.Int64("task_id", task.Id))
+	return
 }

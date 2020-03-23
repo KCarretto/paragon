@@ -33,6 +33,11 @@ type ApplyTagRequest struct {
 	EntID int `json:"entID"`
 }
 
+type ApplyTagToTargetsRequest struct {
+	TagID   int   `json:"tagID"`
+	Targets []int `json:"targets"`
+}
+
 type ChangeNameRequest struct {
 	Name string `json:"name"`
 }
@@ -49,6 +54,7 @@ type CreateJobRequest struct {
 	Name      string  `json:"name"`
 	Content   string  `json:"content"`
 	SessionID *string `json:"sessionID"`
+	Stage     *bool   `json:"stage"`
 	Targets   []int   `json:"targets"`
 	Tags      []int   `json:"tags"`
 	Prev      *int    `json:"prev"`
@@ -97,6 +103,10 @@ type LikeEventRequest struct {
 }
 
 type MakeAdminRequest struct {
+	ID int `json:"id"`
+}
+
+type QueueJobRequest struct {
 	ID int `json:"id"`
 }
 

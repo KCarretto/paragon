@@ -17,3 +17,13 @@ code {
   border: 0 !important;
   resize: none !important;
 }
+
+.monaco-editor .parameter-hints-widget {
+  /* margin-left: 5vw; */
+  margin-top: 10vh;
+}
+
+.XEditor {
+  min-height: 50vh;
+  height: 100%;
+}

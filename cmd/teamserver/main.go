@@ -9,6 +9,9 @@ import (
 
 	"github.com/kcarretto/paragon/pkg/auth"
 	"github.com/kcarretto/paragon/pkg/teamserver"
+	"github.com/kcarretto/paragon/pkg/pprof"
+
+	// "github.com/pkg/profile"
 	"go.uber.org/zap"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
@@ -45,10 +48,7 @@ func init() {
 }
 
 // ServeHTTP handles http requests for the Teamserver.
-func ServeHTTP(logger *zap.Logger, addr string, svc *teamserver.Service) error {
-	router := http.NewServeMux()
-	svc.HTTP(router)
-
+func ServeHTTP(logger *zap.Logger, addr string, svc http.Handler) error {
 	defer func() {
 		logger.Info("Teamserver Stopped",
 			zap.Duration("uptime", time.Since(start)),
@@ -60,7 +60,7 @@ func ServeHTTP(logger *zap.Logger, addr string, svc *teamserver.Service) error {
 		zap.Duration("start_latency", time.Since(start)),
 	)
 
-	return serve(addr, router)
+	return serve(addr, svc)
 }
 
 func main() {
@@ -95,7 +95,17 @@ func main() {
 		},
 	}
 
-	if err := ServeHTTP(logger.Named("http"), HTTPAddr, svc); err != nil {
+	router := http.NewServeMux()
+	svc.HTTP(router)
+	if p := os.Getenv("PG_ENABLE_PPROF"); p != "" {
+        pprofSVC := &pprof.Service{
+			Auth: authenticator,
+			Log: logger.Named("pprof"),
+		}
+		pprofSVC.HTTP(router)
+	}
+
+	if err := ServeHTTP(logger.Named("http"), HTTPAddr, router); err != nil {
 		logger.Fatal("HTTP server failure", zap.Error(err))
 	}
 }

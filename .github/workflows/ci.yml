@@ -1,0 +1,120 @@
+on: [push, pull_request, release]
+name: CI
+jobs:
+  test:
+    name: Go Test
+    strategy:
+      matrix:
+        go-version: [1.13.x, 1.14.x]
+        platform: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: ${{ matrix.go-version }}
+      - name: Checkout Code
+        uses: actions/checkout@v2
+      - name: Run Tests
+        run: go test -v -coverpkg=./... -covermode=atomic -coverprofile=coverage.out ./...
+      - name: Send Test Coverage
+        if: matrix.platform == 'ubuntu-latest'
+        env:
+          COVERALLS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          GO111MODULE=off go get github.com/mattn/goveralls
+          $(go env GOPATH)/bin/goveralls -coverprofile=coverage.out -service=github
+
+  build:
+    name: Go Build
+    needs: [test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.14.x
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Build Artifacts
+        run: |
+          export GO111MODULE=on
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/linux/bundle ./cmd/bundle
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/linux/renegade ./cmd/renegade
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/linux/c2 ./cmd/c2
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/linux/worker ./cmd/worker
+          GOOS=linux   GOARCH=amd64 go build -ldflags="-s -w" -o build/linux/teamserver ./cmd/teamserver
+
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/darwin/bundle ./cmd/bundle
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/darwin/renegade ./cmd/renegade
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/darwin/c2 ./cmd/c2
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/darwin/worker ./cmd/worker
+          GOOS=darwin  GOARCH=amd64 go build -ldflags="-s -w" -o build/darwin/teamserver ./cmd/teamserver
+
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/windows/bundle.exe ./cmd/bundle
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/windows/renegade.exe ./cmd/renegade
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/windows/c2.exe ./cmd/c2
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/windows/worker.exe ./cmd/worker
+          GOOS=windows GOARCH=amd64 go build -ldflags="-s -w" -o build/windows/teamserver.exe ./cmd/teamserver
+      - name: Upload Artifacts
+        uses: actions/upload-artifact@master
+        with:
+          name: binaries
+          path: build/
+
+  docker-agent:
+    name: Docker (agent)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/agent
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/agent.Dockerfile
+          tag_names: true
+
+  docker-c2:
+    name: Docker (c2)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/c2
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/c2.Dockerfile
+
+  docker-teamserver:
+    name: Docker (teamserver)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/teamserver
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/teamserver.Dockerfile
+
+  docker-worker:
+    name: Docker (worker)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Publish to Github Registry
+        uses: elgohr/Publish-Docker-Github-Action@master
+        with:
+          name: kcarretto/paragon/worker
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          dockerfile: ./docker/worker.Dockerfile

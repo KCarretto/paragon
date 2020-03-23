@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -40,7 +41,7 @@ func (err Error) Error() string {
 type Request struct {
 	Operation string      `json:"operationName"`
 	Query     string      `json:"query"`
-	Variables interface{} `json:"variables"`
+	Variables interface{} `json:"variables,omitempty"`
 }
 
 // A Client can be used to request GraphQL queries and mutations using HTTP.
@@ -100,7 +101,6 @@ func (client *Client) Do(ctx context.Context, request Request, dst interface{}) 
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Received response from teamserver: %s\n", string(tstData))
 
 	// Decode the response
 	// data := json.NewDecoder(httpResp.Body)
@@ -155,6 +155,47 @@ func (client *Client) ClaimTasks(ctx context.Context, vars models.ClaimTasksRequ
 	return resp.Data.Tasks, nil
 }
 
+// ClaimTask with the provided ID.
+func (client *Client) ClaimTask(ctx context.Context, id int) (*ent.Task, error) {
+	// Build request
+	req := Request{
+		Operation: "ClaimTask",
+		Query: `
+		mutation ClaimTask($id: ID!) {
+			claimTask(id: $id) {
+			  id
+			  content
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Task *ent.Task `json:"claimTask"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Response from teamserver: %+v\n", resp)
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+
+	// Return claimed task
+	return resp.Data.Task, nil
+}
+
 // SubmitTaskResult updates a task with execution output.
 func (client *Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTaskResultRequest) error {
 	// Build request
@@ -189,7 +230,172 @@ func (client *Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTa
 	return nil
 }
 
+// CreateTarget creates a target, but may error if it already exists.
+func (client *Client) CreateTarget(ctx context.Context, vars models.CreateTargetRequest) (*ent.Target, error) {
+	// Build request
+	req := Request{
+		Operation: "CreateTarget",
+		Query: `
+		mutation CreateTarget($params: CreateTargetRequest!) {
+			target: createTarget(input: $params) {
+				id
+				name
+				primaryIP
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"params": vars,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Target *ent.Target `json:"target"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+	if resp.Data.Target == nil {
+		return nil, fmt.Errorf("no target data returned from mutation")
+	}
+
+	return resp.Data.Target, nil
+}
+
+// ListTags provides a map of name to tag for all existing tags.
+func (client *Client) ListTags(ctx context.Context) (map[string]*ent.Tag, error) {
+	// Build request
+	req := Request{
+		Operation: "ListTags",
+		Query: `
+		query ListTags {
+			tags {
+			  id
+			  name
+			}
+		}`,
+		Variables: map[string]interface{}{},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Tags []*ent.Tag `json:"tags"`
+		} `json:"data"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Collect non-nil tags into map
+	tags := make(map[string]*ent.Tag, len(resp.Data.Tags))
+	for _, tag := range resp.Data.Tags {
+		if tag == nil {
+			continue
+		}
+
+		tags[tag.Name] = tag
+	}
+
+	return tags, nil
+}
+
+// CreateTag will create a tag, but may error if the tag already exists.
+func (client *Client) CreateTag(ctx context.Context, vars models.CreateTagRequest) (*ent.Tag, error) {
+	// Build request
+	req := Request{
+		Operation: "CreateTag",
+		Query: `
+		mutation CreateTag($params: CreateTagRequest!) {
+			tag: createTag(input: $params) {
+			  id
+			  name
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"params": vars,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Tag *ent.Tag `json:"tag"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+	if resp.Data.Tag == nil {
+		return nil, fmt.Errorf("no tag data returned from mutation")
+	}
+
+	return resp.Data.Tag, nil
+}
+
+// CreateTags ensures that the provided set of tags exists and creates any that do not yet exist. If
+// duplicate tag names are provided, the tag will only be created once.
+func (client *Client) CreateTags(ctx context.Context, names ...string) (map[string]*ent.Tag, error) {
+	// Prevent query if no names are specified
+	if len(names) < 1 {
+		return make(map[string]*ent.Tag, 0), nil
+	}
+
+	// Get a map of existing tags
+	tagMap, err := client.ListTags(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Create tags that don't exist yet
+	for _, name := range names {
+		// Skip if the tag already exists
+		if _, exists := tagMap[name]; exists {
+			continue
+		}
+
+		// Otherwise, create it
+		tag, err := client.CreateTag(ctx, models.CreateTagRequest{
+			Name: name,
+		})
+		if err != nil {
+			return nil, fmt.Errorf("failed to create tag %q: %w", name, err)
+		}
+
+		// Prevent it from being created again
+		tagMap[name] = tag
+	}
+
+	return tagMap, nil
+}
+
 func (client *Client) sign(msg []byte) ([]byte, error) {
+	// If nil, try loading from the environment
+	if client.PublicKey == nil || client.PrivateKey == nil {
+		client.PublicKey, client.PrivateKey = client.keyFromEnv()
+	}
+
+	// Still nil, generate a keypair
 	if client.PublicKey == nil || client.PrivateKey == nil {
 		pubKey, privKey, err := ed25519.GenerateKey(nil)
 		if err != nil {
@@ -198,5 +404,26 @@ func (client *Client) sign(msg []byte) ([]byte, error) {
 		client.PublicKey = pubKey
 		client.PrivateKey = privKey
 	}
+
+	// Sign the message using the client's private key
 	return client.PrivateKey.Sign(nil, msg, crypto.Hash(0))
+}
+
+func (client *Client) keyFromEnv() (ed25519.PublicKey, ed25519.PrivateKey) {
+	if key := os.Getenv("PG_SVC_KEY"); key != "" {
+		parts := strings.Split(key, ":")
+		if len(parts) != 2 {
+			panic(fmt.Errorf("invalid format for PG_SVC_KEY, expected b64PubKey:b64PrivKey"))
+		}
+		pubKey, err := base64.StdEncoding.DecodeString(parts[0])
+		if err != nil {
+			panic(fmt.Errorf("invalid base64 provided for PubKey in PG_SVC_KEY: %w", err))
+		}
+		privKey, err := base64.StdEncoding.DecodeString(parts[1])
+		if err != nil {
+			panic(fmt.Errorf("invalid base64 provided for PrivKey in PG_SVC_KEY: %w", err))
+		}
+		return pubKey, privKey
+	}
+	return nil, nil
 }

@@ -5,6 +5,7 @@ import * as React from "react";
 import { useState } from "react";
 import {
   Button,
+  Checkbox,
   Form,
   Grid,
   Header,
@@ -13,12 +14,12 @@ import {
   Message,
   Modal
 } from "semantic-ui-react";
-import { Tag, Target } from "../../graphql/models";
+import { Target } from "../../graphql/models";
 import { MULTI_JOB_QUERY, MULTI_TARGET_QUERY } from "../../views";
 import {
   useModal,
-  XScriptEditor,
-  XTagTypeahead,
+  XEditor,
+  XServiceTypeahead,
   XTargetTypeahead
 } from "../form";
 
@@ -28,9 +29,16 @@ export const QUEUE_JOB_MUTATION = gql`
     $content: String!
     $tags: [ID!]
     $targets: [ID!]
+    $stage: Boolean
   ) {
     createJob(
-      input: { name: $name, content: $content, tags: $tags, targets: $targets }
+      input: {
+        name: $name
+        content: $content
+        tags: $tags
+        targets: $targets
+        stage: $stage
+      }
     ) {
       id
     }
@@ -51,8 +59,10 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
   const [content, setContent] = useState<string>(
     '\n# Enter your script here!\ndef main():\n\tprint("Hello World")'
   );
-  const [tags, setTags] = useState<Tag[]>([]);
+  // const [tags, setTags] = useState<Tag[]>([]);
+  const [serviceTag, setServiceTag] = useState(null);
   const [targets, setTargets] = useState<Target[]>([]);
+  const [stage, setStage] = useState<boolean>(false);
 
   const [queueJob, { called, loading }] = useMutation(QUEUE_JOB_MUTATION, {
     refetchQueries: [{ query: MULTI_JOB_QUERY }, { query: MULTI_TARGET_QUERY }]
@@ -62,8 +72,9 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
     let vars = {
       name: name,
       content: content,
-      tags: tags,
-      targets: targets
+      tags: serviceTag ? [serviceTag] : [],
+      targets: targets,
+      stage: stage
     };
 
     queueJob({
@@ -103,31 +114,47 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
       <Modal.Header>{header ? header : "Queue a Job"}</Modal.Header>
       <Modal.Content>
         <Grid verticalAlign="middle" stackable container columns={"equal"}>
-          <Grid.Column>
-            <Input
-              label="Job Name"
-              icon="cube"
-              fluid
-              placeholder="Enter job name"
-              name="name"
-              value={name}
-              onChange={(e, { value }) => setName(value)}
-            />
-          </Grid.Column>
+          <Grid.Row>
+            <Grid.Column>
+              <Input
+                label="Job Name"
+                icon="cube"
+                fluid
+                placeholder="Enter job name"
+                name="name"
+                value={name}
+                onChange={(e, { value }) => setName(value)}
+              />
+            </Grid.Column>
 
-          <Grid.Column>
-            <XTagTypeahead
+            <Grid.Column>
+              <XServiceTypeahead
+                labeled
+                value={serviceTag}
+                onChange={(e, { value }) => setServiceTag(value)}
+              />
+              {/* <XTagTypeahead
               labeled
               onChange={(e, { value }) => setTags(value)}
-            />
-          </Grid.Column>
+            /> */}
+            </Grid.Column>
 
-          <Grid.Column>
-            <XTargetTypeahead
-              labeled
-              onChange={(e, { value }) => setTargets(value)}
-            />
-          </Grid.Column>
+            <Grid.Column>
+              <XTargetTypeahead
+                labeled
+                onChange={(e, { value }) => setTargets(value)}
+              />
+            </Grid.Column>
+          </Grid.Row>
+          <Grid.Row>
+            <Grid.Column>
+              <Checkbox
+                label="Stage this job"
+                onChange={() => setStage(!stage)}
+                checked={stage}
+              />
+            </Grid.Column>
+          </Grid.Row>
         </Grid>
 
         <Header inverted attached="top" size="large">
@@ -135,9 +162,12 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
           {name ? name : "Script"}
         </Header>
         <Form.Field
-          control={XScriptEditor}
-          content={content}
-          onChange={(e, { value }) => setContent(value)}
+          control={XEditor}
+          value={content}
+          onChange={(e, value) => setContent(value)}
+          // control={XScriptEditor}
+          // content={content}
+          // onChange={(e, { value }) => setContent(value)}
         />
         <Message
           error
@@ -149,7 +179,7 @@ const XJobQueueModal = ({ header, openOnStart }: JobQueueModalParams) => {
       </Modal.Content>
       <Modal.Actions>
         <Form.Button style={{ marginBottom: "10px" }} positive floated="right">
-          Queue
+          {stage ? "Stage Job" : "Queue"}
         </Form.Button>
       </Modal.Actions>
     </Modal>

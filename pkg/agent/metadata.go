@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/kcarretto/paragon/pkg/c2"
-
 	"github.com/denisbrodbeck/machineid"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -16,8 +14,8 @@ import (
 // AgentVersion represents a unique agent version string to identify the agent.
 const AgentVersion string = "paragon-v0.1.1"
 
-// CollectMetadata about the system and populate the agent with the gathered information.
-func CollectMetadata(agent *Agent) {
+// collectMetadata about the system and update the agent with the gathered information.
+func (agent *Agent) collectMetadata() {
 	if agent == nil {
 		return
 	}
@@ -25,33 +23,28 @@ func CollectMetadata(agent *Agent) {
 		agent.Log = zap.NewNop()
 	}
 
-	// Initialize agent metadata for the first time.
-	if agent.Metadata == nil {
-		// Generate session ID once
-		var sessionID string
+	// Generate session ID once
+	if agent.Metadata.SessionID == "" {
 		sessionUUID, err := uuid.NewRandom()
 		if err != nil {
 			agent.Log.Error("Failed to generate session ID", zap.Error(err))
-			sessionID = fmt.Sprintf("session_id_err_%d", time.Now().Unix())
+			agent.Metadata.SessionID = fmt.Sprintf("session_id_err_%d", time.Now().Unix())
 		} else {
-			sessionID = sessionUUID.String()
-		}
-
-		// Generate machine UUID once
-		machineUUID, err := machineid.ID()
-		if err != nil {
-			agent.Log.Error("Failed to collect machine UUID", zap.Error(err))
-		}
-
-		// Initial (static) agent metadata
-		agent.Metadata = &c2.AgentMetadata{
-			AgentID:     AgentVersion,
-			SessionID:   sessionID,
-			MachineUUID: machineUUID,
+			agent.Metadata.SessionID = sessionUUID.String()
 		}
 	}
 
-	// Update hostname
+	// Generate machine UUID once
+	if agent.Metadata.MachineUUID == "" {
+		machineUUID, err := machineid.ID()
+		if err != nil {
+			agent.Log.Warn("Failed to collect machine UUID", zap.Error(err))
+		} else {
+			agent.Metadata.MachineUUID = machineUUID
+		}
+	}
+
+	// Always update hostname
 	hostname, err := os.Hostname()
 	if err != nil {
 		agent.Log.Error("Failed to collect machine hostname", zap.Error(err))
@@ -67,24 +60,31 @@ func CollectMetadata(agent *Agent) {
 		return
 	}
 
-	// Update primary MAC address
+	// Always update primary MAC address
 	if mac := iface.HardwareAddr.String(); mac != "" {
 		agent.Metadata.PrimaryMAC = mac
 	}
 
-	// Update primary IP
+	// Always update primary IP
 	ipAddrs, err := iface.Addrs()
 	if err != nil || len(ipAddrs) < 1 {
-		agent.Log.Error("Failed to collect machine primary IP")
+		agent.Log.Error("Failed to collect machine primary IP", zap.Error(err))
 		return
 	}
 
-	ip, _, err := net.ParseCIDR(ipAddrs[0].String())
-	if err != nil {
-		agent.Log.Error("Failed to collect machine primary IP")
-		return
+	for _, ipAddr := range ipAddrs {
+		ip, _, err := net.ParseCIDR(ipAddr.String())
+		if err != nil {
+			agent.Log.Error("Failed to collect machine primary IP", zap.Error(err))
+			continue
+		}
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() {
+			continue
+		}
+		agent.Metadata.PrimaryIP = ip.String()
+		break
 	}
-	agent.Metadata.PrimaryIP = ip.String()
+
 }
 
 // isMulticastCapable reports whether ifi is an IP multicast-capable
@@ -157,7 +157,7 @@ func routableIP(network string, ip net.IP) net.IP {
 			return ip
 		}
 	case "ip6":
-		if ip.IsLoopback() { // addressing scope of the loopback address depends on each implementation
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() { // addressing scope of the loopback address depends on each implementation
 			return nil
 		}
 		if ip := ip.To16(); ip != nil && ip.To4() == nil {

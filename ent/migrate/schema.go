@@ -18,10 +18,10 @@ var (
 	CredentialsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "principal", Type: field.TypeString},
-		{Name: "secret", Type: field.TypeString, Size: 500},
+		{Name: "secret", Type: field.TypeString, Size: 3000},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"password", "key", "certificate"}},
 		{Name: "fails", Type: field.TypeInt, Default: credential.DefaultFails},
-		{Name: "target_id", Type: field.TypeInt, Nullable: true},
+		{Name: "target_credentials", Type: field.TypeInt, Nullable: true},
 	}
 	// CredentialsTable holds the schema information for the "credentials" table.
 	CredentialsTable = &schema.Table{
@@ -43,18 +43,18 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "creation_time", Type: field.TypeTime},
 		{Name: "kind", Type: field.TypeEnum, Enums: []string{"CREATE_JOB", "CREATE_TAG", "APPLY_TAG_TO_TASK", "APPLY_TAG_TO_TARGET", "APPLY_TAG_TO_JOB", "REMOVE_TAG_FROM_TASK", "REMOVE_TAG_FROM_TARGET", "REMOVE_TAG_FROM_JOB", "CREATE_TARGET", "SET_TARGET_FIELDS", "DELETE_TARGET", "ADD_CREDENTIAL_FOR_TARGET", "UPLOAD_FILE", "CREATE_LINK", "SET_LINK_FIELDS", "ACTIVATE_USER", "CREATE_USER", "MAKE_ADMIN", "REMOVE_ADMIN", "CHANGE_NAME", "ACTIVATE_SERVICE", "CREATE_SERVICE", "LIKE_EVENT", "OTHER"}},
-		{Name: "event_job_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_file_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_credential_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_link_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_tag_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_target_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_task_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_user_id", Type: field.TypeInt, Nullable: true},
-		{Name: "event_event_id", Type: field.TypeInt, Unique: true, Nullable: true},
-		{Name: "event_service_id", Type: field.TypeInt, Nullable: true},
-		{Name: "svc_owner_id", Type: field.TypeInt, Nullable: true},
-		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_job", Type: field.TypeInt, Nullable: true},
+		{Name: "event_file", Type: field.TypeInt, Nullable: true},
+		{Name: "event_credential", Type: field.TypeInt, Nullable: true},
+		{Name: "event_link", Type: field.TypeInt, Nullable: true},
+		{Name: "event_tag", Type: field.TypeInt, Nullable: true},
+		{Name: "event_target", Type: field.TypeInt, Nullable: true},
+		{Name: "event_task", Type: field.TypeInt, Nullable: true},
+		{Name: "event_user", Type: field.TypeInt, Nullable: true},
+		{Name: "event_event", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "event_service", Type: field.TypeInt, Nullable: true},
+		{Name: "service_events", Type: field.TypeInt, Nullable: true},
+		{Name: "user_events", Type: field.TypeInt, Nullable: true},
 	}
 	// EventsTable holds the schema information for the "events" table.
 	EventsTable = &schema.Table{
@@ -171,9 +171,10 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "creation_time", Type: field.TypeTime},
-		{Name: "content", Type: field.TypeString},
-		{Name: "prev_id", Type: field.TypeInt, Unique: true, Nullable: true},
-		{Name: "owner_id", Type: field.TypeInt, Nullable: true},
+		{Name: "content", Type: field.TypeString, Size: 2147483647},
+		{Name: "staged", Type: field.TypeBool},
+		{Name: "job_next", Type: field.TypeInt, Unique: true, Nullable: true},
+		{Name: "user_jobs", Type: field.TypeInt, Nullable: true},
 	}
 	// JobsTable holds the schema information for the "jobs" table.
 	JobsTable = &schema.Table{
@@ -183,14 +184,14 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:  "jobs_jobs_next",
-				Columns: []*schema.Column{JobsColumns[4]},
+				Columns: []*schema.Column{JobsColumns[5]},
 
 				RefColumns: []*schema.Column{JobsColumns[0]},
 				OnDelete:   schema.SetNull,
 			},
 			{
 				Symbol:  "jobs_users_jobs",
-				Columns: []*schema.Column{JobsColumns[5]},
+				Columns: []*schema.Column{JobsColumns[6]},
 
 				RefColumns: []*schema.Column{UsersColumns[0]},
 				OnDelete:   schema.SetNull,
@@ -203,7 +204,7 @@ var (
 		{Name: "alias", Type: field.TypeString, Unique: true},
 		{Name: "expiration_time", Type: field.TypeTime, Nullable: true},
 		{Name: "clicks", Type: field.TypeInt, Default: link.DefaultClicks},
-		{Name: "file_id", Type: field.TypeInt, Nullable: true},
+		{Name: "file_links", Type: field.TypeInt, Nullable: true},
 	}
 	// LinksTable holds the schema information for the "links" table.
 	LinksTable = &schema.Table{
@@ -226,7 +227,7 @@ var (
 		{Name: "name", Type: field.TypeString},
 		{Name: "pub_key", Type: field.TypeString, Unique: true, Size: 250},
 		{Name: "is_activated", Type: field.TypeBool, Default: service.DefaultIsActivated},
-		{Name: "service_tag_id", Type: field.TypeInt, Nullable: true},
+		{Name: "service_tag", Type: field.TypeInt, Nullable: true},
 	}
 	// ServicesTable holds the schema information for the "services" table.
 	ServicesTable = &schema.Table{
@@ -285,8 +286,8 @@ var (
 		{Name: "output", Type: field.TypeString, Nullable: true, Size: 2147483647},
 		{Name: "error", Type: field.TypeString, Nullable: true},
 		{Name: "session_id", Type: field.TypeString, Nullable: true, Size: 250},
-		{Name: "job_id", Type: field.TypeInt, Nullable: true},
-		{Name: "target_id", Type: field.TypeInt, Nullable: true},
+		{Name: "job_tasks", Type: field.TypeInt, Nullable: true},
+		{Name: "target_tasks", Type: field.TypeInt, Nullable: true},
 	}
 	// TasksTable holds the schema information for the "tasks" table.
 	TasksTable = &schema.Table{
@@ -319,7 +320,7 @@ var (
 		{Name: "session_token", Type: field.TypeString, Nullable: true, Size: 1000},
 		{Name: "is_activated", Type: field.TypeBool, Default: user.DefaultIsActivated},
 		{Name: "is_admin", Type: field.TypeBool, Default: user.DefaultIsAdmin},
-		{Name: "event_liker_id", Type: field.TypeInt, Nullable: true},
+		{Name: "event_likers", Type: field.TypeInt, Nullable: true},
 	}
 	// UsersTable holds the schema information for the "users" table.
 	UsersTable = &schema.Table{

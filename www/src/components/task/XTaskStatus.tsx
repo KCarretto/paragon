@@ -13,10 +13,21 @@ interface TaskStatus {
 }
 
 class XTaskStatus implements TaskStatus {
+  static STAGED: TaskState = {
+    text: "Staged, waiting to be put into the queue.",
+    icon: { name: "wait", color: "violet" }
+  };
   // Task is waiting to be retrieved
   static QUEUED: TaskState = {
     text: "In the queue, waiting to be claimed for execution.",
-    icon: { name: "wait", color: "violet" }
+    icon: {
+      name: "circle notched",
+      color: "violet",
+      className: "XCircleIcon",
+      bordered: false,
+      circular: true,
+      loading: true
+    }
   };
   // Task has been sent to a target
   static CLAIMED: TaskState = {
@@ -64,6 +75,9 @@ class XTaskStatus implements TaskStatus {
   };
 
   public getStatus(t: Task): TaskState {
+    if (t.job && t.job.staged) {
+      return XTaskStatus.STAGED;
+    }
     if (t.error) {
       return XTaskStatus.ERRORED;
     } else if (t.execStopTime) {

@@ -187,14 +187,17 @@ func (auth UserAuthenticator) Authenticate(w http.ResponseWriter, req *http.Requ
 	// Load requested user object, error if no matching user found
 	user, err := auth.Graph.User.Get(req.Context(), userID)
 	if err != nil {
+		ClearUserSession(w)
 		return nil, fmt.Errorf("failed to load user: %w", err)
 	}
 	if user == nil {
+		ClearUserSession(w)
 		return nil, ErrNotAuthenticated
 	}
 
 	// Authenticate as requested user
 	if !token.Equals(Secret(user.SessionToken)) {
+		ClearUserSession(w)
 		return nil, ErrNotAuthenticated
 	}
 
