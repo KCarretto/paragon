@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
@@ -71,6 +72,16 @@ func (f Type) Move(dstPath string) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return f.File.Move(dstPath)
+}
+
+// Close provides a concurrency-safe method to close the underlying File.
+func (f Type) Close() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if closer, ok := f.File.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
 }
 
 /*

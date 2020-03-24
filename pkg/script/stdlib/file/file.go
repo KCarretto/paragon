@@ -34,6 +34,7 @@ func Library() script.Library {
 		"remove":  script.Func(remove),
 		"chown":   script.Func(chown),
 		"chmod":   script.Func(chmod),
+		"close":   script.Func(fclose),
 	}
 }
 

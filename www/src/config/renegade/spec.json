@@ -80,6 +80,12 @@
             { "name": "mode", "type": "String" }
           ],
           "retvals": [{ "name": "err", "type": "Error" }]
+        },
+        {
+          "name": "close",
+          "doc": "Close a file if possible, otherwise this operation is a no-op.",
+          "params": [{ "name": "f", "type": "File" }],
+          "retvals": null
         }
       ]
     },
@@ -156,6 +162,19 @@
       "functions": [
         {
           "name": "replaceString",
+          "doc": "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong.",
+          "params": [
+            { "name": "oldString", "type": "String" },
+            { "name": "pattern", "type": "String" },
+            { "name": "newString", "type": "String" }
+          ],
+          "retvals": [
+            { "name": "replacedString", "type": "String" },
+            { "name": "err", "type": "Error" }
+          ]
+        },
+        {
+          "name": "replace",
           "doc": "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong.",
           "params": [
             { "name": "oldString", "type": "String" },
@@ -266,6 +285,15 @@
           "name": "noError",
           "doc": "NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect.",
           "params": [{ "name": "err", "type": "starlark.Value" }],
+          "retvals": null
+        },
+        {
+          "name": "equal",
+          "doc": "Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.",
+          "params": [
+            { "name": "expected", "type": "starlark.Value" },
+            { "name": "actual", "type": "starlark.Value" }
+          ],
           "retvals": null
         }
       ]

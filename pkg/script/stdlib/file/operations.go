@@ -38,6 +38,27 @@ func move(parser script.ArgParser) (script.Retval, error) {
 	return Move(f, dstPath), nil
 }
 
+// Close a file if possible, otherwise this operation is a no-op.
+//
+//go:generate go run ../gendoc.go -lib file -func close -param f@File  -doc "Close a file if possible, otherwise this operation is a no-op."
+//
+// @callable:	file.close
+// @param:		file	@File
+//
+// @usage:		file.close(f)
+func Close(file Type) {
+	Type.Close(file)
+}
+
+func fclose(parser script.ArgParser) (script.Retval, error) {
+	f, err := parseFileParam(parser, 0)
+	if err != nil {
+		return nil, err
+	}
+	Close(f)
+	return nil, nil
+}
+
 // Name returns file's basename.
 //
 //go:generate go run ../gendoc.go -lib file -func name -param f@File -retval name@String -doc "Name returns file's basename."
