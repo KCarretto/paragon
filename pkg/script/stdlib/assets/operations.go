@@ -94,5 +94,5 @@ func (env *Environment) drop(parser script.ArgParser) (script.Retval, error) {
 		perms = "0644"
 	}
 	retErr := env.Drop(f, dstPath, perms)
-	return script.WithError(nil, retErr), nil
+	return retErr, nil
 }
