@@ -56,11 +56,19 @@ func (env *Environment) openFile(parser script.ArgParser) (script.Retval, error)
 // @retval:		err 	@Error
 //
 // @usage:		f, err = assets.drop(bot, "/path/to/bot_dst", "0755")
-func (env *Environment) Drop(f file.Type, dstPath, perms string) error {
+func (env *Environment) Drop(f file.Type, dstPath, perms string) (err error) {
 	tmpFile, err := sys.OpenFile(strconv.Itoa(rand.Int()))
 	if err != nil {
 		return err
 	}
+	defer func() {
+		if err == nil {
+			return
+		}
+		if removeErr := file.Remove(tmpFile); removeErr != nil {
+			err = fmt.Errorf("failed to remove file after move failure: %w: %w", err, removeErr)
+		}
+	}()
 	err = file.Copy(f, tmpFile)
 	if err != nil {
 		return err
