@@ -66,7 +66,7 @@ func (env *Environment) Drop(f file.Type, dstPath, perms string) (err error) {
 			return
 		}
 		if removeErr := file.Remove(tmpFile); removeErr != nil {
-			err = fmt.Errorf("failed to remove file after move failure: %w: %w", err, removeErr)
+			err = fmt.Errorf("failed to remove file after move failure: %w: %v", err, removeErr)
 		}
 	}()
 	err = file.Copy(f, tmpFile)
