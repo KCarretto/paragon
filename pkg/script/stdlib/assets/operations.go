@@ -73,10 +73,6 @@ func (env *Environment) Drop(f file.Type, dstPath, perms string) error {
 	if err != nil {
 		return err
 	}
-	err = file.Remove(tmpFile)
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
