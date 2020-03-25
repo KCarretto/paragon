@@ -225,6 +225,16 @@
             { "name": "f", "type": "File" },
             { "name": "err", "type": "Error" }
           ]
+        },
+        {
+          "name": "drop",
+          "doc": "Drop will take a given file, copy it to disk, optionaly set the permissions move it to a given destination, and clean up the temp file created. The default perms are '0755'.",
+          "params": [
+            { "name": "f", "type": "File" },
+            { "name": "dstPath", "type": "String" },
+            { "name": "perms", "type": "String" }
+          ],
+          "retvals": [{ "name": "err", "type": "Error" }]
         }
       ]
     },
