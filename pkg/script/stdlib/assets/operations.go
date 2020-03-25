@@ -61,7 +61,7 @@ func (env *Environment) Drop(f file.Type, dstPath, perms string) error {
 	if err != nil {
 		return err
 	}
-	err = file.Copy(tmpFile, f)
+	err = file.Copy(f, tmpFile)
 	if err != nil {
 		return err
 	}
