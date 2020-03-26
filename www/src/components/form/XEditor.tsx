@@ -1,6 +1,7 @@
 import * as monaco from "monaco-editor";
 import * as React from "react";
 import { useEffect } from "react";
+import { Icon, Menu } from "semantic-ui-react";
 import * as Renegade from "../../config/renegade";
 
 Renegade.Register();
@@ -67,7 +68,78 @@ loading={
     });
   }, []);
 
-  return container;
+  return (
+    <React.Fragment>
+      {/* <div className="XEditorFileMenu"> */}
+      <Menu
+        compact
+        inverted
+        attached="top"
+        style={{
+          borderRadius: "0px",
+          backgroundColor: "rgba(63, 63, 63, 1)"
+        }}
+      >
+        <Menu.Item
+          active
+          fitted="vertically"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            alert("OPEN FILE");
+          }}
+        >
+          <span className="XEditorFileMenuItemLabel">main.rg</span>
+          <Icon
+            name="delete"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              alert("CLOSE FILE");
+            }}
+          />
+        </Menu.Item>
+        <Menu.Item
+          fitted="vertically"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            alert("OPEN FILE");
+          }}
+        >
+          <span className="XEditorFileMenuItemLabel">deploy_nomnom.rg</span>
+          <Icon
+            name="delete"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              alert("CLOSE FILE");
+            }}
+          />
+        </Menu.Item>
+        <Menu.Item
+          fitted="vertically"
+          onClick={e => {
+            e.preventDefault();
+            e.stopPropagation();
+            alert("OPEN FILE");
+          }}
+        >
+          <span className="XEditorFileMenuItemLabel">deploy_paragon.rg</span>
+          <Icon
+            name="delete"
+            onClick={e => {
+              e.preventDefault();
+              e.stopPropagation();
+              alert("CLOSE FILE");
+            }}
+          />
+        </Menu.Item>
+      </Menu>
+      {/* </div> */}
+      {container}
+    </React.Fragment>
+  );
 };
 
 export default XEditor;

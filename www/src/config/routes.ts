@@ -14,6 +14,11 @@ export const Routes: RouteConfig[] = [
     icon: React.createElement(Icon, { name: "road" })
   },
   {
+    title: "Run",
+    link: "/run",
+    icon: React.createElement(Icon, { name: "code" })
+  },
+  {
     title: "Targets",
     link: "/targets",
     icon: React.createElement(Icon, { name: "desktop" })
