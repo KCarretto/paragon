@@ -114,8 +114,8 @@ func (f Type) Hash() (uint32, error) {
 	return 0, fmt.Errorf("file type is unhashable")
 }
 
-// parseFileParam from starlark input
-func parseFileParam(parser script.ArgParser, index int) (Type, error) {
+// ParseParam from starlark input
+func ParseParam(parser script.ArgParser, index int) (Type, error) {
 	val, err := parser.GetParam(index)
 	if err != nil {
 		return Type{}, err

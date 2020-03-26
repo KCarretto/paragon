@@ -25,7 +25,7 @@ func Move(file Type, dstPath string) error {
 }
 
 func move(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func Close(file Type) {
 }
 
 func fclose(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func Name(file Type) string {
 }
 
 func name(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -96,7 +96,7 @@ func Content(file Type) (string, error) {
 }
 
 func content(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -124,7 +124,7 @@ func Write(file Type, content string) error {
 }
 
 func write(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -155,11 +155,11 @@ func Copy(src Type, dst Type) error {
 }
 
 func copy(parser script.ArgParser) (script.Retval, error) {
-	src, err := parseFileParam(parser, 0)
+	src, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
-	dst, err := parseFileParam(parser, 1)
+	dst, err := ParseParam(parser, 1)
 	if err != nil {
 		return nil, err
 	}
@@ -181,7 +181,7 @@ func Remove(file Type) error {
 }
 
 func remove(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -243,7 +243,7 @@ func Chown(file Type, username, group string) error {
 }
 
 func chown(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func Chmod(file Type, mode string) error {
 }
 
 func chmod(parser script.ArgParser) (script.Retval, error) {
-	f, err := parseFileParam(parser, 0)
+	f, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}

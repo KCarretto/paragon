@@ -21,7 +21,7 @@ func NoError(err starlark.Value) error {
 	if !ok {
 		errString, ok := err.(starlark.String)
 		if !ok {
-			return fmt.Errorf("assertion failed: error is not None")
+			return fmt.Errorf("assertion failed: error is not None: %+v", err)
 		}
 		return fmt.Errorf("assertion failed: error is not None: %v", errString)
 	}
