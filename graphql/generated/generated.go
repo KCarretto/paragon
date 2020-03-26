@@ -1649,6 +1649,7 @@ scalar Time
 input Filter {
   offset: Int
   limit: Int
+  search: String
 }
 
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
@@ -9574,6 +9575,12 @@ func (ec *executionContext) unmarshalInputFilter(ctx context.Context, obj interf
 		case "limit":
 			var err error
 			it.Limit, err = ec.unmarshalOInt2ᚖint(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "search":
+			var err error
+			it.Search, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
