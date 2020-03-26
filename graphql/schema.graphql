@@ -13,6 +13,7 @@ scalar Time
 input Filter {
   offset: Int
   limit: Int
+  search: String
 }
 
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {

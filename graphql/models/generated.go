@@ -94,8 +94,9 @@ type FailCredentialRequest struct {
 }
 
 type Filter struct {
-	Offset *int `json:"offset"`
-	Limit  *int `json:"limit"`
+	Offset *int    `json:"offset"`
+	Limit  *int    `json:"limit"`
+	Search *string `json:"search"`
 }
 
 type LikeEventRequest struct {
