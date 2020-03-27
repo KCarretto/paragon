@@ -76,6 +76,7 @@ loading={
         inverted
         attached="top"
         style={{
+          marginTop: "0px",
           borderRadius: "0px",
           backgroundColor: "rgba(63, 63, 63, 1)"
         }}

@@ -10,7 +10,6 @@ import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
 import {
   XAdminView,
-  XCodeView,
   XJobView,
   XLogin,
   XMultiFileView,
@@ -18,6 +17,7 @@ import {
   XMultiTagView,
   XMultiTargetView,
   XProfileView,
+  XRunView,
   XTargetView,
   XTaskView
 } from "./views";
@@ -102,14 +102,8 @@ const App = () => {
             <XPrivateRoute
               authorized={authz}
               exact
-              path="/run/:id"
-              component={XCodeView}
-            />
-            <XPrivateRoute
-              authorized={authz}
-              exact
               path="/run"
-              component={XCodeView}
+              component={XRunView}
             />
             <XPrivateRoute
               authorized={authz}

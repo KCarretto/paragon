@@ -20,6 +20,31 @@ import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XTaskCard, XTaskCardDisplayType } from "../components/task";
 import { CreateJobRequest, Job, Tag } from "../graphql/models";
 
+export const RUN_QUERY = gql`
+  query Runs($name: String!) {
+    jobs(input: { search: $name }) {
+      id
+      staged
+      tasks {
+        id
+        queueTime
+        claimTime
+        execStartTime
+        execStopTime
+        content
+        output
+        error
+        sessionID
+
+        target {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
 export const JOB_QUERY = gql`
   query Job($id: ID!) {
     job(id: $id) {
