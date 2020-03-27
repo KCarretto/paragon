@@ -4,6 +4,7 @@ import { XJobEditor, XJobResults } from "../components/job";
 
 const XRunView = () => {
   const [name, setName] = useState<string>("Untitled Job...");
+
   return (
     <React.Fragment>
       <XJobEditor name={name} setName={setName} />

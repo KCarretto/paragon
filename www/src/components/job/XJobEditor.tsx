@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Button, Grid, Icon, Input, Segment } from "semantic-ui-react";
 import { CreateJobRequest } from "../../graphql/models";
 import { XEditor, XTargetTypeahead } from "../form";
+import { RUNS_QUERY } from "./XJobResults";
 
 export const CREATE_JOB_MUTATION = gql`
   mutation CreateJob(
@@ -40,7 +41,9 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
   const [targets, setTargets] = useState<string[]>([]);
   const [stage, setStage] = useState<boolean>(false);
 
-  const [createJob, { loading }] = useMutation(CREATE_JOB_MUTATION);
+  const [createJob, { loading }] = useMutation(CREATE_JOB_MUTATION, {
+    refetchQueries: [{ query: RUNS_QUERY, variables: { name: name } }]
+  });
 
   const onSubmit = (vars: CreateJobRequest) => {
     createJob({
