@@ -15,6 +15,7 @@ type Target struct {
 func (Target) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
+			Unique().
 			Comment("The name of the Target"),
 		field.String("PrimaryIP").
 			Comment("The IP Address for the primary interface of the Target"),

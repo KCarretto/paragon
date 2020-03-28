@@ -259,7 +259,7 @@ var (
 	// TargetsColumns holds the columns for the "targets" table.
 	TargetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
-		{Name: "name", Type: field.TypeString},
+		{Name: "name", Type: field.TypeString, Unique: true},
 		{Name: "primary_ip", Type: field.TypeString},
 		{Name: "machine_uuid", Type: field.TypeString, Unique: true, Nullable: true, Size: 250},
 		{Name: "public_ip", Type: field.TypeString, Nullable: true},
