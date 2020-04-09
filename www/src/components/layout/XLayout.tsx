@@ -2,7 +2,6 @@ import * as React from "react";
 import { FunctionComponent } from "react";
 import { XSidebar } from ".";
 import { RouteConfig } from "../../config/routes";
-import XToolbar from "./XToolbar";
 
 type LayoutProps = {
   routeMap: RouteConfig[];
@@ -13,8 +12,6 @@ type LayoutProps = {
 
 const XLayout: FunctionComponent<LayoutProps> = props => (
   <React.Fragment>
-    <XToolbar />
-
     <XSidebar
       routeMap={props.routeMap}
       userID={props.userID}

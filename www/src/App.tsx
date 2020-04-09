@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
+import { SemanticToastContainer } from "react-semantic-toasts";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
 import { XLayout, XPrivateRoute } from "./components/layout";
@@ -76,6 +77,11 @@ const App = () => {
 
   return (
     <XGraphProvider>
+      <SemanticToastContainer
+        // position="bottom-right"
+        animation="fade up"
+        className="XToastContainer"
+      />
       <Router>
         <Switch>
           <Route path="/login">

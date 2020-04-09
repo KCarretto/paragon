@@ -12,7 +12,7 @@ import {
   Radio
 } from "semantic-ui-react";
 import XClipboard from "../components/form/XClipboard";
-import { XBoundary, XCardGroup } from "../components/layout";
+import { XBoundary, XCardGroup, XToolbar } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { Service, User } from "../graphql/models";
 
@@ -200,6 +200,8 @@ const XAdminView = () => {
   const showUsers = () => {
     return (
       <React.Fragment>
+        <XToolbar />
+
         <Accordion.Title active={openUsers} index={0} onClick={handleClick}>
           <Header icon as="h2" textAlign="center">
             <Icon name="dropdown" />

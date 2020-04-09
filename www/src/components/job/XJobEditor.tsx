@@ -2,7 +2,9 @@ import { useMutation } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
+import { toast } from "react-semantic-toasts";
 import { Button, Grid, Icon, Input, Segment } from "semantic-ui-react";
+import { XJobSettingsModal } from ".";
 import { CreateJobRequest } from "../../graphql/models";
 import { XEditor, XTargetTypeahead } from "../form";
 import { RUNS_QUERY } from "./XJobResults";
@@ -42,13 +44,63 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
   const [stage, setStage] = useState<boolean>(false);
 
   const [createJob, { loading }] = useMutation(CREATE_JOB_MUTATION, {
+    errorPolicy: "all",
     refetchQueries: [{ query: RUNS_QUERY, variables: { name: name } }]
   });
 
   const onSubmit = (vars: CreateJobRequest) => {
+    let valid = true;
+    if (!targets || targets.length < 1) {
+      toast({
+        title: "凸(¬‿¬)凸 Must Select Targets",
+        type: "error",
+        description: "Choose some targets before running the job",
+        time: 5000
+      });
+      valid = false;
+    }
+    if (!name || name === "") {
+      toast({
+        title: "凸(¬‿¬)凸 No Job Name Provided",
+        type: "error",
+        description: "Give the job a name before running it",
+        time: 5000
+      });
+      valid = false;
+    }
+    if (!content || content === "") {
+      toast({
+        title: "凸(¬‿¬)凸 Empty Script Provided",
+        type: "error",
+        description: "We imagine you actually wanted to run something...",
+        time: 5000
+      });
+      valid = false;
+    }
+    if (!valid) {
+      return;
+    }
+
     createJob({
       variables: vars
-    });
+    })
+      .then(() => {
+        toast({
+          title: "(◠ω◠✿) Job Queued",
+          type: "success",
+          description: "Check below for execution results",
+          time: 3000
+        });
+      })
+      .catch(err => {
+        console.log("[ERROR] FAILED TO QUEUE JOB", err);
+        toast({
+          title: "(҂◡_◡) Failed to Queue Job",
+          type: "error",
+          description: `${err}`,
+          time: 5000
+        });
+      });
   };
 
   return (
@@ -60,11 +112,12 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
             <Input
               icon="code"
               iconPosition="left"
+              placeholder="Name this job..."
               transparent
               inverted
               size="huge"
               name="name"
-              value={name || "Untitled Job..."}
+              value={name}
               onChange={(e, { value }) => setName(value)}
             />
           </Grid.Column>
@@ -83,6 +136,7 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
               <Button
                 animated
                 color="blue"
+                loading={loading}
                 onClick={e =>
                   onSubmit({
                     name: name,
@@ -98,7 +152,13 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
                   <Icon name="arrow right" />
                 </Button.Content>
               </Button>
-              <Button icon="cogs" color="teal" />
+              <XJobSettingsModal
+                serviceTag={serviceTag}
+                setServiceTag={setServiceTag}
+                stage={stage}
+                setStage={setStage}
+              />
+              {/* <Button icon="cogs" color="teal" /> */}
             </Button.Group>
           </Grid.Column>
         </Grid>

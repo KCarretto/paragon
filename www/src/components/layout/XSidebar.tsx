@@ -1,10 +1,8 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
-import { HotKeys } from "react-hotkeys";
 import { Link } from "react-router-dom";
 import { Container, Icon, Menu, Responsive, Sidebar } from "semantic-ui-react";
 import { RouteConfig } from "../../config/routes";
-import { XJobQueueModal } from "../job";
 import "./index.css";
 
 type SidebarProps = {
@@ -84,35 +82,22 @@ const desktopSidebar = (props: SidebarProps) => (
 
 const XSidebar: FunctionComponent<SidebarProps> = props => {
   // let userId = Cookies.get("pg-userid");
-  let modal = <span />;
-  const createJob = React.useCallback(() => {
-    modal = <XJobQueueModal openOnStart={true} />;
-  }, []);
 
-  const handlers = {
-    CREATE_JOB: createJob
-  };
   return (
     <Sidebar.Pushable className="XLayout">
       {mobileSidebar(props)}
       {desktopSidebar(props)}
       <Sidebar.Pusher>
-        <HotKeys handlers={handlers}>
-          <div className="XContent">
-            <Responsive maxWidth={799}>
-              <Container style={{ paddingLeft: "5vw" }}>
-                {props.children}
-                {modal}
-              </Container>
-            </Responsive>
-            <Responsive minWidth={800}>
+        <div className="XContent">
+          <Responsive maxWidth={799}>
+            <Container style={{ paddingLeft: "5vw" }}>
               {props.children}
-              {modal}
-            </Responsive>
-          </div>
+            </Container>
+          </Responsive>
+          <Responsive minWidth={800}>{props.children}</Responsive>
+        </div>
 
-          {/* </Container> */}
-        </HotKeys>
+        {/* </Container> */}
       </Sidebar.Pusher>
     </Sidebar.Pushable>
   );
