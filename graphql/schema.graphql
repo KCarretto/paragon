@@ -272,9 +272,14 @@ input QueueJobRequest {
   id: ID!
 }
 
+input DeleteCredentialRequest {
+  id: ID!
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
+  deleteCredential(input: DeleteCredentialRequest): Boolean!
 
   # Job Mutations
   createJob(input: CreateJobRequest): Job!

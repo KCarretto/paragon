@@ -85,6 +85,10 @@ type DeactivateUserRequest struct {
 	ID int `json:"id"`
 }
 
+type DeleteCredentialRequest struct {
+	ID int `json:"id"`
+}
+
 type DeleteTargetRequest struct {
 	ID int `json:"id"`
 }
