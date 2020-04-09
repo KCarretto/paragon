@@ -16,9 +16,8 @@ const XLayout: FunctionComponent<LayoutProps> = props => (
       routeMap={props.routeMap}
       userID={props.userID}
       isAdmin={props.isAdmin}
-    >
-      {props.children}
-    </XSidebar>
+    />
+    <div className="XContent">{props.children}</div>
   </React.Fragment>
 );
 

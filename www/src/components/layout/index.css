@@ -1,23 +1,35 @@
 .XLayout {
   min-height: 100vh;
 }
-
 .XSidebar {
-  max-width: 150px;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  z-index: 1;
+  min-width: 75px;
+  width: 10vw !important;
+  max-width: 200px;
   height: 100vh;
-}
-
-.XToolbar {
-  max-height: 10vh;
+  border-radius: 0px !important;
 }
 
 .XContent {
-  min-height: 100vh;
+  /* display: flex; */
+  /* flex-grow: 1; */
+  height: 100vh;
+  width: 95vw;
+  margin-left: min(max(75px, 10vw), 200px);
+
+  /* min-height: 100vh;
   margin-left: 10vw;
   padding-top: 3vh;
   padding-bottom: 10vh;
   max-width: 90vw;
-  padding-right: 1vw;
+  padding-right: 1vw; */
+}
+
+.XToolbar {
+  max-height: 10vh;
 }
 
 .XCircleIcon {

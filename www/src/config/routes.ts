@@ -1,46 +1,45 @@
-import * as React from "react";
-import { Icon, IconProps } from "semantic-ui-react";
+import { SemanticICONS } from "semantic-ui-react/dist/commonjs/generic";
 
 export type RouteConfig = {
   title: string;
   link: string;
-  icon: React.CElement<IconProps, Icon>;
+  icon: SemanticICONS;
 };
 
 export const Routes: RouteConfig[] = [
   {
-    title: "Event Feed",
+    title: "Events",
     link: "/event_feed",
-    icon: React.createElement(Icon, { name: "road" })
+    icon: "road"
   },
   {
     title: "Run",
     link: "/run",
-    icon: React.createElement(Icon, { name: "code" })
+    icon: "code"
   },
   {
     title: "Targets",
     link: "/targets",
-    icon: React.createElement(Icon, { name: "desktop" })
+    icon: "desktop"
   },
   {
     title: "Jobs",
     link: "/jobs",
-    icon: React.createElement(Icon, { name: "cubes" })
+    icon: "cubes"
   },
   {
     title: "Tags",
     link: "/tags",
-    icon: React.createElement(Icon, { name: "tags" })
+    icon: "tags"
   },
   {
     title: "Files",
     link: "/files",
-    icon: React.createElement(Icon, { name: "gift" })
+    icon: "gift"
   },
   {
     title: "Profile",
     link: "/profile",
-    icon: React.createElement(Icon, { name: "user secret" })
+    icon: "user secret"
   }
 ];
