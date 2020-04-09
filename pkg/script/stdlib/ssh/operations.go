@@ -9,7 +9,43 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	"github.com/pkg/sftp"
+	"golang.org/x/crypto/ssh"
 )
+
+func (env *Environment) environmentFilter(configs []ssh.ClientConfig) []ssh.ClientConfig {
+	if env.RemoteUser == "" {
+		return configs
+	}
+	var newConfig []ssh.ClientConfig
+	for _, config := range configs {
+		if config.User == env.RemoteUser {
+			newConfig = append(newConfig, config)
+		}
+	}
+	return newConfig
+}
+
+// SetUser sets the RemoteUser attribute to be used in the outgoing SSH Connection. WARNING: MUST BE
+// CALLED BEFORE OTHER SSH CALLS TO WORK.
+//
+//go:generate go run ../gendoc.go -lib ssh -func setUser -param user@String -doc "SetUser sets the RemoteUser attribute to be used in the outgoing SSH Connection. WARNING: MUST BE CALLED BEFORE OTHER SSH CALLS TO WORK."
+//
+// @callable: 	ssh.setUser
+// @param: 		user 	@string
+//
+// @usage: 		ssh.setUser("root")
+func (env *Environment) SetUser(user string) {
+	env.RemoteUser = user
+}
+func (env *Environment) setUser(parser script.ArgParser) (script.Retval, error) {
+	user, err := parser.GetString(0)
+	if err != nil {
+		log.Printf("[Err] SetUser param error: %v", err)
+		return nil, err
+	}
+	env.SetUser(user)
+	return nil, nil
+}
 
 // Exec a command on the remote system using an underlying ssh session.
 //
@@ -27,7 +63,7 @@ func (env *Environment) Exec(cmd string, disown bool) (string, error) {
 		return "", fmt.Errorf("environment has no SSH connector")
 	}
 
-	client, err := env.Connector.Connect(env.RemoteHost)
+	client, err := env.Connector.Connect(env.RemoteHost, env.environmentFilter)
 	if err != nil {
 		log.Printf("[Err] Failed to connect to remote host: %v", err)
 		return "", err
@@ -79,7 +115,7 @@ func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 //
 // @usage: 		f, err = ssh.openFile("/bin/implant")
 func (env *Environment) OpenFile(filePath string) (file.Type, error) {
-	client, err := env.Connector.Connect(env.RemoteHost)
+	client, err := env.Connector.Connect(env.RemoteHost, env.environmentFilter)
 	if err != nil {
 		return file.Type{}, err
 	}

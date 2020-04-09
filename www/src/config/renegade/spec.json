@@ -211,6 +211,12 @@
             { "name": "f", "type": "File" },
             { "name": "err", "type": "Error" }
           ]
+        },
+        {
+          "name": "setUser",
+          "doc": "SetUser sets the RemoteUser attribute to be used in the outgoing SSH Connection. WARNING: MUST BE CALLED BEFORE OTHER SSH CALLS TO WORK.",
+          "params": [{ "name": "user", "type": "String" }],
+          "retvals": null
         }
       ]
     },
