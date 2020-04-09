@@ -9,7 +9,7 @@ RUN apt-get update \
     && cd /tmp/goinstall \
     && go mod init goinstall \
     && GOPATH=/go/tools go get golang.org/x/tools/gopls@latest \
-    && GOPATH=/go/tools go get -u -v \
+    && GOPATH=/go/tools go get -v \
     github.com/ramya-rao-a/go-outline \
     github.com/acroca/go-symbols \
     github.com/uudashr/gopkgs/... \
