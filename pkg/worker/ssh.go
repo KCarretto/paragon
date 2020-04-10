@@ -15,7 +15,7 @@ type SSHConnector struct {
 	client      *ssh.Client
 }
 
-func (conn *SSHConnector) Connect(host string) (*ssh.Client, error) {
+func (conn *SSHConnector) Connect(host string, filter func([]ssh.ClientConfig) []ssh.ClientConfig) (*ssh.Client, error) {
 	if conn.client != nil {
 		return conn.client, nil
 	}
@@ -26,11 +26,11 @@ func (conn *SSHConnector) Connect(host string) (*ssh.Client, error) {
 	if conn.Credentials == nil {
 		return nil, fmt.Errorf("no credentials available for host: %s", host)
 	}
-	configs := conn.configs()
+
+	configs := filter(conn.configs())
 	if configs == nil {
 		return nil, fmt.Errorf("no valid client configs could be created for host: %s", host)
 	}
-
 	for _, config := range configs {
 		log.Printf("[DBG] Connecting to %s with config %+v", host, config)
 		client, err := ssh.Dial("tcp", host, &config)

@@ -1947,6 +1947,7 @@ input QueueJobRequest {
 
 input DeleteCredentialRequest {
   id: ID!
+}
 
 input SetServiceConfigRequest {
   id: ID!
