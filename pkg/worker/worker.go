@@ -71,6 +71,11 @@ func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
 }
 
 func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent.Target, credentials []*ent.Credential) {
+	_, err := w.Graph.ClaimTask(ctx, task.ID)
+	if err != nil {
+		log.Printf("[ERR] Failed to claim task: %v", err)
+	}
+
 	output := &taskOutput{
 		ID:    task.ID,
 		Ctx:   ctx,

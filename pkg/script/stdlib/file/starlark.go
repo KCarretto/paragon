@@ -2,6 +2,7 @@ package file
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"sync"
 
@@ -73,6 +74,16 @@ func (f Type) Move(dstPath string) error {
 	return f.File.Move(dstPath)
 }
 
+// Close provides a concurrency-safe method to close the underlying File.
+func (f Type) Close() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if closer, ok := f.File.(io.Closer); ok {
+		return closer.Close()
+	}
+	return nil
+}
+
 /*
  * Starlark.Value methods
  */
@@ -103,8 +114,8 @@ func (f Type) Hash() (uint32, error) {
 	return 0, fmt.Errorf("file type is unhashable")
 }
 
-// parseFileParam from starlark input
-func parseFileParam(parser script.ArgParser, index int) (Type, error) {
+// ParseParam from starlark input
+func ParseParam(parser script.ArgParser, index int) (Type, error) {
 	val, err := parser.GetParam(index)
 	if err != nil {
 		return Type{}, err

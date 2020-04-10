@@ -8,6 +8,7 @@ import (
 func Library() script.Library {
 	return script.Library{
 		"noError": script.Func(noError),
+		"equal":   script.Func(equal),
 	}
 }
 

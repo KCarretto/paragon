@@ -21,6 +21,7 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 
 	return script.Library{
 		"openFile": script.Func(env.openFile),
+		"drop":     script.Func(env.drop),
 		// "exec":     script.Func(env.exec),
 		// "openFile": script.Func(env.openFile),
 	}
@@ -30,18 +31,3 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 func (env *Environment) Include(options ...func(*Environment)) script.Option {
 	return script.WithLibrary("assets", (*Environment).Library(env, options...))
 }
-
-// package assets
-
-// import (
-// 	"net/http"
-
-// 	"github.com/kcarretto/paragon/pkg/script"
-// )
-
-// // Import the assets library to enable scripts to load assets from the provided filesystem.
-// func Import(assets http.FileSystem) script.Library {
-// 	return script.Library{
-// 		"load": Load(assets),
-// 	}
-// }

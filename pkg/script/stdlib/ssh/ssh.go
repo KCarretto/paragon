@@ -41,8 +41,9 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	}
 
 	return script.Library{
-		"exec":     script.Func(env.exec),
-		"openFile": script.Func(env.openFile),
+		"exec":          script.Func(env.exec),
+		"openFile":      script.Func(env.openFile),
+		"getRemoteHost": script.Func(env.getRemoteHost),
 	}
 }
 

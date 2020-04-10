@@ -68,16 +68,23 @@ func (agent *Agent) collectMetadata() {
 	// Always update primary IP
 	ipAddrs, err := iface.Addrs()
 	if err != nil || len(ipAddrs) < 1 {
-		agent.Log.Error("Failed to collect machine primary IP")
+		agent.Log.Error("Failed to collect machine primary IP", zap.Error(err))
 		return
 	}
 
-	ip, _, err := net.ParseCIDR(ipAddrs[0].String())
-	if err != nil {
-		agent.Log.Error("Failed to collect machine primary IP")
-		return
+	for _, ipAddr := range ipAddrs {
+		ip, _, err := net.ParseCIDR(ipAddr.String())
+		if err != nil {
+			agent.Log.Error("Failed to collect machine primary IP", zap.Error(err))
+			continue
+		}
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() {
+			continue
+		}
+		agent.Metadata.PrimaryIP = ip.String()
+		break
 	}
-	agent.Metadata.PrimaryIP = ip.String()
+
 }
 
 // isMulticastCapable reports whether ifi is an IP multicast-capable
@@ -150,7 +157,7 @@ func routableIP(network string, ip net.IP) net.IP {
 			return ip
 		}
 	case "ip6":
-		if ip.IsLoopback() { // addressing scope of the loopback address depends on each implementation
+		if ip.IsLoopback() || ip.IsLinkLocalUnicast() { // addressing scope of the loopback address depends on each implementation
 			return nil
 		}
 		if ip := ip.To16(); ip != nil && ip.To4() == nil {

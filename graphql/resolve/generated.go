@@ -9,8 +9,14 @@ import (
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/ent/service"
+	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 	"github.com/kcarretto/paragon/graphql/generated"
 	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/auth"
@@ -255,6 +261,9 @@ func (r *fileResolver) Links(ctx context.Context, obj *ent.File, input *models.F
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(link.AliasContains(*input.Search))
+		}
 	}
 	return q.All(ctx)
 }
@@ -270,6 +279,7 @@ func (r *jobResolver) Tasks(ctx context.Context, obj *ent.Job, input *models.Fil
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		// search filter useless
 	}
 	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
@@ -281,6 +291,9 @@ func (r *jobResolver) Tags(ctx context.Context, obj *ent.Job, input *models.Filt
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(tag.NameContains(*input.Search))
 		}
 	}
 	return q.All(ctx)
@@ -309,6 +322,13 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 		AddFails(1).
 		Save(ctx)
 	return cred, err
+}
+func (r *mutationResolver) DeleteCredential(ctx context.Context, input *models.DeleteCredentialRequest) (bool, error) {
+	err := r.Graph.Credential.DeleteOneID(input.ID).Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
 }
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
 	actor := auth.GetUser(ctx)
@@ -884,6 +904,32 @@ func (r *mutationResolver) DeactivateService(ctx context.Context, input *models.
 
 	return svc, nil
 }
+func (r *mutationResolver) SetServiceConfig(ctx context.Context, input *models.SetServiceConfigRequest) (*ent.Service, error) {
+	// basically services can edit themselves and admins
+	svc := auth.GetService(ctx)
+	if svc == nil || !svc.IsActivated || svc.ID == input.ID {
+		err := auth.NewAuthorizer().
+			IsActivated().
+			IsAdmin().
+			Authorize(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	config := ""
+	if input.Config != nil {
+		config = *input.Config
+	}
+	svc, err := r.Graph.Service.UpdateOneID(input.ID).
+		SetConfig(config).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
 	actor := auth.GetUser(ctx)
 	return r.Graph.Event.UpdateOneID(input.ID).
@@ -905,6 +951,9 @@ func (r *queryResolver) Links(ctx context.Context, input *models.Filter) ([]*ent
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(link.AliasContains(*input.Search))
+		}
 	}
 	return q.All(ctx)
 }
@@ -919,6 +968,9 @@ func (r *queryResolver) Files(ctx context.Context, input *models.Filter) ([]*ent
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(file.NameContains(*input.Search))
 		}
 	}
 	return q.All(ctx)
@@ -935,6 +987,9 @@ func (r *queryResolver) Credentials(ctx context.Context, input *models.Filter) (
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(credential.PrincipalContains(*input.Search))
+		}
 	}
 	return q.All(ctx)
 }
@@ -950,8 +1005,11 @@ func (r *queryResolver) Jobs(ctx context.Context, input *models.Filter) ([]*ent.
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(job.NameContains(*input.Search))
+		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(job.FieldCreationTime)).All(ctx)
 }
 func (r *queryResolver) Tag(ctx context.Context, id int) (*ent.Tag, error) {
 	return r.Graph.Tag.Get(ctx, id)
@@ -964,6 +1022,9 @@ func (r *queryResolver) Tags(ctx context.Context, input *models.Filter) ([]*ent.
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(tag.NameContains(*input.Search))
 		}
 	}
 	return q.All(ctx)
@@ -980,6 +1041,9 @@ func (r *queryResolver) Targets(ctx context.Context, input *models.Filter) ([]*e
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(target.NameContains(*input.Search))
+		}
 	}
 	return q.All(ctx)
 }
@@ -994,6 +1058,9 @@ func (r *queryResolver) Tasks(ctx context.Context, input *models.Filter) ([]*ent
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(task.HasJobWith(job.NameContains(*input.Search)))
 		}
 	}
 	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
@@ -1013,6 +1080,9 @@ func (r *queryResolver) Users(ctx context.Context, input *models.Filter) ([]*ent
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(user.NameContains(*input.Search))
+		}
 	}
 	return q.All(ctx)
 }
@@ -1027,6 +1097,9 @@ func (r *queryResolver) Services(ctx context.Context, input *models.Filter) ([]*
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(service.NameContains(*input.Search))
 		}
 	}
 	return q.All(ctx)
@@ -1043,6 +1116,7 @@ func (r *queryResolver) Events(ctx context.Context, input *models.Filter) ([]*en
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		// ignore search filter
 	}
 	return q.Order(ent.Desc(event.FieldCreationTime)).All(ctx)
 }
@@ -1064,6 +1138,9 @@ func (r *tagResolver) Tasks(ctx context.Context, obj *ent.Tag, input *models.Fil
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(task.HasJobWith(job.NameContains(*input.Search)))
+		}
 	}
 	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
@@ -1075,6 +1152,9 @@ func (r *tagResolver) Targets(ctx context.Context, obj *ent.Tag, input *models.F
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(target.NameContains(*input.Search))
 		}
 	}
 	return q.All(ctx)
@@ -1088,8 +1168,11 @@ func (r *tagResolver) Jobs(ctx context.Context, obj *ent.Tag, input *models.Filt
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(job.NameContains(*input.Search))
+		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(job.FieldCreationTime)).All(ctx)
 }
 
 type targetResolver struct{ *Resolver }
@@ -1103,6 +1186,9 @@ func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *mode
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(task.HasJobWith(job.NameContains(*input.Search)))
+		}
 	}
 	return q.Order(ent.Desc(task.FieldLastChangedTime)).All(ctx)
 }
@@ -1115,6 +1201,9 @@ func (r *targetResolver) Tags(ctx context.Context, obj *ent.Target, input *model
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(tag.NameContains(*input.Search))
+		}
 	}
 	return q.All(ctx)
 }
@@ -1126,6 +1215,9 @@ func (r *targetResolver) Credentials(ctx context.Context, obj *ent.Target, input
 		}
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
+		}
+		if input.Search != nil {
+			q.Where(credential.PrincipalContains(*input.Search))
 		}
 	}
 	return q.All(ctx)
@@ -1159,8 +1251,11 @@ func (r *userResolver) Jobs(ctx context.Context, obj *ent.User, input *models.Fi
 		if input.Limit != nil {
 			q.Limit(*input.Limit)
 		}
+		if input.Search != nil {
+			q.Where(job.NameContains(*input.Search))
+		}
 	}
-	return q.All(ctx)
+	return q.Order(ent.Desc(job.FieldCreationTime)).All(ctx)
 }
 
 func resolveEventOwners(ctx context.Context) (userID, svcID *int) {

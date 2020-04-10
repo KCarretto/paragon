@@ -155,6 +155,47 @@ func (client *Client) ClaimTasks(ctx context.Context, vars models.ClaimTasksRequ
 	return resp.Data.Tasks, nil
 }
 
+// ClaimTask with the provided ID.
+func (client *Client) ClaimTask(ctx context.Context, id int) (*ent.Task, error) {
+	// Build request
+	req := Request{
+		Operation: "ClaimTask",
+		Query: `
+		mutation ClaimTask($id: ID!) {
+			claimTask(id: $id) {
+			  id
+			  content
+			}
+		}`,
+		Variables: map[string]interface{}{
+			"id": id,
+		},
+	}
+
+	// Prepare response
+	var resp struct {
+		Data struct {
+			Task *ent.Task `json:"claimTask"`
+		} `json:"data"`
+		Errors []Error `json:"errors"`
+	}
+
+	// Execute mutation
+	if err := client.Do(ctx, req, &resp); err != nil {
+		return nil, err
+	}
+
+	fmt.Printf("Response from teamserver: %+v\n", resp)
+
+	// Check for errors
+	if resp.Errors != nil {
+		return nil, fmt.Errorf("mutation failed: [%+v]", resp.Errors)
+	}
+
+	// Return claimed task
+	return resp.Data.Task, nil
+}
+
 // SubmitTaskResult updates a task with execution output.
 func (client *Client) SubmitTaskResult(ctx context.Context, vars models.SubmitTaskResultRequest) error {
 	// Build request

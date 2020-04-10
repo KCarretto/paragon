@@ -85,6 +85,10 @@ type DeactivateUserRequest struct {
 	ID int `json:"id"`
 }
 
+type DeleteCredentialRequest struct {
+	ID int `json:"id"`
+}
+
 type DeleteTargetRequest struct {
 	ID int `json:"id"`
 }
@@ -94,8 +98,9 @@ type FailCredentialRequest struct {
 }
 
 type Filter struct {
-	Offset *int `json:"offset"`
-	Limit  *int `json:"limit"`
+	Offset *int    `json:"offset"`
+	Limit  *int    `json:"limit"`
+	Search *string `json:"search"`
 }
 
 type LikeEventRequest struct {
@@ -124,6 +129,11 @@ type SetLinkFieldsRequest struct {
 	Alias          *string    `json:"alias"`
 	ExpirationTime *time.Time `json:"ExpirationTime"`
 	Clicks         *int       `json:"clicks"`
+}
+
+type SetServiceConfigRequest struct {
+	ID     int     `json:"id"`
+	Config *string `json:"config"`
 }
 
 type SetTargetFieldsRequest struct {

@@ -13,6 +13,7 @@ scalar Time
 input Filter {
   offset: Int
   limit: Int
+  search: String
 }
 
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
@@ -116,6 +117,7 @@ type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
   id: ID!
   name: String
   pubKey: String
+  config: String
   isActivated: Boolean
 
   tag: Tag!
@@ -271,9 +273,16 @@ input QueueJobRequest {
   id: ID!
 }
 
+input SetServiceConfigRequest {
+  id: ID!
+  config: String
+
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
+  deleteCredential(input: DeleteCredentialRequest): Boolean!
 
   # Job Mutations
   createJob(input: CreateJobRequest): Job!
@@ -314,6 +323,7 @@ type Mutation {
   # Service Mutations
   activateService(input: ActivateServiceRequest): Service!
   deactivateService(input: DeactivateServiceRequest): Service!
+  setServiceConfig(input: SetServiceConfigRequest): Service!
 
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
