@@ -226,6 +226,7 @@ var (
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString},
 		{Name: "pub_key", Type: field.TypeString, Unique: true, Size: 250},
+		{Name: "config", Type: field.TypeString, Size: 2147483647, Default: service.DefaultConfig},
 		{Name: "is_activated", Type: field.TypeBool, Default: service.DefaultIsActivated},
 		{Name: "service_tag", Type: field.TypeInt, Nullable: true},
 	}
@@ -237,7 +238,7 @@ var (
 		ForeignKeys: []*schema.ForeignKey{
 			{
 				Symbol:  "services_tags_tag",
-				Columns: []*schema.Column{ServicesColumns[4]},
+				Columns: []*schema.Column{ServicesColumns[5]},
 
 				RefColumns: []*schema.Column{TagsColumns[0]},
 				OnDelete:   schema.SetNull,
