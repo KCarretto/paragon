@@ -4,6 +4,7 @@
 
 /* Default Sidebar & Content */
 .XSidebar {
+  z-index: 100;
   position: fixed;
   top: 0;
   left: 0;
@@ -53,6 +54,14 @@
 .XToolbar {
   max-height: 10vh;
 }
+
+.XToastContainer {
+  z-index: 1000;
+  position: absolute;
+  bottom: 50px;
+  right: 50px;
+}
+
 
 .XCircleIcon {
   box-shadow: none !important;

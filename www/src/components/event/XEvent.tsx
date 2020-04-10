@@ -98,7 +98,7 @@ const XEventDescription: FunctionComponent<EventProps> = ({
         <span>
           {" "}
           added credentials for{" "}
-          <Link to={"/targets/" + event.target.id}>
+          <Link to={"/targets/" + event.target ? event.target.id : "0"}>
             {event.credential.principal}:{event.credential.secret}@
             {event.target.name}{" "}
           </Link>

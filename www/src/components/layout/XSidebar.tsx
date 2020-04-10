@@ -16,7 +16,7 @@ const getMenu = (props: SidebarProps) => (
     {props.routeMap
       ? props.routeMap.map((value: RouteConfig, index: number) => {
         return (
-          <Menu.Item as={Link} to={value.link} link style={{ display: "flex", alignItems: "center" }}>
+          <Menu.Item key={index} as={Link} to={value.link} link style={{ display: "flex", alignItems: "center" }}>
             <Icon fitted name={value.icon} size="big" />
             <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>{value.title}</b></span></Responsive>
           </Menu.Item>

@@ -21,6 +21,7 @@ const XJobSettingsModal: React.FC<{
             <XServiceTypeahead
               labeled
               value={serviceTag}
+              defaultSVC={"pg-worker"}
               onChange={(e, { value }) => setServiceTag(value)}
             />
             {/* <XTagTypeahead

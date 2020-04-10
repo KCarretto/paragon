@@ -25,7 +25,7 @@ code {
 
 .XEditor {
   min-height: 50vh;
-  height: 75vh;
+  height: 100vh;
 }
 
 .XEditorFileMenu {
@@ -45,9 +45,9 @@ code {
   margin-right: 5px;
 }
 
-.XToastContainer {
-  z-index: 10;
-  position: absolute;
-  bottom: 50px;
-  right: 50px;
+#XResultOverlay {
+  height: 50vh !important;
+  overflow: hidden !important;
+  overflow-y: hidden !important;
+  overflow-x: hidden !important;
 }

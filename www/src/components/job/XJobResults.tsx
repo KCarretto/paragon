@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import { Button, Header, Icon, Label } from "semantic-ui-react";
+import { Button, Card, Label } from "semantic-ui-react";
 import { Job, Task } from "../../graphql/models";
 import { XBoundary, XCardGroup } from "../layout";
 import { XErrorMessage, XLoadingMessage } from "../messages";
@@ -94,28 +94,8 @@ const XJobResults: React.FC<{ name?: string }> = ({ name = null }) => {
 
   return (
     <React.Fragment>
-      <Header size="large" block inverted style={{ marginTop: "0px", borderRadius: "0px", border: "0px" }}>
-        {!taskDisplay ? (
-          <Header.Content>
-            <Icon name="tasks" /> Results
-          </Header.Content>
-        ) : (
-            <Header.Content>
-              <Button
-                inverted
-                icon="arrow left"
-                onClick={() => setTaskDisplay(null)}
-              />
-            Showing results for{" "}
-              {taskDisplay.tasks[taskDisplay.active].target.name}{" "}
-              <Label basic color="blue">
-                {taskDisplay.active !== 0
-                  ? `Version ${taskDisplay.tasks.length - taskDisplay.active}`
-                  : `Latest (v${taskDisplay.tasks.length})`}
-              </Label>
-            </Header.Content>
-          )}
-      </Header>
+
+
       <XBoundary
         boundary={
           <XLoadingMessage
@@ -131,7 +111,31 @@ const XJobResults: React.FC<{ name?: string }> = ({ name = null }) => {
           }
           show={!error}
         >
-          {!taskDisplay ? ResultCards(jobs) : ResultDisplay()}
+          {taskDisplay ? <Card fluid style={{ marginTop: "0px" }}>
+            <Card.Content>
+              <Card.Header>
+                Showing results for{" "}
+                {taskDisplay.tasks[taskDisplay.active].target.name}{" "}
+              </Card.Header>
+              <Card.Meta>
+                <Button icon="arrow left" onClick={() => setTaskDisplay(null)} />
+                <Label basic color="blue">
+                  {taskDisplay.active !== 0
+                    ? `Version ${taskDisplay.tasks.length - taskDisplay.active}`
+                    : `Latest (v${taskDisplay.tasks.length})`}
+                </Label>
+                {/* {taskDisplay.active !== 0
+                ? `Version ${taskDisplay.tasks.length - taskDisplay.active}`
+                  : `Latest (v${taskDisplay.tasks.length})`} */}
+              </Card.Meta>
+              <Card.Description>
+                <XTaskResultDisplay id={taskDisplay.tasks[taskDisplay.active].id} />
+              </Card.Description>
+            </Card.Content>
+          </Card> : ResultCards(jobs)
+          }
+
+          {/* {!taskDisplay ? ResultCards(jobs) : ResultDisplay()} */}
         </XBoundary>
       </XBoundary>
     </React.Fragment>
