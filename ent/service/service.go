@@ -15,6 +15,8 @@ const (
 	FieldName = "name"
 	// FieldPubKey holds the string denoting the pubkey vertex property in the database.
 	FieldPubKey = "pub_key"
+	// FieldConfig holds the string denoting the config vertex property in the database.
+	FieldConfig = "config"
 	// FieldIsActivated holds the string denoting the isactivated vertex property in the database.
 	FieldIsActivated = "is_activated"
 
@@ -41,6 +43,7 @@ var Columns = []string{
 	FieldID,
 	FieldName,
 	FieldPubKey,
+	FieldConfig,
 	FieldIsActivated,
 }
 
@@ -62,8 +65,13 @@ var (
 	// PubKeyValidator is a validator for the "PubKey" field. It is called by the builders before save.
 	PubKeyValidator = descPubKey.Validators[0].(func(string) error)
 
+	// descConfig is the schema descriptor for Config field.
+	descConfig = fields[2].Descriptor()
+	// DefaultConfig holds the default value on creation for the Config field.
+	DefaultConfig = descConfig.Default.(string)
+
 	// descIsActivated is the schema descriptor for IsActivated field.
-	descIsActivated = fields[2].Descriptor()
+	descIsActivated = fields[3].Descriptor()
 	// DefaultIsActivated holds the default value on creation for the IsActivated field.
 	DefaultIsActivated = descIsActivated.Default.(bool)
 )

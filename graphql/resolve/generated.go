@@ -897,6 +897,32 @@ func (r *mutationResolver) DeactivateService(ctx context.Context, input *models.
 
 	return svc, nil
 }
+func (r *mutationResolver) SetServiceConfig(ctx context.Context, input *models.SetServiceConfigRequest) (*ent.Service, error) {
+	// basically services can edit themselves and admins
+	svc := auth.GetService(ctx)
+	if svc == nil || !svc.IsActivated || svc.ID == input.ID {
+		err := auth.NewAuthorizer().
+			IsActivated().
+			IsAdmin().
+			Authorize(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	config := ""
+	if input.Config != nil {
+		config = *input.Config
+	}
+	svc, err := r.Graph.Service.UpdateOneID(input.ID).
+		SetConfig(config).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
 func (r *mutationResolver) LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error) {
 	actor := auth.GetUser(ctx)
 	return r.Graph.Event.UpdateOneID(input.ID).
