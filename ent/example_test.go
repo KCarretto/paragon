@@ -141,6 +141,7 @@ func ExampleEvent() {
 		Create().
 		SetName("string").
 		SetPubKey("string").
+		SetConfig("string").
 		SetIsActivated(true).
 		SaveX(ctx)
 	log.Println("service created:", s9)
@@ -414,6 +415,7 @@ func ExampleService() {
 		Create().
 		SetName("string").
 		SetPubKey("string").
+		SetConfig("string").
 		SetIsActivated(true).
 		SetTag(t0).
 		AddEvents(e1).

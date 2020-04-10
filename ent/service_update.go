@@ -21,6 +21,7 @@ type ServiceUpdate struct {
 	config
 	Name          *string
 	PubKey        *string
+	Config        *string
 	IsActivated   *bool
 	tag           map[int]struct{}
 	events        map[int]struct{}
@@ -44,6 +45,20 @@ func (su *ServiceUpdate) SetName(s string) *ServiceUpdate {
 // SetPubKey sets the PubKey field.
 func (su *ServiceUpdate) SetPubKey(s string) *ServiceUpdate {
 	su.PubKey = &s
+	return su
+}
+
+// SetConfig sets the Config field.
+func (su *ServiceUpdate) SetConfig(s string) *ServiceUpdate {
+	su.Config = &s
+	return su
+}
+
+// SetNillableConfig sets the Config field if the given value is not nil.
+func (su *ServiceUpdate) SetNillableConfig(s *string) *ServiceUpdate {
+	if s != nil {
+		su.SetConfig(*s)
+	}
 	return su
 }
 
@@ -196,6 +211,13 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Column: service.FieldPubKey,
 		})
 	}
+	if value := su.Config; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: service.FieldConfig,
+		})
+	}
 	if value := su.IsActivated; value != nil {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
@@ -291,6 +313,7 @@ type ServiceUpdateOne struct {
 	id            int
 	Name          *string
 	PubKey        *string
+	Config        *string
 	IsActivated   *bool
 	tag           map[int]struct{}
 	events        map[int]struct{}
@@ -307,6 +330,20 @@ func (suo *ServiceUpdateOne) SetName(s string) *ServiceUpdateOne {
 // SetPubKey sets the PubKey field.
 func (suo *ServiceUpdateOne) SetPubKey(s string) *ServiceUpdateOne {
 	suo.PubKey = &s
+	return suo
+}
+
+// SetConfig sets the Config field.
+func (suo *ServiceUpdateOne) SetConfig(s string) *ServiceUpdateOne {
+	suo.Config = &s
+	return suo
+}
+
+// SetNillableConfig sets the Config field if the given value is not nil.
+func (suo *ServiceUpdateOne) SetNillableConfig(s *string) *ServiceUpdateOne {
+	if s != nil {
+		suo.SetConfig(*s)
+	}
 	return suo
 }
 
@@ -451,6 +488,13 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: service.FieldPubKey,
+		})
+	}
+	if value := suo.Config; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: service.FieldConfig,
 		})
 	}
 	if value := suo.IsActivated; value != nil {

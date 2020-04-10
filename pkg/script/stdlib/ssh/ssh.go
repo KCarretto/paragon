@@ -11,7 +11,7 @@ import (
 
 // Connector provides an ssh client connected to a remote host.
 type Connector interface {
-	Connect(remoteHost string) (*ssh.Client, error)
+	Connect(remoteHost string, filter func([]ssh.ClientConfig) []ssh.ClientConfig) (*ssh.Client, error)
 }
 
 // Environment used to configure the behaviour of calls to the ssh library.
@@ -20,6 +20,7 @@ type Environment struct {
 
 	Connector  Connector
 	RemoteHost string
+	RemoteUser string
 
 	handles []io.Closer
 }
@@ -41,8 +42,10 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	}
 
 	return script.Library{
-		"exec":     script.Func(env.exec),
-		"openFile": script.Func(env.openFile),
+		"setUser":       script.Func(env.setUser),
+		"exec":          script.Func(env.exec),
+		"openFile":      script.Func(env.openFile),
+		"getRemoteHost": script.Func(env.getRemoteHost),
 	}
 }
 

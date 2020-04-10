@@ -20,6 +20,8 @@ type Service struct {
 	Name string `json:"Name,omitempty"`
 	// PubKey holds the value of the "PubKey" field.
 	PubKey string `json:"PubKey,omitempty"`
+	// Config holds the value of the "Config" field.
+	Config string `json:"Config,omitempty"`
 	// IsActivated holds the value of the "IsActivated" field.
 	IsActivated bool `json:"IsActivated,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
@@ -68,6 +70,7 @@ func (*Service) scanValues() []interface{} {
 		&sql.NullInt64{},  // id
 		&sql.NullString{}, // Name
 		&sql.NullString{}, // PubKey
+		&sql.NullString{}, // Config
 		&sql.NullBool{},   // IsActivated
 	}
 }
@@ -101,12 +104,17 @@ func (s *Service) assignValues(values ...interface{}) error {
 	} else if value.Valid {
 		s.PubKey = value.String
 	}
-	if value, ok := values[2].(*sql.NullBool); !ok {
-		return fmt.Errorf("unexpected type %T for field IsActivated", values[2])
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Config", values[2])
+	} else if value.Valid {
+		s.Config = value.String
+	}
+	if value, ok := values[3].(*sql.NullBool); !ok {
+		return fmt.Errorf("unexpected type %T for field IsActivated", values[3])
 	} else if value.Valid {
 		s.IsActivated = value.Bool
 	}
-	values = values[3:]
+	values = values[4:]
 	if len(values) == len(service.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
 			return fmt.Errorf("unexpected type %T for edge-field service_tag", value)
@@ -155,6 +163,8 @@ func (s *Service) String() string {
 	builder.WriteString(s.Name)
 	builder.WriteString(", PubKey=")
 	builder.WriteString(s.PubKey)
+	builder.WriteString(", Config=")
+	builder.WriteString(s.Config)
 	builder.WriteString(", IsActivated=")
 	builder.WriteString(fmt.Sprintf("%v", s.IsActivated))
 	builder.WriteByte(')')
