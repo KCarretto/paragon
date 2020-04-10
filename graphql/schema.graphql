@@ -273,10 +273,13 @@ input QueueJobRequest {
   id: ID!
 }
 
+input DeleteCredentialRequest {
+  id: ID!
+}
+
 input SetServiceConfigRequest {
   id: ID!
   config: String
-
 }
 
 type Mutation {

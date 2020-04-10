@@ -100,6 +100,10 @@ export type DeactivateUserRequest = {
   id: Scalars['ID'],
 };
 
+export type DeleteCredentialRequest = {
+  id: Scalars['ID'],
+};
+
 export type DeleteTargetRequest = {
   id: Scalars['ID'],
 };
@@ -201,6 +205,7 @@ export type Mutation = {
    __typename?: 'Mutation',
   /** Credential Mutations */
   failCredential: Credential,
+  deleteCredential: Scalars['Boolean'],
   /** Job Mutations */
   createJob: Job,
   queueJob: Job,
@@ -234,6 +239,7 @@ export type Mutation = {
   /** Service Mutations */
   activateService: Service,
   deactivateService: Service,
+  setServiceConfig: Service,
   /** Event Mutations */
   likeEvent: Event,
 };
@@ -241,6 +247,11 @@ export type Mutation = {
 
 export type MutationFailCredentialArgs = {
   input?: Maybe<FailCredentialRequest>
+};
+
+
+export type MutationDeleteCredentialArgs = {
+  input?: Maybe<DeleteCredentialRequest>
 };
 
 
@@ -371,6 +382,11 @@ export type MutationActivateServiceArgs = {
 
 export type MutationDeactivateServiceArgs = {
   input?: Maybe<DeactivateServiceRequest>
+};
+
+
+export type MutationSetServiceConfigArgs = {
+  input?: Maybe<SetServiceConfigRequest>
 };
 
 
@@ -521,6 +537,7 @@ export type Service = {
   id: Scalars['ID'],
   name?: Maybe<Scalars['String']>,
   pubKey?: Maybe<Scalars['String']>,
+  config?: Maybe<Scalars['String']>,
   isActivated?: Maybe<Scalars['Boolean']>,
   tag: Tag,
 };
@@ -530,6 +547,11 @@ export type SetLinkFieldsRequest = {
   alias?: Maybe<Scalars['String']>,
   ExpirationTime?: Maybe<Scalars['Time']>,
   clicks?: Maybe<Scalars['Int']>,
+};
+
+export type SetServiceConfigRequest = {
+  id: Scalars['ID'],
+  config?: Maybe<Scalars['String']>,
 };
 
 export type SetTargetFieldsRequest = {
