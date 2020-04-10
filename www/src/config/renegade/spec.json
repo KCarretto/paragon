@@ -211,6 +211,12 @@
             { "name": "f", "type": "File" },
             { "name": "err", "type": "Error" }
           ]
+        },
+        {
+          "name": "getRemoteHost",
+          "doc": "GetRemoteHost will return the remote host being used by the worker to connect to.",
+          "params": null,
+          "retvals": [{ "name": "host", "type": "String" }]
         }
       ]
     },

@@ -113,3 +113,19 @@ func (env *Environment) openFile(parser script.ArgParser) (script.Retval, error)
 	retVal, retErr := env.OpenFile(filePath)
 	return script.WithError(retVal, retErr), nil
 }
+
+// GetRemoteHost will return the remote host being used by the worker to connect to.
+//
+//go:generate go run ../gendoc.go -lib ssh -func getRemoteHost -retval host@String -doc "GetRemoteHost will return the remote host being used by the worker to connect to."
+//
+// @callable: 	ssh.getRemoteHost
+// @retval:		host 		@String
+//
+// @usage: 		host = ssh.getRemoteHost()
+func (env *Environment) GetRemoteHost() string {
+	return env.RemoteHost
+}
+
+func (env *Environment) getRemoteHost(parser script.ArgParser) (script.Retval, error) {
+	return env.GetRemoteHost(), nil
+}
