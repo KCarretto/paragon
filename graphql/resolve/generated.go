@@ -323,6 +323,13 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 		Save(ctx)
 	return cred, err
 }
+func (r *mutationResolver) DeleteCredential(ctx context.Context, input *models.DeleteCredentialRequest) (bool, error) {
+	err := r.Graph.Credential.DeleteOneID(input.ID).Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
 	actor := auth.GetUser(ctx)
 	staged := false
@@ -890,6 +897,32 @@ func (r *mutationResolver) DeactivateService(ctx context.Context, input *models.
 
 	svc, err := r.Graph.Service.UpdateOneID(input.ID).
 		SetIsActivated(false).
+		Save(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return svc, nil
+}
+func (r *mutationResolver) SetServiceConfig(ctx context.Context, input *models.SetServiceConfigRequest) (*ent.Service, error) {
+	// basically services can edit themselves and admins
+	svc := auth.GetService(ctx)
+	if svc == nil || !svc.IsActivated || svc.ID == input.ID {
+		err := auth.NewAuthorizer().
+			IsActivated().
+			IsAdmin().
+			Authorize(ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	config := ""
+	if input.Config != nil {
+		config = *input.Config
+	}
+	svc, err := r.Graph.Service.UpdateOneID(input.ID).
+		SetConfig(config).
 		Save(ctx)
 	if err != nil {
 		return nil, err

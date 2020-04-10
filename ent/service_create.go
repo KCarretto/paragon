@@ -19,6 +19,7 @@ type ServiceCreate struct {
 	config
 	Name        *string
 	PubKey      *string
+	Config      *string
 	IsActivated *bool
 	tag         map[int]struct{}
 	events      map[int]struct{}
@@ -33,6 +34,20 @@ func (sc *ServiceCreate) SetName(s string) *ServiceCreate {
 // SetPubKey sets the PubKey field.
 func (sc *ServiceCreate) SetPubKey(s string) *ServiceCreate {
 	sc.PubKey = &s
+	return sc
+}
+
+// SetConfig sets the Config field.
+func (sc *ServiceCreate) SetConfig(s string) *ServiceCreate {
+	sc.Config = &s
+	return sc
+}
+
+// SetNillableConfig sets the Config field if the given value is not nil.
+func (sc *ServiceCreate) SetNillableConfig(s *string) *ServiceCreate {
+	if s != nil {
+		sc.SetConfig(*s)
+	}
 	return sc
 }
 
@@ -98,6 +113,10 @@ func (sc *ServiceCreate) Save(ctx context.Context) (*Service, error) {
 	if err := service.PubKeyValidator(*sc.PubKey); err != nil {
 		return nil, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
 	}
+	if sc.Config == nil {
+		v := service.DefaultConfig
+		sc.Config = &v
+	}
 	if sc.IsActivated == nil {
 		v := service.DefaultIsActivated
 		sc.IsActivated = &v
@@ -146,6 +165,14 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 			Column: service.FieldPubKey,
 		})
 		s.PubKey = *value
+	}
+	if value := sc.Config; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeString,
+			Value:  *value,
+			Column: service.FieldConfig,
+		})
+		s.Config = *value
 	}
 	if value := sc.IsActivated; value != nil {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

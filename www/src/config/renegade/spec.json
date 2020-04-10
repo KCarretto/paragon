@@ -1,6 +1,44 @@
 {
   "libraries": [
     {
+      "name": "assert",
+      "functions": [
+        {
+          "name": "equal",
+          "doc": "Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.",
+          "params": [
+            { "name": "expected", "type": "starlark.Value" },
+            { "name": "actual", "type": "starlark.Value" }
+          ],
+          "retvals": null
+        }
+      ]
+    },
+    {
+      "name": "assets",
+      "functions": [
+        {
+          "name": "openFile",
+          "doc": "OpenFile that was packed into the compiled binary. The resulting file does not support many operations such as Chown, Write, etc. but you may read it's contents or copy it to another file i.e. one opened by ssh or sys.",
+          "params": [{ "name": "path", "type": "String" }],
+          "retvals": [
+            { "name": "f", "type": "File" },
+            { "name": "err", "type": "Error" }
+          ]
+        },
+        {
+          "name": "drop",
+          "doc": "Drop will take a given file, copy it to disk, optionaly set the permissions move it to a given destination, and clean up the temp file created. The default perms are '0755'.",
+          "params": [
+            { "name": "f", "type": "File" },
+            { "name": "dstPath", "type": "String" },
+            { "name": "perms", "type": "String" }
+          ],
+          "retvals": [{ "name": "err", "type": "Error" }]
+        }
+      ]
+    },
+    {
       "name": "cdn",
       "functions": [
         {
@@ -22,6 +60,12 @@
             { "name": "dstPath", "type": "String" }
           ],
           "retvals": [{ "name": "err", "type": "Error" }]
+        },
+        {
+          "name": "close",
+          "doc": "Close a file if possible, otherwise this operation is a no-op.",
+          "params": [{ "name": "f", "type": "File" }],
+          "retvals": null
         },
         {
           "name": "name",
@@ -80,12 +124,6 @@
             { "name": "mode", "type": "String" }
           ],
           "retvals": [{ "name": "err", "type": "Error" }]
-        },
-        {
-          "name": "close",
-          "doc": "Close a file if possible, otherwise this operation is a no-op.",
-          "params": [{ "name": "f", "type": "File" }],
-          "retvals": null
         }
       ]
     },
@@ -161,19 +199,6 @@
       "name": "regex",
       "functions": [
         {
-          "name": "replaceString",
-          "doc": "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong.",
-          "params": [
-            { "name": "oldString", "type": "String" },
-            { "name": "pattern", "type": "String" },
-            { "name": "newString", "type": "String" }
-          ],
-          "retvals": [
-            { "name": "replacedString", "type": "String" },
-            { "name": "err", "type": "Error" }
-          ]
-        },
-        {
           "name": "replace",
           "doc": "Replace uses the golang regex lib to replace all occurences of the pattern in the old string into the new strong.",
           "params": [
@@ -191,6 +216,12 @@
     {
       "name": "ssh",
       "functions": [
+        {
+          "name": "setUser",
+          "doc": "SetUser sets the RemoteUser attribute to be used in the outgoing SSH Connection. WARNING: MUST BE CALLED BEFORE OTHER SSH CALLS TO WORK.",
+          "params": [{ "name": "user", "type": "String" }],
+          "retvals": null
+        },
         {
           "name": "exec",
           "doc": "Exec a command on the remote system using an underlying ssh session.",
@@ -213,34 +244,10 @@
           ]
         },
         {
-          "name": "setUser",
-          "doc": "SetUser sets the RemoteUser attribute to be used in the outgoing SSH Connection. WARNING: MUST BE CALLED BEFORE OTHER SSH CALLS TO WORK.",
-          "params": [{ "name": "user", "type": "String" }],
-          "retvals": null
-        }
-      ]
-    },
-    {
-      "name": "assets",
-      "functions": [
-        {
-          "name": "openFile",
-          "doc": "OpenFile that was packed into the compiled binary. The resulting file does not support many operations such as Chown, Write, etc. but you may read it's contents or copy it to another file i.e. one opened by ssh or sys.",
-          "params": [{ "name": "path", "type": "String" }],
-          "retvals": [
-            { "name": "f", "type": "File" },
-            { "name": "err", "type": "Error" }
-          ]
-        },
-        {
-          "name": "drop",
-          "doc": "Drop will take a given file, copy it to disk, optionaly set the permissions move it to a given destination, and clean up the temp file created. The default perms are '0755'.",
-          "params": [
-            { "name": "f", "type": "File" },
-            { "name": "dstPath", "type": "String" },
-            { "name": "perms", "type": "String" }
-          ],
-          "retvals": [{ "name": "err", "type": "Error" }]
+          "name": "getRemoteHost",
+          "doc": "GetRemoteHost will return the remote host being used by the worker to connect to.",
+          "params": null,
+          "retvals": [{ "name": "host", "type": "String" }]
         }
       ]
     },
@@ -291,26 +298,6 @@
           "doc": "Files uses the ioutil.ReadDir to get all files in a given path.",
           "params": null,
           "retvals": [{ "name": "files", "type": "[]File" }]
-        }
-      ]
-    },
-    {
-      "name": "assert",
-      "functions": [
-        {
-          "name": "noError",
-          "doc": "NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect.",
-          "params": [{ "name": "err", "type": "starlark.Value" }],
-          "retvals": null
-        },
-        {
-          "name": "equal",
-          "doc": "Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.",
-          "params": [
-            { "name": "expected", "type": "starlark.Value" },
-            { "name": "actual", "type": "starlark.Value" }
-          ],
-          "retvals": null
         }
       ]
     }
