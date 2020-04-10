@@ -153,6 +153,7 @@ export type FileLinksArgs = {
 export type Filter = {
   offset?: Maybe<Scalars['Int']>,
   limit?: Maybe<Scalars['Int']>,
+  search?: Maybe<Scalars['String']>,
 };
 
 export type Job = {
