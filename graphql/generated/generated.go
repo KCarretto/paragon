@@ -141,6 +141,7 @@ type ComplexityRoot struct {
 		RemoveTagFromTarget     func(childComplexity int, input *models.RemoveTagRequest) int
 		RemoveTagFromTask       func(childComplexity int, input *models.RemoveTagRequest) int
 		SetLinkFields           func(childComplexity int, input *models.SetLinkFieldsRequest) int
+		SetServiceConfig        func(childComplexity int, input *models.SetServiceConfigRequest) int
 		SetTargetFields         func(childComplexity int, input *models.SetTargetFieldsRequest) int
 		SubmitTaskResult        func(childComplexity int, input *models.SubmitTaskResultRequest) int
 	}
@@ -170,6 +171,7 @@ type ComplexityRoot struct {
 	}
 
 	Service struct {
+		Config      func(childComplexity int) int
 		ID          func(childComplexity int) int
 		IsActivated func(childComplexity int) int
 		Name        func(childComplexity int) int
@@ -285,6 +287,7 @@ type MutationResolver interface {
 	ChangeName(ctx context.Context, input *models.ChangeNameRequest) (*ent.User, error)
 	ActivateService(ctx context.Context, input *models.ActivateServiceRequest) (*ent.Service, error)
 	DeactivateService(ctx context.Context, input *models.DeactivateServiceRequest) (*ent.Service, error)
+	SetServiceConfig(ctx context.Context, input *models.SetServiceConfigRequest) (*ent.Service, error)
 	LikeEvent(ctx context.Context, input *models.LikeEventRequest) (*ent.Event, error)
 }
 type QueryResolver interface {
@@ -986,6 +989,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.SetLinkFields(childComplexity, args["input"].(*models.SetLinkFieldsRequest)), true
 
+	case "Mutation.setServiceConfig":
+		if e.complexity.Mutation.SetServiceConfig == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_setServiceConfig_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.SetServiceConfig(childComplexity, args["input"].(*models.SetServiceConfigRequest)), true
+
 	case "Mutation.setTargetFields":
 		if e.complexity.Mutation.SetTargetFields == nil {
 			break
@@ -1256,6 +1271,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Users(childComplexity, args["input"].(*models.Filter)), true
+
+	case "Service.config":
+		if e.complexity.Service.Config == nil {
+			break
+		}
+
+		return e.complexity.Service.Config(childComplexity), true
 
 	case "Service.id":
 		if e.complexity.Service.ID == nil {
@@ -1753,6 +1775,7 @@ type Service @goModel(model: "github.com/kcarretto/paragon/ent.Service") {
   id: ID!
   name: String
   pubKey: String
+  config: String
   isActivated: Boolean
 
   tag: Tag!
@@ -1908,6 +1931,11 @@ input QueueJobRequest {
   id: ID!
 }
 
+input SetServiceConfigRequest {
+  id: ID!
+  config: String
+}
+
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
@@ -1951,6 +1979,7 @@ type Mutation {
   # Service Mutations
   activateService(input: ActivateServiceRequest): Service!
   deactivateService(input: DeactivateServiceRequest): Service!
+  setServiceConfig(input: SetServiceConfigRequest): Service!
 
   # Event Mutations
   likeEvent(input: LikeEventRequest): Event!
@@ -2407,6 +2436,20 @@ func (ec *executionContext) field_Mutation_setLinkFields_args(ctx context.Contex
 	var arg0 *models.SetLinkFieldsRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOSetLinkFieldsRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetLinkFieldsRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_setServiceConfig_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.SetServiceConfigRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOSetServiceConfigRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetServiceConfigRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -5586,6 +5629,50 @@ func (ec *executionContext) _Mutation_deactivateService(ctx context.Context, fie
 	return ec.marshalNService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Mutation_setServiceConfig(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_setServiceConfig_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().SetServiceConfig(rctx, args["input"].(*models.SetServiceConfigRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Service)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNService2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐService(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Mutation_likeEvent(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -6650,6 +6737,40 @@ func (ec *executionContext) _Service_pubKey(ctx context.Context, field graphql.C
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
 		return obj.PubKey, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Service_config(ctx context.Context, field graphql.CollectedField, obj *ent.Service) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Service",
+		Field:    field,
+		Args:     nil,
+		IsMethod: false,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Config, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -9722,6 +9843,30 @@ func (ec *executionContext) unmarshalInputSetLinkFieldsRequest(ctx context.Conte
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputSetServiceConfigRequest(ctx context.Context, obj interface{}) (models.SetServiceConfigRequest, error) {
+	var it models.SetServiceConfigRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "config":
+			var err error
+			it.Config, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputSetTargetFieldsRequest(ctx context.Context, obj interface{}) (models.SetTargetFieldsRequest, error) {
 	var it models.SetTargetFieldsRequest
 	var asMap = obj.(map[string]interface{})
@@ -10375,6 +10520,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "setServiceConfig":
+			out.Values[i] = ec._Mutation_setServiceConfig(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "likeEvent":
 			out.Values[i] = ec._Mutation_likeEvent(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -10672,6 +10822,8 @@ func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, 
 			out.Values[i] = ec._Service_name(ctx, field, obj)
 		case "pubKey":
 			out.Values[i] = ec._Service_pubKey(ctx, field, obj)
+		case "config":
+			out.Values[i] = ec._Service_config(ctx, field, obj)
 		case "isActivated":
 			out.Values[i] = ec._Service_isActivated(ctx, field, obj)
 		case "tag":
@@ -12266,6 +12418,18 @@ func (ec *executionContext) unmarshalOSetLinkFieldsRequest2ᚖgithubᚗcomᚋkca
 		return nil, nil
 	}
 	res, err := ec.unmarshalOSetLinkFieldsRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetLinkFieldsRequest(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalOSetServiceConfigRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetServiceConfigRequest(ctx context.Context, v interface{}) (models.SetServiceConfigRequest, error) {
+	return ec.unmarshalInputSetServiceConfigRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOSetServiceConfigRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetServiceConfigRequest(ctx context.Context, v interface{}) (*models.SetServiceConfigRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOSetServiceConfigRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐSetServiceConfigRequest(ctx, v)
 	return &res, err
 }
 
