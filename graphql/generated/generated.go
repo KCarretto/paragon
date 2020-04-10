@@ -131,6 +131,7 @@ type ComplexityRoot struct {
 		CreateTarget            func(childComplexity int, input *models.CreateTargetRequest) int
 		DeactivateService       func(childComplexity int, input *models.DeactivateServiceRequest) int
 		DeactivateUser          func(childComplexity int, input *models.DeactivateUserRequest) int
+		DeleteCredential        func(childComplexity int, input *models.DeleteCredentialRequest) int
 		DeleteTarget            func(childComplexity int, input *models.DeleteTargetRequest) int
 		FailCredential          func(childComplexity int, input *models.FailCredentialRequest) int
 		LikeEvent               func(childComplexity int, input *models.LikeEventRequest) int
@@ -261,6 +262,7 @@ type LinkResolver interface {
 }
 type MutationResolver interface {
 	FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error)
+	DeleteCredential(ctx context.Context, input *models.DeleteCredentialRequest) (bool, error)
 	CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error)
 	QueueJob(ctx context.Context, input *models.QueueJobRequest) (*ent.Job, error)
 	CreateTag(ctx context.Context, input *models.CreateTagRequest) (*ent.Tag, error)
@@ -868,6 +870,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.DeactivateUser(childComplexity, args["input"].(*models.DeactivateUserRequest)), true
+
+	case "Mutation.deleteCredential":
+		if e.complexity.Mutation.DeleteCredential == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteCredential_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteCredential(childComplexity, args["input"].(*models.DeleteCredentialRequest)), true
 
 	case "Mutation.deleteTarget":
 		if e.complexity.Mutation.DeleteTarget == nil {
@@ -1931,6 +1945,9 @@ input QueueJobRequest {
   id: ID!
 }
 
+input DeleteCredentialRequest {
+  id: ID!
+
 input SetServiceConfigRequest {
   id: ID!
   config: String
@@ -1939,6 +1956,7 @@ input SetServiceConfigRequest {
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
+  deleteCredential(input: DeleteCredentialRequest): Boolean!
 
   # Job Mutations
   createJob(input: CreateJobRequest): Job!
@@ -2296,6 +2314,20 @@ func (ec *executionContext) field_Mutation_deactivateUser_args(ctx context.Conte
 	var arg0 *models.DeactivateUserRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalODeactivateUserRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateUserRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteCredential_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.DeleteCredentialRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalODeleteCredentialRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteCredentialRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4495,6 +4527,50 @@ func (ec *executionContext) _Mutation_failCredential(ctx context.Context, field 
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalNCredential2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐCredential(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_deleteCredential(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_deleteCredential_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteCredential(rctx, args["input"].(*models.DeleteCredentialRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_createJob(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9645,6 +9721,24 @@ func (ec *executionContext) unmarshalInputDeactivateUserRequest(ctx context.Cont
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputDeleteCredentialRequest(ctx context.Context, obj interface{}) (models.DeleteCredentialRequest, error) {
+	var it models.DeleteCredentialRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "id":
+			var err error
+			it.ID, err = ec.unmarshalNID2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputDeleteTargetRequest(ctx context.Context, obj interface{}) (models.DeleteTargetRequest, error) {
 	var it models.DeleteTargetRequest
 	var asMap = obj.(map[string]interface{})
@@ -10399,6 +10493,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = graphql.MarshalString("Mutation")
 		case "failCredential":
 			out.Values[i] = ec._Mutation_failCredential(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteCredential":
+			out.Values[i] = ec._Mutation_deleteCredential(ctx, field)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
@@ -11977,6 +12076,18 @@ func (ec *executionContext) unmarshalODeactivateUserRequest2ᚖgithubᚗcomᚋkc
 		return nil, nil
 	}
 	res, err := ec.unmarshalODeactivateUserRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeactivateUserRequest(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalODeleteCredentialRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteCredentialRequest(ctx context.Context, v interface{}) (models.DeleteCredentialRequest, error) {
+	return ec.unmarshalInputDeleteCredentialRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalODeleteCredentialRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteCredentialRequest(ctx context.Context, v interface{}) (*models.DeleteCredentialRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalODeleteCredentialRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteCredentialRequest(ctx, v)
 	return &res, err
 }
 

@@ -276,11 +276,13 @@ input QueueJobRequest {
 input SetServiceConfigRequest {
   id: ID!
   config: String
+
 }
 
 type Mutation {
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
+  deleteCredential(input: DeleteCredentialRequest): Boolean!
 
   # Job Mutations
   createJob(input: CreateJobRequest): Job!

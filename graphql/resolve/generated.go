@@ -323,6 +323,13 @@ func (r *mutationResolver) FailCredential(ctx context.Context, input *models.Fai
 		Save(ctx)
 	return cred, err
 }
+func (r *mutationResolver) DeleteCredential(ctx context.Context, input *models.DeleteCredentialRequest) (bool, error) {
+	err := r.Graph.Credential.DeleteOneID(input.ID).Exec(ctx)
+	if err != nil {
+		return false, err
+	}
+	return true, nil
+}
 func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error) {
 	actor := auth.GetUser(ctx)
 	staged := false
