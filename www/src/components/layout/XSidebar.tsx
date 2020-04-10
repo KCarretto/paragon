@@ -15,32 +15,29 @@ const getMenu = (props: SidebarProps) => (
   <React.Fragment>
     {props.routeMap
       ? props.routeMap.map((value: RouteConfig, index: number) => {
-          return (
-            <Link to={value.link}>
-              <Menu.Item link key={index}>
-                <span>
-                  <Responsive minWidth={1500}>{value.title}</Responsive>
-                  <Icon name={value.icon} size="big" />
-                </span>
-              </Menu.Item>
-            </Link>
-          );
-        })
+        return (
+          <Menu.Item as={Link} to={value.link} link style={{ display: "flex", alignItems: "center" }}>
+            <Icon fitted name={value.icon} size="big" />
+            <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>{value.title}</b></span></Responsive>
+          </Menu.Item>
+        );
+      })
       : []}
     {props.isAdmin ? (
-      <Menu.Item as={Link} to="/admin">
-        <Icon name="chess rook" />
-        <Responsive minWidth={1500}>Admin</Responsive>
+      <Menu.Item as={Link} to="/admin" link style={{ display: "flex", alignItems: "center" }}>
+        <Icon fitted name="chess rook" size="big" />
+        <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>Admin</b></span></Responsive>
       </Menu.Item>
     ) : (
-      <span />
-    )}
+        <span />
+      )}
     <Menu.Item
+      link style={{ display: "flex", alignItems: "center" }}
       href="https://github.com/kcarretto/paragon/issues/new"
       target="_blank"
     >
-      <Icon name="bug" />
-      <Responsive minWidth={1500}>Bug</Responsive>
+      <Icon fitted name="bug" size="big" />
+      <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>Bug</b></span></Responsive>
     </Menu.Item>
   </React.Fragment>
 );
@@ -71,8 +68,9 @@ const desktopSidebar = (props: SidebarProps) => (
 const XSidebar: FunctionComponent<SidebarProps> = props => (
   // <Sidebar.Pushable className="XLayout">
   <React.Fragment>
-    {mobileSidebar(props)}
-    {desktopSidebar(props)}
+    <Menu icon vertical inverted className="XSidebar">
+      {getMenu(props)}
+    </Menu>
   </React.Fragment>
 );
 //   {/* <Sidebar.Pusher>

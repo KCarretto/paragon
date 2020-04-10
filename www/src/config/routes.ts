@@ -3,6 +3,7 @@ import { SemanticICONS } from "semantic-ui-react/dist/commonjs/generic";
 export type RouteConfig = {
   title: string;
   link: string;
+  help: string;
   icon: SemanticICONS;
 };
 
@@ -10,36 +11,43 @@ export const Routes: RouteConfig[] = [
   {
     title: "Events",
     link: "/event_feed",
-    icon: "road"
+    icon: "road",
+    help: "Recent Events",
   },
   {
     title: "Run",
     link: "/run",
-    icon: "code"
+    icon: "code",
+    help: "Create and execute jobs",
   },
   {
     title: "Targets",
     link: "/targets",
-    icon: "desktop"
+    icon: "desktop",
+    help: "View targets",
   },
   {
     title: "Jobs",
     link: "/jobs",
-    icon: "cubes"
+    icon: "cubes",
+    help: "View jobs",
   },
   {
     title: "Tags",
     link: "/tags",
-    icon: "tags"
+    icon: "tags",
+    help: "View and manage tags",
   },
   {
     title: "Files",
     link: "/files",
-    icon: "gift"
+    icon: "gift",
+    help: "View, upload, and download files from the CDN",
   },
   {
     title: "Profile",
     link: "/profile",
-    icon: "user secret"
+    icon: "user secret",
+    help: "Your profile information",
   }
 ];

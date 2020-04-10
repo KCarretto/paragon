@@ -1,5 +1,6 @@
 import * as React from "react";
 import { FunctionComponent } from "react";
+import { SemanticToastContainer } from "react-semantic-toasts";
 import { XSidebar } from ".";
 import { RouteConfig } from "../../config/routes";
 
@@ -18,6 +19,12 @@ const XLayout: FunctionComponent<LayoutProps> = props => (
       isAdmin={props.isAdmin}
     />
     <div className="XContent">{props.children}</div>
+    <SemanticToastContainer
+      // position="bottom-right"
+      animation="fade up"
+      className="XToastContainer"
+    />
+
   </React.Fragment>
 );
 

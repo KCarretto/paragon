@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
-import { SemanticToastContainer } from "react-semantic-toasts";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
 import { XLayout, XPrivateRoute } from "./components/layout";
@@ -9,19 +8,7 @@ import { XLoadingMessage } from "./components/messages";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
-import {
-  XAdminView,
-  XJobView,
-  XLogin,
-  XMultiFileView,
-  XMultiJobView,
-  XMultiTagView,
-  XMultiTargetView,
-  XProfileView,
-  XRunView,
-  XTargetView,
-  XTaskView
-} from "./views";
+import { XAdminView, XJobView, XLogin, XMultiFileView, XMultiJobView, XMultiTagView, XMultiTargetView, XProfileView, XRunView, XTargetView, XTaskView } from "./views";
 import XEventFeedView from "./views/XEventFeedView";
 
 type StatusResult = {
@@ -77,11 +64,6 @@ const App = () => {
 
   return (
     <XGraphProvider>
-      <SemanticToastContainer
-        // position="bottom-right"
-        animation="fade up"
-        className="XToastContainer"
-      />
       <Router>
         <Switch>
           <Route path="/login">

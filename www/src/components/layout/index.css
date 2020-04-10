@@ -1,31 +1,53 @@
 .XLayout {
   min-height: 100vh;
 }
+
+/* Default Sidebar & Content */
 .XSidebar {
-  position: absolute;
-  top: 0px;
-  left: 0px;
-  z-index: 1;
-  min-width: 75px;
-  width: 10vw !important;
-  max-width: 200px;
+  position: fixed;
+  top: 0;
+  left: 0;
+
   height: 100vh;
+  min-width: 75px;
+  max-width: 75px;
+
   border-radius: 0px !important;
+
+  vertical-align: middle;
+  overflow-y: auto;
 }
 
 .XContent {
-  /* display: flex; */
-  /* flex-grow: 1; */
   height: 100vh;
-  width: 95vw;
-  margin-left: min(max(75px, 10vw), 200px);
+  width: calc(100vw - 75px);
+  margin-left: 75px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
 
-  /* min-height: 100vh;
-  margin-left: 10vw;
-  padding-top: 3vh;
-  padding-bottom: 10vh;
-  max-width: 90vw;
-  padding-right: 1vw; */
+/* Widescreen Sidebar & Content Overrides*/
+@media only screen and (min-width: 1800px) {
+  .XSidebar {
+    min-width: 125px;
+    width: min(max(125px, 10vw), 200px) !important;
+    max-width: 200px;
+  }
+
+  .XContent {
+    width: calc(100vw - min(max(125px, 10vw), 200px));
+    margin-left: min(max(125px, 10vw), 200px);
+  }
+}
+
+/* Devices with hover functionality */
+@media only screen and (hover) {
+  .XContent {
+    overflow-y: hidden;
+  }
+  .XContent:hover {
+    overflow-y: auto;
+  }
 }
 
 .XToolbar {
