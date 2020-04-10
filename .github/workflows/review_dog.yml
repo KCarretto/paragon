@@ -36,14 +36,14 @@ jobs:
         with:
           node-version: "10"
       - name: Prepare NPM
-        run: cd www && npm ci
+        run: cd www && npm i -g eslint
 
       - name: ESLint
         uses: reviewdog/action-eslint@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review
-          eslint_flags: -c .eslintrc.json ./www
+          eslint_flags: ./www
 
   docker-lint:
     name: Docker Lint
