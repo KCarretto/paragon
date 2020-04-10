@@ -21,6 +21,9 @@ func (Service) Fields() []ent.Field {
 			Unique().
 			MaxLen(250).
 			Comment("The ed25519 public key for the service (stored in Base64 of DER format)"),
+		field.Text("Config").
+			Default("").
+			Comment("The configuration script of the service (usually a Renegade Script)"),
 		field.Bool("IsActivated").
 			Default(false).
 			Comment("True iff the service is active and able to authenticate"),

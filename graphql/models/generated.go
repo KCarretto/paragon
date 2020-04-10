@@ -131,6 +131,11 @@ type SetLinkFieldsRequest struct {
 	Clicks         *int       `json:"clicks"`
 }
 
+type SetServiceConfigRequest struct {
+	ID     int     `json:"id"`
+	Config *string `json:"config"`
+}
+
 type SetTargetFieldsRequest struct {
 	ID          int     `json:"id"`
 	Name        *string `json:"name"`

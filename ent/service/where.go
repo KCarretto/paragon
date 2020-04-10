@@ -105,6 +105,13 @@ func PubKey(v string) predicate.Service {
 	})
 }
 
+// Config applies equality check predicate on the "Config" field. It's identical to ConfigEQ.
+func Config(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldConfig), v))
+	})
+}
+
 // IsActivated applies equality check predicate on the "IsActivated" field. It's identical to IsActivatedEQ.
 func IsActivated(v bool) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
@@ -331,6 +338,117 @@ func PubKeyEqualFold(v string) predicate.Service {
 func PubKeyContainsFold(v string) predicate.Service {
 	return predicate.Service(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldPubKey), v))
+	})
+}
+
+// ConfigEQ applies the EQ predicate on the "Config" field.
+func ConfigEQ(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigNEQ applies the NEQ predicate on the "Config" field.
+func ConfigNEQ(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigIn applies the In predicate on the "Config" field.
+func ConfigIn(vs ...string) predicate.Service {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Service(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldConfig), v...))
+	})
+}
+
+// ConfigNotIn applies the NotIn predicate on the "Config" field.
+func ConfigNotIn(vs ...string) predicate.Service {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Service(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldConfig), v...))
+	})
+}
+
+// ConfigGT applies the GT predicate on the "Config" field.
+func ConfigGT(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.GT(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigGTE applies the GTE predicate on the "Config" field.
+func ConfigGTE(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.GTE(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigLT applies the LT predicate on the "Config" field.
+func ConfigLT(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.LT(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigLTE applies the LTE predicate on the "Config" field.
+func ConfigLTE(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.LTE(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigContains applies the Contains predicate on the "Config" field.
+func ConfigContains(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.Contains(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigHasPrefix applies the HasPrefix predicate on the "Config" field.
+func ConfigHasPrefix(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.HasPrefix(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigHasSuffix applies the HasSuffix predicate on the "Config" field.
+func ConfigHasSuffix(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.HasSuffix(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigEqualFold applies the EqualFold predicate on the "Config" field.
+func ConfigEqualFold(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.EqualFold(s.C(FieldConfig), v))
+	})
+}
+
+// ConfigContainsFold applies the ContainsFold predicate on the "Config" field.
+func ConfigContainsFold(v string) predicate.Service {
+	return predicate.Service(func(s *sql.Selector) {
+		s.Where(sql.ContainsFold(s.C(FieldConfig), v))
 	})
 }
 
