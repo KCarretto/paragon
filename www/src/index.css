@@ -51,3 +51,11 @@ code {
   overflow-y: hidden !important;
   overflow-x: hidden !important;
 }
+
+.XPaddedView {
+  margin: 25px;
+}
+
+.XRunView {
+  overflow-y: hidden !important;
+}

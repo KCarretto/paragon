@@ -9,7 +9,7 @@ const XRunView = () => {
 
   return (
     <React.Fragment>
-      <Sidebar.Pushable style={{ overflowY: "hidden" }}>
+      <Sidebar.Pushable className="XRunView">
         <Sidebar
           visible={visible}
           animation='overlay'
@@ -27,7 +27,7 @@ const XRunView = () => {
               <Button icon="chevron down" onClick={() => setVisible(!visible)} />
             </Menu.Item>
           </Menu>
-          <Container fluid style={{ overflowY: "auto", height: "100%" }}>
+          <Container fluid style={{ overflowY: "auto", height: "100%", margin: "15px" }}>
             <XJobResults name={name} />
           </Container>
         </Sidebar>

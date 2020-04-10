@@ -3,7 +3,8 @@ import { useEffect, useState } from "react";
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import "semantic-ui-css/semantic.min.css";
 import "./App.css";
-import { XLayout, XPrivateRoute } from "./components/layout";
+import { XLayout } from "./components/layout";
+import XView from "./components/layout/XView";
 import { XLoadingMessage } from "./components/messages";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
@@ -75,76 +76,87 @@ const App = () => {
             isAdmin={admin}
             className="App"
           >
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/"
-              component={XEventFeedView}
+              padded
+              view={XEventFeedView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/event_feed"
-              component={XEventFeedView}
+              padded
+              view={XEventFeedView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/run"
-              component={XRunView}
+              view={XRunView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/profile"
-              component={XProfileView}
+              padded
+              view={XProfileView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/admin"
-              component={XAdminView}
+              padded
+              view={XAdminView}
             />
 
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/targets"
-              component={XMultiTargetView}
+              padded
+              view={XMultiTargetView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/jobs"
-              component={XMultiJobView}
+              padded
+              view={XMultiJobView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/tags"
-              component={XMultiTagView}
+              padded
+              view={XMultiTagView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               exact
               path="/files"
-              component={XMultiFileView}
+              padded
+              view={XMultiFileView}
             />
 
-            <XPrivateRoute
+            <XView
               authorized={authz}
               path="/targets/:id"
-              component={XTargetView}
+              padded
+              view={XTargetView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               path="/tasks/:id"
-              component={XTaskView}
+              padded
+              view={XTaskView}
             />
-            <XPrivateRoute
+            <XView
               authorized={authz}
               path="/jobs/:id"
-              component={XJobView}
+              padded
+              view={XJobView}
             />
           </XLayout>
         </Switch>

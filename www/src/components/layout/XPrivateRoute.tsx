@@ -6,26 +6,27 @@ import { Redirect, Route, RouteProps } from "react-router-dom";
 // screen if you're not yet authenticated.
 const XPrivateRoute: FunctionComponent<RouteProps & {
   authorized: boolean;
-  props?: any;
-}> = ({ authorized, props, component, children, ...rest }) => {
+}> = ({ authorized, exact, path, component, children, ...props }) => {
   return (
     <Route
-      {...rest}
+      exact={exact}
+      path={path}
+
       render={({ location }) =>
         authorized ? (
           component ? (
             React.createElement(component, props, children)
           ) : (
-            children
-          )
+              children
+            )
         ) : (
-          <Redirect
-            to={{
-              pathname: "/login",
-              state: { from: location }
-            }}
-          />
-        )
+            <Redirect
+              to={{
+                pathname: "/login",
+                state: { from: location }
+              }}
+            />
+          )
       }
     />
   );

@@ -11,21 +11,24 @@ type LayoutProps = {
   className: string;
 };
 
-const XLayout: FunctionComponent<LayoutProps> = props => (
-  <React.Fragment>
-    <XSidebar
-      routeMap={props.routeMap}
-      userID={props.userID}
-      isAdmin={props.isAdmin}
-    />
-    <div className="XContent">{props.children}</div>
-    <SemanticToastContainer
-      // position="bottom-right"
-      animation="fade up"
-      className="XToastContainer"
-    />
+const XLayout: FunctionComponent<LayoutProps> = props => {
+  return (
+    <React.Fragment>
+      <XSidebar
+        routeMap={props.routeMap}
+        userID={props.userID}
+        isAdmin={props.isAdmin}
+      />
+      <div className="XContent">{props.children}</div>
 
-  </React.Fragment>
-);
+      <SemanticToastContainer
+        // position="bottom-right"
+        animation="fade up"
+        className="XToastContainer"
+      />
+
+    </React.Fragment>
+  );
+}
 
 export default XLayout;
