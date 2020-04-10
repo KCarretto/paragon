@@ -105,7 +105,7 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
 
   return (
     <React.Fragment>
-      <Segment basic secondary inverted attached="top">
+      <Segment basic secondary inverted attached="top" style={{ borderRadius: "0px" }}>
         <Grid stackable verticalAlign="middle">
           {/* Job Name */}
           <Grid.Column width={6}>

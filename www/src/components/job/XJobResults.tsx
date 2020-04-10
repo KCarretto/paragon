@@ -94,27 +94,27 @@ const XJobResults: React.FC<{ name?: string }> = ({ name = null }) => {
 
   return (
     <React.Fragment>
-      <Header size="large" block inverted>
+      <Header size="large" block inverted style={{ marginTop: "0px", borderRadius: "0px", border: "0px" }}>
         {!taskDisplay ? (
           <Header.Content>
             <Icon name="tasks" /> Results
           </Header.Content>
         ) : (
-          <Header.Content>
-            <Button
-              inverted
-              icon="arrow left"
-              onClick={() => setTaskDisplay(null)}
-            />
+            <Header.Content>
+              <Button
+                inverted
+                icon="arrow left"
+                onClick={() => setTaskDisplay(null)}
+              />
             Showing results for{" "}
-            {taskDisplay.tasks[taskDisplay.active].target.name}{" "}
-            <Label basic color="blue">
-              {taskDisplay.active !== 0
-                ? `Version ${taskDisplay.tasks.length - taskDisplay.active}`
-                : `Latest (v${taskDisplay.tasks.length})`}
-            </Label>
-          </Header.Content>
-        )}
+              {taskDisplay.tasks[taskDisplay.active].target.name}{" "}
+              <Label basic color="blue">
+                {taskDisplay.active !== 0
+                  ? `Version ${taskDisplay.tasks.length - taskDisplay.active}`
+                  : `Latest (v${taskDisplay.tasks.length})`}
+              </Label>
+            </Header.Content>
+          )}
       </Header>
       <XBoundary
         boundary={
