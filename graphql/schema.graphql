@@ -79,6 +79,8 @@ type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   secret: String
   kind: String
   fails: Int
+
+  target: Target
 }
 
 type File @goModel(model: "github.com/kcarretto/paragon/ent.File") {

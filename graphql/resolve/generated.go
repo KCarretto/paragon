@@ -100,6 +100,18 @@ func (r *credentialResolver) Kind(ctx context.Context, obj *ent.Credential) (*st
 	return &kind, nil
 }
 
+func (r *credentialResolver) Target(ctx context.Context, obj *ent.Credential) (*ent.Target, error) {
+	q := obj.QueryTarget()
+	exists, err := q.Clone().Exist(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		return nil, nil
+	}
+	return q.Only(ctx)
+}
+
 type eventResolver struct{ *Resolver }
 
 func (r *eventResolver) Kind(ctx context.Context, obj *ent.Event) (*string, error) {

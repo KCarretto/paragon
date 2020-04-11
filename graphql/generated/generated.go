@@ -61,6 +61,7 @@ type ComplexityRoot struct {
 		Kind      func(childComplexity int) int
 		Principal func(childComplexity int) int
 		Secret    func(childComplexity int) int
+		Target    func(childComplexity int) int
 	}
 
 	Event struct {
@@ -230,6 +231,8 @@ type ComplexityRoot struct {
 
 type CredentialResolver interface {
 	Kind(ctx context.Context, obj *ent.Credential) (*string, error)
+
+	Target(ctx context.Context, obj *ent.Credential) (*ent.Target, error)
 }
 type EventResolver interface {
 	Kind(ctx context.Context, obj *ent.Event) (*string, error)
@@ -385,6 +388,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Credential.Secret(childComplexity), true
+
+	case "Credential.target":
+		if e.complexity.Credential.Target == nil {
+			break
+		}
+
+		return e.complexity.Credential.Target(childComplexity), true
 
 	case "Event.creationTime":
 		if e.complexity.Event.CreationTime == nil {
@@ -1751,6 +1761,8 @@ type Credential @goModel(model: "github.com/kcarretto/paragon/ent.Credential") {
   secret: String
   kind: String
   fails: Int
+
+  target: Target
 }
 
 type File @goModel(model: "github.com/kcarretto/paragon/ent.File") {
@@ -3118,6 +3130,40 @@ func (ec *executionContext) _Credential_fails(ctx context.Context, field graphql
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Credential_target(ctx context.Context, field graphql.CollectedField, obj *ent.Credential) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Credential",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Credential().Target(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*ent.Target)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOTarget2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐTarget(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Event_id(ctx context.Context, field graphql.CollectedField, obj *ent.Event) (ret graphql.Marshaler) {
@@ -10099,6 +10145,17 @@ func (ec *executionContext) _Credential(ctx context.Context, sel ast.SelectionSe
 			})
 		case "fails":
 			out.Values[i] = ec._Credential_fails(ctx, field, obj)
+		case "target":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Credential_target(ctx, field, obj)
+				return res
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
