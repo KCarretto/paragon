@@ -10,21 +10,19 @@ import (
 	"github.com/spf13/afero"
 )
 
-// Bundle is an interface for handling multi-file (de)serialization and creation of a http.FileSystem
-type Bundle interface {
-	AddFiles(string, http.File) error
-	Encode() string
-	Decode(string) error
-	ToFileSystem() (http.FileSystem, error)
+// Bundler is an interface for handling multi-file (de)serialization and creation of a http.FileSystem
+type Bundler interface {
+	Bundle(...http.File) error
 }
 
-// TarBundle is the concrete implementation of Bundle using Tar
-type TarBundle struct {
+// TarBundler is the concrete implementation of Bundle using Tar
+type TarBundler struct {
 	Buffer *bytes.Buffer
 }
 
-// AddFiles is used to add multiple files into a tar bundle
-func (tb *TarBundle) AddFiles(files ...http.File) error {
+// Bundle is used to add multiple files into a tar bundle
+func (tb *TarBundler) Bundle(files ...http.File) error {
+	tb.Buffer = &bytes.Buffer{}
 	tw := tar.NewWriter(tb.Buffer)
 	for _, file := range files {
 		info, err := file.Stat()
@@ -53,19 +51,8 @@ func (tb *TarBundle) AddFiles(files ...http.File) error {
 	return nil
 }
 
-// Encode is used to encode a tar bundle into a single string
-func (tb *TarBundle) Encode() string {
-	return tb.Buffer.String()
-}
-
-// Decode is used to decode a tar bundle from a string
-func (tb *TarBundle) Decode(buf string) error {
-	tb.Buffer = bytes.NewBufferString(buf)
-	return nil
-}
-
-// ToFileSystem is used to convert a tar bundle into an in memory http.FileSystem
-func (tb *TarBundle) ToFileSystem() (http.FileSystem, error) {
+// FileSystem is used to convert a tar bundle into an in memory http.FileSystem
+func (tb *TarBundle) FileSystem() (http.FileSystem, error) {
 	tr := tar.NewReader(tb.Buffer)
 	fs := afero.NewMemMapFs()
 	for {
