@@ -1,9 +1,10 @@
 package worker
 
 import (
-	"bytes"
 	"context"
+	"fmt"
 	"log"
+	"strings"
 
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/graphql"
@@ -12,8 +13,11 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	cdnlib "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
+	envlib "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	sshlib "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
+
+	"go.starlark.net/starlark"
 )
 
 const ServiceTag = "svc-pg-worker"
@@ -21,7 +25,8 @@ const ServiceTag = "svc-pg-worker"
 type Worker struct {
 	cdn.Uploader
 	cdn.Downloader
-	Graph graphql.Client
+	Graph  graphql.Client
+	Config string
 }
 
 func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
@@ -93,6 +98,26 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		len(credentials),
 	)
 
+	env := envlib.Environment{
+		PrimaryIP:       target.PrimaryIP,
+		OperatingSystem: target.Name, // TODO: Add OperatingSystem field to target
+	}
+
+	/* Build Assets Bundle */
+	code := script.New(
+		string(task.ID),
+		strings.NewReader(task.Content),
+		script.WithOutput(output),
+		filelib.Include(),
+		assert.Include(),
+		env.Include(),
+	)
+	if _, err := code.Call("init", starlark.Tuple{}); err != nil {
+		execErr = fmt.Errorf("failed to initialize assets: %w", err)
+		return
+	}
+
+	/* Use Config to execute task */
 	sshConnector := &SSHConnector{
 		Credentials: credentials,
 	}
@@ -109,14 +134,28 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		Downloader: w,
 	}
 
-	code := script.New(
+	var configScript = strings.NewReader(DefaultConfig)
+	if w.Config != "" {
+		configScript = strings.NewReader(w.Config)
+	}
+
+	config := script.New(
 		string(task.ID),
-		bytes.NewBufferString(task.Content),
+		configScript,
 		script.WithOutput(output),
 		sshEnv.Include(),
 		cdnEnv.Include(),
 		filelib.Include(),
 		assert.Include(),
 	)
-	execErr = code.Exec(ctx)
+
+	var res starlark.Value = starlark.None
+	defer func() {
+		if _, err := config.Call("worker_exit", starlark.Tuple{res}); err != nil {
+			log.Printf("[ERR] worker_exit failed: %v", err)
+		}
+	}()
+
+	// TODO: pass assets as argument
+	res, execErr = config.Call("worker_run", starlark.Tuple{starlark.String(task.Content), starlark.String("TODO: Assets")})
 }
