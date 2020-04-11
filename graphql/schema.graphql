@@ -16,6 +16,8 @@ input Filter {
   search: String
 }
 
+union Identity = User | Service
+
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
@@ -355,7 +357,7 @@ type Query {
   tasks(input: Filter): [Task]
 
   user(id: ID!): User
-  me: User
+  me: Identity
   users(input: Filter): [User]
 
   service(id: ID!): Service
