@@ -52,7 +52,7 @@ func (tb *TarBundler) Bundle(files ...http.File) error {
 }
 
 // FileSystem is used to convert a tar bundle into an in memory http.FileSystem
-func (tb *TarBundle) FileSystem() (http.FileSystem, error) {
+func (tb *TarBundler) FileSystem() (http.FileSystem, error) {
 	tr := tar.NewReader(tb.Buffer)
 	fs := afero.NewMemMapFs()
 	for {
