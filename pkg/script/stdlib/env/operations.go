@@ -1,10 +1,79 @@
 package env
 
 import (
+	"math/rand"
+	os_user "os/user"
 	"runtime"
+	"time"
 
 	"github.com/kcarretto/paragon/pkg/script"
 )
+
+// UID returns the current user id. If not found, an empty string is returned.
+//
+//go:generate go run ../gendoc.go -lib env -retval uid@string -func uid -doc "UID returns the current user id. If not found, an empty string is returned."
+//
+// @callable: 	env.uid()
+//
+// @usage: 		uid = env.uid()
+func (env *Environment) UID() string {
+	usr, err := os_user.Current()
+	if err != nil {
+		return ""
+	}
+
+	return usr.Uid
+}
+func (env *Environment) uid(parser script.ArgParser) (script.Retval, error) {
+	return env.UID(), nil
+}
+
+// User returns the current username. If not found, an empty string is returned.
+//
+//go:generate go run ../gendoc.go -lib env -retval username@string -func user -doc "User returns the current username. If not found, an empty string is returned."
+//
+// @callable: 	env.user()
+//
+// @usage: 		username = env.user()
+func (env *Environment) User() string {
+	usr, err := os_user.Current()
+	if err != nil {
+		return ""
+	}
+
+	return usr.Username
+}
+func (env *Environment) user(parser script.ArgParser) (script.Retval, error) {
+	return env.User(), nil
+}
+
+// Time returns the current number of seconds since the unix epoch.
+//
+//go:generate go run ../gendoc.go -lib env -retval i@int -func time -doc "Time returns the current number of seconds since the unix epoch."
+//
+// @callable: 	env.time()
+//
+// @usage: 		now = env.time()
+func (env *Environment) Time() int {
+	return int(time.Now().Unix())
+}
+func (env *Environment) time(parser script.ArgParser) (script.Retval, error) {
+	return env.Time(), nil
+}
+
+// Rand returns a random int. Not cryptographically secure.
+//
+//go:generate go run ../gendoc.go -lib env -retval i@int -func rand -doc "Rand returns a random int. Not cryptographically secure."
+//
+// @callable: 	env.rand()
+//
+// @usage: 		num = env.rand()
+func (env *Environment) Rand() int {
+	return rand.Int()
+}
+func (env *Environment) rand(parser script.ArgParser) (script.Retval, error) {
+	return env.Rand(), nil
+}
 
 // IP returns the primary IP address.
 //

@@ -29,6 +29,10 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	return script.Library{
 		"OS":        script.Func(env.os),
 		"IP":        script.Func(env.ip),
+		"rand":      script.Func(env.rand),
+		"uid":       script.Func(env.uid),
+		"user":      script.Func(env.user),
+		"time":      script.Func(env.time),
 		"isLinux":   script.Func(env.isLinux),
 		"isWindows": script.Func(env.isWindows),
 	}
@@ -36,5 +40,5 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 
 // Include TODO
 func (env *Environment) Include(options ...func(*Environment)) script.Option {
-	return script.WithLibrary("target", (*Environment).Library(env, options...))
+	return script.WithLibrary("env", (*Environment).Library(env, options...))
 }
