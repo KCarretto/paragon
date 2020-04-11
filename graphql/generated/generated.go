@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -311,7 +312,7 @@ type QueryResolver interface {
 	Task(ctx context.Context, id int) (*ent.Task, error)
 	Tasks(ctx context.Context, input *models.Filter) ([]*ent.Task, error)
 	User(ctx context.Context, id int) (*ent.User, error)
-	Me(ctx context.Context) (*ent.User, error)
+	Me(ctx context.Context) (models.Identity, error)
 	Users(ctx context.Context, input *models.Filter) ([]*ent.User, error)
 	Service(ctx context.Context, id int) (*ent.Service, error)
 	Services(ctx context.Context, input *models.Filter) ([]*ent.Service, error)
@@ -1698,6 +1699,8 @@ input Filter {
   search: String
 }
 
+union Identity = User | Service
+
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
@@ -2039,7 +2042,7 @@ type Query {
   tasks(input: Filter): [Task]
 
   user(id: ID!): User
-  me: User
+  me: Identity
   users(input: Filter): [User]
 
   service(id: ID!): Service
@@ -6483,10 +6486,10 @@ func (ec *executionContext) _Query_me(ctx context.Context, field graphql.Collect
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*ent.User)
+	res := resTmp.(models.Identity)
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
-	return ec.marshalOUser2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐUser(ctx, field.Selections, res)
+	return ec.marshalOIdentity2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐIdentity(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Query_users(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -10108,6 +10111,25 @@ func (ec *executionContext) unmarshalInputSubmitTaskResultRequest(ctx context.Co
 
 // region    ************************** interface.gotpl ***************************
 
+func (ec *executionContext) _Identity(ctx context.Context, sel ast.SelectionSet, obj models.Identity) graphql.Marshaler {
+	switch obj := (obj).(type) {
+	case nil:
+		return graphql.Null
+	case *ent.User:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._User(ctx, sel, obj)
+	case *ent.Service:
+		if obj == nil {
+			return graphql.Null
+		}
+		return ec._Service(ctx, sel, obj)
+	default:
+		panic(fmt.Errorf("unexpected type %T", obj))
+	}
+}
+
 // endregion ************************** interface.gotpl ***************************
 
 // region    **************************** object.gotpl ****************************
@@ -10959,7 +10981,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 	return out
 }
 
-var serviceImplementors = []string{"Service"}
+var serviceImplementors = []string{"Service", "Identity"}
 
 func (ec *executionContext) _Service(ctx context.Context, sel ast.SelectionSet, obj *ent.Service) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, serviceImplementors)
@@ -11208,7 +11230,7 @@ func (ec *executionContext) _Task(ctx context.Context, sel ast.SelectionSet, obj
 	return out
 }
 
-var userImplementors = []string{"User"}
+var userImplementors = []string{"User", "Identity"}
 
 func (ec *executionContext) _User(ctx context.Context, sel ast.SelectionSet, obj *ent.User) graphql.Marshaler {
 	fields := graphql.CollectFields(ec.RequestContext, sel, userImplementors)
@@ -12340,6 +12362,13 @@ func (ec *executionContext) marshalOID2ᚖint(ctx context.Context, sel ast.Selec
 		return graphql.Null
 	}
 	return ec.marshalOID2int(ctx, sel, *v)
+}
+
+func (ec *executionContext) marshalOIdentity2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐIdentity(ctx context.Context, sel ast.SelectionSet, v models.Identity) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Identity(ctx, sel, v)
 }
 
 func (ec *executionContext) unmarshalOInt2int(ctx context.Context, v interface{}) (int, error) {

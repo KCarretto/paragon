@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+type Identity interface {
+	IsIdentity()
+}
+
 type ActivateServiceRequest struct {
 	ID int `json:"id"`
 }
