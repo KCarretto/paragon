@@ -29,7 +29,7 @@ type testResolver struct {
 }
 
 func (test *testResolver) newTarget(t *testing.T, options ...func(*ent.TargetCreate)) *ent.Target {
-	targetCreater := test.Client.Target.Create().SetHostname("test").SetName("test").SetPrimaryIP("test")
+	targetCreater := test.Client.Target.Create().SetHostname("test").SetName("test").SetOS(target.OSLINUX).SetPrimaryIP("test")
 	for _, opt := range options {
 		opt(targetCreater)
 	}
