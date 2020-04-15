@@ -25,7 +25,7 @@ func newEventKind(value string) EventKind {
 	return EventKind(value)
 }
 
-// IF you update this you MUST regent the ent stuff
+// IF you update this you MUST regen the ent stuff
 var (
 	EventCreateJob EventKind = newEventKind("CREATE_JOB")
 	EventCreateTag EventKind = newEventKind("CREATE_TAG")

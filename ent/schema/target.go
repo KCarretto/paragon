@@ -11,12 +11,31 @@ type Target struct {
 	ent.Schema
 }
 
+type OSType string
+
+var osTypes []string
+
+func newOSType(value string) OSType {
+	osTypes = append(osTypes, value)
+	return OSType(value)
+}
+
+// IF you update this you MUST regen the ent stuff
+var (
+	LinuxOS   OSType = newOSType("LINUX")
+	WindowsOS OSType = newOSType("WINDOWS")
+	BSDOS     OSType = newOSType("BSD")
+)
+
 // Fields of the Target.
 func (Target) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
 			Unique().
 			Comment("The name of the Target"),
+		field.Enum("OS").
+			Values(osTypes...).
+			Comment("The OS of the target"),
 		field.String("PrimaryIP").
 			Comment("The IP Address for the primary interface of the Target"),
 		field.String("MachineUUID").

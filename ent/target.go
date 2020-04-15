@@ -18,6 +18,8 @@ type Target struct {
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
 	Name string `json:"Name,omitempty"`
+	// OS holds the value of the "OS" field.
+	OS target.OS `json:"OS,omitempty"`
 	// PrimaryIP holds the value of the "PrimaryIP" field.
 	PrimaryIP string `json:"PrimaryIP,omitempty"`
 	// MachineUUID holds the value of the "MachineUUID" field.
@@ -80,6 +82,7 @@ func (*Target) scanValues() []interface{} {
 	return []interface{}{
 		&sql.NullInt64{},  // id
 		&sql.NullString{}, // Name
+		&sql.NullString{}, // OS
 		&sql.NullString{}, // PrimaryIP
 		&sql.NullString{}, // MachineUUID
 		&sql.NullString{}, // PublicIP
@@ -107,32 +110,37 @@ func (t *Target) assignValues(values ...interface{}) error {
 		t.Name = value.String
 	}
 	if value, ok := values[1].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PrimaryIP", values[1])
+		return fmt.Errorf("unexpected type %T for field OS", values[1])
+	} else if value.Valid {
+		t.OS = target.OS(value.String)
+	}
+	if value, ok := values[2].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PrimaryIP", values[2])
 	} else if value.Valid {
 		t.PrimaryIP = value.String
 	}
-	if value, ok := values[2].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field MachineUUID", values[2])
+	if value, ok := values[3].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field MachineUUID", values[3])
 	} else if value.Valid {
 		t.MachineUUID = value.String
 	}
-	if value, ok := values[3].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PublicIP", values[3])
+	if value, ok := values[4].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PublicIP", values[4])
 	} else if value.Valid {
 		t.PublicIP = value.String
 	}
-	if value, ok := values[4].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PrimaryMAC", values[4])
+	if value, ok := values[5].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field PrimaryMAC", values[5])
 	} else if value.Valid {
 		t.PrimaryMAC = value.String
 	}
-	if value, ok := values[5].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Hostname", values[5])
+	if value, ok := values[6].(*sql.NullString); !ok {
+		return fmt.Errorf("unexpected type %T for field Hostname", values[6])
 	} else if value.Valid {
 		t.Hostname = value.String
 	}
-	if value, ok := values[6].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field LastSeen", values[6])
+	if value, ok := values[7].(*sql.NullTime); !ok {
+		return fmt.Errorf("unexpected type %T for field LastSeen", values[7])
 	} else if value.Valid {
 		t.LastSeen = value.Time
 	}
@@ -179,6 +187,8 @@ func (t *Target) String() string {
 	builder.WriteString(fmt.Sprintf("id=%v", t.ID))
 	builder.WriteString(", Name=")
 	builder.WriteString(t.Name)
+	builder.WriteString(", OS=")
+	builder.WriteString(fmt.Sprintf("%v", t.OS))
 	builder.WriteString(", PrimaryIP=")
 	builder.WriteString(t.PrimaryIP)
 	builder.WriteString(", MachineUUID=")

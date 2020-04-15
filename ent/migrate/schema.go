@@ -261,6 +261,7 @@ var (
 	TargetsColumns = []*schema.Column{
 		{Name: "id", Type: field.TypeInt, Increment: true},
 		{Name: "name", Type: field.TypeString, Unique: true},
+		{Name: "os", Type: field.TypeEnum, Enums: []string{"LINUX", "WINDOWS", "BSD"}},
 		{Name: "primary_ip", Type: field.TypeString},
 		{Name: "machine_uuid", Type: field.TypeString, Unique: true, Nullable: true, Size: 250},
 		{Name: "public_ip", Type: field.TypeString, Nullable: true},

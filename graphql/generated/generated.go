@@ -197,6 +197,7 @@ type ComplexityRoot struct {
 		LastSeen    func(childComplexity int) int
 		MachineUUID func(childComplexity int) int
 		Name        func(childComplexity int) int
+		Os          func(childComplexity int) int
 		PrimaryIP   func(childComplexity int) int
 		PrimaryMAC  func(childComplexity int) int
 		PublicIP    func(childComplexity int) int
@@ -328,6 +329,8 @@ type TagResolver interface {
 	Jobs(ctx context.Context, obj *ent.Tag, input *models.Filter) ([]*ent.Job, error)
 }
 type TargetResolver interface {
+	Os(ctx context.Context, obj *ent.Target) (*string, error)
+
 	Tasks(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Task, error)
 	Tags(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Tag, error)
 	Credentials(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Credential, error)
@@ -1436,6 +1439,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Target.Name(childComplexity), true
 
+	case "Target.os":
+		if e.complexity.Target.Os == nil {
+			break
+		}
+
+		return e.complexity.Target.Os(childComplexity), true
+
 	case "Target.primaryIP":
 		if e.complexity.Target.PrimaryIP == nil {
 			break
@@ -1704,6 +1714,7 @@ union Identity = User | Service
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
+  os: String
   primaryIP: String
   machineUUID: String
   publicIP: String
@@ -1867,6 +1878,7 @@ input RemoveTagRequest {
 input CreateTargetRequest {
   name: String!
   primaryIP: String!
+  os: String!
 
   tags: [ID!]
 }
@@ -1874,6 +1886,7 @@ input CreateTargetRequest {
 input SetTargetFieldsRequest {
   id: ID!
   name: String
+  os: String
   machineUUID: String
   primaryIP: String
   publicIP: String
@@ -7244,6 +7257,40 @@ func (ec *executionContext) _Target_name(ctx context.Context, field graphql.Coll
 	return ec.marshalOString2string(ctx, field.Selections, res)
 }
 
+func (ec *executionContext) _Target_os(ctx context.Context, field graphql.CollectedField, obj *ent.Target) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Target",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Target().Os(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
 func (ec *executionContext) _Target_primaryIP(ctx context.Context, field graphql.CollectedField, obj *ent.Target) (ret graphql.Marshaler) {
 	ctx = ec.Tracer.StartFieldExecution(ctx, field)
 	defer func() {
@@ -9723,6 +9770,12 @@ func (ec *executionContext) unmarshalInputCreateTargetRequest(ctx context.Contex
 			if err != nil {
 				return it, err
 			}
+		case "os":
+			var err error
+			it.Os, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
 		case "tags":
 			var err error
 			it.Tags, err = ec.unmarshalOID2ᚕintᚄ(ctx, v)
@@ -10026,6 +10079,12 @@ func (ec *executionContext) unmarshalInputSetTargetFieldsRequest(ctx context.Con
 		case "name":
 			var err error
 			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "os":
+			var err error
+			it.Os, err = ec.unmarshalOString2ᚖstring(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -11107,6 +11166,17 @@ func (ec *executionContext) _Target(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Target_id(ctx, field, obj)
 		case "name":
 			out.Values[i] = ec._Target_name(ctx, field, obj)
+		case "os":
+			field := field
+			out.Concurrently(i, func() (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Target_os(ctx, field, obj)
+				return res
+			})
 		case "primaryIP":
 			out.Values[i] = ec._Target_primaryIP(ctx, field, obj)
 		case "machineUUID":
