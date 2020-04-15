@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/graphql/resolve"
 	"github.com/kcarretto/paragon/pkg/auth"
@@ -194,8 +195,8 @@ func testClient() *ent.Client {
 func TestTargetsQuery(t *testing.T) {
 	client := NewTestClient()
 	defer client.Close()
-	client.newTarget(t, func(target *ent.TargetCreate) { target.SetName("test") })
-	client.newTarget(t, func(target *ent.TargetCreate) { target.SetName("test2") })
+	client.newTarget(t, func(tar *ent.TargetCreate) { tar.SetName("test").SetOS(target.OSLINUX) })
+	client.newTarget(t, func(tar *ent.TargetCreate) { tar.SetName("test2").SetOS(target.OSLINUX) })
 
 	query := client.Resolver.Query()
 	targets, err := query.Targets(context.Background(), &models.Filter{})
