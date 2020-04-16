@@ -25,7 +25,7 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	return script.Library{
 		"openFile": script.Func(env.openFile),
 		"drop":     script.Func(env.drop),
-		"require":  script.Func(env.drop),
+		"require":  script.Func(env.require),
 	}
 }
 
