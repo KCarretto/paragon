@@ -78,6 +78,7 @@ type CreateTagRequest struct {
 type CreateTargetRequest struct {
 	Name      string `json:"name"`
 	PrimaryIP string `json:"primaryIP"`
+	Os        string `json:"os"`
 	Tags      []int  `json:"tags"`
 }
 
@@ -143,6 +144,7 @@ type SetServiceConfigRequest struct {
 type SetTargetFieldsRequest struct {
 	ID          int     `json:"id"`
 	Name        *string `json:"name"`
+	Os          *string `json:"os"`
 	MachineUUID *string `json:"machineUUID"`
 	PrimaryIP   *string `json:"primaryIP"`
 	PublicIP    *string `json:"publicIP"`

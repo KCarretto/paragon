@@ -3,6 +3,8 @@
 package target
 
 import (
+	"fmt"
+
 	"github.com/kcarretto/paragon/ent/schema"
 )
 
@@ -13,6 +15,8 @@ const (
 	FieldID = "id"
 	// FieldName holds the string denoting the name vertex property in the database.
 	FieldName = "name"
+	// FieldOS holds the string denoting the os vertex property in the database.
+	FieldOS = "os"
 	// FieldPrimaryIP holds the string denoting the primaryip vertex property in the database.
 	FieldPrimaryIP = "primary_ip"
 	// FieldMachineUUID holds the string denoting the machineuuid vertex property in the database.
@@ -53,6 +57,7 @@ const (
 var Columns = []string{
 	FieldID,
 	FieldName,
+	FieldOS,
 	FieldPrimaryIP,
 	FieldMachineUUID,
 	FieldPublicIP,
@@ -71,7 +76,31 @@ var (
 	fields = schema.Target{}.Fields()
 
 	// descMachineUUID is the schema descriptor for MachineUUID field.
-	descMachineUUID = fields[2].Descriptor()
+	descMachineUUID = fields[3].Descriptor()
 	// MachineUUIDValidator is a validator for the "MachineUUID" field. It is called by the builders before save.
 	MachineUUIDValidator = descMachineUUID.Validators[0].(func(string) error)
 )
+
+// OS defines the type for the OS enum field.
+type OS string
+
+// OS values.
+const (
+	OSLINUX   OS = "LINUX"
+	OSWINDOWS OS = "WINDOWS"
+	OSBSD     OS = "BSD"
+)
+
+func (s OS) String() string {
+	return string(s)
+}
+
+// OSValidator is a validator for the "o" field enum values. It is called by the builders before save.
+func OSValidator(o OS) error {
+	switch o {
+	case OSLINUX, OSWINDOWS, OSBSD:
+		return nil
+	default:
+		return fmt.Errorf("target: invalid enum value for OS field: %q", o)
+	}
+}
