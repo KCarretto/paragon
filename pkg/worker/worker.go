@@ -45,14 +45,8 @@ func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
 		return
 	}
 
-	tags := info.Tags
-	if tags == nil {
-		log.Printf("[DBG] task queued event with invalid tags")
-		return
-	}
-
 	found := false
-	for _, tag := range tags {
+	for _, tag := range info.Tags {
 		if tag == nil {
 			continue
 		}
@@ -63,8 +57,8 @@ func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
 		found = true
 		break
 	}
-	if !found {
-		log.Printf("[DBG] task queued event without worker tags")
+	if !found && info.Tags != nil {
+		log.Printf("[DBG] task queued event with service tags that were not for the worker")
 		return
 	}
 
