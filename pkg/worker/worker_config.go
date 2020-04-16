@@ -1,6 +1,9 @@
 package worker
 
 const DefaultConfig = `
+RG_NIX = "renegade"
+RG_WIN = "renegade.exe"
+
 def ssh_copy(f, dstPath, perms):
 	dst, err = ssh.openFile(dstPath)
     assert.noError(err)
@@ -23,7 +26,7 @@ def ssh_write(content, dstPath, perms):
 
 def run_linux(task, assetBlob):
 	# Upload Interpreter
-	interpreter = cdn.openFile("paragon_interpreter_linux")
+	interpreter = cdn.openFile(RG_NIX)
 	intPath = "/tmp/"+str(env.rand())
 	ssh_copy(interpreter, intPath, "0755")
 
