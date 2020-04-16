@@ -5,12 +5,15 @@ package assets
 import (
 	"net/http"
 
+	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/script"
 )
 
 // Environment used to configure the behaviour of calls to the ssh library.
 type Environment struct {
-	Assets http.FileSystem
+	Assets     http.FileSystem
+	Files      []NamedReader
+	Downloader cdn.Downloader
 }
 
 // Library prepares a new assets library for use within a script environment.
@@ -22,8 +25,7 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	return script.Library{
 		"openFile": script.Func(env.openFile),
 		"drop":     script.Func(env.drop),
-		// "exec":     script.Func(env.exec),
-		// "openFile": script.Func(env.openFile),
+		"require":  script.Func(env.require),
 	}
 }
 

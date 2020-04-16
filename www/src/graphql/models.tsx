@@ -80,6 +80,7 @@ export type CreateTagRequest = {
 export type CreateTargetRequest = {
   name: Scalars['String'],
   primaryIP: Scalars['String'],
+  os: Scalars['String'],
   tags?: Maybe<Array<Scalars['ID']>>,
 };
 
@@ -90,6 +91,7 @@ export type Credential = {
   secret?: Maybe<Scalars['String']>,
   kind?: Maybe<Scalars['String']>,
   fails?: Maybe<Scalars['Int']>,
+  target?: Maybe<Target>,
 };
 
 export type DeactivateServiceRequest = {
@@ -159,6 +161,8 @@ export type Filter = {
   limit?: Maybe<Scalars['Int']>,
   search?: Maybe<Scalars['String']>,
 };
+
+export type Identity = User | Service;
 
 export type Job = {
    __typename?: 'Job',
@@ -411,7 +415,7 @@ export type Query = {
   task?: Maybe<Task>,
   tasks?: Maybe<Array<Maybe<Task>>>,
   user?: Maybe<User>,
-  me?: Maybe<User>,
+  me?: Maybe<Identity>,
   users?: Maybe<Array<Maybe<User>>>,
   service?: Maybe<Service>,
   services?: Maybe<Array<Maybe<Service>>>,
@@ -557,6 +561,7 @@ export type SetServiceConfigRequest = {
 export type SetTargetFieldsRequest = {
   id: Scalars['ID'],
   name?: Maybe<Scalars['String']>,
+  os?: Maybe<Scalars['String']>,
   machineUUID?: Maybe<Scalars['String']>,
   primaryIP?: Maybe<Scalars['String']>,
   publicIP?: Maybe<Scalars['String']>,
@@ -600,6 +605,7 @@ export type Target = {
    __typename?: 'Target',
   id?: Maybe<Scalars['ID']>,
   name?: Maybe<Scalars['String']>,
+  os?: Maybe<Scalars['String']>,
   primaryIP?: Maybe<Scalars['String']>,
   machineUUID?: Maybe<Scalars['String']>,
   publicIP?: Maybe<Scalars['String']>,

@@ -13,7 +13,13 @@ import (
 
 // Bundler is an interface for handling multi-file (de)serialization and creation of a http.FileSystem
 type Bundler interface {
-	Bundle(...http.File) error
+	Bundle(...NamedReader) error
+}
+
+// NamedReader is a basic struct to organize the data needed for the Bundler
+type NamedReader struct {
+	io.Reader
+	Name string
 }
 
 // TarGZBundler is the concrete implementation of Bundle using Tar and GZip
@@ -22,20 +28,16 @@ type TarGZBundler struct {
 }
 
 // Bundle is used to add multiple files into a tar bundle
-func (tb *TarGZBundler) Bundle(files ...http.File) error {
+func (tb *TarGZBundler) Bundle(files ...NamedReader) error {
 	tb.Buffer = &bytes.Buffer{}
 	tw := tar.NewWriter(tb.Buffer)
 	for _, file := range files {
-		info, err := file.Stat()
-		if err != nil {
-			return err
-		}
 		body, err := ioutil.ReadAll(file)
 		if err != nil {
 			return err
 		}
 		hdr := &tar.Header{
-			Name: info.Name(),
+			Name: file.Name,
 			Mode: 0644,
 			Size: int64(len(body)),
 		}
