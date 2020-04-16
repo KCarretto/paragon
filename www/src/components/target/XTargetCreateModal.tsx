@@ -3,14 +3,14 @@ import { ApolloError } from "apollo-client/errors/ApolloError";
 import gql from "graphql-tag";
 import * as React from "react";
 import { useState } from "react";
-import { Button, Form, Grid, Input, Message, Modal } from "semantic-ui-react";
+import { Button, Dropdown, Form, Grid, Input, Message, Modal } from "semantic-ui-react";
 import { Tag } from "../../graphql/models";
 import { MULTI_TARGET_QUERY } from "../../views";
 import { useModal, XTagTypeahead } from "../form";
 
 export const CREATE_TARGET_MUTATION = gql`
-  mutation CreateTarget($name: String!, $primaryIP: String!, $tags: [ID!]) {
-    createTarget(input: { name: $name, primaryIP: $primaryIP, tags: $tags }) {
+  mutation CreateTarget($name: String!, $primaryIP: String!, $os: String!, $tags: [ID!]) {
+    createTarget(input: { name: $name, primaryIP: $primaryIP, os: $os, tags: $tags }) {
       id
       name
       primaryIP
@@ -35,6 +35,7 @@ const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
   const [name, setName] = useState<string>("");
   const [primaryIP, setPrimaryIP] = useState<string>("");
   const [tags, setTags] = useState<Tag[]>([]);
+  const [os, setOS] = useState<string>("LINUX");
 
   const [createTarget, { called, loading }] = useMutation(
     CREATE_TARGET_MUTATION,
@@ -47,7 +48,8 @@ const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
     let vars = {
       name: name,
       primaryIP: primaryIP,
-      tags: tags
+      tags: tags,
+      os: os,
     };
 
     createTarget({
@@ -70,6 +72,20 @@ const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
 
   if (openOnStart) {
     openModal();
+  }
+
+  let osIcon = "windows";
+  switch (os) {
+    case "WINDOWS":
+      osIcon = "windows";
+      break;
+    case "LINUX":
+      osIcon = "linux";
+      break;
+    case "BSD":
+      osIcon = "freebsd";
+    case "MACOS":
+      osIcon = "apple";
   }
 
   return (
@@ -98,11 +114,26 @@ const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
               onChange={(e, { value }) => setName(value)}
             />
           </Grid.Column>
-
+          <Grid.Column>
+            <Input fluid label="OS" icon={osIcon} input={<Dropdown
+              icon=""
+              fluid
+              selection
+              options={[
+                { text: "Linux", value: "LINUX" },
+                { text: "Windows", value: "WINDOWS" },
+                { text: "BSD", value: "BSD" },
+                { text: "MacOS", value: "MACOS" },
+              ]}
+              name="os"
+              value={os}
+              onChange={(e, { value }) => setOS(value.toString())}
+            />} />
+          </Grid.Column>
           <Grid.Column>
             <Input
               label="Primary IP"
-              icon="desktop"
+              icon="plug"
               fluid
               placeholder="Enter primary ip address"
               name="primaryIP"
