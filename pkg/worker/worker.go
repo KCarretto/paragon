@@ -101,7 +101,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 
 	env := libenv.Environment{
 		PrimaryIP:       target.PrimaryIP,
-		OperatingSystem: target.Name, // TODO: Add OperatingSystem field to target
+		OperatingSystem: target.OS.String(),
 	}
 
 	/* Build Assets Bundle */

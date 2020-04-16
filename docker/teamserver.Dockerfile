@@ -21,15 +21,15 @@ COPY ./www/assets.gen.go /app/www/assets.gen.go
 FROM build-cache as dev
 CMD ["/app/build/teamserver"]
 EXPOSE 80 443 8080
-RUN GOOS=linux go build -tags=dev,profile_cpu,nats -o /app/cdn/renegade ./cmd/renegade
-RUN GOOS=windows go build -tags=dev,profile_cpu,nats -o /app/cdn/renegade.exe ./cmd/renegade
 RUN go build -tags=dev,profile_cpu,nats -o /app/build/teamserver ./cmd/teamserver
+RUN GOOS=linux go build -ldflags="-s -w" -tags=dev,profile_cpu,nats -o /app/cdn/renegade ./cmd/renegade
+RUN GOOS=windows go build -ldflags="-s -w" -tags=dev,profile_cpu,nats -o /app/cdn/renegade.exe ./cmd/renegade
 
 # Production Build
 FROM build-cache as prod-build
-RUN GOOS=linux go build -tags=gcp -o /app/cdn/renegade ./cmd/renegade
-RUN GOOS=windows go build -tags=gcp -o /app/cdn/renegade.exe ./cmd/renegade
 RUN go build -tags=gcp -o /app/build/teamserver ./cmd/teamserver
+RUN GOOS=linux go build -ldflags="-s -w" -tags=gcp -o /app/cdn/renegade ./cmd/renegade
+RUN GOOS=windows go build -ldflags="-s -w" -tags=gcp -o /app/cdn/renegade.exe ./cmd/renegade
 
 # Production
 FROM alpine:3.10.2 as production

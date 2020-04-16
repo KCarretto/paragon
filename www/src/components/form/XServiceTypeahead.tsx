@@ -1,10 +1,8 @@
 import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
-import { useState } from "react";
 import { Dropdown, DropdownProps, Input } from "semantic-ui-react";
 import { Service } from "../../graphql/models";
-
 // Suggest services for the typeahead.
 export const SUGGEST_SERVICES_QUERY = gql`
   query SuggestServices {
@@ -25,8 +23,6 @@ type ServicesResult = {
 
 // XServiceTypeahead adds a service tag field to a form, which has a value of a single tag id.
 const XServiceTypeahead: React.FC<{ value: string, onChange: (event: React.SyntheticEvent<HTMLElement>, data: DropdownProps) => void, labeled?: boolean, defaultSVC?: string }> = ({ value, onChange, labeled, defaultSVC }) => {
-  const [defaultID, setDefaultID] = useState<string>(null);
-
   const { loading, error, data: { services = [] } = {} } = useQuery<
     ServicesResult
   >(SUGGEST_SERVICES_QUERY);
@@ -35,8 +31,8 @@ const XServiceTypeahead: React.FC<{ value: string, onChange: (event: React.Synth
     ? Array.from(
       new Map(
         services.map(svc => {
-          if (svc && svc.name === defaultSVC && svc.tag && svc.tag.id) {
-            setDefaultID(svc.tag.id)
+          if (svc && svc.name === defaultSVC && svc.tag && svc.tag.id && !value) {
+            onChange(null, { value: svc.tag.id })
           }
 
           return [
@@ -56,10 +52,8 @@ const XServiceTypeahead: React.FC<{ value: string, onChange: (event: React.Synth
       placeholder="Default Service"
       icon=""
       fluid
-      defaultValue={defaultID}
       // search
       selection
-      clearable
       error={error !== null && error !== undefined}
       loading={loading}
       options={options}

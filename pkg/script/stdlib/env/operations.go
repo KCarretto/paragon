@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	os_user "os/user"
 	"runtime"
+	"strings"
 	"time"
 
 	"github.com/kcarretto/paragon/pkg/script"
@@ -98,10 +99,10 @@ func (env *Environment) ip(parser script.ArgParser) (script.Retval, error) {
 // @usage: 		os = env.OS()
 func (env *Environment) OS() string {
 	if env.OperatingSystem == "" {
-		env.OperatingSystem = runtime.GOOS
+		env.OperatingSystem = strings.ToUpper(runtime.GOOS)
 	}
 
-	return env.OperatingSystem
+	return strings.ToUpper(env.OperatingSystem)
 }
 func (env *Environment) os(parser script.ArgParser) (script.Retval, error) {
 	return env.OS(), nil
@@ -116,10 +117,10 @@ func (env *Environment) os(parser script.ArgParser) (script.Retval, error) {
 // @usage: 		env.isLinux()
 func (env *Environment) IsLinux() bool {
 	if env.OperatingSystem == "" {
-		env.OperatingSystem = runtime.GOOS
+		env.OperatingSystem = strings.ToUpper(runtime.GOOS)
 	}
 
-	return env.OperatingSystem == "linux"
+	return strings.ToUpper(env.OperatingSystem) == "LINUX"
 }
 func (env *Environment) isLinux(parser script.ArgParser) (script.Retval, error) {
 	return env.IsLinux(), nil
@@ -134,10 +135,10 @@ func (env *Environment) isLinux(parser script.ArgParser) (script.Retval, error) 
 // @usage: 		env.isWindows()
 func (env *Environment) IsWindows() bool {
 	if env.OperatingSystem == "" {
-		env.OperatingSystem = runtime.GOOS
+		env.OperatingSystem = strings.ToUpper(runtime.GOOS)
 	}
 
-	return env.OperatingSystem == "windows"
+	return strings.ToUpper(env.OperatingSystem) == "WINDOWS"
 }
 func (env *Environment) isWindows(parser script.ArgParser) (script.Retval, error) {
 	return env.IsWindows(), nil
