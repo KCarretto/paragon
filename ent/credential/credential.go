@@ -30,7 +30,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "target" package.
 	TargetInverseTable = "targets"
 	// TargetColumn is the table column denoting the target relation/edge.
-	TargetColumn = "target_credentials"
+	TargetColumn = "target_id"
 )
 
 // Columns holds all SQL columns for credential fields.
@@ -44,7 +44,7 @@ var Columns = []string{
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the Credential type.
 var ForeignKeys = []string{
-	"target_credentials",
+	"target_id",
 }
 
 var (

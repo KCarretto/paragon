@@ -67,14 +67,14 @@ func (cq *CredentialQuery) QueryTarget() *TargetQuery {
 	return query
 }
 
-// First returns the first Credential entity in the query. Returns *NotFoundError when no credential was found.
+// First returns the first Credential entity in the query. Returns *ErrNotFound when no credential was found.
 func (cq *CredentialQuery) First(ctx context.Context) (*Credential, error) {
 	cs, err := cq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(cs) == 0 {
-		return nil, &NotFoundError{credential.Label}
+		return nil, &ErrNotFound{credential.Label}
 	}
 	return cs[0], nil
 }
@@ -88,14 +88,14 @@ func (cq *CredentialQuery) FirstX(ctx context.Context) *Credential {
 	return c
 }
 
-// FirstID returns the first Credential id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first Credential id in the query. Returns *ErrNotFound when no id was found.
 func (cq *CredentialQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = cq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{credential.Label}
+		err = &ErrNotFound{credential.Label}
 		return
 	}
 	return ids[0], nil
@@ -120,9 +120,9 @@ func (cq *CredentialQuery) Only(ctx context.Context) (*Credential, error) {
 	case 1:
 		return cs[0], nil
 	case 0:
-		return nil, &NotFoundError{credential.Label}
+		return nil, &ErrNotFound{credential.Label}
 	default:
-		return nil, &NotSingularError{credential.Label}
+		return nil, &ErrNotSingular{credential.Label}
 	}
 }
 
@@ -145,9 +145,9 @@ func (cq *CredentialQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{credential.Label}
+		err = &ErrNotFound{credential.Label}
 	default:
-		err = &NotSingularError{credential.Label}
+		err = &ErrNotSingular{credential.Label}
 	}
 	return
 }
@@ -290,12 +290,9 @@ func (cq *CredentialQuery) Select(field string, fields ...string) *CredentialSel
 
 func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	var (
-		nodes       = []*Credential{}
-		withFKs     = cq.withFKs
-		_spec       = cq.querySpec()
-		loadedTypes = [1]bool{
-			cq.withTarget != nil,
-		}
+		nodes   []*Credential
+		withFKs = cq.withFKs
+		_spec   = cq.querySpec()
 	)
 	if cq.withTarget != nil {
 		withFKs = true
@@ -317,12 +314,12 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, cq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -331,7 +328,7 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Credential)
 		for i := range nodes {
-			if fk := nodes[i].target_credentials; fk != nil {
+			if fk := nodes[i].target_id; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -344,7 +341,7 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_credentials" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Target = n

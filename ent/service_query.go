@@ -82,14 +82,14 @@ func (sq *ServiceQuery) QueryEvents() *EventQuery {
 	return query
 }
 
-// First returns the first Service entity in the query. Returns *NotFoundError when no service was found.
+// First returns the first Service entity in the query. Returns *ErrNotFound when no service was found.
 func (sq *ServiceQuery) First(ctx context.Context) (*Service, error) {
 	sSlice, err := sq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(sSlice) == 0 {
-		return nil, &NotFoundError{service.Label}
+		return nil, &ErrNotFound{service.Label}
 	}
 	return sSlice[0], nil
 }
@@ -103,14 +103,14 @@ func (sq *ServiceQuery) FirstX(ctx context.Context) *Service {
 	return s
 }
 
-// FirstID returns the first Service id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first Service id in the query. Returns *ErrNotFound when no id was found.
 func (sq *ServiceQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = sq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{service.Label}
+		err = &ErrNotFound{service.Label}
 		return
 	}
 	return ids[0], nil
@@ -135,9 +135,9 @@ func (sq *ServiceQuery) Only(ctx context.Context) (*Service, error) {
 	case 1:
 		return sSlice[0], nil
 	case 0:
-		return nil, &NotFoundError{service.Label}
+		return nil, &ErrNotFound{service.Label}
 	default:
-		return nil, &NotSingularError{service.Label}
+		return nil, &ErrNotSingular{service.Label}
 	}
 }
 
@@ -160,9 +160,9 @@ func (sq *ServiceQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{service.Label}
+		err = &ErrNotFound{service.Label}
 	default:
-		err = &NotSingularError{service.Label}
+		err = &ErrNotSingular{service.Label}
 	}
 	return
 }
@@ -316,13 +316,9 @@ func (sq *ServiceQuery) Select(field string, fields ...string) *ServiceSelect {
 
 func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 	var (
-		nodes       = []*Service{}
-		withFKs     = sq.withFKs
-		_spec       = sq.querySpec()
-		loadedTypes = [2]bool{
-			sq.withTag != nil,
-			sq.withEvents != nil,
-		}
+		nodes   []*Service
+		withFKs = sq.withFKs
+		_spec   = sq.querySpec()
 	)
 	if sq.withTag != nil {
 		withFKs = true
@@ -344,12 +340,12 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, sq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -358,7 +354,7 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Service)
 		for i := range nodes {
-			if fk := nodes[i].service_tag; fk != nil {
+			if fk := nodes[i].service_tag_id; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -371,7 +367,7 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "service_tag" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "service_tag_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Tag = n
@@ -395,13 +391,13 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.service_events
+			fk := n.svc_owner_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "service_events" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "svc_owner_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "service_events" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "svc_owner_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Events = append(node.Edges.Events, n)
 		}

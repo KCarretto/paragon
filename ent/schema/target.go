@@ -25,6 +25,7 @@ var (
 	LinuxOS   OSType = newOSType("LINUX")
 	WindowsOS OSType = newOSType("WINDOWS")
 	BSDOS     OSType = newOSType("BSD")
+	MACOS     OSType = newOSType("MACOS")
 )
 
 // Fields of the Target.

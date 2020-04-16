@@ -8,7 +8,6 @@ import (
 
 	"github.com/facebookincubator/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/credential"
-	"github.com/kcarretto/paragon/ent/target"
 )
 
 // Credential is the model entity for the Credential schema.
@@ -26,31 +25,11 @@ type Credential struct {
 	Fails int `json:"fails,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CredentialQuery when eager-loading is set.
-	Edges              CredentialEdges `json:"edges"`
-	target_credentials *int
-}
-
-// CredentialEdges holds the relations/edges for other nodes in the graph.
-type CredentialEdges struct {
-	// Target holds the value of the target edge.
-	Target *Target
-	// loadedTypes holds the information for reporting if a
-	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [1]bool
-}
-
-// TargetOrErr returns the Target value or an error if the edge
-// was not loaded in eager-loading, or loaded but was not found.
-func (e CredentialEdges) TargetOrErr() (*Target, error) {
-	if e.loadedTypes[0] {
-		if e.Target == nil {
-			// The edge target was loaded in eager-loading,
-			// but was not found.
-			return nil, &NotFoundError{label: target.Label}
-		}
-		return e.Target, nil
-	}
-	return nil, &NotLoadedError{edge: "target"}
+	Edges struct {
+		// Target holds the value of the target edge.
+		Target *Target
+	} `json:"edges"`
+	target_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -67,7 +46,7 @@ func (*Credential) scanValues() []interface{} {
 // fkValues returns the types for scanning foreign-keys values from sql.Rows.
 func (*Credential) fkValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{}, // target_credentials
+		&sql.NullInt64{}, // target_id
 	}
 }
 
@@ -106,10 +85,10 @@ func (c *Credential) assignValues(values ...interface{}) error {
 	values = values[4:]
 	if len(values) == len(credential.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field target_credentials", value)
+			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
 		} else if value.Valid {
-			c.target_credentials = new(int)
-			*c.target_credentials = int(value.Int64)
+			c.target_id = new(int)
+			*c.target_id = int(value.Int64)
 		}
 	}
 	return nil

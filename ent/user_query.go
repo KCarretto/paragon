@@ -82,14 +82,14 @@ func (uq *UserQuery) QueryEvents() *EventQuery {
 	return query
 }
 
-// First returns the first User entity in the query. Returns *NotFoundError when no user was found.
+// First returns the first User entity in the query. Returns *ErrNotFound when no user was found.
 func (uq *UserQuery) First(ctx context.Context) (*User, error) {
 	us, err := uq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(us) == 0 {
-		return nil, &NotFoundError{user.Label}
+		return nil, &ErrNotFound{user.Label}
 	}
 	return us[0], nil
 }
@@ -103,14 +103,14 @@ func (uq *UserQuery) FirstX(ctx context.Context) *User {
 	return u
 }
 
-// FirstID returns the first User id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first User id in the query. Returns *ErrNotFound when no id was found.
 func (uq *UserQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = uq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{user.Label}
+		err = &ErrNotFound{user.Label}
 		return
 	}
 	return ids[0], nil
@@ -135,9 +135,9 @@ func (uq *UserQuery) Only(ctx context.Context) (*User, error) {
 	case 1:
 		return us[0], nil
 	case 0:
-		return nil, &NotFoundError{user.Label}
+		return nil, &ErrNotFound{user.Label}
 	default:
-		return nil, &NotSingularError{user.Label}
+		return nil, &ErrNotSingular{user.Label}
 	}
 }
 
@@ -160,9 +160,9 @@ func (uq *UserQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{user.Label}
+		err = &ErrNotFound{user.Label}
 	default:
-		err = &NotSingularError{user.Label}
+		err = &ErrNotSingular{user.Label}
 	}
 	return
 }
@@ -316,13 +316,9 @@ func (uq *UserQuery) Select(field string, fields ...string) *UserSelect {
 
 func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 	var (
-		nodes       = []*User{}
-		withFKs     = uq.withFKs
-		_spec       = uq.querySpec()
-		loadedTypes = [2]bool{
-			uq.withJobs != nil,
-			uq.withEvents != nil,
-		}
+		nodes   []*User
+		withFKs = uq.withFKs
+		_spec   = uq.querySpec()
 	)
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, user.ForeignKeys...)
@@ -341,12 +337,12 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, uq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -367,13 +363,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.user_jobs
+			fk := n.owner_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "user_jobs" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "owner_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_jobs" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Jobs = append(node.Edges.Jobs, n)
 		}
@@ -395,13 +391,13 @@ func (uq *UserQuery) sqlAll(ctx context.Context) ([]*User, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.user_events
+			fk := n.owner_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "user_events" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "owner_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_events" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Events = append(node.Edges.Events, n)
 		}

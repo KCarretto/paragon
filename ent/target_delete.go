@@ -70,7 +70,7 @@ func (tdo *TargetDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &NotFoundError{target.Label}
+		return &ErrNotFound{target.Label}
 	default:
 		return nil
 	}

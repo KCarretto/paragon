@@ -19,47 +19,14 @@ type Tag struct {
 	Name string `json:"Name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TagQuery when eager-loading is set.
-	Edges TagEdges `json:"edges"`
-}
-
-// TagEdges holds the relations/edges for other nodes in the graph.
-type TagEdges struct {
-	// Targets holds the value of the targets edge.
-	Targets []*Target
-	// Tasks holds the value of the tasks edge.
-	Tasks []*Task
-	// Jobs holds the value of the jobs edge.
-	Jobs []*Job
-	// loadedTypes holds the information for reporting if a
-	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [3]bool
-}
-
-// TargetsOrErr returns the Targets value or an error if the edge
-// was not loaded in eager-loading.
-func (e TagEdges) TargetsOrErr() ([]*Target, error) {
-	if e.loadedTypes[0] {
-		return e.Targets, nil
-	}
-	return nil, &NotLoadedError{edge: "targets"}
-}
-
-// TasksOrErr returns the Tasks value or an error if the edge
-// was not loaded in eager-loading.
-func (e TagEdges) TasksOrErr() ([]*Task, error) {
-	if e.loadedTypes[1] {
-		return e.Tasks, nil
-	}
-	return nil, &NotLoadedError{edge: "tasks"}
-}
-
-// JobsOrErr returns the Jobs value or an error if the edge
-// was not loaded in eager-loading.
-func (e TagEdges) JobsOrErr() ([]*Job, error) {
-	if e.loadedTypes[2] {
-		return e.Jobs, nil
-	}
-	return nil, &NotLoadedError{edge: "jobs"}
+	Edges struct {
+		// Targets holds the value of the targets edge.
+		Targets []*Target
+		// Tasks holds the value of the tasks edge.
+		Tasks []*Task
+		// Jobs holds the value of the jobs edge.
+		Jobs []*Job
+	} `json:"edges"`
 }
 
 // scanValues returns the types for scanning values from sql.Rows.

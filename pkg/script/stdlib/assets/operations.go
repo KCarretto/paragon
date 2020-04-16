@@ -102,15 +102,14 @@ func (env *Environment) drop(parser script.ArgParser) (script.Retval, error) {
 }
 
 // Require will be used in the init function for the worker to specify which files you wish to
-// include in the asset bundle which will be accessible on the target.
+// include in the asset bundle which will be accessible on the target. Will fatal if error occurs.
 //
-//go:generate go run ../gendoc.go -lib assets -func require -param filePath@String -retval err@Error -doc "Require will be used in the init function for the worker to specify which files you wish to include in the asset bundle which will be accessible on the target."
+//go:generate go run ../gendoc.go -lib assets -func require -param filePath@String -doc "Require will be used in the init function for the worker to specify which files you wish to include in the asset bundle which will be accessible on the target. Will fatal if error occurs."
 //
 // @callable:	assets.require
 // @param:		filePath 	@String
-// @retval:		err 		@Error
 //
-// @usage:		f, err = assets.require("file_on_cdn")
+// @usage:		assets.require("file_on_cdn")
 func (env *Environment) Require(filePath string) (err error) {
 	f, err := env.Downloader.Download(filePath)
 	if err != nil {
@@ -126,6 +125,5 @@ func (env *Environment) require(parser script.ArgParser) (script.Retval, error) 
 	if err != nil {
 		return nil, err
 	}
-	retErr := env.Require(filePath)
-	return retErr, nil
+	return nil, env.Require(filePath)
 }

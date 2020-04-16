@@ -95,14 +95,14 @@ func (tq *TagQuery) QueryJobs() *JobQuery {
 	return query
 }
 
-// First returns the first Tag entity in the query. Returns *NotFoundError when no tag was found.
+// First returns the first Tag entity in the query. Returns *ErrNotFound when no tag was found.
 func (tq *TagQuery) First(ctx context.Context) (*Tag, error) {
 	ts, err := tq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(ts) == 0 {
-		return nil, &NotFoundError{tag.Label}
+		return nil, &ErrNotFound{tag.Label}
 	}
 	return ts[0], nil
 }
@@ -116,14 +116,14 @@ func (tq *TagQuery) FirstX(ctx context.Context) *Tag {
 	return t
 }
 
-// FirstID returns the first Tag id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first Tag id in the query. Returns *ErrNotFound when no id was found.
 func (tq *TagQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = tq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{tag.Label}
+		err = &ErrNotFound{tag.Label}
 		return
 	}
 	return ids[0], nil
@@ -148,9 +148,9 @@ func (tq *TagQuery) Only(ctx context.Context) (*Tag, error) {
 	case 1:
 		return ts[0], nil
 	case 0:
-		return nil, &NotFoundError{tag.Label}
+		return nil, &ErrNotFound{tag.Label}
 	default:
-		return nil, &NotSingularError{tag.Label}
+		return nil, &ErrNotSingular{tag.Label}
 	}
 }
 
@@ -173,9 +173,9 @@ func (tq *TagQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{tag.Label}
+		err = &ErrNotFound{tag.Label}
 	default:
-		err = &NotSingularError{tag.Label}
+		err = &ErrNotSingular{tag.Label}
 	}
 	return
 }
@@ -340,13 +340,8 @@ func (tq *TagQuery) Select(field string, fields ...string) *TagSelect {
 
 func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 	var (
-		nodes       = []*Tag{}
-		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
-			tq.withTargets != nil,
-			tq.withTasks != nil,
-			tq.withJobs != nil,
-		}
+		nodes []*Tag
+		_spec = tq.querySpec()
 	)
 	_spec.ScanValues = func() []interface{} {
 		node := &Tag{config: tq.config}
@@ -359,12 +354,12 @@ func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -403,7 +398,7 @@ func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := int(eout.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -466,7 +461,7 @@ func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := int(eout.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -529,7 +524,7 @@ func (tq *TagQuery) sqlAll(ctx context.Context) ([]*Tag, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := int(eout.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)

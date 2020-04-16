@@ -26,7 +26,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "file" package.
 	FileInverseTable = "files"
 	// FileColumn is the table column denoting the file relation/edge.
-	FileColumn = "file_links"
+	FileColumn = "file_id"
 )
 
 // Columns holds all SQL columns for link fields.
@@ -39,7 +39,7 @@ var Columns = []string{
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the Link type.
 var ForeignKeys = []string{
-	"file_links",
+	"file_id",
 }
 
 var (
