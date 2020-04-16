@@ -38,7 +38,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "target_tasks"
+	TasksColumn = "target_id"
 	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
 	TagsTable = "target_tags"
 	// TagsInverseTable is the table name for the Tag entity.
@@ -50,7 +50,7 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "credential" package.
 	CredentialsInverseTable = "credentials"
 	// CredentialsColumn is the table column denoting the credentials relation/edge.
-	CredentialsColumn = "target_credentials"
+	CredentialsColumn = "target_id"
 )
 
 // Columns holds all SQL columns for target fields.
@@ -89,6 +89,7 @@ const (
 	OSLINUX   OS = "LINUX"
 	OSWINDOWS OS = "WINDOWS"
 	OSBSD     OS = "BSD"
+	OSMACOS   OS = "MACOS"
 )
 
 func (s OS) String() string {
@@ -98,7 +99,7 @@ func (s OS) String() string {
 // OSValidator is a validator for the "o" field enum values. It is called by the builders before save.
 func OSValidator(o OS) error {
 	switch o {
-	case OSLINUX, OSWINDOWS, OSBSD:
+	case OSLINUX, OSWINDOWS, OSBSD, OSMACOS:
 		return nil
 	default:
 		return fmt.Errorf("target: invalid enum value for OS field: %q", o)

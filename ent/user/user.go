@@ -32,14 +32,14 @@ const (
 	// It exists in this package in order to avoid circular dependency with the "job" package.
 	JobsInverseTable = "jobs"
 	// JobsColumn is the table column denoting the jobs relation/edge.
-	JobsColumn = "user_jobs"
+	JobsColumn = "owner_id"
 	// EventsTable is the table the holds the events relation/edge.
 	EventsTable = "events"
 	// EventsInverseTable is the table name for the Event entity.
 	// It exists in this package in order to avoid circular dependency with the "event" package.
 	EventsInverseTable = "events"
 	// EventsColumn is the table column denoting the events relation/edge.
-	EventsColumn = "user_events"
+	EventsColumn = "owner_id"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -55,7 +55,7 @@ var Columns = []string{
 
 // ForeignKeys holds the SQL foreign-keys that are owned by the User type.
 var ForeignKeys = []string{
-	"event_likers",
+	"event_liker_id",
 }
 
 var (

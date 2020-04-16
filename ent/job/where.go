@@ -12,23 +12,27 @@ import (
 
 // ID filters vertices based on their identifier.
 func ID(id int) predicate.Job {
-	return predicate.Job(func(s *sql.Selector) {
-		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s.Where(sql.EQ(s.C(FieldID), id))
+		},
+	)
 }
 
 // IDEQ applies the EQ predicate on the ID field.
 func IDEQ(id int) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldID), id))
-	})
+	},
+	)
 }
 
 // IDNEQ applies the NEQ predicate on the ID field.
 func IDNEQ(id int) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldID), id))
-	})
+	},
+	)
 }
 
 // IDIn applies the In predicate on the ID field.
@@ -45,7 +49,8 @@ func IDIn(ids ...int) predicate.Job {
 			v[i] = ids[i]
 		}
 		s.Where(sql.In(s.C(FieldID), v...))
-	})
+	},
+	)
 }
 
 // IDNotIn applies the NotIn predicate on the ID field.
@@ -62,77 +67,88 @@ func IDNotIn(ids ...int) predicate.Job {
 			v[i] = ids[i]
 		}
 		s.Where(sql.NotIn(s.C(FieldID), v...))
-	})
+	},
+	)
 }
 
 // IDGT applies the GT predicate on the ID field.
 func IDGT(id int) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldID), id))
-	})
+	},
+	)
 }
 
 // IDGTE applies the GTE predicate on the ID field.
 func IDGTE(id int) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldID), id))
-	})
+	},
+	)
 }
 
 // IDLT applies the LT predicate on the ID field.
 func IDLT(id int) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldID), id))
-	})
+	},
+	)
 }
 
 // IDLTE applies the LTE predicate on the ID field.
 func IDLTE(id int) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldID), id))
-	})
+	},
+	)
 }
 
 // Name applies equality check predicate on the "Name" field. It's identical to NameEQ.
 func Name(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // CreationTime applies equality check predicate on the "CreationTime" field. It's identical to CreationTimeEQ.
 func CreationTime(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // Content applies equality check predicate on the "Content" field. It's identical to ContentEQ.
 func Content(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // Staged applies equality check predicate on the "Staged" field. It's identical to StagedEQ.
 func Staged(v bool) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldStaged), v))
-	})
+	},
+	)
 }
 
 // NameEQ applies the EQ predicate on the "Name" field.
 func NameEQ(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameNEQ applies the NEQ predicate on the "Name" field.
 func NameNEQ(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameIn applies the In predicate on the "Name" field.
@@ -149,7 +165,8 @@ func NameIn(vs ...string) predicate.Job {
 			return
 		}
 		s.Where(sql.In(s.C(FieldName), v...))
-	})
+	},
+	)
 }
 
 // NameNotIn applies the NotIn predicate on the "Name" field.
@@ -166,84 +183,96 @@ func NameNotIn(vs ...string) predicate.Job {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldName), v...))
-	})
+	},
+	)
 }
 
 // NameGT applies the GT predicate on the "Name" field.
 func NameGT(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameGTE applies the GTE predicate on the "Name" field.
 func NameGTE(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameLT applies the LT predicate on the "Name" field.
 func NameLT(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameLTE applies the LTE predicate on the "Name" field.
 func NameLTE(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameContains applies the Contains predicate on the "Name" field.
 func NameContains(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.Contains(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameHasPrefix applies the HasPrefix predicate on the "Name" field.
 func NameHasPrefix(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.HasPrefix(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameHasSuffix applies the HasSuffix predicate on the "Name" field.
 func NameHasSuffix(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameEqualFold applies the EqualFold predicate on the "Name" field.
 func NameEqualFold(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EqualFold(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // NameContainsFold applies the ContainsFold predicate on the "Name" field.
 func NameContainsFold(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldName), v))
-	})
+	},
+	)
 }
 
 // CreationTimeEQ applies the EQ predicate on the "CreationTime" field.
 func CreationTimeEQ(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // CreationTimeNEQ applies the NEQ predicate on the "CreationTime" field.
 func CreationTimeNEQ(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // CreationTimeIn applies the In predicate on the "CreationTime" field.
@@ -260,7 +289,8 @@ func CreationTimeIn(vs ...time.Time) predicate.Job {
 			return
 		}
 		s.Where(sql.In(s.C(FieldCreationTime), v...))
-	})
+	},
+	)
 }
 
 // CreationTimeNotIn applies the NotIn predicate on the "CreationTime" field.
@@ -277,49 +307,56 @@ func CreationTimeNotIn(vs ...time.Time) predicate.Job {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldCreationTime), v...))
-	})
+	},
+	)
 }
 
 // CreationTimeGT applies the GT predicate on the "CreationTime" field.
 func CreationTimeGT(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // CreationTimeGTE applies the GTE predicate on the "CreationTime" field.
 func CreationTimeGTE(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // CreationTimeLT applies the LT predicate on the "CreationTime" field.
 func CreationTimeLT(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // CreationTimeLTE applies the LTE predicate on the "CreationTime" field.
 func CreationTimeLTE(v time.Time) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldCreationTime), v))
-	})
+	},
+	)
 }
 
 // ContentEQ applies the EQ predicate on the "Content" field.
 func ContentEQ(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentNEQ applies the NEQ predicate on the "Content" field.
 func ContentNEQ(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentIn applies the In predicate on the "Content" field.
@@ -336,7 +373,8 @@ func ContentIn(vs ...string) predicate.Job {
 			return
 		}
 		s.Where(sql.In(s.C(FieldContent), v...))
-	})
+	},
+	)
 }
 
 // ContentNotIn applies the NotIn predicate on the "Content" field.
@@ -353,84 +391,96 @@ func ContentNotIn(vs ...string) predicate.Job {
 			return
 		}
 		s.Where(sql.NotIn(s.C(FieldContent), v...))
-	})
+	},
+	)
 }
 
 // ContentGT applies the GT predicate on the "Content" field.
 func ContentGT(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GT(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentGTE applies the GTE predicate on the "Content" field.
 func ContentGTE(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.GTE(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentLT applies the LT predicate on the "Content" field.
 func ContentLT(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LT(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentLTE applies the LTE predicate on the "Content" field.
 func ContentLTE(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.LTE(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentContains applies the Contains predicate on the "Content" field.
 func ContentContains(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.Contains(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentHasPrefix applies the HasPrefix predicate on the "Content" field.
 func ContentHasPrefix(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.HasPrefix(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentHasSuffix applies the HasSuffix predicate on the "Content" field.
 func ContentHasSuffix(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.HasSuffix(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentEqualFold applies the EqualFold predicate on the "Content" field.
 func ContentEqualFold(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EqualFold(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // ContentContainsFold applies the ContainsFold predicate on the "Content" field.
 func ContentContainsFold(v string) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.ContainsFold(s.C(FieldContent), v))
-	})
+	},
+	)
 }
 
 // StagedEQ applies the EQ predicate on the "Staged" field.
 func StagedEQ(v bool) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.EQ(s.C(FieldStaged), v))
-	})
+	},
+	)
 }
 
 // StagedNEQ applies the NEQ predicate on the "Staged" field.
 func StagedNEQ(v bool) predicate.Job {
 	return predicate.Job(func(s *sql.Selector) {
 		s.Where(sql.NEQ(s.C(FieldStaged), v))
-	})
+	},
+	)
 }
 
 // HasTasks applies the HasEdge predicate on the "tasks" edge.
@@ -442,7 +492,8 @@ func HasTasks() predicate.Job {
 			sqlgraph.Edge(sqlgraph.O2M, false, TasksTable, TasksColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	})
+	},
+	)
 }
 
 // HasTasksWith applies the HasEdge predicate on the "tasks" edge with a given conditions (other predicates).
@@ -458,7 +509,8 @@ func HasTasksWith(preds ...predicate.Task) predicate.Job {
 				p(s)
 			}
 		})
-	})
+	},
+	)
 }
 
 // HasTags applies the HasEdge predicate on the "tags" edge.
@@ -470,7 +522,8 @@ func HasTags() predicate.Job {
 			sqlgraph.Edge(sqlgraph.M2M, false, TagsTable, TagsPrimaryKey...),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	})
+	},
+	)
 }
 
 // HasTagsWith applies the HasEdge predicate on the "tags" edge with a given conditions (other predicates).
@@ -486,7 +539,8 @@ func HasTagsWith(preds ...predicate.Tag) predicate.Job {
 				p(s)
 			}
 		})
-	})
+	},
+	)
 }
 
 // HasPrev applies the HasEdge predicate on the "prev" edge.
@@ -498,7 +552,8 @@ func HasPrev() predicate.Job {
 			sqlgraph.Edge(sqlgraph.O2O, true, PrevTable, PrevColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	})
+	},
+	)
 }
 
 // HasPrevWith applies the HasEdge predicate on the "prev" edge with a given conditions (other predicates).
@@ -514,7 +569,8 @@ func HasPrevWith(preds ...predicate.Job) predicate.Job {
 				p(s)
 			}
 		})
-	})
+	},
+	)
 }
 
 // HasNext applies the HasEdge predicate on the "next" edge.
@@ -526,7 +582,8 @@ func HasNext() predicate.Job {
 			sqlgraph.Edge(sqlgraph.O2O, false, NextTable, NextColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	})
+	},
+	)
 }
 
 // HasNextWith applies the HasEdge predicate on the "next" edge with a given conditions (other predicates).
@@ -542,7 +599,8 @@ func HasNextWith(preds ...predicate.Job) predicate.Job {
 				p(s)
 			}
 		})
-	})
+	},
+	)
 }
 
 // HasOwner applies the HasEdge predicate on the "owner" edge.
@@ -554,7 +612,8 @@ func HasOwner() predicate.Job {
 			sqlgraph.Edge(sqlgraph.M2O, true, OwnerTable, OwnerColumn),
 		)
 		sqlgraph.HasNeighbors(s, step)
-	})
+	},
+	)
 }
 
 // HasOwnerWith applies the HasEdge predicate on the "owner" edge with a given conditions (other predicates).
@@ -570,37 +629,44 @@ func HasOwnerWith(preds ...predicate.User) predicate.Job {
 				p(s)
 			}
 		})
-	})
+	},
+	)
 }
 
 // And groups list of predicates with the AND operator between them.
 func And(predicates ...predicate.Job) predicate.Job {
-	return predicate.Job(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for _, p := range predicates {
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s1 := s.Clone().SetP(nil)
+			for _, p := range predicates {
+				p(s1)
+			}
+			s.Where(s1.P())
+		},
+	)
 }
 
 // Or groups list of predicates with the OR operator between them.
 func Or(predicates ...predicate.Job) predicate.Job {
-	return predicate.Job(func(s *sql.Selector) {
-		s1 := s.Clone().SetP(nil)
-		for i, p := range predicates {
-			if i > 0 {
-				s1.Or()
+	return predicate.Job(
+		func(s *sql.Selector) {
+			s1 := s.Clone().SetP(nil)
+			for i, p := range predicates {
+				if i > 0 {
+					s1.Or()
+				}
+				p(s1)
 			}
-			p(s1)
-		}
-		s.Where(s1.P())
-	})
+			s.Where(s1.P())
+		},
+	)
 }
 
 // Not applies the not operator on the given predicate.
 func Not(p predicate.Job) predicate.Job {
-	return predicate.Job(func(s *sql.Selector) {
-		p(s.Not())
-	})
+	return predicate.Job(
+		func(s *sql.Selector) {
+			p(s.Not())
+		},
+	)
 }

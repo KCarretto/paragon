@@ -67,14 +67,14 @@ func (fq *FileQuery) QueryLinks() *LinkQuery {
 	return query
 }
 
-// First returns the first File entity in the query. Returns *NotFoundError when no file was found.
+// First returns the first File entity in the query. Returns *ErrNotFound when no file was found.
 func (fq *FileQuery) First(ctx context.Context) (*File, error) {
 	fs, err := fq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(fs) == 0 {
-		return nil, &NotFoundError{file.Label}
+		return nil, &ErrNotFound{file.Label}
 	}
 	return fs[0], nil
 }
@@ -88,14 +88,14 @@ func (fq *FileQuery) FirstX(ctx context.Context) *File {
 	return f
 }
 
-// FirstID returns the first File id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first File id in the query. Returns *ErrNotFound when no id was found.
 func (fq *FileQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = fq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{file.Label}
+		err = &ErrNotFound{file.Label}
 		return
 	}
 	return ids[0], nil
@@ -120,9 +120,9 @@ func (fq *FileQuery) Only(ctx context.Context) (*File, error) {
 	case 1:
 		return fs[0], nil
 	case 0:
-		return nil, &NotFoundError{file.Label}
+		return nil, &ErrNotFound{file.Label}
 	default:
-		return nil, &NotSingularError{file.Label}
+		return nil, &ErrNotSingular{file.Label}
 	}
 }
 
@@ -145,9 +145,9 @@ func (fq *FileQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{file.Label}
+		err = &ErrNotFound{file.Label}
 	default:
-		err = &NotSingularError{file.Label}
+		err = &ErrNotSingular{file.Label}
 	}
 	return
 }
@@ -290,11 +290,8 @@ func (fq *FileQuery) Select(field string, fields ...string) *FileSelect {
 
 func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 	var (
-		nodes       = []*File{}
-		_spec       = fq.querySpec()
-		loadedTypes = [1]bool{
-			fq.withLinks != nil,
-		}
+		nodes []*File
+		_spec = fq.querySpec()
 	)
 	_spec.ScanValues = func() []interface{} {
 		node := &File{config: fq.config}
@@ -307,12 +304,12 @@ func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, fq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -333,13 +330,13 @@ func (fq *FileQuery) sqlAll(ctx context.Context) ([]*File, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.file_links
+			fk := n.file_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "file_links" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "file_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "file_links" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "file_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Links = append(node.Edges.Links, n)
 		}

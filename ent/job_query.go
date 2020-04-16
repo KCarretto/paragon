@@ -122,14 +122,14 @@ func (jq *JobQuery) QueryOwner() *UserQuery {
 	return query
 }
 
-// First returns the first Job entity in the query. Returns *NotFoundError when no job was found.
+// First returns the first Job entity in the query. Returns *ErrNotFound when no job was found.
 func (jq *JobQuery) First(ctx context.Context) (*Job, error) {
 	js, err := jq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(js) == 0 {
-		return nil, &NotFoundError{job.Label}
+		return nil, &ErrNotFound{job.Label}
 	}
 	return js[0], nil
 }
@@ -143,14 +143,14 @@ func (jq *JobQuery) FirstX(ctx context.Context) *Job {
 	return j
 }
 
-// FirstID returns the first Job id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first Job id in the query. Returns *ErrNotFound when no id was found.
 func (jq *JobQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = jq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{job.Label}
+		err = &ErrNotFound{job.Label}
 		return
 	}
 	return ids[0], nil
@@ -175,9 +175,9 @@ func (jq *JobQuery) Only(ctx context.Context) (*Job, error) {
 	case 1:
 		return js[0], nil
 	case 0:
-		return nil, &NotFoundError{job.Label}
+		return nil, &ErrNotFound{job.Label}
 	default:
-		return nil, &NotSingularError{job.Label}
+		return nil, &ErrNotSingular{job.Label}
 	}
 }
 
@@ -200,9 +200,9 @@ func (jq *JobQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{job.Label}
+		err = &ErrNotFound{job.Label}
 	default:
-		err = &NotSingularError{job.Label}
+		err = &ErrNotSingular{job.Label}
 	}
 	return
 }
@@ -389,16 +389,9 @@ func (jq *JobQuery) Select(field string, fields ...string) *JobSelect {
 
 func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 	var (
-		nodes       = []*Job{}
-		withFKs     = jq.withFKs
-		_spec       = jq.querySpec()
-		loadedTypes = [5]bool{
-			jq.withTasks != nil,
-			jq.withTags != nil,
-			jq.withPrev != nil,
-			jq.withNext != nil,
-			jq.withOwner != nil,
-		}
+		nodes   []*Job
+		withFKs = jq.withFKs
+		_spec   = jq.querySpec()
 	)
 	if jq.withPrev != nil || jq.withOwner != nil {
 		withFKs = true
@@ -420,12 +413,12 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, jq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -446,13 +439,13 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.job_tasks
+			fk := n.job_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "job_tasks" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "job_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "job_tasks" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "job_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Tasks = append(node.Edges.Tasks, n)
 		}
@@ -492,7 +485,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := int(eout.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -525,7 +518,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Job)
 		for i := range nodes {
-			if fk := nodes[i].job_next; fk != nil {
+			if fk := nodes[i].prev_id; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -538,7 +531,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "job_next" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Prev = n
@@ -562,13 +555,13 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.job_next
+			fk := n.prev_id
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "job_next" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "prev_id" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "job_next" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Next = n
 		}
@@ -578,7 +571,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Job)
 		for i := range nodes {
-			if fk := nodes[i].user_jobs; fk != nil {
+			if fk := nodes[i].owner_id; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -591,7 +584,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "user_jobs" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Owner = n

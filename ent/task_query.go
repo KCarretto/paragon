@@ -96,14 +96,14 @@ func (tq *TaskQuery) QueryTarget() *TargetQuery {
 	return query
 }
 
-// First returns the first Task entity in the query. Returns *NotFoundError when no task was found.
+// First returns the first Task entity in the query. Returns *ErrNotFound when no task was found.
 func (tq *TaskQuery) First(ctx context.Context) (*Task, error) {
 	ts, err := tq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
 	if len(ts) == 0 {
-		return nil, &NotFoundError{task.Label}
+		return nil, &ErrNotFound{task.Label}
 	}
 	return ts[0], nil
 }
@@ -117,14 +117,14 @@ func (tq *TaskQuery) FirstX(ctx context.Context) *Task {
 	return t
 }
 
-// FirstID returns the first Task id in the query. Returns *NotFoundError when no id was found.
+// FirstID returns the first Task id in the query. Returns *ErrNotFound when no id was found.
 func (tq *TaskQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = tq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &NotFoundError{task.Label}
+		err = &ErrNotFound{task.Label}
 		return
 	}
 	return ids[0], nil
@@ -149,9 +149,9 @@ func (tq *TaskQuery) Only(ctx context.Context) (*Task, error) {
 	case 1:
 		return ts[0], nil
 	case 0:
-		return nil, &NotFoundError{task.Label}
+		return nil, &ErrNotFound{task.Label}
 	default:
-		return nil, &NotSingularError{task.Label}
+		return nil, &ErrNotSingular{task.Label}
 	}
 }
 
@@ -174,9 +174,9 @@ func (tq *TaskQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &NotFoundError{task.Label}
+		err = &ErrNotFound{task.Label}
 	default:
-		err = &NotSingularError{task.Label}
+		err = &ErrNotSingular{task.Label}
 	}
 	return
 }
@@ -341,14 +341,9 @@ func (tq *TaskQuery) Select(field string, fields ...string) *TaskSelect {
 
 func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 	var (
-		nodes       = []*Task{}
-		withFKs     = tq.withFKs
-		_spec       = tq.querySpec()
-		loadedTypes = [3]bool{
-			tq.withTags != nil,
-			tq.withJob != nil,
-			tq.withTarget != nil,
-		}
+		nodes   []*Task
+		withFKs = tq.withFKs
+		_spec   = tq.querySpec()
 	)
 	if tq.withJob != nil || tq.withTarget != nil {
 		withFKs = true
@@ -370,12 +365,12 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		node.Edges.loadedTypes = loadedTypes
 		return node.assignValues(values...)
 	}
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
+
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -414,7 +409,7 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(ein.Int64)
+				inValue := int(eout.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
@@ -447,7 +442,7 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Task)
 		for i := range nodes {
-			if fk := nodes[i].job_tasks; fk != nil {
+			if fk := nodes[i].job_id; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -460,7 +455,7 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "job_tasks" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "job_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Job = n
@@ -472,7 +467,7 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Task)
 		for i := range nodes {
-			if fk := nodes[i].target_tasks; fk != nil {
+			if fk := nodes[i].target_id; fk != nil {
 				ids = append(ids, *fk)
 				nodeids[*fk] = append(nodeids[*fk], nodes[i])
 			}
@@ -485,7 +480,7 @@ func (tq *TaskQuery) sqlAll(ctx context.Context) ([]*Task, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_tasks" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Target = n

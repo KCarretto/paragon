@@ -29,37 +29,13 @@ type User struct {
 	IsAdmin bool `json:"IsAdmin,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the UserQuery when eager-loading is set.
-	Edges        UserEdges `json:"edges"`
-	event_likers *int
-}
-
-// UserEdges holds the relations/edges for other nodes in the graph.
-type UserEdges struct {
-	// Jobs holds the value of the jobs edge.
-	Jobs []*Job
-	// Events holds the value of the events edge.
-	Events []*Event
-	// loadedTypes holds the information for reporting if a
-	// type was loaded (or requested) in eager-loading or not.
-	loadedTypes [2]bool
-}
-
-// JobsOrErr returns the Jobs value or an error if the edge
-// was not loaded in eager-loading.
-func (e UserEdges) JobsOrErr() ([]*Job, error) {
-	if e.loadedTypes[0] {
-		return e.Jobs, nil
-	}
-	return nil, &NotLoadedError{edge: "jobs"}
-}
-
-// EventsOrErr returns the Events value or an error if the edge
-// was not loaded in eager-loading.
-func (e UserEdges) EventsOrErr() ([]*Event, error) {
-	if e.loadedTypes[1] {
-		return e.Events, nil
-	}
-	return nil, &NotLoadedError{edge: "events"}
+	Edges struct {
+		// Jobs holds the value of the jobs edge.
+		Jobs []*Job
+		// Events holds the value of the events edge.
+		Events []*Event
+	} `json:"edges"`
+	event_liker_id *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -78,7 +54,7 @@ func (*User) scanValues() []interface{} {
 // fkValues returns the types for scanning foreign-keys values from sql.Rows.
 func (*User) fkValues() []interface{} {
 	return []interface{}{
-		&sql.NullInt64{}, // event_likers
+		&sql.NullInt64{}, // event_liker_id
 	}
 }
 
@@ -127,10 +103,10 @@ func (u *User) assignValues(values ...interface{}) error {
 	values = values[6:]
 	if len(values) == len(user.ForeignKeys) {
 		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_likers", value)
+			return fmt.Errorf("unexpected type %T for edge-field event_liker_id", value)
 		} else if value.Valid {
-			u.event_likers = new(int)
-			*u.event_likers = int(value.Int64)
+			u.event_liker_id = new(int)
+			*u.event_liker_id = int(value.Int64)
 		}
 	}
 	return nil
