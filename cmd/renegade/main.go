@@ -90,7 +90,7 @@ func main() {
 				if err != nil {
 					return fmt.Errorf("failed to open assets file %q: %w", assetPath, err)
 				}
-				assetTar := &libassets.TarBundler{
+				assetTar := &libassets.TarGZBundler{
 					Buffer: bytes.NewBuffer(assetFile),
 				}
 				assets, err = assetTar.FileSystem()
