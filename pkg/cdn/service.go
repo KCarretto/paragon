@@ -2,10 +2,12 @@ package cdn
 
 import (
 	"bytes"
+	"context"
 	"encoding/base64"
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"path/filepath"
 	"time"
 
@@ -30,6 +32,8 @@ type Service struct {
 
 // HTTP registers http handlers for the CDN.
 func (svc *Service) HTTP(router *http.ServeMux) {
+	go svc.initFiles()
+
 	upload := &service.Endpoint{
 		Log:           svc.Log.Named("upload"),
 		Authenticator: svc.Auth,
@@ -170,4 +174,51 @@ func (svc Service) HandleLink(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Expires", "0")
 	http.ServeContent(w, r, file.Name, file.LastModifiedTime, content)
 	return nil
+}
+
+// populate with files from the cdn directory if they don't yet exist.
+func (svc Service) initFiles() {
+	var root = "cdn/"
+
+	filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		// Skip errors or directories
+		if err != nil || info == nil || info.IsDir() {
+			return nil
+		}
+
+		// Remove root directory from file name
+		name, err := filepath.Rel(root, path)
+		if err != nil {
+			return nil
+		}
+
+		// Skip if it already exists
+		ctx := context.Background()
+		if exists, err := svc.Graph.File.Query().Where(file.Name(name)).Exist(ctx); err != nil || exists {
+			return nil
+		}
+
+		// Read the file
+		content, err := ioutil.ReadFile(path)
+		if err != nil || content == nil {
+			return err
+		}
+
+		// Calculate the hash and content type
+		digestBytes := sha3.Sum256(content)
+		digest := base64.StdEncoding.EncodeToString(digestBytes[:])
+		contentType := http.DetectContentType(content)
+
+		// Create the file
+		svc.Graph.File.Create().
+			SetName(name).
+			SetSize(int(info.Size())).
+			SetContentType(contentType).
+			SetContent(content).
+			SetHash(digest).
+			SetLastModifiedTime(time.Now()).
+			Save(ctx)
+
+		return nil
+	})
 }
