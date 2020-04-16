@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -34,14 +33,18 @@ func compilePredeclared(libs map[string]script.Library) starlark.StringDict {
 	return builtins
 }
 
-func run(ctx context.Context, id string, content io.Reader, assets http.FileSystem) error {
+func run(ctx context.Context, assets http.FileSystem) error {
 	env := &libenv.Environment{}
 
 	assetEnv := &libassets.Environment{
 		Assets: assets,
 	}
+	task, err := assetEnv.OpenFile("scripts/main.rg")
+	if err != nil {
+		return fmt.Errorf("failed to execute scripts/main.rg: %w", err)
+	}
 
-	code := script.New(id, content, script.WithOutput(os.Stdout),
+	code := script.New("main.rg", task, script.WithOutput(os.Stdout),
 		env.Include(),
 		assetEnv.Include(),
 		libassert.Include(),
@@ -56,60 +59,35 @@ func run(ctx context.Context, id string, content io.Reader, assets http.FileSyst
 }
 
 func main() {
-	var (
-		assetPath string
-		taskPath  string
-		id        string
-		// key       string
-	)
+	var bundlePath string
 
 	app := &cli.App{
 		Name:  "renegade",
 		Usage: "Interpreter for the renegade scripting language.",
 		Flags: []cli.Flag{
 			&cli.StringFlag{
-				Name:        "id",
-				Usage:       "ID to associate with the task.",
-				Destination: &id,
-			},
-			&cli.StringFlag{
-				Name:        "assets",
-				Usage:       "Path to the assets tar file.",
-				Destination: &assetPath,
-			},
-			&cli.StringFlag{
-				Name:        "task",
-				Usage:       "Path to the task file.",
-				Destination: &taskPath,
+				Name:        "bundle",
+				Usage:       "Path to the bundle tar.gz file.",
+				Destination: &bundlePath,
 			},
 		},
 		Action: func(c *cli.Context) error {
-			var assets http.FileSystem
-			if assetPath != "" {
-				assetFile, err := ioutil.ReadFile(assetPath)
+			var bundle http.FileSystem
+			if bundlePath != "" {
+				bundleFile, err := ioutil.ReadFile(bundlePath)
 				if err != nil {
-					return fmt.Errorf("failed to open assets file %q: %w", assetPath, err)
+					return fmt.Errorf("failed to open bundle file %q: %w", bundlePath, err)
 				}
 				assetTar := &libassets.TarGZBundler{
-					Buffer: bytes.NewBuffer(assetFile),
+					Buffer: bytes.NewBuffer(bundleFile),
 				}
-				assets, err = assetTar.FileSystem()
+				bundle, err = assetTar.FileSystem()
 				if err != nil {
 					return fmt.Errorf("failed to create assets filesystem: %w", err)
 				}
 			}
 
-			var task io.Reader = os.Stdin
-			if taskPath != "" {
-				taskFile, err := ioutil.ReadFile(taskPath)
-				if err != nil {
-					return fmt.Errorf("failed to open task file %q: %w", taskPath, err)
-				}
-
-				task = bytes.NewBuffer(taskFile)
-			}
-
-			return run(context.Background(), id, task, assets)
+			return run(context.Background(), bundle)
 
 		},
 	}

@@ -11,11 +11,12 @@ import (
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/event"
 	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/assert"
-	cdnlib "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
-	envlib "github.com/kcarretto/paragon/pkg/script/stdlib/env"
-	filelib "github.com/kcarretto/paragon/pkg/script/stdlib/file"
-	sshlib "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
+	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
+	libassets "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
+	libcdn "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
+	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
+	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	libssh "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
 
 	"go.starlark.net/starlark"
 )
@@ -98,22 +99,38 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		len(credentials),
 	)
 
-	env := envlib.Environment{
+	env := libenv.Environment{
 		PrimaryIP:       target.PrimaryIP,
 		OperatingSystem: target.Name, // TODO: Add OperatingSystem field to target
 	}
 
 	/* Build Assets Bundle */
+	assets := libassets.Environment{
+		Downloader: w,
+	}
 	code := script.New(
 		string(task.ID),
 		strings.NewReader(task.Content),
 		script.WithOutput(output),
-		filelib.Include(),
-		assert.Include(),
+		libfile.Include(),
+		libassert.Include(),
+		assets.Include(),
 		env.Include(),
 	)
 	if _, err := code.Call("init", starlark.Tuple{}); err != nil {
 		execErr = fmt.Errorf("failed to initialize assets: %w", err)
+		return
+	}
+
+	bundle := libassets.TarGZBundler{}
+	if err := bundle.Bundle(append(
+		assets.Files,
+		libassets.NamedReader{
+			Name:   "scripts/main.rg",
+			Reader: strings.NewReader(task.Content),
+		},
+	)...); err != nil {
+		execErr = fmt.Errorf("failed to bundle assets: %w", err)
 		return
 	}
 
@@ -123,13 +140,13 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 	defer sshConnector.Close()
 
-	sshEnv := &sshlib.Environment{
+	sshEnv := &libssh.Environment{
 		RemoteHost: target.PrimaryIP,
 		Connector:  sshConnector,
 	}
 	defer sshEnv.Close()
 
-	cdnEnv := &cdnlib.Environment{
+	cdnEnv := &libcdn.Environment{
 		Uploader:   w,
 		Downloader: w,
 	}
@@ -143,10 +160,11 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		string(task.ID),
 		configScript,
 		script.WithOutput(output),
-		sshEnv.Include(),
+		libfile.Include(),
+		libassert.Include(),
+		env.Include(),
 		cdnEnv.Include(),
-		filelib.Include(),
-		assert.Include(),
+		sshEnv.Include(),
 	)
 
 	var res starlark.Value = starlark.None
@@ -156,6 +174,5 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		}
 	}()
 
-	// TODO: pass assets as argument
-	res, execErr = config.Call("worker_run", starlark.Tuple{starlark.String(task.Content), starlark.String("TODO: Assets")})
+	res, execErr = config.Call("worker_run", starlark.Tuple{starlark.String(bundle.Buffer.Bytes())})
 }

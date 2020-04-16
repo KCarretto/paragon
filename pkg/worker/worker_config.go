@@ -24,28 +24,24 @@ def ssh_write(content, dstPath, perms):
 	err = file.chmod(f, perms)
 	assert.noError(err)
 
-def run_linux(task, assetBlob):
+def run_linux(bundle):
 	# Upload Interpreter
 	interpreter = cdn.openFile(RG_NIX)
 	intPath = "/tmp/"+str(env.rand())
 	ssh_copy(interpreter, intPath, "0755")
 
-	# Upload Assets
-	assetPath = "/tmp/"+str(env.rand())
-	ssh_write(assetBlob, assetPath, "0644")
-
-	# Upload Task
-	taskPath = "/tmp/"+str(env.rand())
-	ssh_write(task, taskPath, "0644")
+	# Upload Bundle
+	bundlePath = "/tmp/"+str(env.rand())
+	ssh_write(bundle, bundlePath, "0644")
 
 	# Run Task
-	output, err = ssh.exec(intPath+"-f "+assetPath+" -t "+taskPath)
+	output, err = ssh.exec(intPath+" --bundle "+bundlePath)
 	print(output)
 	assert.noError(err)
 
-def worker_run(task, assetBlob):
+def worker_run(bundle):
     if env.isLinux():
-		return run_linux(task, assetBlob)
+		return run_linux(bundle)
     else:
 		assert.noError("Unsupported Operating System")
 `
