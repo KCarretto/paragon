@@ -42,7 +42,16 @@ func TestTarGZBundleConsistent(t *testing.T) {
 		t.Errorf("failed to open file: %w", err)
 	}
 	targzbundlr := assets.TarGZBundler{}
-	err = targzbundlr.Bundle(f1, f2)
+	err = targzbundlr.Bundle(
+		assets.NamedReader{
+			Reader: f1,
+			Name:   file1Name,
+		},
+		assets.NamedReader{
+			Reader: f2,
+			Name:   file2Name,
+		},
+	)
 	if err != nil {
 		t.Errorf("failed to bundle files: %w", err)
 	}
