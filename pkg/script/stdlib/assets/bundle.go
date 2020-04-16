@@ -3,6 +3,7 @@ package assets
 import (
 	"archive/tar"
 	"bytes"
+	"compress/gzip"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,13 +16,13 @@ type Bundler interface {
 	Bundle(...http.File) error
 }
 
-// TarBundler is the concrete implementation of Bundle using Tar
-type TarBundler struct {
+// TarGZBundler is the concrete implementation of Bundle using Tar and GZip
+type TarGZBundler struct {
 	Buffer *bytes.Buffer
 }
 
 // Bundle is used to add multiple files into a tar bundle
-func (tb *TarBundler) Bundle(files ...http.File) error {
+func (tb *TarGZBundler) Bundle(files ...http.File) error {
 	tb.Buffer = &bytes.Buffer{}
 	tw := tar.NewWriter(tb.Buffer)
 	for _, file := range files {
@@ -48,12 +49,27 @@ func (tb *TarBundler) Bundle(files ...http.File) error {
 	if err := tw.Close(); err != nil {
 		return err
 	}
+	gzBuffer := &bytes.Buffer{}
+	gw := gzip.NewWriter(gzBuffer)
+	gw.Write(tb.Buffer.Bytes())
+	if err := gw.Close(); err != nil {
+		return err
+	}
+	tb.Buffer = gzBuffer
 	return nil
 }
 
-// FileSystem is used to convert a tar bundle into an in memory http.FileSystem
-func (tb *TarBundler) FileSystem() (http.FileSystem, error) {
-	tr := tar.NewReader(tb.Buffer)
+// FileSystem is used to convert a targz bundle into an in memory http.FileSystem
+func (tb *TarGZBundler) FileSystem() (http.FileSystem, error) {
+	gr, err := gzip.NewReader(tb.Buffer)
+	if err != nil {
+		return nil, err
+	}
+	b, err := ioutil.ReadAll(gr)
+	if err := gr.Close(); err != nil {
+		return nil, err
+	}
+	tr := tar.NewReader(bytes.NewBuffer(b))
 	fs := afero.NewMemMapFs()
 	for {
 		hdr, err := tr.Next()
