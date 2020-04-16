@@ -21,6 +21,7 @@ import (
 type TargetUpdate struct {
 	config
 	Name               *string
+	OS                 *target.OS
 	PrimaryIP          *string
 	MachineUUID        *string
 	clearMachineUUID   bool
@@ -50,6 +51,12 @@ func (tu *TargetUpdate) Where(ps ...predicate.Target) *TargetUpdate {
 // SetName sets the Name field.
 func (tu *TargetUpdate) SetName(s string) *TargetUpdate {
 	tu.Name = &s
+	return tu
+}
+
+// SetOS sets the OS field.
+func (tu *TargetUpdate) SetOS(t target.OS) *TargetUpdate {
+	tu.OS = &t
 	return tu
 }
 
@@ -286,6 +293,11 @@ func (tu *TargetUpdate) RemoveCredentials(c ...*Credential) *TargetUpdate {
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (tu *TargetUpdate) Save(ctx context.Context) (int, error) {
+	if tu.OS != nil {
+		if err := target.OSValidator(*tu.OS); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)
+		}
+	}
 	if tu.MachineUUID != nil {
 		if err := target.MachineUUIDValidator(*tu.MachineUUID); err != nil {
 			return 0, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
@@ -339,6 +351,13 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldName,
+		})
+	}
+	if value := tu.OS; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  *value,
+			Column: target.FieldOS,
 		})
 	}
 	if value := tu.PrimaryIP; value != nil {
@@ -541,6 +560,7 @@ type TargetUpdateOne struct {
 	config
 	id                 int
 	Name               *string
+	OS                 *target.OS
 	PrimaryIP          *string
 	MachineUUID        *string
 	clearMachineUUID   bool
@@ -563,6 +583,12 @@ type TargetUpdateOne struct {
 // SetName sets the Name field.
 func (tuo *TargetUpdateOne) SetName(s string) *TargetUpdateOne {
 	tuo.Name = &s
+	return tuo
+}
+
+// SetOS sets the OS field.
+func (tuo *TargetUpdateOne) SetOS(t target.OS) *TargetUpdateOne {
+	tuo.OS = &t
 	return tuo
 }
 
@@ -799,6 +825,11 @@ func (tuo *TargetUpdateOne) RemoveCredentials(c ...*Credential) *TargetUpdateOne
 
 // Save executes the query and returns the updated entity.
 func (tuo *TargetUpdateOne) Save(ctx context.Context) (*Target, error) {
+	if tuo.OS != nil {
+		if err := target.OSValidator(*tuo.OS); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)
+		}
+	}
 	if tuo.MachineUUID != nil {
 		if err := target.MachineUUIDValidator(*tuo.MachineUUID); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
@@ -846,6 +877,13 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 			Type:   field.TypeString,
 			Value:  *value,
 			Column: target.FieldName,
+		})
+	}
+	if value := tuo.OS; value != nil {
+		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  *value,
+			Column: target.FieldOS,
 		})
 	}
 	if value := tuo.PrimaryIP; value != nil {

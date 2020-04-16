@@ -11,6 +11,7 @@ import (
 
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/target"
 )
 
 // dsn for the database. In order to run the tests locally, run the following command:
@@ -100,6 +101,7 @@ func ExampleEvent() {
 	t5 := client.Target.
 		Create().
 		SetName("string").
+		SetOS(target.OSLINUX).
 		SetPrimaryIP("string").
 		SetMachineUUID("string").
 		SetPublicIP("string").
@@ -504,6 +506,7 @@ func ExampleTarget() {
 	t := client.Target.
 		Create().
 		SetName("string").
+		SetOS(target.OSLINUX).
 		SetPrimaryIP("string").
 		SetMachineUUID("string").
 		SetPublicIP("string").

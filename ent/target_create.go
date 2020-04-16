@@ -20,6 +20,7 @@ import (
 type TargetCreate struct {
 	config
 	Name        *string
+	OS          *target.OS
 	PrimaryIP   *string
 	MachineUUID *string
 	PublicIP    *string
@@ -34,6 +35,12 @@ type TargetCreate struct {
 // SetName sets the Name field.
 func (tc *TargetCreate) SetName(s string) *TargetCreate {
 	tc.Name = &s
+	return tc
+}
+
+// SetOS sets the OS field.
+func (tc *TargetCreate) SetOS(t target.OS) *TargetCreate {
+	tc.OS = &t
 	return tc
 }
 
@@ -178,6 +185,12 @@ func (tc *TargetCreate) Save(ctx context.Context) (*Target, error) {
 	if tc.Name == nil {
 		return nil, errors.New("ent: missing required field \"Name\"")
 	}
+	if tc.OS == nil {
+		return nil, errors.New("ent: missing required field \"OS\"")
+	}
+	if err := target.OSValidator(*tc.OS); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)
+	}
 	if tc.PrimaryIP == nil {
 		return nil, errors.New("ent: missing required field \"PrimaryIP\"")
 	}
@@ -216,6 +229,14 @@ func (tc *TargetCreate) sqlSave(ctx context.Context) (*Target, error) {
 			Column: target.FieldName,
 		})
 		t.Name = *value
+	}
+	if value := tc.OS; value != nil {
+		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
+			Type:   field.TypeEnum,
+			Value:  *value,
+			Column: target.FieldOS,
+		})
+		t.OS = *value
 	}
 	if value := tc.PrimaryIP; value != nil {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{

@@ -506,6 +506,7 @@ func (r *mutationResolver) RemoveTagFromJob(ctx context.Context, input *models.R
 func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.CreateTargetRequest) (*ent.Target, error) {
 	target, err := r.Graph.Target.Create().
 		SetName(input.Name).
+		SetOS(target.OS(input.Os)).
 		SetPrimaryIP(input.PrimaryIP).
 		AddTagIDs(input.Tags...).
 		Save(ctx)
@@ -529,6 +530,9 @@ func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.Se
 	targetUpdater := r.Graph.Target.UpdateOneID(input.ID)
 	if input.Name != nil {
 		targetUpdater.SetName(*input.Name)
+	}
+	if input.Os != nil {
+		targetUpdater.SetOS(target.OS(*input.Os))
 	}
 	if input.PrimaryIP != nil {
 		targetUpdater.SetPrimaryIP(*input.PrimaryIP)
@@ -1192,6 +1196,11 @@ func (r *tagResolver) Jobs(ctx context.Context, obj *ent.Tag, input *models.Filt
 }
 
 type targetResolver struct{ *Resolver }
+
+func (r *targetResolver) Os(ctx context.Context, obj *ent.Target) (*string, error) {
+	os := obj.OS.String()
+	return &os, nil
+}
 
 func (r *targetResolver) Tasks(ctx context.Context, obj *ent.Target, input *models.Filter) ([]*ent.Task, error) {
 	q := obj.QueryTasks()

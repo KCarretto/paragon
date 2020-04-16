@@ -21,6 +21,7 @@ union Identity = User | Service
 type Target @goModel(model: "github.com/kcarretto/paragon/ent.Target") {
   id: ID
   name: String
+  os: String
   primaryIP: String
   machineUUID: String
   publicIP: String
@@ -184,6 +185,7 @@ input RemoveTagRequest {
 input CreateTargetRequest {
   name: String!
   primaryIP: String!
+  os: String!
 
   tags: [ID!]
 }
@@ -191,6 +193,7 @@ input CreateTargetRequest {
 input SetTargetFieldsRequest {
   id: ID!
   name: String
+  os: String
   machineUUID: String
   primaryIP: String
   publicIP: String

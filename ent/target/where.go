@@ -253,6 +253,54 @@ func NameContainsFold(v string) predicate.Target {
 	})
 }
 
+// OSEQ applies the EQ predicate on the "OS" field.
+func OSEQ(v OS) predicate.Target {
+	return predicate.Target(func(s *sql.Selector) {
+		s.Where(sql.EQ(s.C(FieldOS), v))
+	})
+}
+
+// OSNEQ applies the NEQ predicate on the "OS" field.
+func OSNEQ(v OS) predicate.Target {
+	return predicate.Target(func(s *sql.Selector) {
+		s.Where(sql.NEQ(s.C(FieldOS), v))
+	})
+}
+
+// OSIn applies the In predicate on the "OS" field.
+func OSIn(vs ...OS) predicate.Target {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Target(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.In(s.C(FieldOS), v...))
+	})
+}
+
+// OSNotIn applies the NotIn predicate on the "OS" field.
+func OSNotIn(vs ...OS) predicate.Target {
+	v := make([]interface{}, len(vs))
+	for i := range v {
+		v[i] = vs[i]
+	}
+	return predicate.Target(func(s *sql.Selector) {
+		// if not arguments were provided, append the FALSE constants,
+		// since we can't apply "IN ()". This will make this predicate falsy.
+		if len(vs) == 0 {
+			s.Where(sql.False())
+			return
+		}
+		s.Where(sql.NotIn(s.C(FieldOS), v...))
+	})
+}
+
 // PrimaryIPEQ applies the EQ predicate on the "PrimaryIP" field.
 func PrimaryIPEQ(v string) predicate.Target {
 	return predicate.Target(func(s *sql.Selector) {
