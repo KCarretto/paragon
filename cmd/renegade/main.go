@@ -75,7 +75,7 @@ func main() {
 			},
 			&cli.StringFlag{
 				Name:        "key",
-				Usage:       "Base64 representation of Key used to encrypt bundle.",
+				Usage:       "Base64 representation of Key to be used to decrypt bundle.",
 				Destination: &bundleKey,
 			},
 		},
