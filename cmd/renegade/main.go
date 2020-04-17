@@ -62,6 +62,7 @@ func run(ctx context.Context, assets http.FileSystem) error {
 
 func main() {
 	var bundlePath string
+	var bundleKey string
 
 	app := &cli.App{
 		Name:  "renegade",
@@ -72,6 +73,11 @@ func main() {
 				Usage:       "Path to the bundle tar.gz file.",
 				Destination: &bundlePath,
 			},
+			&cli.StringFlag{
+				Name:        "key",
+				Usage:       "Base64 representation of Key used to encrypt bundle.",
+				Destination: &bundleKey,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var bundle http.FileSystem
@@ -80,6 +86,19 @@ func main() {
 				if err != nil {
 					return fmt.Errorf("failed to open bundle file %q: %w", bundlePath, err)
 				}
+
+				if bundleKey != "" {
+					cryptoKey, err := libcrypto.CreateKey(bundleKey)
+					if err != nil {
+						return fmt.Errorf("failed to import key: %w", err)
+					}
+					decryptedBundle, err := libcrypto.Decrypt(cryptoKey, string(bundleFile))
+					if err != nil {
+						return fmt.Errorf("failed to decrypt bundle: %w", err)
+					}
+					bundleFile = []byte(decryptedBundle)
+				}
+
 				assetTar := &libassets.TarGZBundler{
 					Buffer: bytes.NewBuffer(bundleFile),
 				}
