@@ -49,6 +49,10 @@ const XJobResults: React.FC<{ name?: string }> = ({ name = null }) => {
   }>(null);
 
   const ResultCards = (jobs: Job[]) => {
+    if (!jobs || jobs.length < 1) {
+      return <XNoTasksFound />;
+    }
+
     // Map of Target Name => []Task
     const taskMap = new Map<string, Task[]>();
     jobs.forEach(job => {
@@ -86,16 +90,8 @@ const XJobResults: React.FC<{ name?: string }> = ({ name = null }) => {
     );
   };
 
-  const ResultDisplay = () => (
-    <React.Fragment>
-      <XTaskResultDisplay id={taskDisplay.tasks[taskDisplay.active].id} />
-    </React.Fragment>
-  );
-
   return (
     <React.Fragment>
-
-
       <XBoundary
         boundary={
           <XLoadingMessage

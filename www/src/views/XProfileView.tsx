@@ -10,11 +10,13 @@ import { User } from "../graphql/models";
 export const PROFILE_QUERY = gql`
   {
     me {
-      id
-      name
-      photoURL
-      isActivated
-      isAdmin
+      ... on User {
+        id
+        name
+        photoURL
+        isActivated
+        isAdmin
+      }
     }
   }
 `;

@@ -10,11 +10,13 @@ import { useModal } from "../form";
 export const CHANGE_NAME_MUTATION = gql`
   mutation changeName($name: String!) {
     changeName(input: { name: $name }) {
-      id
-      name
-      photoURL
-      isActivated
-      isAdmin
+      ... on User {
+        id
+        name
+        photoURL
+        isActivated
+        isAdmin
+      }
     }
   }
 `;

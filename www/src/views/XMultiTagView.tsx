@@ -4,11 +4,7 @@ import * as React from "react";
 import { FunctionComponent, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button, Icon, Input, Label, Table } from "semantic-ui-react";
-import {
-  SUGGEST_TAGS_QUERY,
-  SUGGEST_TARGETS_QUERY,
-  XTargetTypeahead
-} from "../components/form";
+import { SUGGEST_TAGS_QUERY, SUGGEST_TARGETS_QUERY, XTargetTypeahead } from "../components/form";
 import { XBoundary } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
 import { XNoTagsFound } from "../components/tag";
@@ -162,7 +158,7 @@ const AddTagForm = () => {
       fluid
       loading={loading}
       label={<Button icon="plus" positive onClick={handleSubmit} />}
-      error={error !== null}
+      error={!!error}
       labelPosition="right"
       iconPosition="left"
       icon="tag"
