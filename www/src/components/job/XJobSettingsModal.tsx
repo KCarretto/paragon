@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button, Checkbox, Grid, Modal } from "semantic-ui-react";
+import { Button, Checkbox, Grid, Icon, Modal } from "semantic-ui-react";
 import { XServiceTypeahead } from "../form";
 
 const XJobSettingsModal: React.FC<{
@@ -36,9 +36,10 @@ const XJobSettingsModal: React.FC<{
             />
           </Grid.Column>
           <Grid.Column>
-            <Button negative icon="delete" onClick={
+            <Button negative onClick={
               () => window.localStorage.removeItem("xeditor:main.rg")
             }>
+              <Icon name="delete" />
               Clear Local Storage
             </Button>
           </Grid.Column>
