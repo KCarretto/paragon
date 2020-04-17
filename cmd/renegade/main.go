@@ -12,6 +12,7 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	libassets "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
+	libcrypto "github.com/kcarretto/paragon/pkg/script/stdlib/crypto"
 	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	libhttp "github.com/kcarretto/paragon/pkg/script/stdlib/http"
@@ -48,6 +49,7 @@ func run(ctx context.Context, assets http.FileSystem) error {
 		env.Include(),
 		assetEnv.Include(),
 		libassert.Include(),
+		libcrypto.Include(),
 		libfile.Include(),
 		libhttp.Include(),
 		libproc.Include(),
@@ -60,6 +62,7 @@ func run(ctx context.Context, assets http.FileSystem) error {
 
 func main() {
 	var bundlePath string
+	var bundleKey string
 
 	app := &cli.App{
 		Name:  "renegade",
@@ -70,6 +73,11 @@ func main() {
 				Usage:       "Path to the bundle tar.gz file.",
 				Destination: &bundlePath,
 			},
+			&cli.StringFlag{
+				Name:        "key",
+				Usage:       "Base64 representation of Key to be used to decrypt bundle.",
+				Destination: &bundleKey,
+			},
 		},
 		Action: func(c *cli.Context) error {
 			var bundle http.FileSystem
@@ -78,6 +86,19 @@ func main() {
 				if err != nil {
 					return fmt.Errorf("failed to open bundle file %q: %w", bundlePath, err)
 				}
+
+				if bundleKey != "" {
+					cryptoKey, err := libcrypto.CreateKey(bundleKey)
+					if err != nil {
+						return fmt.Errorf("failed to import key: %w", err)
+					}
+					decryptedBundle, err := libcrypto.Decrypt(cryptoKey, string(bundleFile))
+					if err != nil {
+						return fmt.Errorf("failed to decrypt bundle: %w", err)
+					}
+					bundleFile = []byte(decryptedBundle)
+				}
+
 				assetTar := &libassets.TarGZBundler{
 					Buffer: bytes.NewBuffer(bundleFile),
 				}

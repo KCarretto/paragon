@@ -14,6 +14,7 @@ import (
 	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	libassets "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
 	libcdn "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
+	libcrypto "github.com/kcarretto/paragon/pkg/script/stdlib/crypto"
 	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	libssh "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
@@ -156,6 +157,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		script.WithOutput(output),
 		libfile.Include(),
 		libassert.Include(),
+		libcrypto.Include(),
 		env.Include(),
 		cdnEnv.Include(),
 		sshEnv.Include(),

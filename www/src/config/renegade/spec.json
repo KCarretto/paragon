@@ -365,6 +365,44 @@
           "retvals": [{ "name": "i", "type": "int" }]
         }
       ]
+    },
+    {
+      "name": "crypto",
+      "functions": [
+        {
+          "name": "generateKey",
+          "doc": "GenerateKey creates a new Key object to be passed around.",
+          "params": null,
+          "retvals": [
+            { "name": "key", "type": "Key" },
+            { "name": "err", "type": "Error" }
+          ]
+        },
+        {
+          "name": "encrypt",
+          "doc": "Encrypt takes a Key and some data and returns the AESGCM encrypted IV+ciphertext.",
+          "params": [
+            { "name": "key", "type": "Key" },
+            { "name": "data", "type": "String" }
+          ],
+          "retvals": [
+            { "name": "ciphertext", "type": "String" },
+            { "name": "err", "type": "Error" }
+          ]
+        },
+        {
+          "name": "decrypt",
+          "doc": "Decrypt takes a Key and AESGCM encrypted IV+ciphertext data and returns the plaintext.",
+          "params": [
+            { "name": "key", "type": "Key" },
+            { "name": "data", "type": "String" }
+          ],
+          "retvals": [
+            { "name": "plaintext", "type": "String" },
+            { "name": "err", "type": "Error" }
+          ]
+        }
+      ]
     }
   ]
 }
