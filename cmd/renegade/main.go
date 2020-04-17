@@ -12,6 +12,7 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	libassets "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
+	libcrypto "github.com/kcarretto/paragon/pkg/script/stdlib/crypto"
 	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	libhttp "github.com/kcarretto/paragon/pkg/script/stdlib/http"
@@ -48,6 +49,7 @@ func run(ctx context.Context, assets http.FileSystem) error {
 		env.Include(),
 		assetEnv.Include(),
 		libassert.Include(),
+		libcrypto.Include(),
 		libfile.Include(),
 		libhttp.Include(),
 		libproc.Include(),
