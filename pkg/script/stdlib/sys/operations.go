@@ -217,12 +217,13 @@ func processes(parser script.ArgParser) (script.Retval, error) {
 
 // Files uses the ioutil.ReadDir to get all files in a given path.
 //
-//go:generate go run ../gendoc.go -lib sys -func files -retval files@[]File -doc "Files uses the ioutil.ReadDir to get all files in a given path."
+//go:generate go run ../gendoc.go -lib sys -func files -retval files@[]File -retval err@Error -doc "Files uses the ioutil.ReadDir to get all files in a given path."
 //
 // @callable:	sys.files
 // @retval:		files 		@[]File
+// @retval:		err 		@Error
 //
-// @usage:		files = sys.files()
+// @usage:		files, err = sys.files()
 func Files(path string) (files []filelib.File, err error) {
 	fileInfos, err := ioutil.ReadDir(path)
 	if err != nil {
