@@ -19,8 +19,9 @@ code {
 }
 
 .monaco-editor .parameter-hints-widget {
-  /* margin-left: 5vw; */
-  margin-top: 10vh;
+  /* padding-left: 10vw; */
+  margin-left: 5vw;
+  /* margin-top: 10vh; */
 }
 
 .XEditor {

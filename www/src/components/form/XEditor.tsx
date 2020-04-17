@@ -52,6 +52,7 @@ loading={
       scrollbar: {
         verticalScrollbarSize: 7
       },
+      fixedOverflowWidgets: true,
       minimap: {
         enabled: false
       },
