@@ -84,8 +84,10 @@ const XTargetCreateModal = ({ openOnStart }: TargetCreateModalParams) => {
       break;
     case "BSD":
       osIcon = "freebsd";
+      break;
     case "MACOS":
       osIcon = "apple";
+      break;
   }
 
   return (
