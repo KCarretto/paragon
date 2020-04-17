@@ -2,7 +2,8 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import moment from "moment";
 import * as React from "react";
-import { Icon } from "semantic-ui-react";
+import { Link } from "react-router-dom";
+import { Button, Header, Icon, Label, Segment } from "semantic-ui-react";
 import { XTaskStatus } from ".";
 import { Task } from "../../graphql/models";
 import { XBoundary } from "../layout";
@@ -20,6 +21,11 @@ const RESULT_QUERY = gql`
       execStopTime
       error
 
+      target {
+        id
+        name
+      }
+
       job {
         id
         staged
@@ -30,7 +36,9 @@ const RESULT_QUERY = gql`
 
 const XTaskResultDisplay: React.FC<{
   id: string;
-}> = ({ id }) => {
+  version: string;
+  onExit: () => void;
+}> = ({ id, version, onExit }) => {
   const {
     loading,
     error,
@@ -59,15 +67,31 @@ const XTaskResultDisplay: React.FC<{
       >
         {task && (
           <React.Fragment>
-            <Icon
-              floated="right"
-              size="large"
-              {...new XTaskStatus().getStatus(task).icon}
-            />
-            Last Updated:{" "}
-            {moment(new XTaskStatus().getTimestamp(task)).fromNow()}
-            <br />
-            <pre>{task.output}</pre>
+            <Header>
+              <Header.Content>
+                <Button icon="arrow left" color="teal" onClick={onExit} />
+                <Icon
+                  floated="right"
+                  size="large"
+                  {...new XTaskStatus().getStatus(task).icon}
+                />
+                {task.target && <Link to={'/targets/' + task.target.id}>{task.target.name}</Link>}
+                {" "}<Label>{version}</Label>
+              </Header.Content>
+              <Header.Subheader style={{ paddingLeft: "3em", paddingTop: "1em" }}>
+                Last Updated:{" "}{moment(new XTaskStatus().getTimestamp(task)).fromNow()}
+              </Header.Subheader>
+            </Header>
+            <Segment.Group raised padded style={{ overflow: "auto" }}>
+              {task.error && <Segment color="red" >
+                <Header color="red" content="Error" />
+                <pre style={{ color: "red" }}>{task.error}</pre>
+              </Segment>}
+              {task.output && <Segment color="blue">
+                <Header content="Output" />
+                <pre>{task.output}</pre>
+              </Segment>}
+            </Segment.Group>
           </React.Fragment>
         )}
       </XBoundary>

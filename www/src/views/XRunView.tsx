@@ -24,10 +24,10 @@ const XRunView = () => {
               Results
             </Menu.Item>
             <Menu.Item position="right">
-              <Button icon="chevron down" onClick={() => setVisible(!visible)} />
+              <Button icon="chevron down" color="teal" onClick={() => setVisible(!visible)} />
             </Menu.Item>
           </Menu>
-          <Container fluid style={{ overflowY: "auto", height: "100%", margin: "15px" }}>
+          <Container fluid style={{ overflow: "auto", height: "100%", padding: "15px" }}>
             <XJobResults name={name} />
           </Container>
         </Sidebar>
@@ -35,11 +35,9 @@ const XRunView = () => {
           <XJobEditor name={name} setName={setName} />
           <Menu fixed="bottom" style={{ margin: "0px", borderRadius: "0", backgroundColor: "rgb(63, 63, 63)" }}>
             <Menu.Item position="right">
-              <Button icon="chevron up" onClick={() => setVisible(!visible)} />
+              <Button icon="chevron up" color="teal" onClick={() => setVisible(!visible)} />
             </Menu.Item>
           </Menu>
-          {/* <Segment basic inverted style={{ marginTop: "0px" }}>
-          </Segment> */}
         </Sidebar.Pusher>
       </Sidebar.Pushable>
     </React.Fragment >
