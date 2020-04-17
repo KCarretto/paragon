@@ -35,9 +35,12 @@ const XJobEditor: React.FC<{ name: string; setName: (string) => void }> = ({
   name,
   setName
 }) => {
+  let savedContent: { timestamp: string, content: string } = JSON.parse(window.localStorage.getItem("xeditor:main.rg"))
+
   //   const [name, setName] = useState<string>("Untitled Job");
-  const [content, setContent] = useState<string>(
-    '\n# Enter your script here!\ndef main():\n\tprint("Hello World")'
+  const [content, setContent] = useState<string>(savedContent && savedContent.content
+    ? savedContent.content
+    : '\n# Enter your script here!\ndef main():\n\tprint("Hello World")'
   );
   const [serviceTag, setServiceTag] = useState<string>(null);
   const [targets, setTargets] = useState<string[]>([]);

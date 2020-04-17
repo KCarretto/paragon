@@ -11,7 +11,7 @@ export const Routes: RouteConfig[] = [
   {
     title: "Events",
     link: "/event_feed",
-    icon: "road",
+    icon: "feed",
     help: "Recent Events",
   },
   {

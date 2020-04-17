@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Button, Checkbox, Grid, Modal } from "semantic-ui-react";
+import { Button, Checkbox, Grid, Icon, Modal } from "semantic-ui-react";
 import { XServiceTypeahead } from "../form";
 
 const XJobSettingsModal: React.FC<{
@@ -22,8 +22,8 @@ const XJobSettingsModal: React.FC<{
               labeled
               value={serviceTag}
               onChange={(e, { value }) => setServiceTag(value)}
-            />;
-              {/* <XTagTypeahead
+            />
+            {/* <XTagTypeahead
               labeled
               onChange={(e, { value }) => setTags(value)}
             /> */}
@@ -34,6 +34,14 @@ const XJobSettingsModal: React.FC<{
               onChange={() => setStage(!stage)}
               checked={stage}
             />
+          </Grid.Column>
+          <Grid.Column>
+            <Button negative onClick={
+              () => window.localStorage.removeItem("xeditor:main.rg")
+            }>
+              <Icon name="delete" />
+              Clear Local Storage
+            </Button>
           </Grid.Column>
         </Grid.Row>
       </Grid>

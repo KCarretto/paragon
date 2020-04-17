@@ -1,3 +1,4 @@
+import moment from "moment";
 import * as monaco from "monaco-editor";
 import * as React from "react";
 import { useEffect } from "react";
@@ -52,6 +53,7 @@ loading={
       scrollbar: {
         verticalScrollbarSize: 7
       },
+      fixedOverflowWidgets: true,
       minimap: {
         enabled: false
       },
@@ -60,7 +62,12 @@ loading={
 
     element.getElementsByTagName("textarea")[0].classList.remove("inputarea");
     editor.onDidChangeModelContent(e => {
-      onChange(e, editor.getValue());
+      let content = editor.getValue()
+      onChange(e, content);
+
+      // TODO: Key based on file name
+      window.localStorage.setItem("xeditor:main.rg", JSON.stringify({ timestamp: moment(), content: content }))
+
       let action = editor.getAction("editor.action.triggerParameterHints");
       if (action !== null) {
         action.run().then(v => console.log("RAN ACTION", v));
