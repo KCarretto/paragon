@@ -18,6 +18,7 @@ import (
 	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	libssh "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
+	libsys "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 
 	"go.starlark.net/starlark"
 )
@@ -104,11 +105,12 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		Downloader: w,
 	}
 	code := script.New(
-		string(task.ID),
+		fmt.Sprintf("%d", task.ID),
 		strings.NewReader(task.Content),
 		script.WithOutput(output),
 		libfile.Include(),
 		libassert.Include(),
+		libsys.Include(), // TODO: Deprecate after multi-file is finished
 		assets.Include(),
 		env.Include(),
 	)
@@ -152,7 +154,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 
 	config := script.New(
-		string(task.ID),
+		"worker_config.rg",
 		configScript,
 		script.WithOutput(output),
 		libfile.Include(),
