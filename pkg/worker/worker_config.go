@@ -35,12 +35,18 @@ def run_linux(bundle):
 
     ssh_write(interpreter, intpPath, "0755")
 
+    # Encrypt Bundle
+    key, err = crypto.generateKey()
+    assert.noError(err)
+    encryptedBundle, err = crypto.encrypt(key, bundle)
+    assert.noError(err)
+
     # Upload Bundle
     bundlePath = "/tmp/"+str(env.rand())
-    ssh_write(bundle, bundlePath, "0644")
+    ssh_write(encryptedBundle, bundlePath, "0644")
 
     # Run Task
-    output, err = ssh.exec(intpPath+" --bundle "+bundlePath)
+    output, err = ssh.exec(intpPath+" --bundle "+bundlePath+" --key "+str(key))
     print(output)
     assert.noError(err)
 
