@@ -22,8 +22,8 @@ const XJobSettingsModal: React.FC<{
               labeled
               value={serviceTag}
               onChange={(e, { value }) => setServiceTag(value)}
-            />;
-              {/* <XTagTypeahead
+            />
+            {/* <XTagTypeahead
               labeled
               onChange={(e, { value }) => setTags(value)}
             /> */}
@@ -34,6 +34,13 @@ const XJobSettingsModal: React.FC<{
               onChange={() => setStage(!stage)}
               checked={stage}
             />
+          </Grid.Column>
+          <Grid.Column>
+            <Button negative icon="delete" onClick={
+              () => window.localStorage.removeItem("xeditor:main.rg")
+            }>
+              Clear Local Storage
+            </Button>
           </Grid.Column>
         </Grid.Row>
       </Grid>
