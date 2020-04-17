@@ -10,7 +10,7 @@ type XFileInputProps = {
 const XFileInput: React.FunctionComponent<XFileInputProps> = ({
   id,
   setFile,
-  file
+  file,
 }) => {
   let inputRef: HTMLInputElement | null = null;
 
@@ -32,18 +32,18 @@ const XFileInput: React.FunctionComponent<XFileInputProps> = ({
           labelPosition="right"
         />
       ) : (
-        <Label>
-          <Icon name="file alternate outline" />
-          {file.name} ({file.size} bytes)
-          <Icon
-            name="delete"
-            onClick={() => {
-              inputRef.value = null;
-              setFile(null);
-            }}
-          />
-        </Label>
-      )}
+          <Label>
+            <Icon name="file alternate outline" />
+            {file.name} ({file.size} bytes)
+            <Icon
+              name="delete"
+              onClick={() => {
+                inputRef.value = null;
+                setFile(null);
+              }}
+            />
+          </Label>
+        )}
       <input
         hidden
         ref={el => {

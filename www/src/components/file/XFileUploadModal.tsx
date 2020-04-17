@@ -1,14 +1,7 @@
 import { ApolloError } from "apollo-client/errors/ApolloError";
 import * as React from "react";
 import { useState } from "react";
-import {
-  Button,
-  ButtonProps,
-  Form,
-  Grid,
-  Input,
-  Modal
-} from "semantic-ui-react";
+import { Button, ButtonProps, Form, Grid, Input, Modal } from "semantic-ui-react";
 import { HTTP_URL } from "../../config";
 import { useModal, XFileInput } from "../form";
 import { XErrorMessage } from "../messages";
@@ -30,11 +23,13 @@ const XFileUploadModal = ({
   // Form params
   const [name, setName] = useState<string>(fileName || "");
   const [content, setContent] = useState<File>(null);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleSubmit = () => {
     var data = new FormData();
     data.append("fileName", name);
     data.append("fileContent", content);
+    setLoading(true);
 
     fetch(HTTP_URL + "/cdn/upload/", {
       mode: "no-cors",
@@ -42,6 +37,7 @@ const XFileUploadModal = ({
       body: data
     })
       .then(resp => {
+        setLoading(false);
         setError(null);
         setName(null);
         setContent(null);
@@ -49,6 +45,7 @@ const XFileUploadModal = ({
       })
       .catch(err => {
         let e = new ApolloError({ errorMessage: String(err) });
+        setLoading(false);
         setError(e);
       });
   };
@@ -93,7 +90,7 @@ const XFileUploadModal = ({
         <XErrorMessage title="Failed to upload file" err={error} />
       </Modal.Content>
       <Modal.Actions>
-        <Form.Button style={{ marginBottom: "10px" }} positive floated="right">
+        <Form.Button loading={loading} style={{ marginBottom: "10px" }} positive floated="right">
           Upload
         </Form.Button>
       </Modal.Actions>
