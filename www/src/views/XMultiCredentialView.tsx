@@ -5,8 +5,8 @@ import { FunctionComponent } from "react";
 import { Link } from "react-router-dom";
 import { Button, Label, Table } from "semantic-ui-react";
 import { XNoCredentialsFound } from "../components/credential";
-import { XBoundary } from "../components/layout";
-import { XErrorMessage, XLoadingMessage } from "../components/messages";
+import { XBoundary, XViewProps } from "../components/layout";
+import { XLoadingMessage } from "../components/messages";
 import { Credential } from "../graphql/models";
 
 export const MULTI_CREDENTIAL_QUERY = gql`
@@ -96,11 +96,13 @@ const XCredentialTableRow: FunctionComponent<XCredentialTableRowProps> = ({
   );
 };
 
-const XMultiCredentialView = () => {
-  const { loading, error, data: { credentials = [] } = {} } = useQuery<
+const XMultiCredentialView: React.FC<XViewProps> = ({ setError }) => {
+  const { loading, data: { credentials = [] } = {} } = useQuery<
     MultiCredentialResponse
   >(MULTI_CREDENTIAL_QUERY, {
-    pollInterval: 5000
+    pollInterval: 5000,
+    onError: err =>
+      setError({ title: "Failed to load Credentials", msg: String(err) })
   });
 
   const whenLoading = (
@@ -127,8 +129,6 @@ const XMultiCredentialView = () => {
     });
   return (
     <React.Fragment>
-      <XErrorMessage title="Error Loading Credentials" err={error} />
-
       <XBoundary boundary={whenLoading} show={!loading}>
         <Table celled style={{ overflow: "auto" }}>
           <Table.Header>
