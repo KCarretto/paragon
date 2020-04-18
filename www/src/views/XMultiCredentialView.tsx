@@ -3,8 +3,11 @@ import gql from "graphql-tag";
 import * as React from "react";
 import { FunctionComponent } from "react";
 import { Link } from "react-router-dom";
-import { Button, Label, Table } from "semantic-ui-react";
-import { XNoCredentialsFound } from "../components/credential";
+import { Button, Label, Menu, Table } from "semantic-ui-react";
+import {
+  XBulkAddCredentialsModal,
+  XNoCredentialsFound
+} from "../components/credential";
 import { XBoundary, XViewProps } from "../components/layout";
 import { XLoadingMessage } from "../components/messages";
 import { Credential } from "../graphql/models";
@@ -130,6 +133,11 @@ const XMultiCredentialView: React.FC<XViewProps> = ({ setError }) => {
   return (
     <React.Fragment>
       <XBoundary boundary={whenLoading} show={!loading}>
+        <Menu secondary borderless fluid style={{ margin: "0px" }}>
+          <Menu.Item fitted position="right" style={{ marginRight: "0px" }}>
+            <XBulkAddCredentialsModal />
+          </Menu.Item>
+        </Menu>
         <Table celled style={{ overflow: "auto" }}>
           <Table.Header>
             <Table.Row>
