@@ -95,7 +95,7 @@ The following doc page is automatically generated. Please be kind to it.
 		panic("Failed to change directories for sphinx")
 	}
 
-	cmd := exec.Command("/usr/bin/make", "singlehtml")
+	cmd := exec.Command("/usr/bin/make", "html")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		panic("Failed to run make for sphinx: " + string(out))
@@ -104,7 +104,7 @@ The following doc page is automatically generated. Please be kind to it.
 
 	os.RemoveAll("../" + PublicDir + "docs/")
 
-	err = os.Rename("build/singlehtml/", "../"+PublicDir+"docs/")
+	err = os.Rename("build/html/", "../"+PublicDir+"docs/")
 	if err != nil {
 		panic("Failed to move docs to public folder: " + err.Error())
 	}
