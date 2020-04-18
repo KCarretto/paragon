@@ -2,7 +2,8 @@ FROM golang:1.13.6-buster
 WORKDIR /app
 RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils dialog npm libprotobuf-dev protobuf-compiler 2>&1 \
-    && apt-get -y install git iproute2 procps lsb-release \
+    && apt-get -y install git iproute2 procps lsb-release python3-pip \
+    && pip3 install sphinx \
     && mkdir /go/tools \
     && ln -s /go/bin /go/tools/bin \
     && mkdir /tmp/goinstall \
