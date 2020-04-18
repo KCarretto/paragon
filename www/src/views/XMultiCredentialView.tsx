@@ -2,7 +2,8 @@ import { useMutation, useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import * as React from "react";
 import { FunctionComponent } from "react";
-import { Button, Table } from "semantic-ui-react";
+import { Link } from "react-router-dom";
+import { Button, Label, Table } from "semantic-ui-react";
 import { XNoCredentialsFound } from "../components/credential";
 import { XBoundary } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
@@ -30,16 +31,15 @@ const REMOVE_CREDENTIAL = gql`
   }
 `;
 
-type RemoveCredentialButtonProps = {
-  credential: Credential;
-};
-
-const RemoveCredentialButton: FunctionComponent<RemoveCredentialButtonProps> = ({
+const TargetLabel: FunctionComponent<{ credential: Credential }> = ({
   credential
 }) => {
-  const [removeCredential] = useMutation(REMOVE_CREDENTIAL, {
-    refetchQueries: [{ query: MULTI_CREDENTIAL_QUERY }]
-  });
+  const [removeCredential] = useMutation<any, { credential: string }>(
+    REMOVE_CREDENTIAL,
+    {
+      refetchQueries: [{ query: MULTI_CREDENTIAL_QUERY }]
+    }
+  );
 
   const handleRemove = () => {
     let vars = {
@@ -53,6 +53,9 @@ const RemoveCredentialButton: FunctionComponent<RemoveCredentialButtonProps> = (
 
   return (
     <Button.Group labeled>
+      <Button compact as={Link} to={"/targets/" + credential.target.id}>
+        {`${credential.target.name} (fails: ${credential.fails})`}
+      </Button>
       <Button compact negative icon="x" onClick={handleRemove} />
     </Button.Group>
   );
@@ -63,14 +66,14 @@ export type MultiCredentialResponse = {
 };
 
 type XCredentialTableRowProps = {
-  credential: Credential;
+  credentials: [Credential];
 };
 
 const XCredentialTableRow: FunctionComponent<XCredentialTableRowProps> = ({
-  credential
+  credentials
 }) => {
   const whenEmpty = <span>No Credentials</span>;
-
+  const credential = credentials[0];
   return (
     <Table.Row>
       <Table.Cell width={2}>
@@ -83,10 +86,11 @@ const XCredentialTableRow: FunctionComponent<XCredentialTableRowProps> = ({
         {credential.kind}
       </Table.Cell>
       <Table.Cell collapsing width={8}>
-        {credential.target.name}
-      </Table.Cell>
-      <Table.Cell collapsing width={8}>
-        <RemoveCredentialButton credential={credential} />
+        <Label.Group style={{ maxWidth: "55vw", overflowX: "auto" }}>
+          {credentials.map((credential, index) => (
+            <TargetLabel key={index} credential={credential} />
+          ))}
+        </Label.Group>
       </Table.Cell>
     </Table.Row>
   );
@@ -107,12 +111,20 @@ const XMultiCredentialView = () => {
   );
   const whenEmpty = (
     <Table.Row>
-      <Table.HeaderCell colSpan="5">
+      <Table.HeaderCell colSpan="4">
         <XNoCredentialsFound />
       </Table.HeaderCell>
     </Table.Row>
   );
 
+  const aggregatedCredentials = {};
+  credentials &&
+    credentials.forEach(credential => {
+      const key = credential.principal + credential.secret;
+      aggregatedCredentials[key]
+        ? aggregatedCredentials[key].push(credential)
+        : (aggregatedCredentials[key] = [credential]);
+    });
   return (
     <React.Fragment>
       <XErrorMessage title="Error Loading Credentials" err={error} />
@@ -124,8 +136,7 @@ const XMultiCredentialView = () => {
               <Table.HeaderCell>Credential</Table.HeaderCell>
               <Table.HeaderCell>Secret</Table.HeaderCell>
               <Table.HeaderCell>Type</Table.HeaderCell>
-              <Table.HeaderCell>Target</Table.HeaderCell>
-              <Table.HeaderCell></Table.HeaderCell>
+              <Table.HeaderCell>Targets</Table.HeaderCell>
             </Table.Row>
           </Table.Header>
 
@@ -135,8 +146,11 @@ const XMultiCredentialView = () => {
               show={credentials && credentials.length > 0}
             >
               {credentials &&
-                credentials.map((credential, index) => (
-                  <XCredentialTableRow key={index} credential={credential} />
+                Object.keys(aggregatedCredentials).map((key, index) => (
+                  <XCredentialTableRow
+                    key={index}
+                    credentials={aggregatedCredentials[key]}
+                  />
                 ))}
             </XBoundary>
           </Table.Body>
