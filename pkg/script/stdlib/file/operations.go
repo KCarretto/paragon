@@ -26,7 +26,7 @@ func move(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	if err := fd.Rename(fd.Path, dstPath); err != nil {
+	if err := rename(fd, fd.Path, dstPath); err != nil {
 		return err, nil
 	}
 
@@ -72,12 +72,7 @@ func write(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	dir := filepath.Dir(fd.Path)
-	if exists, err := afero.DirExists(fd, dir); !exists || err != nil {
-		fd.MkdirAll(dir, 0755)
-	}
-
-	f, err := fd.OpenFile(fd.Path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	f, err := upsertFile(fd)
 	if err != nil {
 		return nil, err
 	}
@@ -105,12 +100,7 @@ func copy(parser script.ArgParser) (script.Retval, error) {
 	}
 	defer src.Close()
 
-	dir := filepath.Dir(dstFD.Path)
-	if exists, err := afero.DirExists(dstFD, dir); !exists || err != nil {
-		dstFD.MkdirAll(dir, 0755)
-	}
-
-	dst, err := dstFD.OpenFile(dstFD.Path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	dst, err := upsertFile(dstFD)
 	if err != nil {
 		return script.WithError(nil, fmt.Errorf("failed to open dst file: %w", err)), nil
 	}
@@ -190,6 +180,7 @@ func drop(parser script.ArgParser) (script.Retval, error) {
 	tmpPath := tmp.Name()
 	defer func() {
 		tmp.Close()
+		dstFS.Remove(tmpPath)
 		dstFS.RemoveAll(tmpPath)
 	}()
 
@@ -199,11 +190,7 @@ func drop(parser script.ArgParser) (script.Retval, error) {
 	}
 
 	// Move Temp File to Dst
-	dir := filepath.Dir(dstFD.Path)
-	if exists, err := dstFS.DirExists(dir); !exists || err != nil {
-		dstFS.MkdirAll(dir, 0755)
-	}
-	if err := dstFS.Rename(tmpPath, dstFD.Path); err != nil {
+	if err := rename(dstFS, tmpPath, dstFD.Path); err != nil {
 		return fmt.Errorf("failed to replace dst file with temp file: %w", err), nil
 	}
 
@@ -213,4 +200,45 @@ func drop(parser script.ArgParser) (script.Retval, error) {
 	}
 
 	return nil, nil
+}
+
+func rename(fs afero.Fs, src, dst string) error {
+	// SSH implementation doesn't rename if dst already exists, so delete it
+	if exists, _ := afero.Exists(fs, dst); exists {
+		fs.RemoveAll(dst)
+		fs.Remove(dst)
+	}
+
+	dir := filepath.Dir(dst)
+	if exists, err := afero.DirExists(fs, dir); !exists || err != nil {
+		fs.MkdirAll(dir, 0755)
+	}
+
+	if err := fs.Rename(src, dst); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func upsertFile(fd *File) (afero.File, error) {
+	dir := filepath.Dir(fd.Path)
+	if exists, err := afero.DirExists(fd, dir); !exists || err != nil {
+		fd.MkdirAll(dir, 0755)
+	}
+
+	f, err := fd.OpenFile(fd.Path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, err
+	}
+
+	// SSH implementation doesn't pass the flags and returns nil, nil when file does not exist
+	if f == nil {
+		f, err = fd.Create(fd.Path)
+		if err != nil || f == nil {
+			return nil, fmt.Errorf("failed to create file: %w", err)
+		}
+	}
+
+	return f, nil
 }

@@ -49,6 +49,10 @@ func ParseParam(parser script.ArgParser, index int) (*File, error) {
 		return nil, err
 	}
 
+	if val == nil {
+		return nil, fmt.Errorf("expected file type, got None")
+	}
+
 	f, ok := val.(*File)
 	if !ok {
 		return nil, fmt.Errorf("%w: expected file type", script.ErrInvalidArgType)

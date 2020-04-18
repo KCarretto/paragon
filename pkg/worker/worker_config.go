@@ -26,33 +26,46 @@ def ssh_write(content, dstPath, perms):
     assert.noError(err)
     file.close(f)
 
-def run_linux(bundle):
-    # Upload Interpreter
-    intpF = cdn.openFile(RG_NIX)
-    intpPath = "/tmp/"+str(env.rand())
-    interpreter, err = file.content(intpF)
-    assert.noError(err)
-
-    ssh_write(interpreter, intpPath, "0755")
-
+def encrypt_bundle(bundle):
     # Encrypt Bundle
     key, err = crypto.generateKey()
     assert.noError(err)
     encryptedBundle, err = crypto.encrypt(key, bundle)
     assert.noError(err)
 
+    return encryptedBundle, key
+
+
+def run_linux(bundle, key):
     # Upload Bundle
     bundlePath = "/tmp/"+str(env.rand())
-    ssh_write(encryptedBundle, bundlePath, "0644")
+    bundleDst, err = ssh.file(bundlePath)
+    assert.noError(err)
+    file.write(bundleDst, bundle)
+
+    # Upload Interpreter
+    intpSrc, err = cdn.download(RG_NIX)
+    assert.noError(err)
+
+    binPath = "/tmp/"+str(env.rand())
+    intpDst, err = ssh.file(binPath)
+    assert.noError(err)
+
+    err = file.copy(intpSrc, intpDst)
+    assert.noError(err)
+
+    file.chmod(intpDst, "0755")
 
     # Run Task
-    output, err = ssh.exec(intpPath+" --bundle "+bundlePath+" --key "+str(key))
+    output, err = ssh.exec(binPath+" --bundle "+bundlePath+" --key "+str(key))
     print(output)
     assert.noError(err)
 
 def worker_run(bundle):
+    encryptedBundle, key = encrypt_bundle(bundle)
+
     if env.isLinux():
-        return run_linux(bundle)
+        return run_linux(encryptedBundle, key)
     else:
         assert.noError("Unsupported Operating System")
 `
