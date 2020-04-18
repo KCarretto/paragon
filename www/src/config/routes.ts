@@ -33,6 +33,12 @@ export const Routes: RouteConfig[] = [
     help: "View jobs",
   },
   {
+    title: "Credentials",
+    link: "/credentials",
+    icon: "key",
+    help: "View and delete credentials",
+  },
+  {
     title: "Tags",
     link: "/tags",
     icon: "tags",

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/afero"
 )
 
-func writeFileForTest(fs *afero.HttpFs, filename string, content string) error {
+func writeFileForTest(fs afero.Fs, filename string, content string) error {
 	f, err := fs.Create(filename)
 	if err != nil {
 		return err
@@ -24,7 +24,7 @@ func writeFileForTest(fs *afero.HttpFs, filename string, content string) error {
 }
 
 func TestTarGZBundleConsistent(t *testing.T) {
-	fs := afero.NewHttpFs(afero.NewMemMapFs())
+	fs := afero.NewMemMapFs()
 	file1Name, file1Content := "file1", "boop"
 	file2Name, file2Content := "file2", "shmoop"
 	if err := writeFileForTest(fs, file1Name, file1Content); err != nil {

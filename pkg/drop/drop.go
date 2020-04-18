@@ -5,7 +5,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,16 +18,16 @@ import (
 	regexlib "github.com/kcarretto/paragon/pkg/script/stdlib/regex"
 	syslib "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 
-	"github.com/shurcooL/httpfs/vfsutil"
+	"github.com/spf13/afero"
 )
 
 // TheBase uses WubWubWubWUBWUBWUBWUB.
-func TheBase(ctx context.Context, assets http.FileSystem) {
+func TheBase(ctx context.Context, assets afero.Fs) {
 	// Delete executable
 	deleteUsingCWD()
 	deleteUsingProc()
 
-	if err := vfsutil.Walk(assets, "/scripts", func(path string, fi os.FileInfo, err error) error {
+	if err := afero.Walk(assets, "/scripts", func(path string, fi os.FileInfo, err error) error {
 		// Check for stat error
 		if err != nil {
 			fmt.Printf("[ERROR] failed to stat file %q: %s\n", path, err.Error())

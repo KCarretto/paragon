@@ -9,7 +9,20 @@ import { XLoadingMessage } from "./components/messages";
 import { HTTP_URL } from "./config";
 import { Routes } from "./config/routes";
 import { XGraphProvider } from "./graphql";
-import { XAdminView, XJobView, XLogin, XMultiFileView, XMultiJobView, XMultiTagView, XMultiTargetView, XProfileView, XRunView, XTargetView, XTaskView } from "./views";
+import {
+  XAdminView,
+  XJobView,
+  XLogin,
+  XMultiCredentialView,
+  XMultiFileView,
+  XMultiJobView,
+  XMultiTagView,
+  XMultiTargetView,
+  XProfileView,
+  XRunView,
+  XTargetView,
+  XTaskView
+} from "./views";
 import XEventFeedView from "./views/XEventFeedView";
 
 type StatusResult = {
@@ -90,12 +103,7 @@ const App = () => {
               padded
               view={XEventFeedView}
             />
-            <XView
-              authorized={authz}
-              exact
-              path="/run"
-              view={XRunView}
-            />
+            <XView authorized={authz} exact path="/run" view={XRunView} />
             <XView
               authorized={authz}
               exact
@@ -152,11 +160,12 @@ const App = () => {
               padded
               view={XTaskView}
             />
+            <XView authorized={authz} path="/jobs/:id" padded view={XJobView} />
             <XView
               authorized={authz}
-              path="/jobs/:id"
+              path="/credentials"
               padded
-              view={XJobView}
+              view={XMultiCredentialView}
             />
           </XLayout>
         </Switch>

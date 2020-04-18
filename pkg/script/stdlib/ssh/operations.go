@@ -3,12 +3,12 @@ package ssh
 import (
 	"fmt"
 	"log"
-	"os"
-	"path"
 
 	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
+
 	"github.com/pkg/sftp"
+	"github.com/spf13/afero/sftpfs"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -104,50 +104,31 @@ func (env *Environment) exec(parser script.ArgParser) (script.Retval, error) {
 	return script.WithError(retVal, retErr), nil
 }
 
-// OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.
-//
-//go:generate go run ../gendoc.go -lib ssh -func openFile -param path@String -retval f@File -retval err@Error -doc "OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist."
-//
-// @callable: 	ssh.openFile
-// @param: 		path	 	@string
-// @retval:		file 		@File
-// @retval:		err 		@Error
-//
-// @usage: 		f, err = ssh.openFile("/bin/implant")
-func (env *Environment) OpenFile(filePath string) (file.Type, error) {
-	client, err := env.Connector.Connect(env.RemoteHost, env.environmentFilter)
-	if err != nil {
-		return file.Type{}, err
-	}
-
-	session, err := sftp.NewClient(client)
-	if err != nil {
-		return file.Type{}, err
-	}
-	env.TrackHandle(session)
-	dir := path.Dir(filePath)
-	if err := session.MkdirAll(dir); err != nil {
-		return file.New(nil), fmt.Errorf("failed to create parent directory %q: %w", dir, err)
-	}
-
-	f, err := session.OpenFile(filePath, os.O_RDWR|os.O_CREATE)
-	if err != nil {
-		return file.Type{}, err
-	}
-	handle := &File{f, session}
-	env.TrackHandle(handle)
-
-	return file.New(handle), nil
-}
-
-func (env *Environment) openFile(parser script.ArgParser) (script.Retval, error) {
-	filePath, err := parser.GetString(0)
+//go:generate go run ../gendoc.go -lib ssh -func file -param path@String -retval f@File -retval err@Error -doc "Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library."
+func (env *Environment) file(parser script.ArgParser) (script.Retval, error) {
+	path, err := parser.GetString(0)
 	if err != nil {
 		return nil, err
 	}
 
-	retVal, retErr := env.OpenFile(filePath)
-	return script.WithError(retVal, retErr), nil
+	client, err := env.Connector.Connect(env.RemoteHost, env.environmentFilter)
+	if err != nil {
+		return script.WithError(nil, err), nil
+	}
+
+	session, err := sftp.NewClient(client)
+	if err != nil {
+		return script.WithError(nil, err), nil
+	}
+	env.TrackHandle(session)
+
+	return script.WithError(
+		&libfile.File{
+			Path: path,
+			Fs:   sftpfs.New(session),
+		},
+		nil,
+	), nil
 }
 
 // GetRemoteHost will return the remote host being used by the worker to connect to.

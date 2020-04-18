@@ -2,26 +2,8 @@
 package file
 
 import (
-	"io"
-	"os"
-
 	"github.com/kcarretto/paragon/pkg/script"
 )
-
-// File defines the required methods for a file object to be used for file operations.
-type File interface {
-	io.Reader
-	io.Writer
-
-	Name() string
-	Chmod(os.FileMode) error
-	Chown(uid, gid int) error
-	Stat() (os.FileInfo, error)
-
-	Move(dstPath string) error
-	Remove() error
-	Sync() error
-}
 
 // Library prepares a new file library for use within a script environment.
 func Library() script.Library {
@@ -32,9 +14,8 @@ func Library() script.Library {
 		"write":   script.Func(write),
 		"copy":    script.Func(copy),
 		"remove":  script.Func(remove),
-		"chown":   script.Func(chown),
 		"chmod":   script.Func(chmod),
-		"close":   script.Func(fclose),
+		"drop":    script.Func(drop),
 	}
 }
 
