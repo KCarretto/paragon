@@ -3,15 +3,14 @@
 package assets
 
 import (
-	"net/http"
-
 	"github.com/kcarretto/paragon/pkg/cdn"
 	"github.com/kcarretto/paragon/pkg/script"
+	"github.com/spf13/afero"
 )
 
 // Environment used to configure the behaviour of calls to the ssh library.
 type Environment struct {
-	Assets     http.FileSystem
+	Assets     afero.Fs
 	Files      []NamedReader
 	Downloader cdn.Downloader
 }
@@ -23,9 +22,8 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	}
 
 	return script.Library{
-		"openFile": script.Func(env.openFile),
-		"drop":     script.Func(env.drop),
-		"require":  script.Func(env.require),
+		"file":    script.Func(env.file),
+		"require": script.Func(env.require),
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 	"compress/gzip"
 	"io"
 	"io/ioutil"
-	"net/http"
 
 	"github.com/spf13/afero"
 )
@@ -62,7 +61,7 @@ func (tb *TarGZBundler) Bundle(files ...NamedReader) error {
 }
 
 // FileSystem is used to convert a targz bundle into an in memory http.FileSystem
-func (tb *TarGZBundler) FileSystem() (http.FileSystem, error) {
+func (tb *TarGZBundler) FileSystem() (afero.Fs, error) {
 	gr, err := gzip.NewReader(tb.Buffer)
 	if err != nil {
 		return nil, err
@@ -89,5 +88,5 @@ func (tb *TarGZBundler) FileSystem() (http.FileSystem, error) {
 			return nil, err
 		}
 	}
-	return afero.NewHttpFs(fs), nil
+	return fs, nil
 }

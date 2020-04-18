@@ -44,7 +44,7 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	return script.Library{
 		"setUser":       script.Func(env.setUser),
 		"exec":          script.Func(env.exec),
-		"openFile":      script.Func(env.openFile),
+		"file":          script.Func(env.file),
 		"getRemoteHost": script.Func(env.getRemoteHost),
 	}
 }
