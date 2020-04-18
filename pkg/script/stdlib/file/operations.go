@@ -1,31 +1,22 @@
 package file
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
+	"math/rand"
 	"os"
-	"os/user"
+	"path/filepath"
 	"strconv"
 
 	"github.com/kcarretto/paragon/pkg/script"
+
+	"github.com/spf13/afero"
 )
 
-// Move a file to the desired location.
-//
 //go:generate go run ../gendoc.go -lib file -func move -param f@File -param dstPath@String -retval err@Error -doc "Move a file to the desired location."
-//
-// @callable:	file.move
-// @param:		file	@File
-// @param:		dstPath @String
-// @retval:		err 	@Error
-//
-// @usage:		err = file.move(f, "/path/to/dst")
-func Move(file Type, dstPath string) error {
-	return Type.Move(file, dstPath)
-}
-
 func move(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
+	fd, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -35,257 +26,191 @@ func move(parser script.ArgParser) (script.Retval, error) {
 		return nil, err
 	}
 
-	return Move(f, dstPath), nil
-}
-
-// Close a file if possible, otherwise this operation is a no-op.
-//
-//go:generate go run ../gendoc.go -lib file -func close -param f@File  -doc "Close a file if possible, otherwise this operation is a no-op."
-//
-// @callable:	file.close
-// @param:		file	@File
-//
-// @usage:		file.close(f)
-func Close(file Type) {
-	Type.Close(file)
-}
-
-func fclose(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
-	if err != nil {
-		return nil, err
+	if err := fd.Rename(fd.Path, dstPath); err != nil {
+		return err, nil
 	}
-	Close(f)
+
+	fd.Path = dstPath
 	return nil, nil
 }
 
-// Name returns file's basename.
-//
-//go:generate go run ../gendoc.go -lib file -func name -param f@File -retval name@String -doc "Name returns file's basename."
-//
-// @callable: 	file.name
-// @param: 		file @File
-// @retval:		name @String
-//
-// @usage:		name = file.name(f)
-func Name(file Type) string {
-	return Type.Name(file)
-}
-
+//go:generate go run ../gendoc.go -lib file -func name -param f@File -retval name@String -doc "The name or path used to open the file."
 func name(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
+	fd, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
-	return Name(f), nil
+	return fd.Path, nil
 }
 
-// Content returns the file's content.
-//
-//go:generate go run ../gendoc.go -lib file -func content -param f@File -retval content@String -retval err@Error -doc "Content returns the file's content."
-//
-// @callable: 	file.content
-// @param: 		file 	@File
-// @retval:		content @String
-// @retval:		err 	@Error
-//
-// @usage:		content, err = file.content(f)
-func Content(file Type) (string, error) {
-	content, err := ioutil.ReadAll(file)
+//go:generate go run ../gendoc.go -lib file -func content -param f@File -retval content@String -doc "Read and return the file's contents."
+func content(parser script.ArgParser) (script.Retval, error) {
+	fd, err := ParseParam(parser, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	f, err := fd.Open(fd.Path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	content, err := ioutil.ReadAll(f)
 	return string(content), err
 }
 
-func content(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	retVal, retErr := Content(f)
-	return script.WithError(retVal, retErr), nil
-}
-
-// Write sets the file's content.
-//
-//go:generate go run ../gendoc.go -lib file -func write -param f@File -param content@String -retval err@Error -doc "Write sets the file's content."
-//
-// @callable: 	file.write
-// @param: 		file 	@File
-// @param:		content @String
-// @retval:		err 	@Error
-//
-// @usage: 		err = file.write(f, "New\n\tFile\n\t\tContent")
-func Write(file Type, content string) error {
-	_, err := Type.Write(file, []byte(content))
-	if err != nil {
-		return err
-	}
-	return file.Sync()
-}
-
+//go:generate go run ../gendoc.go -lib file -func write -param f@File -param content@String -doc "Write sets the file's content, overwriting any previous value. It creates the file if it does not yet exist."
 func write(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
+	fd, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
+
 	content, err := parser.GetString(1)
 	if err != nil {
 		return nil, err
 	}
 
-	return Write(f, content), nil
-}
-
-// Copy the file's content into another file.
-//
-//go:generate go run ../gendoc.go -lib file -func copy -param src@File -param dst@File -retval err@Error -doc "Copy the file's content into another file."
-//
-// @callable: 	file.copy
-// @param: 		src 	@File
-// @param:		dst		@File
-// @retval:		err 	@Error
-//
-// @usage: 		err = file.copy(f1, f2)
-func Copy(src Type, dst Type) error {
-	_, err := io.Copy(dst, src)
-	if err != nil {
-		return err
+	dir := filepath.Dir(fd.Path)
+	if exists, err := afero.DirExists(fd, dir); !exists || err != nil {
+		fd.MkdirAll(dir, 0755)
 	}
-	return dst.Sync()
+
+	f, err := fd.OpenFile(fd.Path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	_, err = f.WriteString(content)
+	return nil, err
 }
 
+//go:generate go run ../gendoc.go -lib file -func copy -param src@File -param dst@File -retval err@Error -doc "Copy the file's content into a destination file, overwriting any previous value. It creates the destination file if it does not yet exist."
 func copy(parser script.ArgParser) (script.Retval, error) {
-	src, err := ParseParam(parser, 0)
+	srcFD, err := ParseParam(parser, 0)
 	if err != nil {
-		return nil, err
-	}
-	dst, err := ParseParam(parser, 1)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("src file: %w", err)
 	}
 
-	return Copy(src, dst), nil
+	dstFD, err := ParseParam(parser, 1)
+	if err != nil {
+		return nil, fmt.Errorf("dst file: %w", err)
+	}
+
+	src, err := srcFD.OpenFile(srcFD.Path, os.O_RDONLY, 0755)
+	if err != nil {
+		return script.WithError(nil, fmt.Errorf("failed to open src file: %w", err)), nil
+	}
+	defer src.Close()
+
+	dir := filepath.Dir(dstFD.Path)
+	if exists, err := afero.DirExists(dstFD, dir); !exists || err != nil {
+		dstFD.MkdirAll(dir, 0755)
+	}
+
+	dst, err := dstFD.OpenFile(dstFD.Path, os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0755)
+	if err != nil {
+		return script.WithError(nil, fmt.Errorf("failed to open dst file: %w", err)), nil
+	}
+	defer dst.Close()
+
+	if _, err := io.Copy(dst, src); err != nil {
+		return script.WithError(nil, fmt.Errorf("failed to copy files: %w", err)), nil
+	}
+
+	return nil, nil
 }
 
-// Remove the file. It will become unuseable after calling this operation.
-//
-//go:generate go run ../gendoc.go -lib file -func remove -param f@File -retval err@Error -doc "Remove the file. It will become unuseable after calling this operation."
-//
-// @callable: 	file.remove
-// @param: 		file 	@File
-// @retval:		err 	@Error
-//
-// @usage: 		err = file.remove(f)
-func Remove(file Type) error {
-	return Type.Remove(file)
-}
-
+//go:generate go run ../gendoc.go -lib file -func remove -param f@File -retval err@Error -doc "Remove the file"
 func remove(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
+	fd, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
 
-	return Remove(f), nil
+	return fd.RemoveAll(fd.Path), nil
 }
 
-// Chown modifies the file's ownership metadata. Passing an empty string for either the username
-// or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will
-// change the file's group ownership to 'new_group' but will not affect the file's user ownership.
-//
-//go:generate go run ../gendoc.go -lib file -func chown -param f@File -param username@String -param group@String -retval err@Error -doc "Chown modifies the file's ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will change the file's group ownership to 'new_group' but will not affect the file's user ownership."
-//
-// @callable: 	file.chown
-// @param: 		file 		@File
-// @param:		username	@String
-// @param:		group		@String
-// @retval:		err 		@Error
-//
-// @usage: 		err = file.chown(f, "root", "sudoers")
-func Chown(file Type, username, group string) error {
-	var uid int64 = -1
-	var gid int64 = -1
-
-	if username != "" {
-		userData, err := user.Lookup(username)
-		if err != nil {
-			return err
-		}
-
-		uid, err = strconv.ParseInt(userData.Uid, 10, 32)
-		if err != nil {
-			return err
-		}
-	}
-
-	if group != "" {
-		groupData, err := user.LookupGroup(group)
-		if err != nil {
-			return err
-		}
-
-		gid, err = strconv.ParseInt(groupData.Gid, 10, 32)
-		if err != nil {
-			return err
-		}
-	}
-
-	// No-op if no user or group was specified
-	if uid == -1 && gid == -1 {
-		return nil
-	}
-
-	err := Type.Chown(file, int(uid), int(gid))
-	if err != nil {
-		return err
-	}
-	return file.Sync()
-}
-
-func chown(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
-	if err != nil {
-		return nil, err
-	}
-
-	username, _ := parser.GetString(1)
-	group, _ := parser.GetString(2)
-
-	return Chown(f, username, group), nil
-}
-
-// Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation
-// of what os.FileMode you wish to set file to have.
-//
-//go:generate go run ../gendoc.go -lib file -func chmod -param f@File -param mode@String -retval err@Error -doc "Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have."
-//
-// @callable: 	file.chmod
-// @param: 		file 		@File
-// @param:		mode		@String
-// @retval:		err 		@Error
-//
-// @usage: 		err = file.chmod(f, "0777")
-func Chmod(file Type, mode string) error {
-	modeInt, err := strconv.ParseInt(mode, 8, 32)
-	if err != nil {
-		return err
-	}
-	err = Type.Chmod(file, os.FileMode(modeInt))
-	if err != nil {
-		return err
-	}
-	return file.Sync()
-}
-
+//go:generate go run ../gendoc.go -lib file -func chmod -param f@File -param mode@String -doc "Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have (i.e. '0755')."
 func chmod(parser script.ArgParser) (script.Retval, error) {
-	f, err := ParseParam(parser, 0)
+	fd, err := ParseParam(parser, 0)
 	if err != nil {
 		return nil, err
 	}
+
 	modeStr, err := parser.GetString(1)
 	if err != nil {
 		return nil, err
 	}
 
-	return Chmod(f, modeStr), nil
+	mode, err := strconv.ParseInt(modeStr, 8, 32)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, fd.Chmod(fd.Path, os.FileMode(mode))
+}
+
+//go:generate go run ../gendoc.go -lib file -func drop -param src@File -param dst@File -param perms@?String -retval err@Error -doc "Drop will:\n\t1. Copy a given file to a tempfile on disk\n\t2. Optionally set the permissions The default perms are '0755'.\n\t3. Move it to a given destination\n\t4. Clean up the temp file created."
+func drop(parser script.ArgParser) (script.Retval, error) {
+	srcFD, err := ParseParam(parser, 0)
+	if err != nil {
+		return nil, fmt.Errorf("src file: %w", err)
+	}
+
+	dstFD, err := ParseParam(parser, 1)
+	if err != nil {
+		return nil, fmt.Errorf("dst file: %w", err)
+	}
+
+	var perms int64 = 0755
+	if permStr, err := parser.GetString(2); err == nil {
+		perms, err = strconv.ParseInt(permStr, 8, 32)
+		if err != nil {
+			return nil, fmt.Errorf("invalid perms: %w", err)
+		}
+	}
+
+	// Open Source File
+	src, err := srcFD.Open(srcFD.Name())
+	if err != nil {
+		return fmt.Errorf("failed to open src file: %w", err), nil
+	}
+
+	// Create TempFile on Destination Filesystem
+	dstFS := afero.Afero{
+		Fs: dstFD.Fs,
+	}
+	tmp, err := dstFS.TempFile(dstFS.GetTempDir(""), strconv.Itoa(rand.Int()))
+	if err != nil {
+		return fmt.Errorf("failed to open temp file on destination filesystem: %w", err), nil
+	}
+	tmpPath := tmp.Name()
+	defer func() {
+		tmp.Close()
+		dstFS.RemoveAll(tmpPath)
+	}()
+
+	// Copy Src to Temp File
+	if _, err := io.Copy(tmp, src); err != nil {
+		return fmt.Errorf("failed to copy src into temp file: %w", err), nil
+	}
+
+	// Move Temp File to Dst
+	dir := filepath.Dir(dstFD.Path)
+	if exists, err := dstFS.DirExists(dir); !exists || err != nil {
+		dstFS.MkdirAll(dir, 0755)
+	}
+	if err := dstFS.Rename(tmpPath, dstFD.Path); err != nil {
+		return fmt.Errorf("failed to replace dst file with temp file: %w", err), nil
+	}
+
+	// Update DST File permissions
+	if err := dstFS.Chmod(dstFD.Path, os.FileMode(perms)); err != nil {
+		return fmt.Errorf("failed to update dst file perms: %w", err), nil
+	}
+
+	return nil, nil
 }

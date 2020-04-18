@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/kcarretto/paragon/pkg/script"
@@ -20,6 +19,7 @@ import (
 	libregex "github.com/kcarretto/paragon/pkg/script/stdlib/regex"
 	libsys "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 
+	"github.com/spf13/afero"
 	"github.com/urfave/cli"
 	"go.starlark.net/starlark"
 )
@@ -34,13 +34,13 @@ func compilePredeclared(libs map[string]script.Library) starlark.StringDict {
 	return builtins
 }
 
-func run(ctx context.Context, assets http.FileSystem) error {
+func run(ctx context.Context, assets afero.Fs) error {
 	env := &libenv.Environment{}
 
 	assetEnv := &libassets.Environment{
 		Assets: assets,
 	}
-	task, err := assetEnv.OpenFile("scripts/main.rg")
+	task, err := assetEnv.Assets.Open("scripts/main.rg")
 	if err != nil {
 		return fmt.Errorf("failed to execute scripts/main.rg: %w", err)
 	}
@@ -80,7 +80,7 @@ func main() {
 			},
 		},
 		Action: func(c *cli.Context) error {
-			var bundle http.FileSystem
+			var bundle afero.Fs
 			if bundlePath != "" {
 				bundleFile, err := ioutil.ReadFile(bundlePath)
 				if err != nil {
