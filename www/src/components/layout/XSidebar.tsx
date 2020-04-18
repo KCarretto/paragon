@@ -15,29 +15,67 @@ const getMenu = (props: SidebarProps) => (
   <React.Fragment>
     {props.routeMap
       ? props.routeMap.map((value: RouteConfig, index: number) => {
-        return (
-          <Menu.Item key={index} as={Link} to={value.link} link style={{ display: "flex", alignItems: "center" }}>
-            <Icon fitted name={value.icon} size="big" />
-            <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>{value.title}</b></span></Responsive>
-          </Menu.Item>
-        );
-      })
+          return (
+            <Menu.Item
+              key={index}
+              as={Link}
+              to={value.link}
+              link
+              style={{ display: "flex", alignItems: "center" }}
+            >
+              <Icon fitted name={value.icon} size="big" />
+              <Responsive minWidth={1800}>
+                <span style={{ marginLeft: "15px" }}>
+                  <b>{value.title}</b>
+                </span>
+              </Responsive>
+            </Menu.Item>
+          );
+        })
       : []}
     {props.isAdmin ? (
-      <Menu.Item as={Link} to="/admin" link style={{ display: "flex", alignItems: "center" }}>
+      <Menu.Item
+        as={Link}
+        to="/admin"
+        link
+        style={{ display: "flex", alignItems: "center" }}
+      >
         <Icon fitted name="chess rook" size="big" />
-        <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>Admin</b></span></Responsive>
+        <Responsive minWidth={1800}>
+          <span style={{ marginLeft: "15px" }}>
+            <b>Admin</b>
+          </span>
+        </Responsive>
       </Menu.Item>
     ) : (
-        <span />
-      )}
+      <span />
+    )}
     <Menu.Item
-      link style={{ display: "flex", alignItems: "center" }}
+      link
+      style={{ display: "flex", alignItems: "center" }}
+      href="/app/docs"
+      target="_blank"
+    >
+      <Icon fitted name="book" size="big" />
+      <Responsive minWidth={1800}>
+        <span style={{ marginLeft: "15px" }}>
+          <b>Docs</b>
+        </span>
+      </Responsive>
+    </Menu.Item>
+
+    <Menu.Item
+      link
+      style={{ display: "flex", alignItems: "center" }}
       href="https://github.com/kcarretto/paragon/issues/new"
       target="_blank"
     >
       <Icon fitted name="bug" size="big" />
-      <Responsive minWidth={1800}><span style={{ marginLeft: "15px" }}><b>Bug</b></span></Responsive>
+      <Responsive minWidth={1800}>
+        <span style={{ marginLeft: "15px" }}>
+          <b>Bug</b>
+        </span>
+      </Responsive>
     </Menu.Item>
   </React.Fragment>
 );
@@ -65,7 +103,7 @@ const desktopSidebar = (props: SidebarProps) => (
   </Responsive>
 );
 
-const XSidebar: FunctionComponent<SidebarProps> = props => (
+const XSidebar: FunctionComponent<SidebarProps> = (props) => (
   // <Sidebar.Pushable className="XLayout">
   <React.Fragment>
     <Menu icon vertical inverted className="XSidebar">
