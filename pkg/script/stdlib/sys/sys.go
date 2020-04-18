@@ -7,12 +7,11 @@ import (
 // Library prepares a new sys library for use within a script environment.
 func Library() script.Library {
 	return script.Library{
-		"openFile":    script.Func(openFile),
-		"detectOS":    script.Func(detectOS),
+		"file":        script.Func(file),
 		"exec":        script.Func(exec),
 		"connections": script.Func(connections),
 		"processes":   script.Func(processes),
-		"files":       script.Func(files),
+		// "files":       script.Func(files), // TODO: Fix files
 	}
 }
 

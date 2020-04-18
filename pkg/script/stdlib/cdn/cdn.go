@@ -20,7 +20,8 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	}
 
 	return script.Library{
-		"openFile": script.Func(env.openFile),
+		"upload":   script.Func(env.upload),
+		"download": script.Func(env.download),
 	}
 }
 

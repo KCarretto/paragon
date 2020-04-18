@@ -6,28 +6,30 @@ import (
 	"testing"
 
 	"github.com/kcarretto/paragon/pkg/script"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/assert"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/file"
-	"github.com/kcarretto/paragon/pkg/script/stdlib/sys"
+	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
+	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
+	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	libsys "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
+
 	"github.com/stretchr/testify/require"
 )
 
 func execScript(t *testing.T, name string, code string) error {
+	env := &libenv.Environment{}
+
 	return script.New(name, bytes.NewBufferString(code),
-		assert.Include(),
-		file.Include(),
-		sys.Include(),
+		env.Include(),
+		libassert.Include(),
+		libfile.Include(),
+		libsys.Include(),
 	).
 		Exec(context.Background())
 }
 
 const codeTestOperations = `
-def test_sys_openFile(fileName):
-	f, err = sys.openFile(fileName)
-	assert.noError(err)
-	name = file.name(f)
-	if name != fileName:
-		fail("Opened file but got invalid name", "Expected: '"+fileName+"'", "Got: '"+name+"'")
+def test_sys_file(fileName):
+	f = sys.file(fileName)
+	assert.equal(fileName, file.name(f))
 
 	return f
 
@@ -40,24 +42,17 @@ def test_sys_exec(cmd):
 	print("============= ---- =============")
 
 def test_write(f, fileContent):
-	err = file.write(f, fileContent)
-	assert.noError(err)
+	file.write(f, fileContent)
 
 def test_move(f, dstPath):
-	err = file.move(f, dstPath)
-	assert.noError(err)
-
-	path = file.name(f)
-	assert.equal(dstPath, path)
+	file.move(f, dstPath)
+	assert.equal(dstPath, file.name(f))
 
 def test_content(f, expected):
-	content, err = file.content(f)
-	assert.noError(err)
-
-	assert.equal(expected, content)
+	assert.equal(expected, file.content(f))
 
 def test_copy(f1, dstPath):
-	f2 = test_sys_openFile(dstPath)
+	f2 = test_sys_file(dstPath)
 	err = file.copy(f1, f2)
 	assert.noError(err)
 
@@ -67,25 +62,12 @@ def test_remove(f):
 	err = file.remove(f)
 	assert.noError(err)
 
-# TODO: Requires root / to know what the operating user is
-#def test_chown(f):
-#	pass
-#	err = file.chown(f, "root", "root")
-#	assert.noError(err)
-
 def test_chmod(f):
-	if sys.detectOS() == "windows":
-		print("Skipping chmod test since windows is not yet supported")
-		return
-
-	err = file.chmod(f, "777")
-	assert.noError(err)
+	file.chmod(f, "777")
 
 def main():
-	os = sys.detectOS()
-
-	prefix = "/tmp/paragon_test/" if os != "windows" else "C:\\Windows\\"
-	cmd = "ls -al /" if os != "windows" else "dir"
+	prefix = "/tmp/paragon_test/" if not env.isWindows() else "C:\\Windows\\"
+	cmd = "ls -al /" if not env.isWindows() else "dir"
 
 	fileName = prefix + "path/to/file"
 	newPath = prefix + "new_path/to/file"
@@ -94,7 +76,7 @@ def main():
 
 	test_sys_exec(cmd)
 
-	f1 = test_sys_openFile(fileName)
+	f1 = test_sys_file(fileName)
 
 	test_write(f1, fileContent)
 	test_content(f1, fileContent)
