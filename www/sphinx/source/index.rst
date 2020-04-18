@@ -44,6 +44,12 @@ stdlib/assets
 
 ----
 
+.. function:: file(path: String) -> (f: File)
+
+	Prepare a descriptor for a file that was packaged into the binary. The descriptor may be used with the file library.
+
+----
+
 stdlib/cdn
 --------------------------------------
 
@@ -52,6 +58,18 @@ stdlib/cdn
 .. function:: openFile(name: String) -> (f: File)
 
 	OpenFile stored on the CDN. Writing to the file will cause an upload to the CDN, overwriting any previously stored contents. Reading the file will download it from the CDN. Since operations are performed lazily, openFile will never error however reading from or writing to the file may.
+
+----
+
+.. function:: upload(f: File) -> (err: Error)
+
+	Upload a file to the CDN, overwriting any previously stored contents.
+
+----
+
+.. function:: download(name: String) -> (f: File,err: Error)
+
+	Download a file from the CDN.
 
 ----
 
@@ -74,31 +92,31 @@ stdlib/file
 
 .. function:: name(f: File) -> (name: String)
 
-	Name returns file's basename.
+	The name or path used to open the file.
 
 ----
 
-.. function:: content(f: File) -> (content: String,err: Error)
+.. function:: content(f: File) -> (content: String)
 
-	Content returns the file's content.
+	Read and return the file's contents.
 
 ----
 
-.. function:: write(f: File,content: String) -> (err: Error)
+.. function:: write(f: File,content: String) -> ()
 
-	Write sets the file's content.
+	Write sets the file's content, overwriting any previous value. It creates the file if it does not yet exist.
 
 ----
 
 .. function:: copy(src: File,dst: File) -> (err: Error)
 
-	Copy the file's content into another file.
+	Copy the file's content into a destination file, overwriting any previous value. It creates the destination file if it does not yet exist.
 
 ----
 
 .. function:: remove(f: File) -> (err: Error)
 
-	Remove the file. It will become unuseable after calling this operation.
+	Remove the file
 
 ----
 
@@ -108,9 +126,19 @@ stdlib/file
 
 ----
 
-.. function:: chmod(f: File,mode: String) -> (err: Error)
+.. function:: chmod(f: File,mode: String) -> ()
 
-	Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have.
+	Chmod modifies the file's permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have (i.e. '0755').
+
+----
+
+.. function:: drop(src: File,dst: File,perms: ?String) -> (err: Error)
+
+	Drop will:
+	1. Copy a given file to a tempfile on disk
+	2. Optionally set the permissions The default perms are '0755'.
+	3. Move it to a given destination
+	4. Clean up the temp file created.
 
 ----
 
@@ -206,6 +234,12 @@ stdlib/ssh
 
 ----
 
+.. function:: file(path: String) -> (f: File,err: Error)
+
+	Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library.
+
+----
+
 stdlib/sys
 --------------------------------------
 
@@ -225,7 +259,7 @@ stdlib/sys
 
 .. function:: exec(executable: String,disown: ?Bool) -> (output: String,err: Error)
 
-	Exec uses the os/exec.command to execute the passed executable/params.
+	Exec uses the os/exec.command to execute the passed executable/params. Disown will optionally spawn a process but prevent it's output from being returned.
 
 ----
 
@@ -244,6 +278,12 @@ stdlib/sys
 .. function:: files() -> (files: []File)
 
 	Files uses the ioutil.ReadDir to get all files in a given path.
+
+----
+
+.. function:: file(path: String) -> (f: File)
+
+	Prepare a descriptor for a file on the system. The descriptor may be used with the file library.
 
 ----
 

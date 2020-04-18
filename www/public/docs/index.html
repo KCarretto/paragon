@@ -74,6 +74,13 @@
 <dd><p>Require will be used in the init function for the worker to specify which files you wish to include in the asset bundle which will be accessible on the target. Will fatal if error occurs.</p>
 </dd></dl>
 
+<hr class="docutils" />
+<dl class="py function">
+<dt id="assets.file">
+<code class="sig-prename descclassname">assets.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#assets.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare a descriptor for a file that was packaged into the binary. The descriptor may be used with the file library.</p>
+</dd></dl>
+
 </div>
 <hr class="docutils" />
 <div class="section" id="stdlib-cdn">
@@ -82,6 +89,20 @@
 <dt id="cdn.openFile">
 <code class="sig-prename descclassname">cdn.</code><code class="sig-name descname">openFile</code><span class="sig-paren">(</span><em class="sig-param">name: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#cdn.openFile" title="Permalink to this definition">¶</a></dt>
 <dd><p>OpenFile stored on the CDN. Writing to the file will cause an upload to the CDN, overwriting any previously stored contents. Reading the file will download it from the CDN. Since operations are performed lazily, openFile will never error however reading from or writing to the file may.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="cdn.upload">
+<code class="sig-prename descclassname">cdn.</code><code class="sig-name descname">upload</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#cdn.upload" title="Permalink to this definition">¶</a></dt>
+<dd><p>Upload a file to the CDN, overwriting any previously stored contents.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="cdn.download">
+<code class="sig-prename descclassname">cdn.</code><code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">name: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#cdn.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download a file from the CDN.</p>
 </dd></dl>
 
 </div>
@@ -105,35 +126,35 @@
 <dl class="py function">
 <dt id="file.name">
 <code class="sig-prename descclassname">file.</code><code class="sig-name descname">name</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (name: String</em><span class="sig-paren">)</span><a class="headerlink" href="#file.name" title="Permalink to this definition">¶</a></dt>
-<dd><p>Name returns file’s basename.</p>
+<dd><p>The name or path used to open the file.</p>
 </dd></dl>
 
 <hr class="docutils" />
 <dl class="py function">
 <dt id="file.content">
-<code class="sig-prename descclassname">file.</code><code class="sig-name descname">content</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (content: String</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.content" title="Permalink to this definition">¶</a></dt>
-<dd><p>Content returns the file’s content.</p>
+<code class="sig-prename descclassname">file.</code><code class="sig-name descname">content</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (content: String</em><span class="sig-paren">)</span><a class="headerlink" href="#file.content" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read and return the file’s contents.</p>
 </dd></dl>
 
 <hr class="docutils" />
 <dl class="py function">
 <dt id="file.write">
-<code class="sig-prename descclassname">file.</code><code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param">f: File</em>, <em class="sig-param">content: String) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.write" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write sets the file’s content.</p>
+<code class="sig-prename descclassname">file.</code><code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span><span class="p">:</span> <span class="n">File</span></em>, <em class="sig-param"><span class="n">content</span><span class="p">:</span> <span class="n">String</span></em><span class="sig-paren">)</span><a class="headerlink" href="#file.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write sets the file’s content, overwriting any previous value. It creates the file if it does not yet exist.</p>
 </dd></dl>
 
 <hr class="docutils" />
 <dl class="py function">
 <dt id="file.copy">
 <code class="sig-prename descclassname">file.</code><code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param">src: File</em>, <em class="sig-param">dst: File) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.copy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Copy the file’s content into another file.</p>
+<dd><p>Copy the file’s content into a destination file, overwriting any previous value. It creates the destination file if it does not yet exist.</p>
 </dd></dl>
 
 <hr class="docutils" />
 <dl class="py function">
 <dt id="file.remove">
 <code class="sig-prename descclassname">file.</code><code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.remove" title="Permalink to this definition">¶</a></dt>
-<dd><p>Remove the file. It will become unuseable after calling this operation.</p>
+<dd><p>Remove the file</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -146,8 +167,19 @@
 <hr class="docutils" />
 <dl class="py function">
 <dt id="file.chmod">
-<code class="sig-prename descclassname">file.</code><code class="sig-name descname">chmod</code><span class="sig-paren">(</span><em class="sig-param">f: File</em>, <em class="sig-param">mode: String) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.chmod" title="Permalink to this definition">¶</a></dt>
-<dd><p>Chmod modifies the file’s permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have.</p>
+<code class="sig-prename descclassname">file.</code><code class="sig-name descname">chmod</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span><span class="p">:</span> <span class="n">File</span></em>, <em class="sig-param"><span class="n">mode</span><span class="p">:</span> <span class="n">String</span></em><span class="sig-paren">)</span><a class="headerlink" href="#file.chmod" title="Permalink to this definition">¶</a></dt>
+<dd><p>Chmod modifies the file’s permission metadata. The strong passed is expected to be an octal representation of what os.FileMode you wish to set file to have (i.e. ‘0755’).</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="file.drop">
+<code class="sig-prename descclassname">file.</code><code class="sig-name descname">drop</code><span class="sig-paren">(</span><em class="sig-param">src: File</em>, <em class="sig-param">dst: File</em>, <em class="sig-param">perms: ?String) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.drop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Drop will:
+1. Copy a given file to a tempfile on disk
+2. Optionally set the permissions The default perms are ‘0755’.
+3. Move it to a given destination
+4. Clean up the temp file created.</p>
 </dd></dl>
 
 </div>
@@ -246,6 +278,13 @@
 <dd><p>GetRemoteHost will return the remote host being used by the worker to connect to.</p>
 </dd></dl>
 
+<hr class="docutils" />
+<dl class="py function">
+<dt id="ssh.file">
+<code class="sig-prename descclassname">ssh.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#ssh.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library.</p>
+</dd></dl>
+
 </div>
 <hr class="docutils" />
 <div class="section" id="stdlib-sys">
@@ -267,7 +306,7 @@
 <dl class="py function">
 <dt id="sys.exec">
 <code class="sig-prename descclassname">sys.</code><code class="sig-name descname">exec</code><span class="sig-paren">(</span><em class="sig-param">executable: String</em>, <em class="sig-param">disown: ?Bool) -&gt; (output: String</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.exec" title="Permalink to this definition">¶</a></dt>
-<dd><p>Exec uses the os/exec.command to execute the passed executable/params.</p>
+<dd><p>Exec uses the os/exec.command to execute the passed executable/params. Disown will optionally spawn a process but prevent it’s output from being returned.</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -289,6 +328,13 @@
 <dt id="sys.files">
 <code class="sig-prename descclassname">sys.</code><code class="sig-name descname">files</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (files: []File</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Files uses the ioutil.ReadDir to get all files in a given path.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="sys.file">
+<code class="sig-prename descclassname">sys.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare a descriptor for a file on the system. The descriptor may be used with the file library.</p>
 </dd></dl>
 
 </div>
