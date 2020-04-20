@@ -57,7 +57,7 @@ def run_linux(bundle, key):
     file.chmod(intpDst, "0755")
 
     # Run Task
-    output, err = ssh.exec(binPath+" --bundle "+bundlePath+" --key "+str(key))
+    output, err = ssh.exec(binPath+" --bundle "+bundlePath+" --key "+str(key)+" --cleanup")
     print(output)
     assert.noError(err)
 
