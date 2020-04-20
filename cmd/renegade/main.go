@@ -21,6 +21,7 @@ import (
 
 	"github.com/spf13/afero"
 	"github.com/urfave/cli"
+	"go.starlark.net/repl"
 	"go.starlark.net/starlark"
 )
 
@@ -63,85 +64,73 @@ func run(ctx context.Context, assets afero.Fs) error {
 func main() {
 	var bundlePath string
 	var bundleKey string
+	passedArgs := len(os.Args) != 1
 
-	app := &cli.App{
-		Name:  "renegade",
-		Usage: "Interpreter for the renegade scripting language.",
-		Flags: []cli.Flag{
-			&cli.StringFlag{
-				Name:        "bundle",
-				Usage:       "Path to the bundle tar.gz file.",
-				Destination: &bundlePath,
+	if passedArgs {
+		app := &cli.App{
+			Name:  "renegade",
+			Usage: "Interpreter for the renegade scripting language.",
+			Flags: []cli.Flag{
+				&cli.StringFlag{
+					Name:        "bundle",
+					Usage:       "Path to the bundle tar.gz file.",
+					Destination: &bundlePath,
+				},
+				&cli.StringFlag{
+					Name:        "key",
+					Usage:       "Base64 representation of Key to be used to decrypt bundle.",
+					Destination: &bundleKey,
+				},
 			},
-			&cli.StringFlag{
-				Name:        "key",
-				Usage:       "Base64 representation of Key to be used to decrypt bundle.",
-				Destination: &bundleKey,
+			Action: func(c *cli.Context) error {
+				var bundle afero.Fs
+				if bundlePath != "" {
+					bundleFile, err := ioutil.ReadFile(bundlePath)
+					if err != nil {
+						return fmt.Errorf("failed to open bundle file %q: %w", bundlePath, err)
+					}
+
+					if bundleKey != "" {
+						cryptoKey, err := libcrypto.CreateKey(bundleKey)
+						if err != nil {
+							return fmt.Errorf("failed to import key: %w", err)
+						}
+						decryptedBundle, err := libcrypto.Decrypt(cryptoKey, string(bundleFile))
+						if err != nil {
+							return fmt.Errorf("failed to decrypt bundle: %w", err)
+						}
+						bundleFile = []byte(decryptedBundle)
+					}
+
+					assetTar := &libassets.TarGZBundler{
+						Buffer: bytes.NewBuffer(bundleFile),
+					}
+					bundle, err = assetTar.FileSystem()
+					if err != nil {
+						return fmt.Errorf("failed to create assets filesystem: %w", err)
+					}
+				}
+
+				return run(context.Background(), bundle)
+
 			},
-		},
-		Action: func(c *cli.Context) error {
-			var bundle afero.Fs
-			if bundlePath != "" {
-				bundleFile, err := ioutil.ReadFile(bundlePath)
-				if err != nil {
-					return fmt.Errorf("failed to open bundle file %q: %w", bundlePath, err)
-				}
-
-				if bundleKey != "" {
-					cryptoKey, err := libcrypto.CreateKey(bundleKey)
-					if err != nil {
-						return fmt.Errorf("failed to import key: %w", err)
-					}
-					decryptedBundle, err := libcrypto.Decrypt(cryptoKey, string(bundleFile))
-					if err != nil {
-						return fmt.Errorf("failed to decrypt bundle: %w", err)
-					}
-					bundleFile = []byte(decryptedBundle)
-				}
-
-				assetTar := &libassets.TarGZBundler{
-					Buffer: bytes.NewBuffer(bundleFile),
-				}
-				bundle, err = assetTar.FileSystem()
-				if err != nil {
-					return fmt.Errorf("failed to create assets filesystem: %w", err)
-				}
-			}
-
-			return run(context.Background(), bundle)
-
-		},
+		}
+		if err := app.Run(os.Args); err != nil {
+			log.Fatalf("unexpected error: %v", err)
+		}
+	} else {
+		fmt.Println("Welcome to Renegade Shell!")
+		thread := &starlark.Thread{Load: repl.MakeLoad()}
+		builtins := compilePredeclared(
+			map[string]script.Library{
+				"sys":     libsys.Library(),
+				"http":    libhttp.Library(),
+				"file":    libfile.Library(),
+				"regex":   libregex.Library(),
+				"process": libproc.Library(),
+				"assert":  libassert.Library(),
+			},
+		)
+		repl.REPL(thread, builtins)
 	}
-	if err := app.Run(os.Args); err != nil {
-		log.Fatalf("unexpected error: %v", err)
-	}
-
-	// thread := &starlark.Thread{Load: repl.MakeLoad()}
-	// builtins := compilePredeclared(
-	// 	map[string]script.Library{
-	// 		"sys":     sys.Library(),
-	// 		"http":    http.Library(),
-	// 		"file":    file.Library(),
-	// 		"regex":   regex.Library(),
-	// 		"process": process.Library(),
-	// 		"assert":  assert.Library(),
-	// 	},
-	// )
-	// switch len(os.Args) {
-	// case 1:
-	// 	fmt.Println("Welcome to Renegade Shell!")
-	// 	repl.REPL(thread, builtins)
-	// case 2:
-	// 	// Execute specified file.
-	// 	filename := os.Args[1]
-	// 	var err error
-	// 	_, err = starlark.ExecFile(thread, filename, nil, builtins)
-	// 	if err != nil {
-	// 		repl.PrintError(err)
-	// 		os.Exit(1)
-	// 	}
-	// default:
-	// 	log.Fatal("want at most one renegade file name")
-	// }
-
 }

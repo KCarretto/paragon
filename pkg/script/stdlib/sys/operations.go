@@ -2,7 +2,10 @@ package sys
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	os_exec "os/exec"
+	os_path "path/filepath"
 	"strings"
 
 	"github.com/kcarretto/paragon/pkg/script"
@@ -124,37 +127,33 @@ func processes(parser script.ArgParser) (script.Retval, error) {
 	return procs, nil
 }
 
-// Files uses the ioutil.ReadDir to get all files in a given path.
-//
-// TODO: Remove spaces before go:generate
 //  go:generate go run ../gendoc.go -lib sys -func files -retval files@[]File -retval err@Error -doc "Files uses the ioutil.ReadDir to get all files in a given path."
-//
-// @callable:	sys.files
-// @retval:		files 		@[]File
-// @retval:		err 		@Error
-//
-// @usage:		files, err = sys.files()
-// func Files(path string) (files []filelib.File, err error) {
-// 	fileInfos, err := ioutil.ReadDir(path)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	for _, info := range fileInfos {
-// 		if !info.IsDir() {
-// 			f, err := OpenFile(os_path.Join(path, info.Name()))
-// 			if err != nil {
-// 				return nil, err
-// 			}
-// 			files = append(files, f)
-// 		}
-// 	}
-// 	return files, nil
-// }
+func files(parser script.ArgParser) (script.Retval, error) {
+	path, err := parser.GetString(0)
+	if err != nil {
+		path, err = os.Getwd()
+		if err != nil {
+			return nil, err
+		}
+	}
+	fileInfos, err := ioutil.ReadDir(path)
+	if err != nil {
+		return nil, err
+	}
 
-// func files(parser script.ArgParser) (script.Retval, error) {
-// 	path, err := parser.GetString(0)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return script.WithError(Files(path)), nil
-// }
+	var files []*libfile.File
+	for _, info := range fileInfos {
+		if !info.IsDir() {
+			f := &libfile.File{
+				Path: os_path.Join(path, info.Name()),
+				Fs:   afero.NewOsFs(),
+			}
+			if err != nil {
+				return nil, err
+			}
+			files = append(files, f)
+		}
+	}
+
+	return files, nil
+}
