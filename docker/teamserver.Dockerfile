@@ -34,6 +34,7 @@ FROM debian:buster as production
 WORKDIR /app
 CMD ["/teamserver"]
 EXPOSE 80 443 8080
+RUN apt-get update -y && apt-get install ca-certificates
 COPY --from=prod-build /app/cdn/renegade /cdn/renegade
 COPY --from=prod-build /app/cdn/renegade.exe /cdn/renegade.exe
 COPY --from=prod-build /app/build/teamserver /teamserver
