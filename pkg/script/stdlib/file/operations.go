@@ -164,7 +164,7 @@ func drop(parser script.ArgParser) (script.Retval, error) {
 	}
 
 	// Open Source File
-	src, err := srcFD.Open(srcFD.Name())
+	src, err := srcFD.Open(srcFD.Path)
 	if err != nil {
 		return fmt.Errorf("failed to open src file: %w", err), nil
 	}
