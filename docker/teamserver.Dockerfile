@@ -30,7 +30,7 @@ RUN GOOS=linux go build -ldflags='-w -extldflags "-static"' -o /app/cdn/renegade
 RUN GOOS=windows go build -ldflags='-w -extldflags "-static"' -o /app/cdn/renegade.exe ./cmd/renegade
 
 # Production
-FROM alpine:3.10.2 as production
+FROM debian:buster as production
 WORKDIR /app
 CMD ["/teamserver"]
 EXPOSE 80 443 8080
