@@ -32,9 +32,9 @@ RUN GOOS=windows go build -ldflags='-w -extldflags "-static"' -o /app/cdn/renega
 # Production
 FROM debian:buster as production
 WORKDIR /app
-CMD ["/teamserver"]
+CMD ["/app/teamserver"]
 EXPOSE 80 443 8080
 RUN apt-get update -y && apt-get install -y ca-certificates
-COPY --from=prod-build /app/cdn/renegade /cdn/renegade
-COPY --from=prod-build /app/cdn/renegade.exe /cdn/renegade.exe
-COPY --from=prod-build /app/build/teamserver /teamserver
+COPY --from=prod-build /app/cdn/renegade /app/cdn/renegade
+COPY --from=prod-build /app/cdn/renegade.exe /app/cdn/renegade.exe
+COPY --from=prod-build /app/build/teamserver /app/teamserver
