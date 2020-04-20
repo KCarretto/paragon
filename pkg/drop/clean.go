@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 )
 
-// deleteFile is used to delete the running executable with the provided path.
-func deleteFile(path string) error {
+// DeleteFile is used to delete the running executable with the provided path.
+func DeleteFile(path string) error {
 	path = filepath.Clean(path)
 
 	log.Printf("[INFO] attempting deletion of file: %q", path)

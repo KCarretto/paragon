@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/kcarretto/paragon/pkg/drop"
 	"github.com/kcarretto/paragon/pkg/script"
 	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	libassets "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
@@ -64,6 +65,7 @@ func run(ctx context.Context, assets afero.Fs) error {
 func main() {
 	var bundlePath string
 	var bundleKey string
+	var cleanup bool
 	passedArgs := len(os.Args) != 1
 
 	if passedArgs {
@@ -81,6 +83,11 @@ func main() {
 					Usage:       "Base64 representation of Key to be used to decrypt bundle.",
 					Destination: &bundleKey,
 				},
+				&cli.BoolFlag{
+					Name:        "cleanup",
+					Usage:       "If enabled the renegade binary will delete itself and any assets after running",
+					Destination: &cleanup,
+				},
 			},
 			Action: func(c *cli.Context) error {
 				var bundle afero.Fs
@@ -88,6 +95,16 @@ func main() {
 					bundleFile, err := ioutil.ReadFile(bundlePath)
 					if err != nil {
 						return fmt.Errorf("failed to open bundle file %q: %w", bundlePath, err)
+					}
+					if cleanup {
+						// first try to delete the interpreter
+						drop.DeleteUsingCWD()
+						drop.DeleteUsingProc()
+
+						// then delete assets
+						if err := drop.DeleteFile(bundlePath); err != nil {
+							log.Printf("[ERROR][DELETION] failed to delete assets at path %q: %v", bundlePath, err)
+						}
 					}
 
 					if bundleKey != "" {
