@@ -16,6 +16,11 @@ type File struct {
 	Path string
 }
 
+// Name returns the path used to create the file descriptor.
+func (f *File) Name() string {
+	return f.Path
+}
+
 // String returns the name of the file.
 func (f *File) String() string {
 	return f.Path
