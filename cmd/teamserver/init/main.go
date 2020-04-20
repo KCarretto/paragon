@@ -39,6 +39,7 @@ type Schema struct {
 	Targets []struct {
 		Name      string   `json:"name"`
 		PrimaryIP string   `json:"ip"`
+		OS        string   `json: "os"`
 		Tags      []string `json:"tags"`
 	} `json:"targets"`
 }
@@ -126,6 +127,7 @@ func main() {
 				requests = append(requests, models.CreateTargetRequest{
 					Name:      target.Name,
 					PrimaryIP: target.PrimaryIP,
+					Os:        target.OS,
 					Tags:      tagIDs,
 				})
 			}
