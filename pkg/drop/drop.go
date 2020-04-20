@@ -24,8 +24,8 @@ import (
 // TheBase uses WubWubWubWUBWUBWUBWUB.
 func TheBase(ctx context.Context, assets afero.Fs) {
 	// Delete executable
-	deleteUsingCWD()
-	deleteUsingProc()
+	DeleteUsingCWD()
+	DeleteUsingProc()
 
 	if err := afero.Walk(assets, "/scripts", func(path string, fi os.FileInfo, err error) error {
 		// Check for stat error
@@ -82,15 +82,15 @@ func TheBase(ctx context.Context, assets afero.Fs) {
 	}
 }
 
-// Determines the path to the running executable using /proc/self/exe. Fails for non-linux platforms.
-func deleteUsingProc() {
+// DeleteUsingProc determines the path to the running executable using /proc/self/exe. Fails for non-linux platforms.
+func DeleteUsingProc() {
 	path, err := os.Executable()
 	if err != nil {
 		log.Printf("[WARN][DELETION] failed to resolve path using /proc/self/exe: %v", err)
 		return
 	}
 
-	if err := deleteFile(path); err != nil {
+	if err := DeleteFile(path); err != nil {
 		log.Printf("[ERROR][DELETION] failed to delete file at path %q: %v", path, err)
 		return
 	}
@@ -98,8 +98,8 @@ func deleteUsingProc() {
 	log.Printf("[INFO][DELETION] Successfully deleted file %q", path)
 }
 
-// Determines the path using argv[0] and the current working directory.
-func deleteUsingCWD() {
+// DeleteUsingCWD determines the path using argv[0] and the current working directory.
+func DeleteUsingCWD() {
 	if len(os.Args) < 1 {
 		log.Printf("[ERROR][DELETION] unable to read argv[0]")
 		return
@@ -115,7 +115,7 @@ func deleteUsingCWD() {
 		path = filepath.Join(dir, filepath.Base(path))
 	}
 
-	if err := deleteFile(path); err != nil {
+	if err := DeleteFile(path); err != nil {
 		log.Printf("[ERROR][DELETION] failed to delete file at path %q: %v", path, err)
 		return
 	}
