@@ -8,6 +8,7 @@ import (
 func Library() script.Library {
 	return script.Library{
 		"file":        script.Func(file),
+		"files":       script.Func(files),
 		"exec":        script.Func(exec),
 		"connections": script.Func(connections),
 		"processes":   script.Func(processes),
