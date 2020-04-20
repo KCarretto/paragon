@@ -38,16 +38,16 @@
 <div class="section" id="stdlib-assert">
 <h2>stdlib/assert<a class="headerlink" href="#stdlib-assert" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
-<dt id="assert.equal">
-<code class="sig-prename descclassname">assert.</code><code class="sig-name descname">equal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expected</span><span class="p">:</span> <span class="n">starlark.Value</span></em>, <em class="sig-param"><span class="n">actual</span><span class="p">:</span> <span class="n">starlark.Value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#assert.equal" title="Permalink to this definition">¶</a></dt>
-<dd><p>Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.</p>
+<dt id="assert.noError">
+<code class="sig-prename descclassname">assert.</code><code class="sig-name descname">noError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">err</span><span class="p">:</span> <span class="n">starlark.Value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#assert.noError" title="Permalink to this definition">¶</a></dt>
+<dd><p>NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect.</p>
 </dd></dl>
 
 <hr class="docutils" />
 <dl class="py function">
-<dt id="assert.noError">
-<code class="sig-prename descclassname">assert.</code><code class="sig-name descname">noError</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">err</span><span class="p">:</span> <span class="n">starlark.Value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#assert.noError" title="Permalink to this definition">¶</a></dt>
-<dd><p>NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect.</p>
+<dt id="assert.equal">
+<code class="sig-prename descclassname">assert.</code><code class="sig-name descname">equal</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">expected</span><span class="p">:</span> <span class="n">starlark.Value</span></em>, <em class="sig-param"><span class="n">actual</span><span class="p">:</span> <span class="n">starlark.Value</span></em><span class="sig-paren">)</span><a class="headerlink" href="#assert.equal" title="Permalink to this definition">¶</a></dt>
+<dd><p>Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.</p>
 </dd></dl>
 
 </div>
@@ -55,16 +55,9 @@
 <div class="section" id="stdlib-assets">
 <h2>stdlib/assets<a class="headerlink" href="#stdlib-assets" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
-<dt id="assets.openFile">
-<code class="sig-prename descclassname">assets.</code><code class="sig-name descname">openFile</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#assets.openFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>OpenFile that was packed into the compiled binary. The resulting file does not support many operations such as Chown, Write, etc. but you may read it’s contents or copy it to another file i.e. one opened by ssh or sys.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="assets.drop">
-<code class="sig-prename descclassname">assets.</code><code class="sig-name descname">drop</code><span class="sig-paren">(</span><em class="sig-param">f: File</em>, <em class="sig-param">dstPath: String</em>, <em class="sig-param">perms: String) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#assets.drop" title="Permalink to this definition">¶</a></dt>
-<dd><p>Drop will take a given file, copy it to disk, optionaly set the permissions move it to a given destination, and clean up the temp file created. The default perms are ‘0755’.</p>
+<dt id="assets.file">
+<code class="sig-prename descclassname">assets.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#assets.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare a descriptor for a file that was packaged into the binary. The descriptor may be used with the file library.</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -74,24 +67,10 @@
 <dd><p>Require will be used in the init function for the worker to specify which files you wish to include in the asset bundle which will be accessible on the target. Will fatal if error occurs.</p>
 </dd></dl>
 
-<hr class="docutils" />
-<dl class="py function">
-<dt id="assets.file">
-<code class="sig-prename descclassname">assets.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#assets.file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepare a descriptor for a file that was packaged into the binary. The descriptor may be used with the file library.</p>
-</dd></dl>
-
 </div>
 <hr class="docutils" />
 <div class="section" id="stdlib-cdn">
 <h2>stdlib/cdn<a class="headerlink" href="#stdlib-cdn" title="Permalink to this headline">¶</a></h2>
-<dl class="py function">
-<dt id="cdn.openFile">
-<code class="sig-prename descclassname">cdn.</code><code class="sig-name descname">openFile</code><span class="sig-paren">(</span><em class="sig-param">name: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#cdn.openFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>OpenFile stored on the CDN. Writing to the file will cause an upload to the CDN, overwriting any previously stored contents. Reading the file will download it from the CDN. Since operations are performed lazily, openFile will never error however reading from or writing to the file may.</p>
-</dd></dl>
-
-<hr class="docutils" />
 <dl class="py function">
 <dt id="cdn.upload">
 <code class="sig-prename descclassname">cdn.</code><code class="sig-name descname">upload</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#cdn.upload" title="Permalink to this definition">¶</a></dt>
@@ -107,19 +86,95 @@
 
 </div>
 <hr class="docutils" />
+<div class="section" id="stdlib-crypto">
+<h2>stdlib/crypto<a class="headerlink" href="#stdlib-crypto" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="crypto.generateKey">
+<code class="sig-prename descclassname">crypto.</code><code class="sig-name descname">generateKey</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (key: Key</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#crypto.generateKey" title="Permalink to this definition">¶</a></dt>
+<dd><p>GenerateKey creates a new Key object to be passed around.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="crypto.encrypt">
+<code class="sig-prename descclassname">crypto.</code><code class="sig-name descname">encrypt</code><span class="sig-paren">(</span><em class="sig-param">key: Key</em>, <em class="sig-param">data: String) -&gt; (ciphertext: String</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#crypto.encrypt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encrypt takes a Key and some data and returns the AESGCM encrypted IV+ciphertext.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="crypto.decrypt">
+<code class="sig-prename descclassname">crypto.</code><code class="sig-name descname">decrypt</code><span class="sig-paren">(</span><em class="sig-param">key: Key</em>, <em class="sig-param">data: String) -&gt; (plaintext: String</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#crypto.decrypt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Decrypt takes a Key and AESGCM encrypted IV+ciphertext data and returns the plaintext.</p>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
+<div class="section" id="stdlib-env">
+<h2>stdlib/env<a class="headerlink" href="#stdlib-env" title="Permalink to this headline">¶</a></h2>
+<dl class="py function">
+<dt id="env.uid">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">uid</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (uid: string</em><span class="sig-paren">)</span><a class="headerlink" href="#env.uid" title="Permalink to this definition">¶</a></dt>
+<dd><p>UID returns the current user id. If not found, an empty string is returned.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.user">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">user</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (username: string</em><span class="sig-paren">)</span><a class="headerlink" href="#env.user" title="Permalink to this definition">¶</a></dt>
+<dd><p>User returns the current username. If not found, an empty string is returned.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.time">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">time</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (i: int</em><span class="sig-paren">)</span><a class="headerlink" href="#env.time" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time returns the current number of seconds since the unix epoch.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.rand">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">rand</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (i: int</em><span class="sig-paren">)</span><a class="headerlink" href="#env.rand" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rand returns a random int. Not cryptographically secure.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.IP">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">IP</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.IP" title="Permalink to this definition">¶</a></dt>
+<dd><p>IP returns the primary IP address.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.OS">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">OS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.OS" title="Permalink to this definition">¶</a></dt>
+<dd><p>OS returns the operating system.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.isLinux">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">isLinux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.isLinux" title="Permalink to this definition">¶</a></dt>
+<dd><p>IsLinux returns true if the operating system is linux.</p>
+</dd></dl>
+
+<hr class="docutils" />
+<dl class="py function">
+<dt id="env.isWindows">
+<code class="sig-prename descclassname">env.</code><code class="sig-name descname">isWindows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.isWindows" title="Permalink to this definition">¶</a></dt>
+<dd><p>IsWindows returns true if the operating system is windows.</p>
+</dd></dl>
+
+</div>
+<hr class="docutils" />
 <div class="section" id="stdlib-file">
 <h2>stdlib/file<a class="headerlink" href="#stdlib-file" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
 <dt id="file.move">
 <code class="sig-prename descclassname">file.</code><code class="sig-name descname">move</code><span class="sig-paren">(</span><em class="sig-param">f: File</em>, <em class="sig-param">dstPath: String) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.move" title="Permalink to this definition">¶</a></dt>
 <dd><p>Move a file to the desired location.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="file.close">
-<code class="sig-prename descclassname">file.</code><code class="sig-name descname">close</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">f</span><span class="p">:</span> <span class="n">File</span></em><span class="sig-paren">)</span><a class="headerlink" href="#file.close" title="Permalink to this definition">¶</a></dt>
-<dd><p>Close a file if possible, otherwise this operation is a no-op.</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -155,13 +210,6 @@
 <dt id="file.remove">
 <code class="sig-prename descclassname">file.</code><code class="sig-name descname">remove</code><span class="sig-paren">(</span><em class="sig-param">f: File) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.remove" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove the file</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="file.chown">
-<code class="sig-prename descclassname">file.</code><code class="sig-name descname">chown</code><span class="sig-paren">(</span><em class="sig-param">f: File</em>, <em class="sig-param">username: String</em>, <em class="sig-param">group: String) -&gt; (err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#file.chown" title="Permalink to this definition">¶</a></dt>
-<dd><p>Chown modifies the file’s ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, ‘’, ‘new_group’) will change the file’s group ownership to ‘new_group’ but will not affect the file’s user ownership.</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -266,9 +314,9 @@
 
 <hr class="docutils" />
 <dl class="py function">
-<dt id="ssh.openFile">
-<code class="sig-prename descclassname">ssh.</code><code class="sig-name descname">openFile</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#ssh.openFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.</p>
+<dt id="ssh.file">
+<code class="sig-prename descclassname">ssh.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#ssh.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library.</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -278,28 +326,14 @@
 <dd><p>GetRemoteHost will return the remote host being used by the worker to connect to.</p>
 </dd></dl>
 
-<hr class="docutils" />
-<dl class="py function">
-<dt id="ssh.file">
-<code class="sig-prename descclassname">ssh.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#ssh.file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library.</p>
-</dd></dl>
-
 </div>
 <hr class="docutils" />
 <div class="section" id="stdlib-sys">
 <h2>stdlib/sys<a class="headerlink" href="#stdlib-sys" title="Permalink to this headline">¶</a></h2>
 <dl class="py function">
-<dt id="sys.openFile">
-<code class="sig-prename descclassname">sys.</code><code class="sig-name descname">openFile</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.openFile" title="Permalink to this definition">¶</a></dt>
-<dd><p>OpenFile uses os.Open to Open a file.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="sys.detectOS">
-<code class="sig-prename descclassname">sys.</code><code class="sig-name descname">detectOS</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (os: String</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.detectOS" title="Permalink to this definition">¶</a></dt>
-<dd><p>DetectOS uses the GOOS variable to determine the OS.</p>
+<dt id="sys.file">
+<code class="sig-prename descclassname">sys.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prepare a descriptor for a file on the system. The descriptor may be used with the file library.</p>
 </dd></dl>
 
 <hr class="docutils" />
@@ -324,103 +358,6 @@
 </dd></dl>
 
 <hr class="docutils" />
-<dl class="py function">
-<dt id="sys.files">
-<code class="sig-prename descclassname">sys.</code><code class="sig-name descname">files</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (files: []File</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.files" title="Permalink to this definition">¶</a></dt>
-<dd><p>Files uses the ioutil.ReadDir to get all files in a given path.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="sys.file">
-<code class="sig-prename descclassname">sys.</code><code class="sig-name descname">file</code><span class="sig-paren">(</span><em class="sig-param">path: String) -&gt; (f: File</em><span class="sig-paren">)</span><a class="headerlink" href="#sys.file" title="Permalink to this definition">¶</a></dt>
-<dd><p>Prepare a descriptor for a file on the system. The descriptor may be used with the file library.</p>
-</dd></dl>
-
-</div>
-<hr class="docutils" />
-<div class="section" id="stdlib-env">
-<h2>stdlib/env<a class="headerlink" href="#stdlib-env" title="Permalink to this headline">¶</a></h2>
-<dl class="py function">
-<dt id="env.IP">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">IP</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.IP" title="Permalink to this definition">¶</a></dt>
-<dd><p>IP returns the primary IP address.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.OS">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">OS</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.OS" title="Permalink to this definition">¶</a></dt>
-<dd><p>OS returns the operating system.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.isLinux">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">isLinux</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.isLinux" title="Permalink to this definition">¶</a></dt>
-<dd><p>IsLinux returns true if the operating system is linux.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.isWindows">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">isWindows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#env.isWindows" title="Permalink to this definition">¶</a></dt>
-<dd><p>IsWindows returns true if the operating system is windows.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.uid">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">uid</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (uid: string</em><span class="sig-paren">)</span><a class="headerlink" href="#env.uid" title="Permalink to this definition">¶</a></dt>
-<dd><p>UID returns the current user id. If not found, an empty string is returned.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.user">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">user</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (username: string</em><span class="sig-paren">)</span><a class="headerlink" href="#env.user" title="Permalink to this definition">¶</a></dt>
-<dd><p>User returns the current username. If not found, an empty string is returned.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.time">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">time</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (i: int</em><span class="sig-paren">)</span><a class="headerlink" href="#env.time" title="Permalink to this definition">¶</a></dt>
-<dd><p>Time returns the current number of seconds since the unix epoch.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="env.rand">
-<code class="sig-prename descclassname">env.</code><code class="sig-name descname">rand</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (i: int</em><span class="sig-paren">)</span><a class="headerlink" href="#env.rand" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rand returns a random int. Not cryptographically secure.</p>
-</dd></dl>
-
-</div>
-<hr class="docutils" />
-<div class="section" id="stdlib-crypto">
-<h2>stdlib/crypto<a class="headerlink" href="#stdlib-crypto" title="Permalink to this headline">¶</a></h2>
-<dl class="py function">
-<dt id="crypto.generateKey">
-<code class="sig-prename descclassname">crypto.</code><code class="sig-name descname">generateKey</code><span class="sig-paren">(</span><em class="sig-param">) -&gt; (key: Key</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#crypto.generateKey" title="Permalink to this definition">¶</a></dt>
-<dd><p>GenerateKey creates a new Key object to be passed around.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="crypto.encrypt">
-<code class="sig-prename descclassname">crypto.</code><code class="sig-name descname">encrypt</code><span class="sig-paren">(</span><em class="sig-param">key: Key</em>, <em class="sig-param">data: String) -&gt; (ciphertext: String</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#crypto.encrypt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Encrypt takes a Key and some data and returns the AESGCM encrypted IV+ciphertext.</p>
-</dd></dl>
-
-<hr class="docutils" />
-<dl class="py function">
-<dt id="crypto.decrypt">
-<code class="sig-prename descclassname">crypto.</code><code class="sig-name descname">decrypt</code><span class="sig-paren">(</span><em class="sig-param">key: Key</em>, <em class="sig-param">data: String) -&gt; (plaintext: String</em>, <em class="sig-param">err: Error</em><span class="sig-paren">)</span><a class="headerlink" href="#crypto.decrypt" title="Permalink to this definition">¶</a></dt>
-<dd><p>Decrypt takes a Key and AESGCM encrypted IV+ciphertext data and returns the plaintext.</p>
-</dd></dl>
-
-<hr class="docutils" />
 </div>
 </div>
 
@@ -436,14 +373,14 @@
 <li><a class="reference internal" href="#stdlib-assert">stdlib/assert</a></li>
 <li><a class="reference internal" href="#stdlib-assets">stdlib/assets</a></li>
 <li><a class="reference internal" href="#stdlib-cdn">stdlib/cdn</a></li>
+<li><a class="reference internal" href="#stdlib-crypto">stdlib/crypto</a></li>
+<li><a class="reference internal" href="#stdlib-env">stdlib/env</a></li>
 <li><a class="reference internal" href="#stdlib-file">stdlib/file</a></li>
 <li><a class="reference internal" href="#stdlib-http">stdlib/http</a></li>
 <li><a class="reference internal" href="#stdlib-process">stdlib/process</a></li>
 <li><a class="reference internal" href="#stdlib-regex">stdlib/regex</a></li>
 <li><a class="reference internal" href="#stdlib-ssh">stdlib/ssh</a></li>
 <li><a class="reference internal" href="#stdlib-sys">stdlib/sys</a></li>
-<li><a class="reference internal" href="#stdlib-env">stdlib/env</a></li>
-<li><a class="reference internal" href="#stdlib-crypto">stdlib/crypto</a></li>
 </ul>
 </li>
 </ul>

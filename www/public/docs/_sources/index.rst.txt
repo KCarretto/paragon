@@ -9,15 +9,15 @@ stdlib/assert
 
 .. currentmodule:: assert
 
-.. function:: equal(expected: starlark.Value,actual: starlark.Value) -> ()
-
-	Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.
-
-----
-
 .. function:: noError(err: starlark.Value) -> ()
 
 	NoError will check if the passed value is a starlark.NoneType, if not it will error out the script.  This function may cause a fatal error if the assertion is incorrect.
+
+----
+
+.. function:: equal(expected: starlark.Value,actual: starlark.Value) -> ()
+
+	Equal will check if two values are equal. This function will result in a fatal error if the assertion is incorrect.
 
 ----
 
@@ -26,15 +26,9 @@ stdlib/assets
 
 .. currentmodule:: assets
 
-.. function:: openFile(path: String) -> (f: File,err: Error)
+.. function:: file(path: String) -> (f: File)
 
-	OpenFile that was packed into the compiled binary. The resulting file does not support many operations such as Chown, Write, etc. but you may read it's contents or copy it to another file i.e. one opened by ssh or sys.
-
-----
-
-.. function:: drop(f: File,dstPath: String,perms: String) -> (err: Error)
-
-	Drop will take a given file, copy it to disk, optionaly set the permissions move it to a given destination, and clean up the temp file created. The default perms are '0755'.
+	Prepare a descriptor for a file that was packaged into the binary. The descriptor may be used with the file library.
 
 ----
 
@@ -44,22 +38,10 @@ stdlib/assets
 
 ----
 
-.. function:: file(path: String) -> (f: File)
-
-	Prepare a descriptor for a file that was packaged into the binary. The descriptor may be used with the file library.
-
-----
-
 stdlib/cdn
 --------------------------------------
 
 .. currentmodule:: cdn
-
-.. function:: openFile(name: String) -> (f: File)
-
-	OpenFile stored on the CDN. Writing to the file will cause an upload to the CDN, overwriting any previously stored contents. Reading the file will download it from the CDN. Since operations are performed lazily, openFile will never error however reading from or writing to the file may.
-
-----
 
 .. function:: upload(f: File) -> (err: Error)
 
@@ -73,6 +55,82 @@ stdlib/cdn
 
 ----
 
+stdlib/crypto
+--------------------------------------
+
+.. currentmodule:: crypto
+
+.. function:: generateKey() -> (key: Key,err: Error)
+
+	GenerateKey creates a new Key object to be passed around.
+
+----
+
+.. function:: encrypt(key: Key,data: String) -> (ciphertext: String,err: Error)
+
+	Encrypt takes a Key and some data and returns the AESGCM encrypted IV+ciphertext.
+
+----
+
+.. function:: decrypt(key: Key,data: String) -> (plaintext: String,err: Error)
+
+	Decrypt takes a Key and AESGCM encrypted IV+ciphertext data and returns the plaintext.
+
+----
+
+stdlib/env
+--------------------------------------
+
+.. currentmodule:: env
+
+.. function:: uid() -> (uid: string)
+
+	UID returns the current user id. If not found, an empty string is returned.
+
+----
+
+.. function:: user() -> (username: string)
+
+	User returns the current username. If not found, an empty string is returned.
+
+----
+
+.. function:: time() -> (i: int)
+
+	Time returns the current number of seconds since the unix epoch.
+
+----
+
+.. function:: rand() -> (i: int)
+
+	Rand returns a random int. Not cryptographically secure.
+
+----
+
+.. function:: IP() -> ()
+
+	IP returns the primary IP address.
+
+----
+
+.. function:: OS() -> ()
+
+	OS returns the operating system.
+
+----
+
+.. function:: isLinux() -> ()
+
+	IsLinux returns true if the operating system is linux.
+
+----
+
+.. function:: isWindows() -> ()
+
+	IsWindows returns true if the operating system is windows.
+
+----
+
 stdlib/file
 --------------------------------------
 
@@ -81,12 +139,6 @@ stdlib/file
 .. function:: move(f: File,dstPath: String) -> (err: Error)
 
 	Move a file to the desired location.
-
-----
-
-.. function:: close(f: File) -> ()
-
-	Close a file if possible, otherwise this operation is a no-op.
 
 ----
 
@@ -117,12 +169,6 @@ stdlib/file
 .. function:: remove(f: File) -> (err: Error)
 
 	Remove the file
-
-----
-
-.. function:: chown(f: File,username: String,group: String) -> (err: Error)
-
-	Chown modifies the file's ownership metadata. Passing an empty string for either the username or group parameter will result in a no-op. For example, file.chown(f, '', 'new_group') will change the file's group ownership to 'new_group' but will not affect the file's user ownership.
 
 ----
 
@@ -222,9 +268,9 @@ stdlib/ssh
 
 ----
 
-.. function:: openFile(path: String) -> (f: File,err: Error)
+.. function:: file(path: String) -> (f: File,err: Error)
 
-	OpenFile on the remote system using SFTP over SSH. The file is created if it does not yet exist.
+	Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library.
 
 ----
 
@@ -234,26 +280,14 @@ stdlib/ssh
 
 ----
 
-.. function:: file(path: String) -> (f: File,err: Error)
-
-	Prepare a descriptor for a file on the remote system using SFTP via SSH. The descriptor may be used with the file library.
-
-----
-
 stdlib/sys
 --------------------------------------
 
 .. currentmodule:: sys
 
-.. function:: openFile(path: String) -> (f: File,err: Error)
+.. function:: file(path: String) -> (f: File)
 
-	OpenFile uses os.Open to Open a file.
-
-----
-
-.. function:: detectOS() -> (os: String)
-
-	DetectOS uses the GOOS variable to determine the OS.
+	Prepare a descriptor for a file on the system. The descriptor may be used with the file library.
 
 ----
 
@@ -272,94 +306,6 @@ stdlib/sys
 .. function:: processes() -> (procs: []Process)
 
 	Processes uses the gopsutil/process to get all processes.
-
-----
-
-.. function:: files() -> (files: []File)
-
-	Files uses the ioutil.ReadDir to get all files in a given path.
-
-----
-
-.. function:: file(path: String) -> (f: File)
-
-	Prepare a descriptor for a file on the system. The descriptor may be used with the file library.
-
-----
-
-stdlib/env
---------------------------------------
-
-.. currentmodule:: env
-
-.. function:: IP() -> ()
-
-	IP returns the primary IP address.
-
-----
-
-.. function:: OS() -> ()
-
-	OS returns the operating system.
-
-----
-
-.. function:: isLinux() -> ()
-
-	IsLinux returns true if the operating system is linux.
-
-----
-
-.. function:: isWindows() -> ()
-
-	IsWindows returns true if the operating system is windows.
-
-----
-
-.. function:: uid() -> (uid: string)
-
-	UID returns the current user id. If not found, an empty string is returned.
-
-----
-
-.. function:: user() -> (username: string)
-
-	User returns the current username. If not found, an empty string is returned.
-
-----
-
-.. function:: time() -> (i: int)
-
-	Time returns the current number of seconds since the unix epoch.
-
-----
-
-.. function:: rand() -> (i: int)
-
-	Rand returns a random int. Not cryptographically secure.
-
-----
-
-stdlib/crypto
---------------------------------------
-
-.. currentmodule:: crypto
-
-.. function:: generateKey() -> (key: Key,err: Error)
-
-	GenerateKey creates a new Key object to be passed around.
-
-----
-
-.. function:: encrypt(key: Key,data: String) -> (ciphertext: String,err: Error)
-
-	Encrypt takes a Key and some data and returns the AESGCM encrypted IV+ciphertext.
-
-----
-
-.. function:: decrypt(key: Key,data: String) -> (plaintext: String,err: Error)
-
-	Decrypt takes a Key and AESGCM encrypted IV+ciphertext data and returns the plaintext.
 
 ----
 
