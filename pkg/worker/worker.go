@@ -104,6 +104,17 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	assets := libassets.Environment{
 		Downloader: w,
 	}
+	sshConnector := &SSHConnector{
+		Credentials: credentials,
+	}
+	defer sshConnector.Close()
+
+	sshEnv := &libssh.Environment{
+		RemoteHost: target.PrimaryIP,
+		Connector:  sshConnector,
+	}
+	defer sshEnv.Close()
+
 	code := script.New(
 		fmt.Sprintf("%d", task.ID),
 		strings.NewReader(task.Content),
@@ -113,6 +124,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		libsys.Include(), // TODO: Deprecate after multi-file is finished
 		assets.Include(),
 		env.Include(),
+		sshEnv.Include(),
 	)
 	if _, err := code.Call("init", starlark.Tuple{}); err != nil {
 		execErr = fmt.Errorf("failed to initialize assets: %w", err)
@@ -132,17 +144,6 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 
 	/* Use Config to execute task */
-	sshConnector := &SSHConnector{
-		Credentials: credentials,
-	}
-	defer sshConnector.Close()
-
-	sshEnv := &libssh.Environment{
-		RemoteHost: target.PrimaryIP,
-		Connector:  sshConnector,
-	}
-	defer sshEnv.Close()
-
 	cdnEnv := &libcdn.Environment{
 		Uploader:   w,
 		Downloader: w,
