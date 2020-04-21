@@ -138,6 +138,7 @@ func main() {
 	} else {
 		fmt.Println("Welcome to Renegade Shell!")
 		thread := &starlark.Thread{Load: repl.MakeLoad()}
+		env := &libenv.Environment{}
 		builtins := compilePredeclared(
 			map[string]script.Library{
 				"sys":     libsys.Library(),
@@ -146,6 +147,7 @@ func main() {
 				"regex":   libregex.Library(),
 				"process": libproc.Library(),
 				"assert":  libassert.Library(),
+				"env":     env.Library(),
 			},
 		)
 		repl.REPL(thread, builtins)

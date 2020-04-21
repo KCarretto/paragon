@@ -27,12 +27,13 @@ func (env *Environment) Library(options ...func(*Environment)) script.Library {
 	}
 
 	return script.Library{
-		"OS":        script.Func(env.os),
 		"IP":        script.Func(env.ip),
-		"rand":      script.Func(env.rand),
-		"uid":       script.Func(env.uid),
+		"OS":        script.Func(env.os),
+		"PID":       script.Func(env.pid),
+		"UID":       script.Func(env.uid),
 		"user":      script.Func(env.user),
 		"time":      script.Func(env.time),
+		"rand":      script.Func(env.rand),
 		"isLinux":   script.Func(env.isLinux),
 		"isWindows": script.Func(env.isWindows),
 	}
