@@ -7,13 +7,17 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/kcarretto/paragon/pkg/auth"
+	"golang.org/x/crypto/sha3"
 )
 
 type Client struct {
@@ -23,6 +27,9 @@ type Client struct {
 	Service    string
 	PublicKey  ed25519.PublicKey
 	PrivateKey ed25519.PrivateKey
+
+	cache map[string][]byte
+	mu    sync.RWMutex
 }
 
 // Upload a file to the CDN.
@@ -98,13 +105,28 @@ func (cdn *Client) Download(name string) (io.Reader, error) {
 	httpReq.Header.Set(auth.HeaderIdentity, base64.StdEncoding.EncodeToString(cdn.PublicKey))
 	httpReq.Header.Set(auth.HeaderEpoch, epoch)
 	httpReq.Header.Set(auth.HeaderSignature, base64.StdEncoding.EncodeToString(sig))
+	if hash := cdn.getCachedFileHash(name); hash != "" {
+		httpReq.Header.Set("If-None-Match", hash)
+	}
 
 	resp, err := cdn.HTTP.Do(httpReq)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
+	if resp.StatusCode == http.StatusNotModified {
+		log.Printf("[CDN] Received HTTP 304 Not Modified, loading file from cache: %q", name)
+		return cdn.getCachedFile(name)
+	}
 
-	return resp.Body, nil
+	content, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read file content from response body: %w", err)
+	}
+	log.Printf("[CDN] File downloaded since it was not present in cache: %q (%d bytes)", name, len(content))
+
+	cdn.cacheFile(name, content)
+
+	return bytes.NewBuffer(content), nil
 }
 
 func (cdn *Client) sign(msg []byte) ([]byte, error) {
@@ -144,4 +166,54 @@ func (cdn *Client) keyFromEnv() (ed25519.PublicKey, ed25519.PrivateKey) {
 		return pubKey, privKey
 	}
 	return nil, nil
+}
+
+func (cdn *Client) cacheFile(name string, content []byte) {
+	cdn.mu.Lock()
+	defer cdn.mu.Unlock()
+
+	if cdn.cache == nil {
+		cdn.cache = make(map[string][]byte)
+	}
+
+	cdn.cache[name] = make([]byte, len(content))
+	copy(cdn.cache[name], content)
+
+	log.Printf("[CDN] File cached: %q (%d bytes)", name, len(cdn.cache[name]))
+}
+
+func (cdn *Client) getCachedFileHash(name string) string {
+	cdn.mu.RLock()
+	defer cdn.mu.RUnlock()
+
+	if cdn.cache == nil {
+		return ""
+	}
+
+	content, ok := cdn.cache[name]
+	if !ok || content == nil {
+		return ""
+	}
+
+	digestBytes := sha3.Sum256(content)
+	return base64.StdEncoding.EncodeToString(digestBytes[:])
+}
+
+func (cdn *Client) getCachedFile(name string) (io.Reader, error) {
+	cdn.mu.RLock()
+	defer cdn.mu.RUnlock()
+
+	if cdn.cache == nil {
+		return nil, fmt.Errorf("file not found in CDN cache")
+	}
+
+	content, ok := cdn.cache[name]
+	if !ok || content == nil {
+		return nil, fmt.Errorf("file not found in CDN cache")
+	}
+
+	dst := make([]byte, len(content))
+	copy(dst, content)
+
+	return bytes.NewBuffer(dst), nil
 }

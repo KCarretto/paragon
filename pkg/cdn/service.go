@@ -128,12 +128,27 @@ func (svc Service) HandleFileDownload(w http.ResponseWriter, r *http.Request) er
 
 	fileQuery := svc.Graph.File.Query().Where(file.Name(filename))
 
-	if exists := fileQuery.ExistX(ctx); !exists {
+	if exists := fileQuery.Clone().ExistX(ctx); !exists {
 		return fmt.Errorf("file not found")
+	}
+
+	// If hash was provided, check to see if the file has been updated
+	// Note that http.ServeContent should handle this, but we want to avoid the expensive DB query
+	// where possible.
+	if hash := r.Header.Get("If-None-Match"); hash != "" {
+		if exists := fileQuery.Clone().Where(file.Hash(hash)).ExistX(ctx); exists {
+			http.Error(w, "file has not been modified", http.StatusNotModified)
+			return nil
+		}
 	}
 
 	file := fileQuery.OnlyX(ctx)
 	content := bytes.NewReader(file.Content)
+
+	// Set hash of file
+	digestBytes := sha3.Sum256(file.Content)
+	w.Header().Set("Etag", base64.StdEncoding.EncodeToString(digestBytes[:]))
+
 	w.Header().Set("Content-Type", "application/octet-stream")
 	http.ServeContent(w, r, filename, file.LastModifiedTime, content)
 	return nil

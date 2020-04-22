@@ -91,19 +91,19 @@ stdlib/env
 
 .. function:: user() -> (username: string)
 
-	User returns the current username. If not found, an empty string is returned.
+	user returns the current username. If not found, an empty string is returned.
 
 ----
 
 .. function:: time() -> (i: int)
 
-	Time returns the current number of seconds since the unix epoch.
+	time returns the current number of seconds since the unix epoch.
 
 ----
 
 .. function:: rand() -> (i: int)
 
-	Rand returns a random int. Not cryptographically secure.
+	rand returns a random int. Not cryptographically secure.
 
 ----
 
@@ -121,13 +121,25 @@ stdlib/env
 
 .. function:: isLinux() -> ()
 
-	IsLinux returns true if the operating system is linux.
+	isLinux returns true if the operating system is linux.
 
 ----
 
 .. function:: isWindows() -> ()
 
-	IsWindows returns true if the operating system is windows.
+	isWindows returns true if the operating system is windows.
+
+----
+
+.. function:: PID() -> (pid: Int)
+
+	PID returns the id of the current process.
+
+----
+
+.. function:: UID() -> (uid: String)
+
+	UID returns the current user id. If not found, an empty string is returned.
 
 ----
 
