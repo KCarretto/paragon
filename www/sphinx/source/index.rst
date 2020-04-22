@@ -89,43 +89,43 @@ stdlib/env
 
 ----
 
-.. function:: user() -> (username: string)
+.. function:: user() -> (username: String)
 
 	user returns the current username. If not found, an empty string is returned.
 
 ----
 
-.. function:: time() -> (i: int)
+.. function:: time() -> (now: Int)
 
 	time returns the current number of seconds since the unix epoch.
 
 ----
 
-.. function:: rand() -> (i: int)
+.. function:: rand() -> (i: Int)
 
 	rand returns a random int. Not cryptographically secure.
 
 ----
 
-.. function:: IP() -> ()
+.. function:: IP() -> (os: String)
 
 	IP returns the primary IP address.
 
 ----
 
-.. function:: OS() -> ()
+.. function:: OS() -> (os: String)
 
 	OS returns the operating system.
 
 ----
 
-.. function:: isLinux() -> ()
+.. function:: isLinux() -> (is_linux: Bool)
 
 	isLinux returns true if the operating system is linux.
 
 ----
 
-.. function:: isWindows() -> ()
+.. function:: isWindows() -> (is_windows: Bool)
 
 	isWindows returns true if the operating system is windows.
 
