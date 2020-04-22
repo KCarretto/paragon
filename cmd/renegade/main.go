@@ -12,12 +12,14 @@ import (
 	"github.com/kcarretto/paragon/pkg/script"
 	libassert "github.com/kcarretto/paragon/pkg/script/stdlib/assert"
 	libassets "github.com/kcarretto/paragon/pkg/script/stdlib/assets"
+	libcdn "github.com/kcarretto/paragon/pkg/script/stdlib/cdn"
 	libcrypto "github.com/kcarretto/paragon/pkg/script/stdlib/crypto"
 	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	libhttp "github.com/kcarretto/paragon/pkg/script/stdlib/http"
 	libproc "github.com/kcarretto/paragon/pkg/script/stdlib/process"
 	libregex "github.com/kcarretto/paragon/pkg/script/stdlib/regex"
+	libssh "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
 	libsys "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 
 	"github.com/spf13/afero"
@@ -37,7 +39,9 @@ func compilePredeclared(libs map[string]script.Library) starlark.StringDict {
 }
 
 func run(ctx context.Context, assets afero.Fs) error {
+	cdn := &libcdn.Environment{}
 	env := &libenv.Environment{}
+	ssh := &libssh.Environment{}
 
 	assetEnv := &libassets.Environment{
 		Assets: assets,
@@ -49,6 +53,10 @@ func run(ctx context.Context, assets afero.Fs) error {
 
 	code := script.New("main.rg", task, script.WithOutput(os.Stdout),
 		env.Include(),
+		// ideally will be removed
+		cdn.Include(),
+		// ideally will be removed
+		ssh.Include(),
 		assetEnv.Include(),
 		libassert.Include(),
 		libcrypto.Include(),

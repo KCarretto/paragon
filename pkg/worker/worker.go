@@ -116,7 +116,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	defer sshEnv.Close()
 
 	code := script.New(
-		fmt.Sprintf("%d", task.ID),
+		"init",
 		strings.NewReader(task.Content),
 		script.WithOutput(output),
 		libfile.Include(),
