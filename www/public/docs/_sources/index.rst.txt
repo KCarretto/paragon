@@ -83,7 +83,25 @@ stdlib/env
 
 .. currentmodule:: env
 
-.. function:: uid() -> (uid: string)
+.. function:: IP() -> (os: String)
+
+	IP returns the primary IP address.
+
+----
+
+.. function:: OS() -> (os: String)
+
+	OS returns the operating system.
+
+----
+
+.. function:: PID() -> (pid: Int)
+
+	PID returns the id of the current process.
+
+----
+
+.. function:: UID() -> (uid: String)
 
 	UID returns the current user id. If not found, an empty string is returned.
 
@@ -107,18 +125,6 @@ stdlib/env
 
 ----
 
-.. function:: IP() -> (os: String)
-
-	IP returns the primary IP address.
-
-----
-
-.. function:: OS() -> (os: String)
-
-	OS returns the operating system.
-
-----
-
 .. function:: isLinux() -> (is_linux: Bool)
 
 	isLinux returns true if the operating system is linux.
@@ -131,18 +137,6 @@ stdlib/env
 
 ----
 
-.. function:: PID() -> (pid: Int)
-
-	PID returns the id of the current process.
-
-----
-
-.. function:: UID() -> (uid: String)
-
-	UID returns the current user id. If not found, an empty string is returned.
-
-----
-
 stdlib/file
 --------------------------------------
 
@@ -151,6 +145,18 @@ stdlib/file
 .. function:: move(f: File,dstPath: String) -> (err: Error)
 
 	Move a file to the desired location.
+
+----
+
+.. function:: hash(f: File) -> (digest: String)
+
+	The SHA3-256 hash of the passed file (base64 encoded).
+
+----
+
+.. function:: exists(f: File) -> (exists: Bool)
+
+	The boolean value on if the file exists or not.
 
 ----
 
