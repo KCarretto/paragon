@@ -36,6 +36,7 @@ func move(parser script.ArgParser) (script.Retval, error) {
 	return nil, nil
 }
 
+//go:generate go run ../gendoc.go -lib file -func hash -param f@File -retval digest@String -doc "The SHA3-256 hash of the passed file (base64 encoded)."
 func hash(parser script.ArgParser) (script.Retval, error) {
 	fd, err := ParseParam(parser, 0)
 	if err != nil {
@@ -54,6 +55,7 @@ func hash(parser script.ArgParser) (script.Retval, error) {
 	return base64.StdEncoding.EncodeToString(digest[:]), nil
 }
 
+//go:generate go run ../gendoc.go -lib file -func exists -param f@File -retval exists@Bool -doc "The boolean value on if the file exists or not."
 func exists(parser script.ArgParser) (script.Retval, error) {
 	fd, err := ParseParam(parser, 0)
 	if err != nil {
