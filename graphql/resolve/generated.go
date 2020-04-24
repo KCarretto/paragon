@@ -705,15 +705,24 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	return updatedTasks, nil
 }
 func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, error) {
-	task, err := r.Graph.Task.Query().
+	unclaimedTasks, err := r.Graph.Task.Query().
 		Where(
 			task.ClaimTimeIsNil(),
 		).
-		Only(ctx)
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	j, err := task.QueryJob().Only(ctx)
+	var t *ent.Task
+	for _, ut := range unclaimedTasks {
+		if ut.ID == id {
+			t = ut
+		}
+	}
+	if t == nil {
+		return nil, fmt.Errorf("cannot find unclaimed task with given id")
+	}
+	j, err := t.QueryJob().Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -722,7 +731,7 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 	}
 
 	currentTime := time.Now()
-	return task.Update().
+	return t.Update().
 		SetClaimTime(currentTime).
 		SetLastChangedTime(currentTime).
 		Save(ctx)
