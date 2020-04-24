@@ -14,7 +14,7 @@ export enum EventKind {
   UPLOAD_FILE = "UPLOAD_FILE",
   CREATE_LINK = "CREATE_LINK",
   CREATE_USER = "CREATE_USER",
-  CREATE_SERVICE = "CREATE_SERVICE"
+  CREATE_SERVICE = "CREATE_SERVICE",
 }
 
 interface EventProps extends XEventProps {
@@ -45,7 +45,7 @@ const GetEventActor: (event: Event) => EventActor = (event: Event) => {
       id: event!.user!.id || "0",
       name: event!.user!.name || "anonymous walrus",
       imgURL: event!.user.photoURL || "/app/default_profile.gif",
-      isUser: true
+      isUser: true,
     };
   }
 
@@ -54,7 +54,7 @@ const GetEventActor: (event: Event) => EventActor = (event: Event) => {
       id: event!.owner!.id || "0",
       name: event!.owner!.name || "anonymous hippo",
       imgURL: event.owner.photoURL || "/app/default_profile.gif",
-      isUser: true
+      isUser: true,
     };
   }
 
@@ -62,7 +62,7 @@ const GetEventActor: (event: Event) => EventActor = (event: Event) => {
     id: event.svcOwner!.id,
     name: event.svcOwner!.name,
     imgURL: "/app/default_profile.gif",
-    isUser: false
+    isUser: false,
   };
 };
 
@@ -75,14 +75,17 @@ type XEventSummaryProps = {
 const XEventDescription: FunctionComponent<EventProps> = ({
   kind,
   event,
-  actor
+  actor,
 }) => {
   switch (kind) {
     case EventKind.CREATE_JOB:
       return (
         <span>
           {" "}
-          created job <Link to={"/jobs/" + event.job.id}>{event.job.name}</Link>
+          created job{" "}
+          <Link to={"/jobs/" + event.job ? event.job.id : ""}>
+            {event.job ? event.job.name : "[DELETED]"}
+          </Link>
         </span>
       );
     case EventKind.COMPLETE_JOB:
@@ -90,7 +93,9 @@ const XEventDescription: FunctionComponent<EventProps> = ({
         <span>
           {" "}
           completed job{" "}
-          <Link to={"/jobs/" + event.job.id}>{event.job.name}</Link>
+          <Link to={"/jobs/" + event.job ? event.job.id : ""}>
+            {event.job ? event.job.name : "[DELETED]"}
+          </Link>
         </span>
       );
     case EventKind.ADD_CREDENTIAL_FOR_TARGET:
@@ -98,9 +103,10 @@ const XEventDescription: FunctionComponent<EventProps> = ({
         <span>
           {" "}
           added credentials for{" "}
-          <Link to={"/targets/" + event.target ? event.target.id : "0"}>
-            {event.credential.principal}:{event.credential.secret}@
-            {event.target.name}{" "}
+          <Link to={"/targets/" + event.target ? event.target.id : ""}>
+            {event.credential ? event.credential.principal : "[DELETED]"}:
+            {event.credential ? event.credential.secret : "[DELETED]"}@
+            {event.target ? event.target.name : "[DELETED]"}{" "}
           </Link>
         </span>
       );
@@ -108,14 +114,20 @@ const XEventDescription: FunctionComponent<EventProps> = ({
       return (
         <span>
           {" "}
-          activated service <Link to={"/admin"}>{event.service.name}</Link>
+          activated service{" "}
+          <Link to={"/admin"}>
+            {event.service ? event.service.name : "[DELETED]"}
+          </Link>
         </span>
       );
     case EventKind.UPLOAD_FILE:
       return (
         <span>
           {" "}
-          uploaded file <Link to={"/files"}>{event.file.name}</Link>
+          uploaded file{" "}
+          <Link to={"/files"}>
+            {event.file ? event.file.name : "[DELETED]"}
+          </Link>
         </span>
       );
     case EventKind.CREATE_LINK:
@@ -124,7 +136,7 @@ const XEventDescription: FunctionComponent<EventProps> = ({
           {" "}
           created link{" "}
           <Link to={"/files"}>
-            {event.link ? event.link.alias : "[deleted]"}
+            {event.link ? event.link.alias : "[DELETED]"}
           </Link>
         </span>
       );
@@ -143,13 +155,13 @@ const XEventDescription: FunctionComponent<EventProps> = ({
 const XEventDetails: FunctionComponent<EventProps> = ({
   kind,
   event,
-  actor
+  actor,
 }) => <span />;
 
 const XEventSummary: FunctionComponent<EventProps> = ({
   kind,
   event,
-  actor
+  actor,
 }) => {
   return (
     <Feed.Summary>
@@ -180,7 +192,8 @@ const XEvent: FunctionComponent<XEventProps> = ({ event }) => {
 
         <Feed.Meta>
           <Feed.Like>
-            <Icon name="like" />4 Likes
+            <Icon name="like" />
+            420 Likes
           </Feed.Like>
         </Feed.Meta>
         <Divider />
