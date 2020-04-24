@@ -2,6 +2,7 @@ package worker
 
 const DefaultConfig = `
 RG_NIX = "renegade"
+RG_BSD = "renegade_freebsd"
 RG_WIN = "renegade.exe"
 
 def ssh_copy(f, dstPath, perms):
@@ -36,7 +37,7 @@ def encrypt_bundle(bundle):
     return encryptedBundle, key
 
 
-def run_linux(bundle, key):
+def run_ssh(bundle, key, interpreterAsset):
     # Upload Bundle
     bundlePath = "/tmp/"+str(env.rand())
     bundleDst, err = ssh.file(bundlePath)
@@ -44,7 +45,7 @@ def run_linux(bundle, key):
     file.write(bundleDst, bundle)
 
     # Upload Interpreter
-    intpSrc, err = cdn.download(RG_NIX)
+    intpSrc, err = cdn.download(interpreterAsset)
     assert.noError(err)
 
     binPath = "/tmp/"+str(env.rand())
@@ -65,7 +66,9 @@ def worker_run(bundle):
     encryptedBundle, key = encrypt_bundle(bundle)
 
     if env.isLinux():
-        return run_linux(encryptedBundle, key)
+        return run_ssh(encryptedBundle, key, RG_NIX)
+    elif env.OS() == "BSD":
+        return run_ssh(encryptedBundle, key, RG_BSD)
     else:
         assert.noError("Unsupported Operating System")
 `

@@ -17,8 +17,11 @@ import (
 	libcrypto "github.com/kcarretto/paragon/pkg/script/stdlib/crypto"
 	libenv "github.com/kcarretto/paragon/pkg/script/stdlib/env"
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
+	libhttp "github.com/kcarretto/paragon/pkg/script/stdlib/http"
+	libproc "github.com/kcarretto/paragon/pkg/script/stdlib/process"
+	libregex "github.com/kcarretto/paragon/pkg/script/stdlib/regex"
 	libssh "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
-	libsys "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 
 	"go.starlark.net/starlark"
 )
@@ -115,16 +118,27 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 	defer sshEnv.Close()
 
+	cdnEnv := &libcdn.Environment{
+		Uploader:   w,
+		Downloader: w,
+	}
+
 	code := script.New(
 		"init",
 		strings.NewReader(task.Content),
 		script.WithOutput(output),
-		libfile.Include(),
+
 		libassert.Include(),
-		libsys.Include(), // TODO: Deprecate after multi-file is finished
 		assets.Include(),
+		cdnEnv.Include(),
+		libcrypto.Include(),
 		env.Include(),
+		libfile.Include(),
+		libhttp.Include(),
+		libproc.Include(),
+		libregex.Include(),
 		sshEnv.Include(),
+		sys.Include(), // TODO: Deprecate after multi-file is finished
 	)
 	if _, err := code.Call("init", starlark.Tuple{}); err != nil {
 		execErr = fmt.Errorf("failed to initialize assets: %w", err)
@@ -144,10 +158,6 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	}
 
 	/* Use Config to execute task */
-	cdnEnv := &libcdn.Environment{
-		Uploader:   w,
-		Downloader: w,
-	}
 
 	var configScript = strings.NewReader(DefaultConfig)
 	if w.Config != "" {
@@ -158,12 +168,17 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		"worker_config.rg",
 		configScript,
 		script.WithOutput(output),
-		libfile.Include(),
 		libassert.Include(),
+		assets.Include(),
+		cdnEnv.Include(),
 		libcrypto.Include(),
 		env.Include(),
-		cdnEnv.Include(),
+		libfile.Include(),
+		libhttp.Include(),
+		libproc.Include(),
+		libregex.Include(),
 		sshEnv.Include(),
+		sys.Include(), // TODO: Deprecate after multi-file is finished
 	)
 
 	var res starlark.Value = starlark.None
