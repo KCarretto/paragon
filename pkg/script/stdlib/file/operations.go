@@ -1,6 +1,7 @@
 package file
 
 import (
+	"encoding/base64"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -10,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/kcarretto/paragon/pkg/script"
+	"golang.org/x/crypto/sha3"
 
 	"github.com/spf13/afero"
 )
@@ -32,6 +34,38 @@ func move(parser script.ArgParser) (script.Retval, error) {
 
 	fd.Path = dstPath
 	return nil, nil
+}
+
+//go:generate go run ../gendoc.go -lib file -func hash -param f@File -retval digest@String -doc "The SHA3-256 hash of the passed file (base64 encoded)."
+func hash(parser script.ArgParser) (script.Retval, error) {
+	fd, err := ParseParam(parser, 0)
+	if err != nil {
+		return nil, err
+	}
+	src, err := fd.OpenFile(fd.Path, os.O_RDONLY, 0755)
+	if err != nil {
+		return script.WithError(nil, fmt.Errorf("failed to open file: %w", err)), nil
+	}
+	defer src.Close()
+	data, err := ioutil.ReadAll(src)
+	if err != nil {
+		return script.WithError(nil, fmt.Errorf("failed to read file: %w", err)), nil
+	}
+	digest := sha3.Sum256(data)
+	return base64.StdEncoding.EncodeToString(digest[:]), nil
+}
+
+//go:generate go run ../gendoc.go -lib file -func exists -param f@File -retval exists@Bool -doc "The boolean value on if the file exists or not."
+func exists(parser script.ArgParser) (script.Retval, error) {
+	fd, err := ParseParam(parser, 0)
+	if err != nil {
+		return nil, err
+	}
+	_, err = os.Stat(fd.Path)
+	if os.IsNotExist(err) {
+		return false, nil
+	}
+	return true, nil
 }
 
 //go:generate go run ../gendoc.go -lib file -func name -param f@File -retval name@String -doc "The name or path used to open the file."

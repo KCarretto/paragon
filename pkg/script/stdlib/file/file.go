@@ -15,6 +15,8 @@ func Library() script.Library {
 		"copy":    script.Func(copy),
 		"remove":  script.Func(remove),
 		"chmod":   script.Func(chmod),
+		"hash":    script.Func(hash),
+		"exists":  script.Func(exists),
 		"drop":    script.Func(drop),
 	}
 }
