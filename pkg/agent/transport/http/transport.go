@@ -83,13 +83,31 @@ func (t *ServerTransport) ListenAndServe(addr string) error {
 
 // ServeHTTP enables the transport to handle HTTP requests provided to the server.
 func (t *ServerTransport) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	// Setup request logging
+	logger := t.Log.With(
+		zap.String("RemoteIP", req.RemoteAddr),
+		zap.String("HostHeader", req.Header.Get("Host")),
+		zap.Int64("ContentLength", req.ContentLength),
+	)
+
 	// Decode agent message
 	msg, err := t.DecodeAgentMessage(req.Body)
 	if err != nil {
-		t.Log.Error("failed to decode request from agent", zap.Error(err))
+		logger.Error("Failed to decode agent request", zap.Error(err))
 		http.Error(w, "failed to decode request", http.StatusBadRequest)
 		return
 	}
+
+	// Log Request
+	logger = logger.With(
+		zap.String("AgentID", msg.Metadata.AgentID),
+		zap.String("SessionID", msg.Metadata.SessionID),
+		zap.String("PrimaryIP", msg.Metadata.PrimaryIP),
+		zap.String("PrimaryMAC", msg.Metadata.PrimaryMAC),
+		zap.String("Hostname", msg.Metadata.Hostname),
+		zap.String("UUID", msg.Metadata.MachineUUID),
+	)
+	logger.Info("Handling agent message", zap.Int("ResultCount", len(msg.Results)))
 
 	// Prepare response
 	resp := &response{
@@ -100,10 +118,8 @@ func (t *ServerTransport) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// Provide the agent message to the server for handling
 	if err := t.Server.WriteAgentMessage(req.Context(), resp, msg); err != nil {
-		t.Log.Error("failed to handle agent message", zap.Error(err))
-		return
+		logger.Error("Failed to handle agent request", zap.Error(err))
 	}
-	t.Log.Debug("successfully responded to agent", zap.String("agent_ip", req.RemoteAddr))
 }
 
 // response is a helper implementation of transport.ServerMessageWriter to enable writing server

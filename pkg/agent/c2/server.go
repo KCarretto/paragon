@@ -49,7 +49,6 @@ func (srv Server) WriteAgentMessage(ctx context.Context, w transport.ServerMessa
 	}
 
 	srvMsg.Tasks = convertTasks(tasks)
-	srv.Log.Debug("Claimed tasks from teamserver", zap.Int("length", len(srvMsg.Tasks)), zap.Reflect("tasks", srvMsg.Tasks))
 	return nil
 }
 
