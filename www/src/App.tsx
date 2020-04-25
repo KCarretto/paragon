@@ -123,7 +123,6 @@ const App = () => {
               authorized={authz}
               exact
               path="/targets"
-              padded
               view={XMultiTargetView}
             />
             <XView
