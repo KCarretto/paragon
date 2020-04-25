@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/kcarretto/paragon/ent"
@@ -528,6 +529,9 @@ func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.Creat
 }
 func (r *mutationResolver) SetTargetFields(ctx context.Context, input *models.SetTargetFieldsRequest) (*ent.Target, error) {
 	targetUpdater := r.Graph.Target.UpdateOneID(input.ID)
+	if os.Getenv("PG_KS_MachineUUID") != "" {
+		input.MachineUUID = nil
+	}
 	if input.Name != nil {
 		targetUpdater.SetName(*input.Name)
 	}
@@ -621,6 +625,9 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	var targetEnt *ent.Target
 	var err error
 
+	if os.Getenv("PG_KS_MachineUUID") != "" {
+		input.MachineUUID = nil
+	}
 	// check for valid machineuuid
 	if input.MachineUUID != nil && *input.MachineUUID != "" {
 		targetEnt, err = r.Graph.Target.Query().
@@ -705,15 +712,24 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	return updatedTasks, nil
 }
 func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, error) {
-	task, err := r.Graph.Task.Query().
+	unclaimedTasks, err := r.Graph.Task.Query().
 		Where(
 			task.ClaimTimeIsNil(),
 		).
-		Only(ctx)
+		All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	j, err := task.QueryJob().Only(ctx)
+	var t *ent.Task
+	for _, ut := range unclaimedTasks {
+		if ut.ID == id {
+			t = ut
+		}
+	}
+	if t == nil {
+		return nil, fmt.Errorf("cannot find unclaimed task with given id")
+	}
+	j, err := t.QueryJob().Only(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -722,7 +738,7 @@ func (r *mutationResolver) ClaimTask(ctx context.Context, id int) (*ent.Task, er
 	}
 
 	currentTime := time.Now()
-	return task.Update().
+	return t.Update().
 		SetClaimTime(currentTime).
 		SetLastChangedTime(currentTime).
 		Save(ctx)
