@@ -1,7 +1,9 @@
 ![CI](https://github.com/KCarretto/paragon/workflows/CI/badge.svg)
 [![Build Status](https://travis-ci.org/KCarretto/paragon.svg?branch=master)](https://travis-ci.org/KCarretto/paragon) [![Go Report Card](https://goreportcard.com/badge/github.com/kcarretto/paragon)](https://goreportcard.com/report/github.com/kcarretto/paragon) [![Coverage Status](https://coveralls.io/repos/github/KCarretto/paragon/badge.svg?branch=master)](https://coveralls.io/github/KCarretto/paragon?branch=master) ![GitHub release](https://img.shields.io/github/release-pre/kcarretto/paragon.svg) [![GoDoc](https://godoc.org/github.com/KCarretto/paragon?status.svg)](https://godoc.org/github.com/KCarretto/paragon)
+
 # Paragon
-![Logo](.github/images/logo.png)
+
+![Demo](.github/images/demo.gif)
 
 ---
 Paragon is a Red Team engagement platform. It aims to unify offensive tools behind a simple UI, abstracting much of the backend work to enable operators to focus on writing implants and spend less time worrying about databases and css. The repository also provides some offensive tools already integrated with Paragon that can be used during engagements.
