@@ -3,10 +3,11 @@
 
 # Paragon
 
+Paragon is a Red Team engagement platform. It aims to unify offensive tools behind a simple UI, abstracting much of the backend work to enable operators to focus on writing implants and spend less time worrying about databases and css. The repository also provides some offensive tools already integrated with Paragon that can be used during engagements.
+
 ![Demo](.github/images/demo.gif)
 
 ---
-Paragon is a Red Team engagement platform. It aims to unify offensive tools behind a simple UI, abstracting much of the backend work to enable operators to focus on writing implants and spend less time worrying about databases and css. The repository also provides some offensive tools already integrated with Paragon that can be used during engagements.
 
 _This repository is still under heavy development and is not ready for production use. When it is considered stable, a V1.0.0 tag will be released. Until then, the API may encounter breaking changes as we continually simplify our design. Please read the developer documentation below if you'd like to help us reach this milestone faster._
 
