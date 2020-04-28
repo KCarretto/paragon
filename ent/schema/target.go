@@ -33,6 +33,7 @@ func (Target) Fields() []ent.Field {
 	return []ent.Field{
 		field.String("Name").
 			Unique().
+			NotEmpty().
 			Comment("The name of the Target"),
 		field.Enum("OS").
 			Values(osTypes...).

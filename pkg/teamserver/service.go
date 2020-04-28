@@ -82,11 +82,17 @@ func (svc *Service) HTTP(router *http.ServeMux) {
 		Authenticator: svc.Auth,
 		Handler:       service.HandlerFn(svc.HandleStatus),
 	}
+	initSVC := &InitService{
+		Log:   svc.Log.Named("init"),
+		Graph: svc.Graph,
+		Auth:  svc.Auth,
+	}
 
 	graphqlSVC.HTTP(router)
 	cdnSVC.HTTP(router)
 	wwwSVC.HTTP(router)
 
 	router.Handle("/status", status)
+	initSVC.HTTP(router)
 	oauthSVC.HTTP(router)
 }

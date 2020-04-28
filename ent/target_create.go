@@ -185,6 +185,9 @@ func (tc *TargetCreate) Save(ctx context.Context) (*Target, error) {
 	if tc.Name == nil {
 		return nil, errors.New("ent: missing required field \"Name\"")
 	}
+	if err := target.NameValidator(*tc.Name); err != nil {
+		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	}
 	if tc.OS == nil {
 		return nil, errors.New("ent: missing required field \"OS\"")
 	}
