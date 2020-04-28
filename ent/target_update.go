@@ -293,6 +293,11 @@ func (tu *TargetUpdate) RemoveCredentials(c ...*Credential) *TargetUpdate {
 
 // Save executes the query and returns the number of rows/vertices matched by this operation.
 func (tu *TargetUpdate) Save(ctx context.Context) (int, error) {
+	if tu.Name != nil {
+		if err := target.NameValidator(*tu.Name); err != nil {
+			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+		}
+	}
 	if tu.OS != nil {
 		if err := target.OSValidator(*tu.OS); err != nil {
 			return 0, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)
@@ -825,6 +830,11 @@ func (tuo *TargetUpdateOne) RemoveCredentials(c ...*Credential) *TargetUpdateOne
 
 // Save executes the query and returns the updated entity.
 func (tuo *TargetUpdateOne) Save(ctx context.Context) (*Target, error) {
+	if tuo.Name != nil {
+		if err := target.NameValidator(*tuo.Name); err != nil {
+			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+		}
+	}
 	if tuo.OS != nil {
 		if err := target.OSValidator(*tuo.OS); err != nil {
 			return nil, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)

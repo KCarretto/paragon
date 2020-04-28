@@ -75,6 +75,11 @@ var (
 var (
 	fields = schema.Target{}.Fields()
 
+	// descName is the schema descriptor for Name field.
+	descName = fields[0].Descriptor()
+	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
+	NameValidator = descName.Validators[0].(func(string) error)
+
 	// descMachineUUID is the schema descriptor for MachineUUID field.
 	descMachineUUID = fields[3].Descriptor()
 	// MachineUUIDValidator is a validator for the "MachineUUID" field. It is called by the builders before save.

@@ -553,7 +553,7 @@ func (r *mutationResolver) DeleteTarget(ctx context.Context, input *models.Delet
 	return delErr != nil, nil
 }
 func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *models.AddCredentialForTargetRequest) (*ent.Target, error) {
-	kind := credential.KindPassword
+	kind := credential.KindPassword //TODO: Make work for other creds
 	if input.Kind != nil {
 		kind = credential.Kind(*input.Kind)
 	}
@@ -584,7 +584,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 	return t, err
 }
 func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *models.AddCredentialForTargetsRequest) ([]*ent.Target, error) {
-	kind := credential.KindPassword
+	kind := credential.KindPassword //TODO: Make work for other creds
 	if input.Kind != nil {
 		kind = credential.Kind(*input.Kind)
 	}
