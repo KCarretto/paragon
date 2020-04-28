@@ -9,8 +9,10 @@ import {
   Header,
   Icon,
   Image,
-  Radio
+  Menu,
+  Radio,
 } from "semantic-ui-react";
+import { XSchemaInitModal } from "../components/form";
 import XClipboard from "../components/form/XClipboard";
 import { XBoundary, XCardGroup, XToolbar } from "../components/layout";
 import { XErrorMessage, XLoadingMessage } from "../components/messages";
@@ -121,48 +123,48 @@ const XAdminView = () => {
   const {
     loading: userLoading,
     error: userError,
-    data: { users = [] } = {}
+    data: { users = [] } = {},
   } = useQuery<UsersResponse>(ADMIN_USERS_QUERY);
   const {
     loading: svcLoading,
     error: svcError,
-    data: { services = [] } = {}
+    data: { services = [] } = {},
   } = useQuery<ServicesResponse>(ADMIN_SERVICES_QUERY);
 
   const [activateUser, { error: activateUserError }] = useMutation(
     ACTIVATE_USER_MUTATION,
     {
-      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }],
     }
   );
   const [deactivateUser, { error: deactivateUserError }] = useMutation(
     DEACTIVATE_USER_MUTATION,
     {
-      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }],
     }
   );
   const [activateService, { error: activateServiceError }] = useMutation(
     ACTIVATE_SERVICE_MUTATION,
     {
-      refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
+      refetchQueries: [{ query: ADMIN_SERVICES_QUERY }],
     }
   );
   const [deactivateService, { error: deactivateServiceError }] = useMutation(
     DEACTIVATE_SERVICE_MUTATION,
     {
-      refetchQueries: [{ query: ADMIN_SERVICES_QUERY }]
+      refetchQueries: [{ query: ADMIN_SERVICES_QUERY }],
     }
   );
   const [makeAdmin, { error: makeAdminError }] = useMutation(
     MAKE_ADMIN_MUTATION,
     {
-      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }],
     }
   );
   const [removeAdmin, { error: removeAdminError }] = useMutation(
     REMOVE_ADMIN_MUTATION,
     {
-      refetchQueries: [{ query: ADMIN_USERS_QUERY }]
+      refetchQueries: [{ query: ADMIN_USERS_QUERY }],
     }
   );
 
@@ -178,10 +180,10 @@ const XAdminView = () => {
   const handleUserActivate = (e, p) => {
     p.checked
       ? activateUser({
-          variables: { id: p.value }
+          variables: { id: p.value },
         })
       : deactivateUser({
-          variables: { id: p.value }
+          variables: { id: p.value },
         });
   };
 
@@ -201,6 +203,11 @@ const XAdminView = () => {
     return (
       <React.Fragment>
         <XToolbar />
+        <Menu secondary borderless fluid style={{ margin: "0px" }}>
+          <Menu.Item fitted position="right" style={{ marginRight: "0px" }}>
+            <XSchemaInitModal button={{ color: "green", icon: "magic" }} />
+          </Menu.Item>
+        </Menu>
 
         <Accordion.Title active={openUsers} index={0} onClick={handleClick}>
           <Header icon as="h2" textAlign="center">
@@ -211,7 +218,7 @@ const XAdminView = () => {
         <Accordion.Content active={openUsers}>
           <XErrorMessage title="Error Loading Users" err={userError} />
           <XCardGroup>
-            {users.map(u => {
+            {users.map((u) => {
               return (
                 <Card key={u.id}>
                   {u.photoURL !== "" ? (
@@ -278,7 +285,7 @@ const XAdminView = () => {
         <Accordion.Content active={openServices}>
           <XErrorMessage title="Error Loading Services" err={svcError} />
           <XCardGroup>
-            {services.map(s => {
+            {services.map((s) => {
               return (
                 <Card key={s.id}>
                   <Image src="/app/default_profile.gif" wrapped ui={false} />

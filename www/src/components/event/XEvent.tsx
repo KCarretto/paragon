@@ -83,7 +83,7 @@ const XEventDescription: FunctionComponent<EventProps> = ({
         <span>
           {" "}
           created job{" "}
-          <Link to={"/jobs/" + event.job ? event.job.id : ""}>
+          <Link to={`/jobs/${event.job ? event.job.id : ""}`}>
             {event.job ? event.job.name : "[DELETED]"}
           </Link>
         </span>
@@ -93,7 +93,7 @@ const XEventDescription: FunctionComponent<EventProps> = ({
         <span>
           {" "}
           completed job{" "}
-          <Link to={"/jobs/" + event.job ? event.job.id : ""}>
+          <Link to={`/jobs/${event.job ? event.job.id : ""}`}>
             {event.job ? event.job.name : "[DELETED]"}
           </Link>
         </span>
@@ -103,7 +103,7 @@ const XEventDescription: FunctionComponent<EventProps> = ({
         <span>
           {" "}
           added credentials for{" "}
-          <Link to={"/targets/" + event.target ? event.target.id : ""}>
+          <Link to={`/targets/${event.target ? event.target.id : ""}`}>
             {event.credential ? event.credential.principal : "[DELETED]"}:
             {event.credential ? event.credential.secret : "[DELETED]"}@
             {event.target ? event.target.name : "[DELETED]"}{" "}
