@@ -98,6 +98,10 @@ type DeleteTargetRequest struct {
 	ID int `json:"id"`
 }
 
+type EmptyRequest struct {
+	Mock *bool `json:"mock"`
+}
+
 type FailCredentialRequest struct {
 	ID int `json:"id"`
 }

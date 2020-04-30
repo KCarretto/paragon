@@ -329,6 +329,63 @@ func (r *linkResolver) File(ctx context.Context, obj *ent.Link) (*ent.File, erro
 
 type mutationResolver struct{ *Resolver }
 
+func (r *mutationResolver) DbWipe(ctx context.Context, input *models.EmptyRequest) (bool, error) {
+	if input.Mock != nil {
+		if *input.Mock {
+			return true, nil
+		}
+	}
+	err := auth.NewAuthorizer().
+		IsActivated().
+		IsAdmin().
+		Authorize(ctx)
+	if err != nil {
+		return false, err
+	}
+	//TODO: do this with migrations or some better way
+	_, userErr := r.Graph.User.Delete().Exec(ctx)
+	if userErr != nil {
+		return false, userErr
+	}
+	_, taskErr := r.Graph.Task.Delete().Exec(ctx)
+	if taskErr != nil {
+		return false, taskErr
+	}
+	_, targetErr := r.Graph.Target.Delete().Exec(ctx)
+	if targetErr != nil {
+		return false, targetErr
+	}
+	_, tagErr := r.Graph.Tag.Delete().Exec(ctx)
+	if tagErr != nil {
+		return false, tagErr
+	}
+	_, serviceErr := r.Graph.Service.Delete().Exec(ctx)
+	if serviceErr != nil {
+		return false, serviceErr
+	}
+	_, linkErr := r.Graph.Link.Delete().Exec(ctx)
+	if linkErr != nil {
+		return false, linkErr
+	}
+	_, jobErr := r.Graph.Job.Delete().Exec(ctx)
+	if jobErr != nil {
+		return false, jobErr
+	}
+	_, fileErr := r.Graph.File.Delete().Exec(ctx)
+	if fileErr != nil {
+		return false, fileErr
+	}
+	_, eventErr := r.Graph.Event.Delete().Exec(ctx)
+	if eventErr != nil {
+		return false, eventErr
+	}
+	_, credentialErr := r.Graph.Credential.Delete().Exec(ctx)
+	if credentialErr != nil {
+		return false, eventErr
+	}
+	return true, nil
+}
+
 func (r *mutationResolver) FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error) {
 	cred, err := r.Graph.Credential.GetX(ctx, input.ID).
 		Update().

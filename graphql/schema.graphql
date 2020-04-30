@@ -289,7 +289,14 @@ input SetServiceConfigRequest {
   config: String
 }
 
+input EmptyRequest {
+  mock: Boolean
+}
+
 type Mutation {
+  # Server Mutations
+  dbWipe(input: EmptyRequest): Boolean!
+
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
   deleteCredential(input: DeleteCredentialRequest): Boolean!
