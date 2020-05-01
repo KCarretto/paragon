@@ -131,6 +131,7 @@ type ComplexityRoot struct {
 		CreateLink              func(childComplexity int, input *models.CreateLinkRequest) int
 		CreateTag               func(childComplexity int, input *models.CreateTagRequest) int
 		CreateTarget            func(childComplexity int, input *models.CreateTargetRequest) int
+		DbWipe                  func(childComplexity int, input *models.EmptyRequest) int
 		DeactivateService       func(childComplexity int, input *models.DeactivateServiceRequest) int
 		DeactivateUser          func(childComplexity int, input *models.DeactivateUserRequest) int
 		DeleteCredential        func(childComplexity int, input *models.DeleteCredentialRequest) int
@@ -266,6 +267,7 @@ type LinkResolver interface {
 	File(ctx context.Context, obj *ent.Link) (*ent.File, error)
 }
 type MutationResolver interface {
+	DbWipe(ctx context.Context, input *models.EmptyRequest) (bool, error)
 	FailCredential(ctx context.Context, input *models.FailCredentialRequest) (*ent.Credential, error)
 	DeleteCredential(ctx context.Context, input *models.DeleteCredentialRequest) (bool, error)
 	CreateJob(ctx context.Context, input *models.CreateJobRequest) (*ent.Job, error)
@@ -860,6 +862,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateTarget(childComplexity, args["input"].(*models.CreateTargetRequest)), true
+
+	case "Mutation.dbWipe":
+		if e.complexity.Mutation.DbWipe == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_dbWipe_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DbWipe(childComplexity, args["input"].(*models.EmptyRequest)), true
 
 	case "Mutation.deactivateService":
 		if e.complexity.Mutation.DeactivateService == nil {
@@ -1982,7 +1996,14 @@ input SetServiceConfigRequest {
   config: String
 }
 
+input EmptyRequest {
+  mock: Boolean
+}
+
 type Mutation {
+  # Server Mutations
+  dbWipe(input: EmptyRequest): Boolean!
+
   # Credential Mutations
   failCredential(input: FailCredentialRequest): Credential!
   deleteCredential(input: DeleteCredentialRequest): Boolean!
@@ -2315,6 +2336,20 @@ func (ec *executionContext) field_Mutation_createTarget_args(ctx context.Context
 	var arg0 *models.CreateTargetRequest
 	if tmp, ok := rawArgs["input"]; ok {
 		arg0, err = ec.unmarshalOCreateTargetRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐCreateTargetRequest(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_dbWipe_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *models.EmptyRequest
+	if tmp, ok := rawArgs["input"]; ok {
+		arg0, err = ec.unmarshalOEmptyRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐEmptyRequest(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -4546,6 +4581,50 @@ func (ec *executionContext) _Link_file(ctx context.Context, field graphql.Collec
 	rctx.Result = res
 	ctx = ec.Tracer.StartFieldChildExecution(ctx)
 	return ec.marshalOFile2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋentᚐFile(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) _Mutation_dbWipe(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	ctx = ec.Tracer.StartFieldExecution(ctx, field)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+		ec.Tracer.EndFieldExecution(ctx)
+	}()
+	rctx := &graphql.ResolverContext{
+		Object:   "Mutation",
+		Field:    field,
+		Args:     nil,
+		IsMethod: true,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	rawArgs := field.ArgumentMap(ec.Variables)
+	args, err := ec.field_Mutation_dbWipe_args(ctx, rawArgs)
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	rctx.Args = args
+	ctx = ec.Tracer.StartFieldResolverExecution(ctx, rctx)
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DbWipe(rctx, args["input"].(*models.EmptyRequest))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	ctx = ec.Tracer.StartFieldChildExecution(ctx)
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) _Mutation_failCredential(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
@@ -9860,6 +9939,24 @@ func (ec *executionContext) unmarshalInputDeleteTargetRequest(ctx context.Contex
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputEmptyRequest(ctx context.Context, obj interface{}) (models.EmptyRequest, error) {
+	var it models.EmptyRequest
+	var asMap = obj.(map[string]interface{})
+
+	for k, v := range asMap {
+		switch k {
+		case "mock":
+			var err error
+			it.Mock, err = ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputFailCredentialRequest(ctx context.Context, obj interface{}) (models.FailCredentialRequest, error) {
 	var it models.FailCredentialRequest
 	var asMap = obj.(map[string]interface{})
@@ -10630,6 +10727,11 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Mutation")
+		case "dbWipe":
+			out.Values[i] = ec._Mutation_dbWipe(ctx, field)
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "failCredential":
 			out.Values[i] = ec._Mutation_failCredential(ctx, field)
 			if out.Values[i] == graphql.Null {
@@ -12250,6 +12352,18 @@ func (ec *executionContext) unmarshalODeleteTargetRequest2ᚖgithubᚗcomᚋkcar
 		return nil, nil
 	}
 	res, err := ec.unmarshalODeleteTargetRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐDeleteTargetRequest(ctx, v)
+	return &res, err
+}
+
+func (ec *executionContext) unmarshalOEmptyRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐEmptyRequest(ctx context.Context, v interface{}) (models.EmptyRequest, error) {
+	return ec.unmarshalInputEmptyRequest(ctx, v)
+}
+
+func (ec *executionContext) unmarshalOEmptyRequest2ᚖgithubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐEmptyRequest(ctx context.Context, v interface{}) (*models.EmptyRequest, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalOEmptyRequest2githubᚗcomᚋkcarrettoᚋparagonᚋgraphqlᚋmodelsᚐEmptyRequest(ctx, v)
 	return &res, err
 }
 
