@@ -57,12 +57,9 @@ func main() {
 	}
 
 	// Initial call to register the service
-	_, err := graph.ClaimTasks(context.Background(), models.ClaimTasksRequest{
+	graph.ClaimTasks(context.Background(), models.ClaimTasksRequest{
 		PrimaryIP: nil,
 	})
-	if err != nil {
-		panic(err)
-	}
 
 	// Initialize Server
 	srv := &c2.Server{
