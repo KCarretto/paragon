@@ -30,6 +30,7 @@ type credential struct {
 type target struct {
 	Name        string
 	PrimaryIP   string
+	PublicIP    string
 	OS          string `json:"os"`
 	Tags        []string
 	Credentials []credential
@@ -134,6 +135,7 @@ func (svc InitService) HandleSchemaUpload(w http.ResponseWriter, r *http.Request
 		_, err := svc.Graph.Target.Create().
 			SetName(tar.Name).
 			SetPrimaryIP(tar.PrimaryIP).
+			SetPublicIP(tar.PublicIP).
 			SetOS(os).AddTagIDs(tags...).
 			AddCredentialIDs(creds...).
 			Save(ctx)
