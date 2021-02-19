@@ -103,7 +103,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		targetIP = target.PrimaryIP
 	}
 	env := libenv.Environment{
-		PrimaryIP:       target.PrimaryIP,
+		PrimaryIP:       targetIP,
 		OperatingSystem: target.OS.String(),
 	}
 
