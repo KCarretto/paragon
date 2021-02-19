@@ -67,7 +67,7 @@ func (w *Worker) HandleTaskQueued(ctx context.Context, info event.TaskQueued) {
 		return
 	}
 
-	if target.PrimaryIP == "" {
+	if target.PrimaryIP == "" && target.PublicIP == "" {
 		log.Printf("[DBG] task queued event with invalid target ip")
 		return
 	}
@@ -98,6 +98,10 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		len(credentials),
 	)
 
+	var targetIP string = target.PublicIP
+	if targetIP == "" {
+		targetIP = target.PrimaryIP
+	}
 	env := libenv.Environment{
 		PrimaryIP:       target.PrimaryIP,
 		OperatingSystem: target.OS.String(),
