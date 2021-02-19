@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	"github.com/kcarretto/paragon/graphql"
+	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/agent/c2"
 	"github.com/kcarretto/paragon/pkg/agent/transport/http"
 
@@ -49,14 +51,23 @@ func main() {
 	if url := os.Getenv("TEAMSERVER_URL"); url != "" {
 		teamserverURL = url
 	}
+	graph := &graphql.Client{
+		Service: "pg-c2",
+		URL:     teamserverURL,
+	}
+
+	// Initial call to register the service
+	_, err := graph.ClaimTasks(context.Background(), models.ClaimTasksRequest{
+		PrimaryIP: nil,
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	// Initialize Server
 	srv := &c2.Server{
-		Log: logger,
-		Teamserver: &graphql.Client{
-			Service: "pg-c2",
-			URL:     teamserverURL,
-		},
+		Log:        logger,
+		Teamserver: graph,
 	}
 	httpSvc := &http.ServerTransport{
 		Log:    logger.Named("transport.http"),
