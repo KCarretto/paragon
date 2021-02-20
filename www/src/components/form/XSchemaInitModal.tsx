@@ -150,6 +150,7 @@ const renderTable = (schema: string) => {
         <Table.Header>
           <Table.HeaderCell>Name</Table.HeaderCell>
           <Table.HeaderCell>PrimaryIP</Table.HeaderCell>
+          <Table.HeaderCell>PublicIP</Table.HeaderCell>
           <Table.HeaderCell>OS</Table.HeaderCell>
           <Table.HeaderCell>Tags</Table.HeaderCell>
           <Table.HeaderCell>Credentials</Table.HeaderCell>
