@@ -68,6 +68,7 @@ const XTargetView = () => {
       target: {
         name = "Untitled Target",
         primaryIP = null,
+        publicIP = null,
         primaryMAC = null,
         hostname = null,
         machineUUID = null,
@@ -138,6 +139,19 @@ const XTargetView = () => {
                 <XBoundary boundary={whenFieldEmpty} show={primaryIP !== ""}>
                   <a>
                     <XClipboard value={primaryIP}>{primaryIP}</XClipboard>
+                  </a>
+                </XBoundary>
+              </Table.Cell>
+            </Table.Row>
+            <Table.Row>
+              <Table.HeaderCell collapsing>
+                <Icon name="wifi" style={{ marginLeft: "10px" }} />
+                Public IP
+              </Table.HeaderCell>
+              <Table.Cell>
+                <XBoundary boundary={whenFieldEmpty} show={publicIP !== ""}>
+                  <a>
+                    <XClipboard value={publicIP}>{publicIP}</XClipboard>
                   </a>
                 </XBoundary>
               </Table.Cell>

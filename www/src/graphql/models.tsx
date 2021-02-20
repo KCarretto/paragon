@@ -110,6 +110,10 @@ export type DeleteTargetRequest = {
   id: Scalars['ID'],
 };
 
+export type EmptyRequest = {
+  mock?: Maybe<Scalars['Boolean']>,
+};
+
 export type Event = {
    __typename?: 'Event',
   id: Scalars['ID'],
@@ -207,6 +211,8 @@ export type MakeAdminRequest = {
 
 export type Mutation = {
    __typename?: 'Mutation',
+  /** Server Mutations */
+  dbWipe: Scalars['Boolean'],
   /** Credential Mutations */
   failCredential: Credential,
   deleteCredential: Scalars['Boolean'],
@@ -246,6 +252,11 @@ export type Mutation = {
   setServiceConfig: Service,
   /** Event Mutations */
   likeEvent: Event,
+};
+
+
+export type MutationDbWipeArgs = {
+  input?: Maybe<EmptyRequest>
 };
 
 

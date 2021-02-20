@@ -10,7 +10,7 @@ import {
   Modal,
   Tab,
   Table,
-  TextArea,
+  TextArea
 } from "semantic-ui-react";
 import { useModal } from ".";
 import { FETCH_CORS, HTTP_URL } from "../../config";
@@ -160,6 +160,7 @@ const renderTable = (schema: string) => {
             <Table.Row>
               <Table.Cell>{target.name}</Table.Cell>
               <Table.Cell>{target.primaryIP}</Table.Cell>
+              <Table.Cell>{target.publicIP}</Table.Cell>
               <Table.Cell>{renderOSIcon(target.os)}</Table.Cell>
               <Table.Cell>
                 {target.tags && target.tags.length > 0
