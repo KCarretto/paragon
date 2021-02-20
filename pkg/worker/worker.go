@@ -92,16 +92,15 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 		output.Stop(execErr)
 	}()
 
-	log.Printf("[DBG] Executing new task (%d) on %s (%d credentials)",
-		task.ID,
-		target.PrimaryIP,
-		len(credentials),
-	)
-
 	var targetIP string = target.PublicIP
 	if targetIP == "" {
 		targetIP = target.PrimaryIP
 	}
+	log.Printf("[DBG] Executing new task (%d) on %s (%d credentials)",
+		task.ID,
+		targetIP,
+		len(credentials),
+	)
 	env := libenv.Environment{
 		PrimaryIP:       targetIP,
 		OperatingSystem: target.OS.String(),
@@ -117,7 +116,7 @@ func (w *Worker) ExecTargetTask(ctx context.Context, task *ent.Task, target *ent
 	defer sshConnector.Close()
 
 	sshEnv := &libssh.Environment{
-		RemoteHost: target.PrimaryIP,
+		RemoteHost: targetIP,
 		Connector:  sshConnector,
 	}
 	defer sshEnv.Close()
