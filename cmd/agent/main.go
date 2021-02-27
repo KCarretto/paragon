@@ -13,7 +13,8 @@ import (
 	"go.uber.org/zap"
 )
 
-func run() bool {
+// Run the agent, returns true when cancelled
+func Run() bool {
 	// Initialize context
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -79,6 +80,6 @@ func main() {
 
 	interupted := false
 	for !interupted {
-		interupted = run()
+		interupted = Run()
 	}
 }
