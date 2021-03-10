@@ -102,8 +102,8 @@ Monitor target network activity and visible services. Map out a graph of the eng
 
 ## FAQ
 
-### Adding a Transport
-The agent is designed to be easily customized with new transport mechanisms, multiplexing communications based on 
+### What if machines report the same UUID?
+Setting the `PG_KS_MachineUUID` killswitch environment variable for the teamserver will disable lookups that utilize machine UUIDs.
 
 ## Terminology
 
@@ -173,8 +173,7 @@ Below is an overview of the relationship between nodes in the Red Team knowledge
 
 ![Graph](.github/images/graph.png)
 
-#### What if machines report the same UUID?
-Setting the `PG_KS_MachineUUID` killswitch environment variable for the teamserver will disable lookups that utilize machine UUIDs.
+
 
 ### Agent Reference
 
@@ -188,6 +187,9 @@ The scripting environment can be customized for your agent, enabling you to easi
 
 #### Execution Flow
 Below is a flow diagram of the general execution of the agent implant.
+
+#### Adding a Transport
+The agent is designed to be easily customized with new transport mechanisms, multiplexing communications based on 
 
 ![AgentExec](.github/images/agent/exec_flow.png)
 
