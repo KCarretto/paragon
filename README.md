@@ -14,6 +14,7 @@ _This repository is still under heavy development and is not ready for productio
 - [Feature Highlights](#feature-highlights)
 - [Getting Started](#getting-started)
 - [Component Overview](#component-overview)
+- [FAQ](#faq)
 - [Terminology](#terminology)
 - [Developer Guide](#developer-guide)
 
