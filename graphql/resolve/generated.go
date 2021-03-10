@@ -685,10 +685,10 @@ func (r *mutationResolver) ClaimTasks(ctx context.Context, input *models.ClaimTa
 	if os.Getenv("PG_KS_MachineUUID") != "" {
 		input.MachineUUID = nil
 	}
-	// check for valid machineuuid
-	if input.MachineUUID != nil && *input.MachineUUID != "" {
+	// check for valid PrimaryMac
+	if input.PrimaryMac != nil && *input.PrimaryMac != "" {
 		targetEnt, err = r.Graph.Target.Query().
-			Where(target.MachineUUID(*input.MachineUUID)).
+			Where(target.PrimaryMAC(*input.PrimaryMac)).
 			Only(ctx)
 	}
 
