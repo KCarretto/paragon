@@ -168,6 +168,9 @@ Below is an overview of the relationship between nodes in the Red Team knowledge
 
 ![Graph](.github/images/graph.png)
 
+#### What if machines report the same UUID?
+Setting the `PG_KS_MachineUUID` killswitch environment variable for the teamserver will disable lookups that utilize machine UUIDs.
+
 ### Agent Reference
 
 #### Adding a Transport
