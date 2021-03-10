@@ -100,6 +100,11 @@ Instead of waiting for a callback, some situations might require a foward connec
 
 Monitor target network activity and visible services. Map out a graph of the engagement network, and trigger automation on state changes (i.e. ssh becomes available).
 
+## FAQ
+
+### Adding a Transport
+The agent is designed to be easily customized with new transport mechanisms, multiplexing communications based on 
+
 ## Terminology
 
 To ensure clear communication about these complex systems, we have outlined a few project-specific terms below that will be used throughout the project's documentation.
@@ -173,8 +178,7 @@ Setting the `PG_KS_MachineUUID` killswitch environment variable for the teamserv
 
 ### Agent Reference
 
-#### Adding a Transport
-The agent is designed to be easily customized with new transport mechanisms, multiplexing communications based on transport priority. To use your own, simply implement the [agent.Sender](https://godoc.org/github.com/KCarretto/paragon/pkg/agent#Sender) interface and register your transport during initialization. Examples of existing transports can be found in subdirectories of the `agent` package.
+transport priority. To use your own, simply implement the [agent.Sender](https://godoc.org/github.com/KCarretto/paragon/pkg/agent#Sender) interface and register your transport during initialization. Examples of existing transports can be found in subdirectories of the `agent` package.
 
 #### Task Execution
 By default, the agent expects tasks to adhere to starlark syntax, and exposes a standard library for scripts to utilize. To change the behaviour of task execution (i.e. just bash commands), you may implement the [agent.Receiver](https://godoc.org/github.com/KCarretto/paragon/pkg/agent#Receiver) interface to execute tasks as you'd like.
