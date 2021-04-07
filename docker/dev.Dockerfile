@@ -23,7 +23,7 @@ RUN apt-get update \
     github.com/go-delve/delve/cmd/dlv \
     github.com/mattn/goveralls \
     github.com/golang/mock/mockgen \
-    github.com/facebookincubator/ent/cmd/entc \
+    entgo.io/ent/cmd/ent \
     github.com/gogo/protobuf/protoc-gen-gogoslick \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
     && rm -rf /tmp/goinstall
