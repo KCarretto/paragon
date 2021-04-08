@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/kcarretto/paragon/pkg/agent/transport"
-	"github.com/kcarretto/paragon/pkg/agent/transport/http"
+	transport_httpproxy "github.com/kcarretto/paragon/pkg/agent/transport/httpproxy"
 	"go.uber.org/zap"
 )
 
@@ -23,8 +23,11 @@ func transports(logger *zap.Logger) (transports []transport.AgentMessageWriter) 
 		}
 	}
 
-	transports = append(transports, &http.AgentTransport{
+	transports = append(transports, &transport_httpproxy.AgentTransport{
 		URL: httpURL,
 	})
+	//transports = append(transports, &transport_http.AgentTransport{
+	//	URL: httpURL,
+	//})
 	return
 }
