@@ -194,3 +194,7 @@ The agent is designed to be easily customized with new transport mechanisms, mul
 
 ![AgentExec](.github/images/agent/exec_flow.png)
 
+A transport is defined by creating the file ```pkg/agent/transport/<transport_name>/transport.go```
+
+To implement the transport in the agent modify ```cmd/agent/transport_prod.go``` to include your new transport.
+
