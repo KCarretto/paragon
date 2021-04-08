@@ -74,7 +74,6 @@ func (agent *Agent) sendMessage(ctx context.Context, msg transport.AgentMessage)
 		)
 		return
 	}
-	agent.Log.Debug("TESTING123")
 	agent.Log.Debug("successfully sent agent message")
 }
 

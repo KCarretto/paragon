@@ -25,9 +25,10 @@ func transports(logger *zap.Logger) (transports []transport.AgentMessageWriter) 
 
 	transports = append(transports, &transport_httpproxy.AgentTransport{
 		URL: httpURL,
+		PROXY: "http://TEST-squid-proxy:3128",
 	})
-	//transports = append(transports, &transport_http.AgentTransport{
-	//	URL: httpURL,
-	//})
+	transports = append(transports, &transport_http.AgentTransport{
+		URL: httpURL,
+	})
 	return
 }

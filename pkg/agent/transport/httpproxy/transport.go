@@ -17,6 +17,8 @@ type AgentTransport struct {
 
 	URL *url.URL
 	*http.Client
+
+	PROXY string
 }
 
 // WriteAgentMessage sends an agent message to the server using HTTP(s).
@@ -28,7 +30,11 @@ func (t *AgentTransport) WriteAgentMessage(ctx context.Context, w transport.Serv
 	}
 
 	//creating the proxyURL
-	proxyStr := "http://TEST-squid-proxy:3128"
+	proxyStr := "http://localhost:3128"
+	if t.PROXY != "" {
+		proxyStr = t.PROXY
+	}
+
 	proxyURL, err := url.Parse(proxyStr)
 	if err != nil {
 		return fmt.Errorf("failed to create http proxy: %w", err)
