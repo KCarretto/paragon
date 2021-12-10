@@ -6,7 +6,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-
+	// "time"
 	nats "github.com/nats-io/nats.go"
 	"gocloud.dev/pubsub"
 	"gocloud.dev/pubsub/natspubsub"
@@ -25,7 +25,8 @@ func newPublisher(ctx context.Context, topic string) *NatsPublisher {
 
 	nc, err := nats.Connect(natsUrl)
 	if err != nil {
-		panic(fmt.Errorf("failed to connect to the nats server"))
+		// time.Sleep(10 * time.Minute)
+		panic(fmt.Errorf("failed to connect to the nats server %s", natsUrl))
 	}
 	t, err := natspubsub.OpenTopic(nc, topic, nil)
 	if err != nil {

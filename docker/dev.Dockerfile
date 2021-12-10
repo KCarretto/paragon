@@ -1,7 +1,8 @@
-FROM golang:1.13.6-buster
+FROM golang:1.17.5-buster
 WORKDIR /app
 RUN apt-get update \
-    && apt-get -y install --no-install-recommends apt-utils dialog npm libprotobuf-dev protobuf-compiler 2>&1 \
+    && apt-get -y install npm \
+    && apt-get -y install --no-install-recommends apt-utils dialog libprotobuf-dev protobuf-compiler 2>&1 \
     && apt-get -y install git iproute2 procps lsb-release python3-pip \
     && pip3 install sphinx \
     && mkdir /go/tools \
@@ -23,11 +24,11 @@ RUN apt-get update \
     github.com/go-delve/delve/cmd/dlv \
     github.com/mattn/goveralls \
     github.com/golang/mock/mockgen \
-    github.com/facebookincubator/ent/cmd/entc \
+    entgo.io/ent/cmd/ent \
     github.com/gogo/protobuf/protoc-gen-gogoslick \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
     && rm -rf /tmp/goinstall
-RUN npm install -g npm
+# RUN npm install -g npm
 RUN npm install -g eslint
 RUN npm install -g typescript @typescript-eslint/parser @typescript-eslint/eslint-plugin \
     @types/react
