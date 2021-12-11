@@ -1,0 +1,75 @@
+version: "3.7"
+
+services:
+  agent:
+    build:
+      context: ../
+      dockerfile: "./docker/agent.Dockerfile"
+      target: dev
+    environment:
+      C2_HTTP_ADDR: http://paragon_c2_1
+      DEBUG_API_USER: "admin"
+      DEBUG_API_PASSWORD: "password123"
+      DEBUG_API_ADDR: "0.0.0.0:8080"
+      DST_HOST: "127.0.0.1:9090"
+    ports:
+      - "127.0.0.1:1337:8080"
+
+  c2:
+    build:
+      context: ../
+      dockerfile: "./docker/c2.Dockerfile"
+      target: dev
+    environment:
+      PG_HTTP_ADDR: "0.0.0.0:80"
+      TEAMSERVER_URL: "http://paragon_teamserver_1/graphql"
+
+  worker:
+    build:
+      context: ../
+      dockerfile: "./docker/worker.Dockerfile"
+      target: dev
+    depends_on:
+      - nats
+      - teamserver
+    environment:
+      TEAMSERVER_URL: "http://paragon_teamserver_1"
+      PUB_TOPIC: "my_topic"
+      NATS_URL: "paragon_nats_1"
+
+  teamserver:
+    build:
+      context: ../
+      dockerfile: "./docker/teamserver.Dockerfile"
+      target: dev
+    depends_on:
+      - nats
+      - mysql
+    environment:
+      PG_MYSQL_DSN: "mysql://root:changeme123@tcp(paragon_mysql_1)/ent?parseTime=true"
+      PG_HTTP_ADDR: "0.0.0.0:80"
+      PUB_TOPIC: "my_topic"
+      NATS_URL: "paragon_nats_1"
+    ports:
+      - "127.0.0.1:9090:80"
+
+  mysql:
+    image: mysql:latest
+    ports:
+      - "127.0.0.1:3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: changeme123
+
+  nats:
+    image: nats:latest
+    hostname: nats
+    ports:
+      - "127.0.0.1:8222:8222"
+
+  target:
+    build:
+      context: ../
+      dockerfile: "./docker/target.Dockerfile"
+      target: dev
+    ports:
+      - "127.0.0.1:22:22"
