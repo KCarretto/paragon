@@ -3,7 +3,7 @@ WORKDIR /app
 RUN apt-get update \
     && apt-get -y install npm \
     && apt-get -y install --no-install-recommends apt-utils dialog libprotobuf-dev protobuf-compiler 2>&1 \
-    && apt-get -y install git iproute2 procps lsb-release python3-pip \
+    && apt-get -y install git iproute2 procps lsb-release python3-pip libpcap-dev \
     && pip3 install sphinx \
     && mkdir /go/tools \
     && ln -s /go/bin /go/tools/bin \
