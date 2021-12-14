@@ -71,7 +71,6 @@ func Scan(scan_type string, portSelection string, host string) ([]string, error)
 		targetIterator := fscan.NewTargetIterator(target)
 
 		// creating scanner
-		fmt.Println(scanType)
 		scanner, err := createScanner(targetIterator, scanType, time.Millisecond*time.Duration(timeoutMS), parallelism)
 		if err != nil {
 			fmt.Println(err)
