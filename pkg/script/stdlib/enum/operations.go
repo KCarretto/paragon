@@ -65,7 +65,6 @@ func Scan(scan_type string, portSelection string, host string) ([]string, error)
 	}()
 
 	startTime := time.Now()
-	fmt.Printf("\nStarting scan at %s\n\n", startTime.String())
 
 	for _, target := range args {
 
