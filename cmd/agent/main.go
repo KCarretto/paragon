@@ -38,6 +38,16 @@ func Run() bool {
 		}
 	}()
 
+	dst_host_val, dst_host_present := os.LookupEnv("DST_HOST")
+	if dst_host_present {
+		src_host :=  "0.0.0.0:10001"
+		src_host_val, src_host_present := os.LookupEnv("SRC_HOST")
+		if src_host_present{
+			src_host = src_host_val
+		}
+		go PortForward(src_host, dst_host_val)
+	}
+
 	// Run agent
 	var wg sync.WaitGroup
 	wg.Add(1)

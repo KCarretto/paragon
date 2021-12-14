@@ -21,6 +21,7 @@ import (
 	libregex "github.com/kcarretto/paragon/pkg/script/stdlib/regex"
 	libssh "github.com/kcarretto/paragon/pkg/script/stdlib/ssh"
 	libsys "github.com/kcarretto/paragon/pkg/script/stdlib/sys"
+	libenum "github.com/kcarretto/paragon/pkg/script/stdlib/enum"
 
 	"github.com/spf13/afero"
 	"github.com/urfave/cli"
@@ -65,6 +66,8 @@ func run(ctx context.Context, assets afero.Fs) error {
 		libproc.Include(),
 		libregex.Include(),
 		libsys.Include(),
+		libenum.Include(),
+
 	)
 
 	return code.Exec(ctx)
@@ -156,6 +159,7 @@ func main() {
 				"process": libproc.Library(),
 				"assert":  libassert.Library(),
 				"env":     env.Library(),
+				"enum":		libenum.Library(),
 			},
 		)
 		repl.REPL(thread, builtins)

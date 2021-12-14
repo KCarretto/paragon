@@ -3,7 +3,7 @@ version: "3.7"
 services:
   agent:
     build:
-      context: ../
+      context: ./
       dockerfile: "./docker/agent.Dockerfile"
       target: dev
     environment:
@@ -11,13 +11,12 @@ services:
       DEBUG_API_USER: "admin"
       DEBUG_API_PASSWORD: "password123"
       DEBUG_API_ADDR: "0.0.0.0:8080"
-      DST_HOST: "127.0.0.1:9090"
     ports:
       - "127.0.0.1:1337:8080"
 
   c2:
     build:
-      context: ../
+      context: ./
       dockerfile: "./docker/c2.Dockerfile"
       target: dev
     environment:
@@ -26,7 +25,7 @@ services:
 
   worker:
     build:
-      context: ../
+      context: ./
       dockerfile: "./docker/worker.Dockerfile"
       target: dev
     depends_on:
@@ -39,7 +38,7 @@ services:
 
   teamserver:
     build:
-      context: ../
+      context: ./
       dockerfile: "./docker/teamserver.Dockerfile"
       target: dev
     depends_on:
@@ -68,7 +67,7 @@ services:
 
   target:
     build:
-      context: ../
+      context: ./
       dockerfile: "./docker/target.Dockerfile"
       target: dev
     ports:

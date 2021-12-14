@@ -15,6 +15,7 @@ require (
 	github.com/golang/mock v1.3.1
 	github.com/google/skylark v0.0.0-20181101142754-a5f7082aabed
 	github.com/google/uuid v1.1.1
+	github.com/liamg/furious v0.0.0-20191231090757-c295c872d6c1 // indirect
 	github.com/mattn/go-sqlite3 v1.11.0
 	github.com/nats-io/nats.go v1.9.1
 	github.com/pkg/errors v0.9.1
@@ -24,9 +25,9 @@ require (
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/shurcooL/httpfs v0.0.0-20190707220628-8d4bc4ba7749
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
+	github.com/sirupsen/logrus v1.4.2 // indirect
 	github.com/spf13/afero v1.2.2
 	github.com/stretchr/testify v1.4.0
-	github.com/urfave/cli v1.20.0
 	github.com/vektah/gqlparser v1.2.0
 	go.starlark.net v0.0.0-20191018214235-58de16fb0ee7
 	go.uber.org/atomic v1.4.0 // indirect
