@@ -9,6 +9,7 @@ import (
     "strconv"
     "strings"
     "time"
+	"encoding/json"
 
     fscan "github.com/liamg/furious/scan"
     log "github.com/sirupsen/logrus"
@@ -42,8 +43,9 @@ func scan(parser script.ArgParser) (script.Retval, error) {
 }
 
 
-func Scan(scan_type string, portSelection string, host string) (string, error) {
+func Scan(scan_type string, portSelection string, host string) ([]string, error) {
 	var args [1]string
+	var final_res []string
 	args[0] = host
 
 	ports, err := getPorts(portSelection)
@@ -92,11 +94,12 @@ func Scan(scan_type string, portSelection string, host string) (string, error) {
 		}
 		for _, result := range results {
 			if !hideUnavailableHosts || result.IsHostUp() {
-				scanner.OutputResult(result)
+				res, _ := scanResultToJSON(result)
+				final_res = append(final_res, res)
 			}
 		}
 	}
-	return "Scan data", nil
+	return final_res, nil
 }
 
 func getPorts(selection string) ([]int, error) {
@@ -156,4 +159,9 @@ func createScanner(ti *fscan.TargetIterator, scanTypeStr string, timeout time.Du
     }
 
     return nil, fmt.Errorf("Unknown scan type '%s'", scanTypeStr)
+}
+
+func scanResultToJSON(result fscan.Result) (string, error){
+    byte_arr, err := json.Marshal(result)
+    return string(byte_arr), err
 }
