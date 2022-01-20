@@ -32,6 +32,9 @@ func (agent *Agent) collectMetadata() {
 		} else {
 			agent.Metadata.SessionID = sessionUUID.String()
 		}
+		if agent.machineidPrefix != "" {
+			agent.Metadata.SessionID = fmt.Sprintf("%s%s", agent.machineidPrefix, agent.Metadata.SessionID)
+		}
 	}
 
 	// Generate machine UUID once
