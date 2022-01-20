@@ -43,7 +43,7 @@ func (agent *Agent) collectMetadata() {
 			agent.Metadata.MachineUUID = machineUUID
 		}
 		if agent.machineidPrefix != "" {
-			agent.Metadata.MachineUUID = fmt.Sprintf("%s%s", agent.machineidPrefix, agent.Metadata.SessionID)
+			agent.Metadata.MachineUUID = fmt.Sprintf("%s%s", agent.machineidPrefix, agent.Metadata.MachineUUID)
 		}
 	}
 
