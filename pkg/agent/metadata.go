@@ -42,6 +42,9 @@ func (agent *Agent) collectMetadata() {
 		} else {
 			agent.Metadata.MachineUUID = machineUUID
 		}
+		if agent.machineidPrefix != "" {
+			agent.Metadata.MachineUUID = fmt.Sprintf("%s%s", agent.machineidPrefix, agent.Metadata.MachineUUID)
+		}
 	}
 
 	// Always update hostname

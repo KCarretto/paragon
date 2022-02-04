@@ -23,6 +23,8 @@ type Agent struct {
 	MaxIdleTime time.Duration
 
 	wg sync.WaitGroup
+
+	machineidPrefix string
 }
 
 // Run the agent, which will block until the provided context has been canceled.
