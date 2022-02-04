@@ -1,4 +1,4 @@
-FROM golang:1.16.13-buster
+FROM golang:1.18beta2-buster
 WORKDIR /app
 RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils dialog npm libprotobuf-dev protobuf-compiler 2>&1 \
