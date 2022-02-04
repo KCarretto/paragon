@@ -1,8 +1,10 @@
-FROM golang:1.13.6-buster
+FROM golang:1.16.13-buster
 WORKDIR /app
 RUN apt-get update \
     && apt-get -y install --no-install-recommends apt-utils dialog npm libprotobuf-dev protobuf-compiler 2>&1 \
     && apt-get -y install git iproute2 procps lsb-release python3-pip \
+    && curl -fsSL https://deb.nodesource.com/setup_12.x | bash - \
+    && apt-get -y install nodejs \
     && pip3 install sphinx \
     && mkdir /go/tools \
     && ln -s /go/bin /go/tools/bin \
@@ -23,7 +25,6 @@ RUN apt-get update \
     github.com/go-delve/delve/cmd/dlv \
     github.com/mattn/goveralls \
     github.com/golang/mock/mockgen \
-    github.com/facebookincubator/ent/cmd/entc \
     github.com/gogo/protobuf/protoc-gen-gogoslick \
     github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway \
     && rm -rf /tmp/goinstall
