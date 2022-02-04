@@ -6,6 +6,7 @@ import (
 
 	"github.com/kcarretto/paragon/pkg/script/stdlib/assets"
 	"github.com/spf13/afero"
+	"github.com/stretchr/testify/require"
 )
 
 func writeFileForTest(fs afero.Fs, filename string, content string) error {
@@ -27,20 +28,19 @@ func TestTarGZBundleConsistent(t *testing.T) {
 	fs := afero.NewMemMapFs()
 	file1Name, file1Content := "file1", "boop"
 	file2Name, file2Content := "file2", "shmoop"
-	if err := writeFileForTest(fs, file1Name, file1Content); err != nil {
-		t.Errorf("failed to create test file: %w", err)
-	}
-	if err := writeFileForTest(fs, file2Name, file2Content); err != nil {
-		t.Errorf("failed to create test file: %w", err)
-	}
+
+	err := writeFileForTest(fs, file1Name, file1Content)
+	require.NoError(t, err, "failed to create test file")
+
+	err = writeFileForTest(fs, file2Name, file2Content)
+	require.NoError(t, err, "failed to create test file")
+
 	f1, err := fs.Open(file1Name)
-	if err != nil {
-		t.Errorf("failed to open file: %w", err)
-	}
+	require.NoError(t, err, "failed to open file")
+
 	f2, err := fs.Open(file2Name)
-	if err != nil {
-		t.Errorf("failed to open file: %w", err)
-	}
+	require.NoError(t, err, "failed to open file")
+
 	targzbundlr := assets.TarGZBundler{}
 	err = targzbundlr.Bundle(
 		assets.NamedReader{
@@ -52,34 +52,23 @@ func TestTarGZBundleConsistent(t *testing.T) {
 			Name:   file2Name,
 		},
 	)
-	if err != nil {
-		t.Errorf("failed to bundle files: %w", err)
-	}
-	newFS, err := targzbundlr.FileSystem()
-	if err != nil {
-		t.Errorf("failed to open unbundle the files into a filesystem: %w", err)
-	}
-	newF1, err := newFS.Open(file1Name)
-	if err != nil {
-		t.Errorf("failed to open untargz'd file: %w", err)
-	}
-	newF2, err := newFS.Open(file2Name)
-	if err != nil {
-		t.Errorf("failed to open untargz'd file: %w", err)
-	}
-	newf1Content, err := ioutil.ReadAll(newF1)
-	if err != nil {
-		t.Errorf("failed to read file: %w", err)
-	}
-	newf2Content, err := ioutil.ReadAll(newF2)
-	if err != nil {
-		t.Errorf("failed to read file: %w", err)
-	}
+	require.NoError(t, err, "failed to bundle files")
 
-	if file1Content != string(newf1Content) {
-		t.Errorf("'%s' does not equal '%s'", file1Content, string(newf1Content))
-	}
-	if file2Content != string(newf2Content) {
-		t.Errorf("'%s' does not equal '%s'", file2Content, string(newf2Content))
-	}
+	newFS, err := targzbundlr.FileSystem()
+	require.NoError(t, err, "failed to open unbundle the files into a filesystem")
+
+	newF1, err := newFS.Open(file1Name)
+	require.NoError(t, err, "failed to open untargz'd file")
+
+	newF2, err := newFS.Open(file2Name)
+	require.NoError(t, err, "failed to open untargz'd file")
+
+	newf1Content, err := ioutil.ReadAll(newF1)
+	require.NoError(t, err, "failed to read file")
+
+	newf2Content, err := ioutil.ReadAll(newF2)
+	require.NoError(t, err, "failed to read file")
+
+	require.Equal(t, file1Content, string(newf1Content), "invalid file content")
+	require.Equal(t, file2Content, string(newf2Content), "invalid file content")
 }
