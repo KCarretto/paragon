@@ -1,5 +1,14 @@
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+## Development
+
+1. Run `npm start` to start the development server
+   - If this fails, run `npm i react-scripts` to ensure create react app is installed
+2. In a separate terminal, run `PG_DISABLE_CORS=1 go run -tags=dev ./cmd/teamserver` to enable the teamserver in dev mode
+3. Visit http://127.0.0.1:8080 to interact with the development version
+4. Run `go generate ./www/gen.go` to bundle your changes into the production version of paragon
+   - Do not commit changes to WWW code without first testing in the dev environment and then including them in the production version
+
 ## Available Scripts
 
 In the project directory, you can run:
