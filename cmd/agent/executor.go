@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"io"
 
 	"github.com/kcarretto/paragon/pkg/agent/transport"
@@ -21,7 +22,7 @@ type Executor struct{}
 // ExecuteTask runs a renegade script.
 func (exec Executor) ExecuteTask(ctx context.Context, output io.Writer, task *transport.Task) error {
 	code := script.New(
-		string(task.GetId()),
+		fmt.Sprint(task.GetId()),
 		bytes.NewBufferString(task.Content),
 		script.WithOutput(output),
 		sys.Include(),
