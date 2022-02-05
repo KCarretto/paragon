@@ -1,3 +1,4 @@
+//go:build dev
 // +build dev
 
 package auth
@@ -76,7 +77,7 @@ func (auth DevAuthenticator) Authenticate(w http.ResponseWriter, req *http.Reque
 	auth.Graph.Event.Create().
 		SetOwner(user).
 		SetUser(user).
-		SetKind(event.KindCREATEUSER).
+		SetKind(event.KindCREATE_USER).
 		Save(req.Context())
 	return CreateUserSession(w, req, user), nil
 }
