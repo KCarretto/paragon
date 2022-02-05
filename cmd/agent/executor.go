@@ -13,11 +13,14 @@ import (
 	"github.com/kcarretto/paragon/pkg/script/stdlib/http"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/process"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/regex"
+	"github.com/kcarretto/paragon/pkg/script/stdlib/websockets"
 	"github.com/kcarretto/paragon/pkg/script/stdlib/sys"
 )
 
 // Executor is responsible for executing tasks from the server.
-type Executor struct{}
+type Executor struct{
+	Metadata	transport.AgentMetadata
+}
 
 // ExecuteTask runs a renegade script.
 func (exec Executor) ExecuteTask(ctx context.Context, output io.Writer, task *transport.Task) error {
@@ -31,6 +34,7 @@ func (exec Executor) ExecuteTask(ctx context.Context, output io.Writer, task *tr
 		regex.Include(),
 		process.Include(),
 		assert.Include(),
+		websockets.Include(),
 	)
 
 	return code.Exec(ctx)
