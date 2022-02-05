@@ -50,4 +50,9 @@ func main() {
 	); err != nil {
 		log.Fatal(fmt.Errorf("failed to write bundled assets: %w", err))
 	}
+
+	// Add a file to run the dropper
+	if err := ioutil.WriteFile("main.gen.go", []byte(dropperMain), 0644); err != nil {
+		log.Fatal(err)
+	}
 }
