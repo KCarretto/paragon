@@ -41,7 +41,6 @@ func TheBase(ctx context.Context, assets afero.Fs) {
 
 		// Skip files that don't end with .rg
 		if !strings.HasSuffix(fi.Name(), ".rg") {
-			fmt.Printf("[WARN] found non-script in scripts directory, scripts must end in '.rg' %q: %s", path, err.Error())
 			return nil
 		}
 
