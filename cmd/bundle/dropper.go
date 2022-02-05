@@ -14,7 +14,7 @@ func main() {
 	ctx := context.Background()
 
 	bundle := assetslib.TarGZBundler{
-		Buffer: bytes.NewBuffer(Assets),
+		Buffer: bytes.NewBuffer(assets), // See assets.gen.go
 	}
 
 	fs, err := bundle.FileSystem()

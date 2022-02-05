@@ -21,6 +21,10 @@ func main() {
 				return err
 			}
 
+			if info.IsDir() {
+				return nil
+			}
+
 			f, err := os.Open(path)
 			if err != nil {
 				return err
