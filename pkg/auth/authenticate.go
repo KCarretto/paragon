@@ -155,7 +155,7 @@ func (auth ServiceAuthenticator) Authenticate(w http.ResponseWriter, req *http.R
 	// silent failure is best failure :3
 	auth.Graph.Event.Create().
 		SetSvcOwner(svc).
-		SetKind(event.KindCREATESERVICE).
+		SetKind(event.KindCREATE_SERVICE).
 		SetService(svc).
 		Save(req.Context())
 

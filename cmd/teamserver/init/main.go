@@ -39,7 +39,7 @@ type Schema struct {
 	Targets []struct {
 		Name      string   `json:"name"`
 		PrimaryIP string   `json:"ip"`
-		OS        string   `json: "os"`
+		OS        string   `json:"os"`
 		Tags      []string `json:"tags"`
 	} `json:"targets"`
 }

@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/target"
 	"github.com/kcarretto/paragon/ent/task"
 )
 
@@ -17,160 +19,221 @@ type Task struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// QueueTime holds the value of the "QueueTime" field.
+	// The timestamp for when the Task was queued/created
 	QueueTime time.Time `json:"QueueTime,omitempty"`
 	// LastChangedTime holds the value of the "LastChangedTime" field.
+	// The timestamp for when the Task was last changed
 	LastChangedTime time.Time `json:"LastChangedTime,omitempty"`
 	// ClaimTime holds the value of the "ClaimTime" field.
+	// The timestamp for when the Task was claim
 	ClaimTime time.Time `json:"ClaimTime,omitempty"`
 	// ExecStartTime holds the value of the "ExecStartTime" field.
+	// The timestamp for when the Task was executed
 	ExecStartTime time.Time `json:"ExecStartTime,omitempty"`
 	// ExecStopTime holds the value of the "ExecStopTime" field.
+	// The timestamp for when the Task's execution ended
 	ExecStopTime time.Time `json:"ExecStopTime,omitempty"`
 	// Content holds the value of the "Content" field.
+	// The content of the task (usually a Renegade Script)
 	Content string `json:"Content,omitempty"`
 	// Output holds the value of the "Output" field.
+	// The output from executing the task
 	Output string `json:"Output,omitempty"`
 	// Error holds the value of the "Error" field.
+	// The error, if any, produced while executing the Task
 	Error string `json:"Error,omitempty"`
 	// SessionID holds the value of the "SessionID" field.
 	SessionID string `json:"SessionID,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TaskQuery when eager-loading is set.
-	Edges struct {
-		// Tags holds the value of the tags edge.
-		Tags []*Tag
-		// Job holds the value of the job edge.
-		Job *Job
-		// Target holds the value of the target edge.
-		Target *Target
-	} `json:"edges"`
-	job_id    *int
-	target_id *int
+	Edges        TaskEdges `json:"edges"`
+	job_tasks    *int
+	target_tasks *int
+}
+
+// TaskEdges holds the relations/edges for other nodes in the graph.
+type TaskEdges struct {
+	// Tags holds the value of the tags edge.
+	Tags []*Tag `json:"tags,omitempty"`
+	// Job holds the value of the job edge.
+	Job *Job `json:"job,omitempty"`
+	// Target holds the value of the target edge.
+	Target *Target `json:"target,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// TagsOrErr returns the Tags value or an error if the edge
+// was not loaded in eager-loading.
+func (e TaskEdges) TagsOrErr() ([]*Tag, error) {
+	if e.loadedTypes[0] {
+		return e.Tags, nil
+	}
+	return nil, &NotLoadedError{edge: "tags"}
+}
+
+// JobOrErr returns the Job value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TaskEdges) JobOrErr() (*Job, error) {
+	if e.loadedTypes[1] {
+		if e.Job == nil {
+			// The edge job was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: job.Label}
+		}
+		return e.Job, nil
+	}
+	return nil, &NotLoadedError{edge: "job"}
+}
+
+// TargetOrErr returns the Target value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e TaskEdges) TargetOrErr() (*Target, error) {
+	if e.loadedTypes[2] {
+		if e.Target == nil {
+			// The edge target was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: target.Label}
+		}
+		return e.Target, nil
+	}
+	return nil, &NotLoadedError{edge: "target"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Task) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullTime{},   // QueueTime
-		&sql.NullTime{},   // LastChangedTime
-		&sql.NullTime{},   // ClaimTime
-		&sql.NullTime{},   // ExecStartTime
-		&sql.NullTime{},   // ExecStopTime
-		&sql.NullString{}, // Content
-		&sql.NullString{}, // Output
-		&sql.NullString{}, // Error
-		&sql.NullString{}, // SessionID
+func (*Task) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case task.FieldID:
+			values[i] = new(sql.NullInt64)
+		case task.FieldContent, task.FieldOutput, task.FieldError, task.FieldSessionID:
+			values[i] = new(sql.NullString)
+		case task.FieldQueueTime, task.FieldLastChangedTime, task.FieldClaimTime, task.FieldExecStartTime, task.FieldExecStopTime:
+			values[i] = new(sql.NullTime)
+		case task.ForeignKeys[0]: // job_tasks
+			values[i] = new(sql.NullInt64)
+		case task.ForeignKeys[1]: // target_tasks
+			values[i] = new(sql.NullInt64)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type Task", columns[i])
+		}
 	}
-}
-
-// fkValues returns the types for scanning foreign-keys values from sql.Rows.
-func (*Task) fkValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{}, // job_id
-		&sql.NullInt64{}, // target_id
-	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Task fields.
-func (t *Task) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(task.Columns); m < n {
+func (t *Task) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	t.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field QueueTime", values[0])
-	} else if value.Valid {
-		t.QueueTime = value.Time
-	}
-	if value, ok := values[1].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field LastChangedTime", values[1])
-	} else if value.Valid {
-		t.LastChangedTime = value.Time
-	}
-	if value, ok := values[2].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field ClaimTime", values[2])
-	} else if value.Valid {
-		t.ClaimTime = value.Time
-	}
-	if value, ok := values[3].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field ExecStartTime", values[3])
-	} else if value.Valid {
-		t.ExecStartTime = value.Time
-	}
-	if value, ok := values[4].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field ExecStopTime", values[4])
-	} else if value.Valid {
-		t.ExecStopTime = value.Time
-	}
-	if value, ok := values[5].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Content", values[5])
-	} else if value.Valid {
-		t.Content = value.String
-	}
-	if value, ok := values[6].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Output", values[6])
-	} else if value.Valid {
-		t.Output = value.String
-	}
-	if value, ok := values[7].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Error", values[7])
-	} else if value.Valid {
-		t.Error = value.String
-	}
-	if value, ok := values[8].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field SessionID", values[8])
-	} else if value.Valid {
-		t.SessionID = value.String
-	}
-	values = values[9:]
-	if len(values) == len(task.ForeignKeys) {
-		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field job_id", value)
-		} else if value.Valid {
-			t.job_id = new(int)
-			*t.job_id = int(value.Int64)
-		}
-		if value, ok := values[1].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
-		} else if value.Valid {
-			t.target_id = new(int)
-			*t.target_id = int(value.Int64)
+	for i := range columns {
+		switch columns[i] {
+		case task.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			t.ID = int(value.Int64)
+		case task.FieldQueueTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field QueueTime", values[i])
+			} else if value.Valid {
+				t.QueueTime = value.Time
+			}
+		case task.FieldLastChangedTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field LastChangedTime", values[i])
+			} else if value.Valid {
+				t.LastChangedTime = value.Time
+			}
+		case task.FieldClaimTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field ClaimTime", values[i])
+			} else if value.Valid {
+				t.ClaimTime = value.Time
+			}
+		case task.FieldExecStartTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field ExecStartTime", values[i])
+			} else if value.Valid {
+				t.ExecStartTime = value.Time
+			}
+		case task.FieldExecStopTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field ExecStopTime", values[i])
+			} else if value.Valid {
+				t.ExecStopTime = value.Time
+			}
+		case task.FieldContent:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Content", values[i])
+			} else if value.Valid {
+				t.Content = value.String
+			}
+		case task.FieldOutput:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Output", values[i])
+			} else if value.Valid {
+				t.Output = value.String
+			}
+		case task.FieldError:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Error", values[i])
+			} else if value.Valid {
+				t.Error = value.String
+			}
+		case task.FieldSessionID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field SessionID", values[i])
+			} else if value.Valid {
+				t.SessionID = value.String
+			}
+		case task.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field job_tasks", value)
+			} else if value.Valid {
+				t.job_tasks = new(int)
+				*t.job_tasks = int(value.Int64)
+			}
+		case task.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field target_tasks", value)
+			} else if value.Valid {
+				t.target_tasks = new(int)
+				*t.target_tasks = int(value.Int64)
+			}
 		}
 	}
 	return nil
 }
 
-// QueryTags queries the tags edge of the Task.
+// QueryTags queries the "tags" edge of the Task entity.
 func (t *Task) QueryTags() *TagQuery {
-	return (&TaskClient{t.config}).QueryTags(t)
+	return (&TaskClient{config: t.config}).QueryTags(t)
 }
 
-// QueryJob queries the job edge of the Task.
+// QueryJob queries the "job" edge of the Task entity.
 func (t *Task) QueryJob() *JobQuery {
-	return (&TaskClient{t.config}).QueryJob(t)
+	return (&TaskClient{config: t.config}).QueryJob(t)
 }
 
-// QueryTarget queries the target edge of the Task.
+// QueryTarget queries the "target" edge of the Task entity.
 func (t *Task) QueryTarget() *TargetQuery {
-	return (&TaskClient{t.config}).QueryTarget(t)
+	return (&TaskClient{config: t.config}).QueryTarget(t)
 }
 
 // Update returns a builder for updating this Task.
-// Note that, you need to call Task.Unwrap() before calling this method, if this Task
+// Note that you need to call Task.Unwrap() before calling this method if this Task
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (t *Task) Update() *TaskUpdateOne {
-	return (&TaskClient{t.config}).UpdateOne(t)
+	return (&TaskClient{config: t.config}).UpdateOne(t)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the Task entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (t *Task) Unwrap() *Task {
 	tx, ok := t.config.driver.(*txDriver)
 	if !ok {

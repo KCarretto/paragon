@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/predicate"
@@ -19,35 +19,29 @@ import (
 // LinkUpdate is the builder for updating Link entities.
 type LinkUpdate struct {
 	config
-	Alias               *string
-	ExpirationTime      *time.Time
-	clearExpirationTime bool
-	Clicks              *int
-	addClicks           *int
-	file                map[int]struct{}
-	clearedFile         bool
-	predicates          []predicate.Link
+	hooks    []Hook
+	mutation *LinkMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the LinkUpdate builder.
 func (lu *LinkUpdate) Where(ps ...predicate.Link) *LinkUpdate {
-	lu.predicates = append(lu.predicates, ps...)
+	lu.mutation.Where(ps...)
 	return lu
 }
 
-// SetAlias sets the Alias field.
+// SetAlias sets the "Alias" field.
 func (lu *LinkUpdate) SetAlias(s string) *LinkUpdate {
-	lu.Alias = &s
+	lu.mutation.SetAlias(s)
 	return lu
 }
 
-// SetExpirationTime sets the ExpirationTime field.
+// SetExpirationTime sets the "ExpirationTime" field.
 func (lu *LinkUpdate) SetExpirationTime(t time.Time) *LinkUpdate {
-	lu.ExpirationTime = &t
+	lu.mutation.SetExpirationTime(t)
 	return lu
 }
 
-// SetNillableExpirationTime sets the ExpirationTime field if the given value is not nil.
+// SetNillableExpirationTime sets the "ExpirationTime" field if the given value is not nil.
 func (lu *LinkUpdate) SetNillableExpirationTime(t *time.Time) *LinkUpdate {
 	if t != nil {
 		lu.SetExpirationTime(*t)
@@ -55,21 +49,20 @@ func (lu *LinkUpdate) SetNillableExpirationTime(t *time.Time) *LinkUpdate {
 	return lu
 }
 
-// ClearExpirationTime clears the value of ExpirationTime.
+// ClearExpirationTime clears the value of the "ExpirationTime" field.
 func (lu *LinkUpdate) ClearExpirationTime() *LinkUpdate {
-	lu.ExpirationTime = nil
-	lu.clearExpirationTime = true
+	lu.mutation.ClearExpirationTime()
 	return lu
 }
 
-// SetClicks sets the Clicks field.
+// SetClicks sets the "Clicks" field.
 func (lu *LinkUpdate) SetClicks(i int) *LinkUpdate {
-	lu.Clicks = &i
-	lu.addClicks = nil
+	lu.mutation.ResetClicks()
+	lu.mutation.SetClicks(i)
 	return lu
 }
 
-// SetNillableClicks sets the Clicks field if the given value is not nil.
+// SetNillableClicks sets the "Clicks" field if the given value is not nil.
 func (lu *LinkUpdate) SetNillableClicks(i *int) *LinkUpdate {
 	if i != nil {
 		lu.SetClicks(*i)
@@ -77,26 +70,19 @@ func (lu *LinkUpdate) SetNillableClicks(i *int) *LinkUpdate {
 	return lu
 }
 
-// AddClicks adds i to Clicks.
+// AddClicks adds i to the "Clicks" field.
 func (lu *LinkUpdate) AddClicks(i int) *LinkUpdate {
-	if lu.addClicks == nil {
-		lu.addClicks = &i
-	} else {
-		*lu.addClicks += i
-	}
+	lu.mutation.AddClicks(i)
 	return lu
 }
 
-// SetFileID sets the file edge to File by id.
+// SetFileID sets the "file" edge to the File entity by ID.
 func (lu *LinkUpdate) SetFileID(id int) *LinkUpdate {
-	if lu.file == nil {
-		lu.file = make(map[int]struct{})
-	}
-	lu.file[id] = struct{}{}
+	lu.mutation.SetFileID(id)
 	return lu
 }
 
-// SetNillableFileID sets the file edge to File by id if the given value is not nil.
+// SetNillableFileID sets the "file" edge to the File entity by ID if the given value is not nil.
 func (lu *LinkUpdate) SetNillableFileID(id *int) *LinkUpdate {
 	if id != nil {
 		lu = lu.SetFileID(*id)
@@ -104,33 +90,58 @@ func (lu *LinkUpdate) SetNillableFileID(id *int) *LinkUpdate {
 	return lu
 }
 
-// SetFile sets the file edge to File.
+// SetFile sets the "file" edge to the File entity.
 func (lu *LinkUpdate) SetFile(f *File) *LinkUpdate {
 	return lu.SetFileID(f.ID)
 }
 
-// ClearFile clears the file edge to File.
+// Mutation returns the LinkMutation object of the builder.
+func (lu *LinkUpdate) Mutation() *LinkMutation {
+	return lu.mutation
+}
+
+// ClearFile clears the "file" edge to the File entity.
 func (lu *LinkUpdate) ClearFile() *LinkUpdate {
-	lu.clearedFile = true
+	lu.mutation.ClearFile()
 	return lu
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (lu *LinkUpdate) Save(ctx context.Context) (int, error) {
-	if lu.Alias != nil {
-		if err := link.AliasValidator(*lu.Alias); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Alias\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(lu.hooks) == 0 {
+		if err = lu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = lu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*LinkMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = lu.check(); err != nil {
+				return 0, err
+			}
+			lu.mutation = mutation
+			affected, err = lu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(lu.hooks) - 1; i >= 0; i-- {
+			if lu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = lu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, lu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if lu.Clicks != nil {
-		if err := link.ClicksValidator(*lu.Clicks); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Clicks\": %v", err)
-		}
-	}
-	if len(lu.file) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"file\"")
-	}
-	return lu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -155,6 +166,21 @@ func (lu *LinkUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (lu *LinkUpdate) check() error {
+	if v, ok := lu.mutation.Alias(); ok {
+		if err := link.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "Alias", err: fmt.Errorf(`ent: validator failed for field "Link.Alias": %w`, err)}
+		}
+	}
+	if v, ok := lu.mutation.Clicks(); ok {
+		if err := link.ClicksValidator(v); err != nil {
+			return &ValidationError{Name: "Clicks", err: fmt.Errorf(`ent: validator failed for field "Link.Clicks": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -166,48 +192,48 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := lu.predicates; len(ps) > 0 {
+	if ps := lu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := lu.Alias; value != nil {
+	if value, ok := lu.mutation.Alias(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldAlias,
 		})
 	}
-	if value := lu.ExpirationTime; value != nil {
+	if value, ok := lu.mutation.ExpirationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldExpirationTime,
 		})
 	}
-	if lu.clearExpirationTime {
+	if lu.mutation.ExpirationTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: link.FieldExpirationTime,
 		})
 	}
-	if value := lu.Clicks; value != nil {
+	if value, ok := lu.mutation.Clicks(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldClicks,
 		})
 	}
-	if value := lu.addClicks; value != nil {
+	if value, ok := lu.mutation.AddedClicks(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldClicks,
 		})
 	}
-	if lu.clearedFile {
+	if lu.mutation.FileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -223,7 +249,7 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := lu.file; len(nodes) > 0 {
+	if nodes := lu.mutation.FileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -237,14 +263,16 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, lu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{link.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -254,29 +282,24 @@ func (lu *LinkUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // LinkUpdateOne is the builder for updating a single Link entity.
 type LinkUpdateOne struct {
 	config
-	id                  int
-	Alias               *string
-	ExpirationTime      *time.Time
-	clearExpirationTime bool
-	Clicks              *int
-	addClicks           *int
-	file                map[int]struct{}
-	clearedFile         bool
+	fields   []string
+	hooks    []Hook
+	mutation *LinkMutation
 }
 
-// SetAlias sets the Alias field.
+// SetAlias sets the "Alias" field.
 func (luo *LinkUpdateOne) SetAlias(s string) *LinkUpdateOne {
-	luo.Alias = &s
+	luo.mutation.SetAlias(s)
 	return luo
 }
 
-// SetExpirationTime sets the ExpirationTime field.
+// SetExpirationTime sets the "ExpirationTime" field.
 func (luo *LinkUpdateOne) SetExpirationTime(t time.Time) *LinkUpdateOne {
-	luo.ExpirationTime = &t
+	luo.mutation.SetExpirationTime(t)
 	return luo
 }
 
-// SetNillableExpirationTime sets the ExpirationTime field if the given value is not nil.
+// SetNillableExpirationTime sets the "ExpirationTime" field if the given value is not nil.
 func (luo *LinkUpdateOne) SetNillableExpirationTime(t *time.Time) *LinkUpdateOne {
 	if t != nil {
 		luo.SetExpirationTime(*t)
@@ -284,21 +307,20 @@ func (luo *LinkUpdateOne) SetNillableExpirationTime(t *time.Time) *LinkUpdateOne
 	return luo
 }
 
-// ClearExpirationTime clears the value of ExpirationTime.
+// ClearExpirationTime clears the value of the "ExpirationTime" field.
 func (luo *LinkUpdateOne) ClearExpirationTime() *LinkUpdateOne {
-	luo.ExpirationTime = nil
-	luo.clearExpirationTime = true
+	luo.mutation.ClearExpirationTime()
 	return luo
 }
 
-// SetClicks sets the Clicks field.
+// SetClicks sets the "Clicks" field.
 func (luo *LinkUpdateOne) SetClicks(i int) *LinkUpdateOne {
-	luo.Clicks = &i
-	luo.addClicks = nil
+	luo.mutation.ResetClicks()
+	luo.mutation.SetClicks(i)
 	return luo
 }
 
-// SetNillableClicks sets the Clicks field if the given value is not nil.
+// SetNillableClicks sets the "Clicks" field if the given value is not nil.
 func (luo *LinkUpdateOne) SetNillableClicks(i *int) *LinkUpdateOne {
 	if i != nil {
 		luo.SetClicks(*i)
@@ -306,26 +328,19 @@ func (luo *LinkUpdateOne) SetNillableClicks(i *int) *LinkUpdateOne {
 	return luo
 }
 
-// AddClicks adds i to Clicks.
+// AddClicks adds i to the "Clicks" field.
 func (luo *LinkUpdateOne) AddClicks(i int) *LinkUpdateOne {
-	if luo.addClicks == nil {
-		luo.addClicks = &i
-	} else {
-		*luo.addClicks += i
-	}
+	luo.mutation.AddClicks(i)
 	return luo
 }
 
-// SetFileID sets the file edge to File by id.
+// SetFileID sets the "file" edge to the File entity by ID.
 func (luo *LinkUpdateOne) SetFileID(id int) *LinkUpdateOne {
-	if luo.file == nil {
-		luo.file = make(map[int]struct{})
-	}
-	luo.file[id] = struct{}{}
+	luo.mutation.SetFileID(id)
 	return luo
 }
 
-// SetNillableFileID sets the file edge to File by id if the given value is not nil.
+// SetNillableFileID sets the "file" edge to the File entity by ID if the given value is not nil.
 func (luo *LinkUpdateOne) SetNillableFileID(id *int) *LinkUpdateOne {
 	if id != nil {
 		luo = luo.SetFileID(*id)
@@ -333,42 +348,74 @@ func (luo *LinkUpdateOne) SetNillableFileID(id *int) *LinkUpdateOne {
 	return luo
 }
 
-// SetFile sets the file edge to File.
+// SetFile sets the "file" edge to the File entity.
 func (luo *LinkUpdateOne) SetFile(f *File) *LinkUpdateOne {
 	return luo.SetFileID(f.ID)
 }
 
-// ClearFile clears the file edge to File.
+// Mutation returns the LinkMutation object of the builder.
+func (luo *LinkUpdateOne) Mutation() *LinkMutation {
+	return luo.mutation
+}
+
+// ClearFile clears the "file" edge to the File entity.
 func (luo *LinkUpdateOne) ClearFile() *LinkUpdateOne {
-	luo.clearedFile = true
+	luo.mutation.ClearFile()
 	return luo
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (luo *LinkUpdateOne) Select(field string, fields ...string) *LinkUpdateOne {
+	luo.fields = append([]string{field}, fields...)
+	return luo
+}
+
+// Save executes the query and returns the updated Link entity.
 func (luo *LinkUpdateOne) Save(ctx context.Context) (*Link, error) {
-	if luo.Alias != nil {
-		if err := link.AliasValidator(*luo.Alias); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Alias\": %v", err)
+	var (
+		err  error
+		node *Link
+	)
+	if len(luo.hooks) == 0 {
+		if err = luo.check(); err != nil {
+			return nil, err
+		}
+		node, err = luo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*LinkMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = luo.check(); err != nil {
+				return nil, err
+			}
+			luo.mutation = mutation
+			node, err = luo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(luo.hooks) - 1; i >= 0; i-- {
+			if luo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = luo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, luo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if luo.Clicks != nil {
-		if err := link.ClicksValidator(*luo.Clicks); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Clicks\": %v", err)
-		}
-	}
-	if len(luo.file) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"file\"")
-	}
-	return luo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (luo *LinkUpdateOne) SaveX(ctx context.Context) *Link {
-	l, err := luo.Save(ctx)
+	node, err := luo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return l
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -384,53 +431,91 @@ func (luo *LinkUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (luo *LinkUpdateOne) check() error {
+	if v, ok := luo.mutation.Alias(); ok {
+		if err := link.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "Alias", err: fmt.Errorf(`ent: validator failed for field "Link.Alias": %w`, err)}
+		}
+	}
+	if v, ok := luo.mutation.Clicks(); ok {
+		if err := link.ClicksValidator(v); err != nil {
+			return &ValidationError{Name: "Clicks", err: fmt.Errorf(`ent: validator failed for field "Link.Clicks": %w`, err)}
+		}
+	}
+	return nil
+}
+
+func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (_node *Link, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   link.Table,
 			Columns: link.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  luo.id,
 				Type:   field.TypeInt,
 				Column: link.FieldID,
 			},
 		},
 	}
-	if value := luo.Alias; value != nil {
+	id, ok := luo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Link.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := luo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, link.FieldID)
+		for _, f := range fields {
+			if !link.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != link.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := luo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := luo.mutation.Alias(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldAlias,
 		})
 	}
-	if value := luo.ExpirationTime; value != nil {
+	if value, ok := luo.mutation.ExpirationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldExpirationTime,
 		})
 	}
-	if luo.clearExpirationTime {
+	if luo.mutation.ExpirationTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: link.FieldExpirationTime,
 		})
 	}
-	if value := luo.Clicks; value != nil {
+	if value, ok := luo.mutation.Clicks(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldClicks,
 		})
 	}
-	if value := luo.addClicks; value != nil {
+	if value, ok := luo.mutation.AddedClicks(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldClicks,
 		})
 	}
-	if luo.clearedFile {
+	if luo.mutation.FileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -446,7 +531,7 @@ func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := luo.file; len(nodes) > 0 {
+	if nodes := luo.mutation.FileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -460,19 +545,21 @@ func (luo *LinkUpdateOne) sqlSave(ctx context.Context) (l *Link, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	l = &Link{config: luo.config}
-	_spec.Assign = l.assignValues
-	_spec.ScanValues = l.scanValues()
+	_node = &Link{config: luo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, luo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{link.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return l, nil
+	return _node, nil
 }

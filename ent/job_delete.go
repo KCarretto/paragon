@@ -4,10 +4,11 @@ package ent
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -15,18 +16,46 @@ import (
 // JobDelete is the builder for deleting a Job entity.
 type JobDelete struct {
 	config
-	predicates []predicate.Job
+	hooks    []Hook
+	mutation *JobMutation
 }
 
-// Where adds a new predicate to the delete builder.
+// Where appends a list predicates to the JobDelete builder.
 func (jd *JobDelete) Where(ps ...predicate.Job) *JobDelete {
-	jd.predicates = append(jd.predicates, ps...)
+	jd.mutation.Where(ps...)
 	return jd
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (jd *JobDelete) Exec(ctx context.Context) (int, error) {
-	return jd.sqlExec(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(jd.hooks) == 0 {
+		affected, err = jd.sqlExec(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*JobMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			jd.mutation = mutation
+			affected, err = jd.sqlExec(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(jd.hooks) - 1; i >= 0; i-- {
+			if jd.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = jd.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, jd.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -48,7 +77,7 @@ func (jd *JobDelete) sqlExec(ctx context.Context) (int, error) {
 			},
 		},
 	}
-	if ps := jd.predicates; len(ps) > 0 {
+	if ps := jd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -70,7 +99,7 @@ func (jdo *JobDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{job.Label}
+		return &NotFoundError{job.Label}
 	default:
 		return nil
 	}

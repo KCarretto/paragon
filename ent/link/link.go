@@ -2,31 +2,28 @@
 
 package link
 
-import (
-	"github.com/kcarretto/paragon/ent/schema"
-)
-
 const (
 	// Label holds the string label denoting the link type in the database.
 	Label = "link"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldAlias holds the string denoting the alias vertex property in the database.
+	// FieldAlias holds the string denoting the alias field in the database.
 	FieldAlias = "alias"
-	// FieldExpirationTime holds the string denoting the expirationtime vertex property in the database.
+	// FieldExpirationTime holds the string denoting the expirationtime field in the database.
 	FieldExpirationTime = "expiration_time"
-	// FieldClicks holds the string denoting the clicks vertex property in the database.
+	// FieldClicks holds the string denoting the clicks field in the database.
 	FieldClicks = "clicks"
-
+	// EdgeFile holds the string denoting the file edge name in mutations.
+	EdgeFile = "file"
 	// Table holds the table name of the link in the database.
 	Table = "links"
-	// FileTable is the table the holds the file relation/edge.
+	// FileTable is the table that holds the file relation/edge.
 	FileTable = "links"
 	// FileInverseTable is the table name for the File entity.
 	// It exists in this package in order to avoid circular dependency with the "file" package.
 	FileInverseTable = "files"
 	// FileColumn is the table column denoting the file relation/edge.
-	FileColumn = "file_id"
+	FileColumn = "file_links"
 )
 
 // Columns holds all SQL columns for link fields.
@@ -37,38 +34,32 @@ var Columns = []string{
 	FieldClicks,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the Link type.
+// ForeignKeys holds the SQL foreign-keys that are owned by the "links"
+// table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"file_id",
+	"file_links",
+}
+
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
+	return false
 }
 
 var (
-	fields = schema.Link{}.Fields()
-
-	// descAlias is the schema descriptor for Alias field.
-	descAlias = fields[0].Descriptor()
 	// AliasValidator is a validator for the "Alias" field. It is called by the builders before save.
-	AliasValidator = func() func(string) error {
-		validators := descAlias.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-			validators[2].(func(string) error),
-		}
-		return func(Alias string) error {
-			for _, fn := range fns {
-				if err := fn(Alias); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-
-	// descClicks is the schema descriptor for Clicks field.
-	descClicks = fields[2].Descriptor()
-	// DefaultClicks holds the default value on creation for the Clicks field.
-	DefaultClicks = descClicks.Default.(int)
+	AliasValidator func(string) error
+	// DefaultClicks holds the default value on creation for the "Clicks" field.
+	DefaultClicks int
 	// ClicksValidator is a validator for the "Clicks" field. It is called by the builders before save.
-	ClicksValidator = descClicks.Validators[0].(func(int) error)
+	ClicksValidator func(int) error
 )

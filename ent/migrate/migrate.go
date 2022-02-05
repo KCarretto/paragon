@@ -7,8 +7,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/facebookincubator/ent/dialect"
-	"github.com/facebookincubator/ent/dialect/sql/schema"
+	"entgo.io/ent/dialect"
+	"entgo.io/ent/dialect/sql/schema"
 )
 
 var (
@@ -28,12 +28,16 @@ var (
 	// and therefore, it's recommended to enable this option to get more
 	// flexibility in the schema changes.
 	WithDropIndex = schema.WithDropIndex
+	// WithFixture sets the foreign-key renaming option to the migration when upgrading
+	// ent from v0.1.0 (issue-#285). Defaults to false.
+	WithFixture = schema.WithFixture
+	// WithForeignKeys enables creating foreign-key in schema DDL. This defaults to true.
+	WithForeignKeys = schema.WithForeignKeys
 )
 
 // Schema is the API for creating, migrating and dropping a schema.
 type Schema struct {
-	drv         dialect.Driver
-	universalID bool
+	drv dialect.Driver
 }
 
 // NewSchema creates a new schema client.
@@ -43,7 +47,7 @@ func NewSchema(drv dialect.Driver) *Schema { return &Schema{drv: drv} }
 func (s *Schema) Create(ctx context.Context, opts ...schema.MigrateOption) error {
 	migrate, err := schema.NewMigrate(s.drv, opts...)
 	if err != nil {
-		return fmt.Errorf("ent/migrate: %v", err)
+		return fmt.Errorf("ent/migrate: %w", err)
 	}
 	return migrate.Create(ctx, Tables...)
 }
@@ -61,7 +65,7 @@ func (s *Schema) WriteTo(ctx context.Context, w io.Writer, opts ...schema.Migrat
 	}
 	migrate, err := schema.NewMigrate(drv, opts...)
 	if err != nil {
-		return fmt.Errorf("ent/migrate: %v", err)
+		return fmt.Errorf("ent/migrate: %w", err)
 	}
 	return migrate.Create(ctx, Tables...)
 }

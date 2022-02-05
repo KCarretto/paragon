@@ -4,10 +4,11 @@ package ent
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -15,18 +16,46 @@ import (
 // EventDelete is the builder for deleting a Event entity.
 type EventDelete struct {
 	config
-	predicates []predicate.Event
+	hooks    []Hook
+	mutation *EventMutation
 }
 
-// Where adds a new predicate to the delete builder.
+// Where appends a list predicates to the EventDelete builder.
 func (ed *EventDelete) Where(ps ...predicate.Event) *EventDelete {
-	ed.predicates = append(ed.predicates, ps...)
+	ed.mutation.Where(ps...)
 	return ed
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (ed *EventDelete) Exec(ctx context.Context) (int, error) {
-	return ed.sqlExec(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(ed.hooks) == 0 {
+		affected, err = ed.sqlExec(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*EventMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			ed.mutation = mutation
+			affected, err = ed.sqlExec(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(ed.hooks) - 1; i >= 0; i-- {
+			if ed.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = ed.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, ed.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -48,7 +77,7 @@ func (ed *EventDelete) sqlExec(ctx context.Context) (int, error) {
 			},
 		},
 	}
-	if ps := ed.predicates; len(ps) > 0 {
+	if ps := ed.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -70,7 +99,7 @@ func (edo *EventDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{event.Label}
+		return &NotFoundError{event.Label}
 	default:
 		return nil
 	}

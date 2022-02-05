@@ -7,7 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 )
 
@@ -17,90 +18,121 @@ type Link struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Alias holds the value of the "Alias" field.
+	// The alias of the link which will be used for routing resolution
 	Alias string `json:"Alias,omitempty"`
 	// ExpirationTime holds the value of the "ExpirationTime" field.
+	// The timestamp for when the link will be deleted
 	ExpirationTime time.Time `json:"ExpirationTime,omitempty"`
 	// Clicks holds the value of the "Clicks" field.
+	// The number of clicks left on the link before it will be deleted (-1 means unlimited)
 	Clicks int `json:"Clicks,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the LinkQuery when eager-loading is set.
-	Edges struct {
-		// File holds the value of the file edge.
-		File *File
-	} `json:"edges"`
-	file_id *int
+	Edges      LinkEdges `json:"edges"`
+	file_links *int
+}
+
+// LinkEdges holds the relations/edges for other nodes in the graph.
+type LinkEdges struct {
+	// File holds the value of the file edge.
+	File *File `json:"file,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// FileOrErr returns the File value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e LinkEdges) FileOrErr() (*File, error) {
+	if e.loadedTypes[0] {
+		if e.File == nil {
+			// The edge file was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: file.Label}
+		}
+		return e.File, nil
+	}
+	return nil, &NotLoadedError{edge: "file"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Link) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // Alias
-		&sql.NullTime{},   // ExpirationTime
-		&sql.NullInt64{},  // Clicks
+func (*Link) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case link.FieldID, link.FieldClicks:
+			values[i] = new(sql.NullInt64)
+		case link.FieldAlias:
+			values[i] = new(sql.NullString)
+		case link.FieldExpirationTime:
+			values[i] = new(sql.NullTime)
+		case link.ForeignKeys[0]: // file_links
+			values[i] = new(sql.NullInt64)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type Link", columns[i])
+		}
 	}
-}
-
-// fkValues returns the types for scanning foreign-keys values from sql.Rows.
-func (*Link) fkValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{}, // file_id
-	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Link fields.
-func (l *Link) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(link.Columns); m < n {
+func (l *Link) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	l.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Alias", values[0])
-	} else if value.Valid {
-		l.Alias = value.String
-	}
-	if value, ok := values[1].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field ExpirationTime", values[1])
-	} else if value.Valid {
-		l.ExpirationTime = value.Time
-	}
-	if value, ok := values[2].(*sql.NullInt64); !ok {
-		return fmt.Errorf("unexpected type %T for field Clicks", values[2])
-	} else if value.Valid {
-		l.Clicks = int(value.Int64)
-	}
-	values = values[3:]
-	if len(values) == len(link.ForeignKeys) {
-		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field file_id", value)
-		} else if value.Valid {
-			l.file_id = new(int)
-			*l.file_id = int(value.Int64)
+	for i := range columns {
+		switch columns[i] {
+		case link.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			l.ID = int(value.Int64)
+		case link.FieldAlias:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Alias", values[i])
+			} else if value.Valid {
+				l.Alias = value.String
+			}
+		case link.FieldExpirationTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field ExpirationTime", values[i])
+			} else if value.Valid {
+				l.ExpirationTime = value.Time
+			}
+		case link.FieldClicks:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field Clicks", values[i])
+			} else if value.Valid {
+				l.Clicks = int(value.Int64)
+			}
+		case link.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field file_links", value)
+			} else if value.Valid {
+				l.file_links = new(int)
+				*l.file_links = int(value.Int64)
+			}
 		}
 	}
 	return nil
 }
 
-// QueryFile queries the file edge of the Link.
+// QueryFile queries the "file" edge of the Link entity.
 func (l *Link) QueryFile() *FileQuery {
-	return (&LinkClient{l.config}).QueryFile(l)
+	return (&LinkClient{config: l.config}).QueryFile(l)
 }
 
 // Update returns a builder for updating this Link.
-// Note that, you need to call Link.Unwrap() before calling this method, if this Link
+// Note that you need to call Link.Unwrap() before calling this method if this Link
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (l *Link) Update() *LinkUpdateOne {
-	return (&LinkClient{l.config}).UpdateOne(l)
+	return (&LinkClient{config: l.config}).UpdateOne(l)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the Link entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (l *Link) Unwrap() *Link {
 	tx, ok := l.config.driver.(*txDriver)
 	if !ok {

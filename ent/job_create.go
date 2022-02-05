@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/tag"
 	"github.com/kcarretto/paragon/ent/task"
@@ -19,30 +19,23 @@ import (
 // JobCreate is the builder for creating a Job entity.
 type JobCreate struct {
 	config
-	Name         *string
-	CreationTime *time.Time
-	Content      *string
-	Staged       *bool
-	tasks        map[int]struct{}
-	tags         map[int]struct{}
-	prev         map[int]struct{}
-	next         map[int]struct{}
-	owner        map[int]struct{}
+	mutation *JobMutation
+	hooks    []Hook
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (jc *JobCreate) SetName(s string) *JobCreate {
-	jc.Name = &s
+	jc.mutation.SetName(s)
 	return jc
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (jc *JobCreate) SetCreationTime(t time.Time) *JobCreate {
-	jc.CreationTime = &t
+	jc.mutation.SetCreationTime(t)
 	return jc
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (jc *JobCreate) SetNillableCreationTime(t *time.Time) *JobCreate {
 	if t != nil {
 		jc.SetCreationTime(*t)
@@ -50,30 +43,25 @@ func (jc *JobCreate) SetNillableCreationTime(t *time.Time) *JobCreate {
 	return jc
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (jc *JobCreate) SetContent(s string) *JobCreate {
-	jc.Content = &s
+	jc.mutation.SetContent(s)
 	return jc
 }
 
-// SetStaged sets the Staged field.
+// SetStaged sets the "Staged" field.
 func (jc *JobCreate) SetStaged(b bool) *JobCreate {
-	jc.Staged = &b
+	jc.mutation.SetStaged(b)
 	return jc
 }
 
-// AddTaskIDs adds the tasks edge to Task by ids.
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
 func (jc *JobCreate) AddTaskIDs(ids ...int) *JobCreate {
-	if jc.tasks == nil {
-		jc.tasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		jc.tasks[ids[i]] = struct{}{}
-	}
+	jc.mutation.AddTaskIDs(ids...)
 	return jc
 }
 
-// AddTasks adds the tasks edges to Task.
+// AddTasks adds the "tasks" edges to the Task entity.
 func (jc *JobCreate) AddTasks(t ...*Task) *JobCreate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -82,18 +70,13 @@ func (jc *JobCreate) AddTasks(t ...*Task) *JobCreate {
 	return jc.AddTaskIDs(ids...)
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (jc *JobCreate) AddTagIDs(ids ...int) *JobCreate {
-	if jc.tags == nil {
-		jc.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		jc.tags[ids[i]] = struct{}{}
-	}
+	jc.mutation.AddTagIDs(ids...)
 	return jc
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (jc *JobCreate) AddTags(t ...*Tag) *JobCreate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -102,16 +85,13 @@ func (jc *JobCreate) AddTags(t ...*Tag) *JobCreate {
 	return jc.AddTagIDs(ids...)
 }
 
-// SetPrevID sets the prev edge to Job by id.
+// SetPrevID sets the "prev" edge to the Job entity by ID.
 func (jc *JobCreate) SetPrevID(id int) *JobCreate {
-	if jc.prev == nil {
-		jc.prev = make(map[int]struct{})
-	}
-	jc.prev[id] = struct{}{}
+	jc.mutation.SetPrevID(id)
 	return jc
 }
 
-// SetNillablePrevID sets the prev edge to Job by id if the given value is not nil.
+// SetNillablePrevID sets the "prev" edge to the Job entity by ID if the given value is not nil.
 func (jc *JobCreate) SetNillablePrevID(id *int) *JobCreate {
 	if id != nil {
 		jc = jc.SetPrevID(*id)
@@ -119,21 +99,18 @@ func (jc *JobCreate) SetNillablePrevID(id *int) *JobCreate {
 	return jc
 }
 
-// SetPrev sets the prev edge to Job.
+// SetPrev sets the "prev" edge to the Job entity.
 func (jc *JobCreate) SetPrev(j *Job) *JobCreate {
 	return jc.SetPrevID(j.ID)
 }
 
-// SetNextID sets the next edge to Job by id.
+// SetNextID sets the "next" edge to the Job entity by ID.
 func (jc *JobCreate) SetNextID(id int) *JobCreate {
-	if jc.next == nil {
-		jc.next = make(map[int]struct{})
-	}
-	jc.next[id] = struct{}{}
+	jc.mutation.SetNextID(id)
 	return jc
 }
 
-// SetNillableNextID sets the next edge to Job by id if the given value is not nil.
+// SetNillableNextID sets the "next" edge to the Job entity by ID if the given value is not nil.
 func (jc *JobCreate) SetNillableNextID(id *int) *JobCreate {
 	if id != nil {
 		jc = jc.SetNextID(*id)
@@ -141,59 +118,67 @@ func (jc *JobCreate) SetNillableNextID(id *int) *JobCreate {
 	return jc
 }
 
-// SetNext sets the next edge to Job.
+// SetNext sets the "next" edge to the Job entity.
 func (jc *JobCreate) SetNext(j *Job) *JobCreate {
 	return jc.SetNextID(j.ID)
 }
 
-// SetOwnerID sets the owner edge to User by id.
+// SetOwnerID sets the "owner" edge to the User entity by ID.
 func (jc *JobCreate) SetOwnerID(id int) *JobCreate {
-	if jc.owner == nil {
-		jc.owner = make(map[int]struct{})
-	}
-	jc.owner[id] = struct{}{}
+	jc.mutation.SetOwnerID(id)
 	return jc
 }
 
-// SetOwner sets the owner edge to User.
+// SetOwner sets the "owner" edge to the User entity.
 func (jc *JobCreate) SetOwner(u *User) *JobCreate {
 	return jc.SetOwnerID(u.ID)
 }
 
+// Mutation returns the JobMutation object of the builder.
+func (jc *JobCreate) Mutation() *JobMutation {
+	return jc.mutation
+}
+
 // Save creates the Job in the database.
 func (jc *JobCreate) Save(ctx context.Context) (*Job, error) {
-	if jc.Name == nil {
-		return nil, errors.New("ent: missing required field \"Name\"")
+	var (
+		err  error
+		node *Job
+	)
+	jc.defaults()
+	if len(jc.hooks) == 0 {
+		if err = jc.check(); err != nil {
+			return nil, err
+		}
+		node, err = jc.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*JobMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = jc.check(); err != nil {
+				return nil, err
+			}
+			jc.mutation = mutation
+			if node, err = jc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(jc.hooks) - 1; i >= 0; i-- {
+			if jc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = jc.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, jc.mutation); err != nil {
+			return nil, err
+		}
 	}
-	if err := job.NameValidator(*jc.Name); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
-	}
-	if jc.CreationTime == nil {
-		v := job.DefaultCreationTime()
-		jc.CreationTime = &v
-	}
-	if jc.Content == nil {
-		return nil, errors.New("ent: missing required field \"Content\"")
-	}
-	if err := job.ContentValidator(*jc.Content); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
-	}
-	if jc.Staged == nil {
-		return nil, errors.New("ent: missing required field \"Staged\"")
-	}
-	if len(jc.prev) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
-	}
-	if len(jc.next) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
-	}
-	if len(jc.owner) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
-	}
-	if jc.owner == nil {
-		return nil, errors.New("ent: missing required edge \"owner\"")
-	}
-	return jc.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -205,9 +190,73 @@ func (jc *JobCreate) SaveX(ctx context.Context) *Job {
 	return v
 }
 
+// Exec executes the query.
+func (jc *JobCreate) Exec(ctx context.Context) error {
+	_, err := jc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (jc *JobCreate) ExecX(ctx context.Context) {
+	if err := jc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (jc *JobCreate) defaults() {
+	if _, ok := jc.mutation.CreationTime(); !ok {
+		v := job.DefaultCreationTime()
+		jc.mutation.SetCreationTime(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (jc *JobCreate) check() error {
+	if _, ok := jc.mutation.Name(); !ok {
+		return &ValidationError{Name: "Name", err: errors.New(`ent: missing required field "Job.Name"`)}
+	}
+	if v, ok := jc.mutation.Name(); ok {
+		if err := job.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Job.Name": %w`, err)}
+		}
+	}
+	if _, ok := jc.mutation.CreationTime(); !ok {
+		return &ValidationError{Name: "CreationTime", err: errors.New(`ent: missing required field "Job.CreationTime"`)}
+	}
+	if _, ok := jc.mutation.Content(); !ok {
+		return &ValidationError{Name: "Content", err: errors.New(`ent: missing required field "Job.Content"`)}
+	}
+	if v, ok := jc.mutation.Content(); ok {
+		if err := job.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "Content", err: fmt.Errorf(`ent: validator failed for field "Job.Content": %w`, err)}
+		}
+	}
+	if _, ok := jc.mutation.Staged(); !ok {
+		return &ValidationError{Name: "Staged", err: errors.New(`ent: missing required field "Job.Staged"`)}
+	}
+	if _, ok := jc.mutation.OwnerID(); !ok {
+		return &ValidationError{Name: "owner", err: errors.New(`ent: missing required edge "Job.owner"`)}
+	}
+	return nil
+}
+
 func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
+	_node, _spec := jc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, jc.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (jc *JobCreate) createSpec() (*Job, *sqlgraph.CreateSpec) {
 	var (
-		j     = &Job{config: jc.config}
+		_node = &Job{config: jc.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: job.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -216,39 +265,39 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 			},
 		}
 	)
-	if value := jc.Name; value != nil {
+	if value, ok := jc.mutation.Name(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldName,
 		})
-		j.Name = *value
+		_node.Name = value
 	}
-	if value := jc.CreationTime; value != nil {
+	if value, ok := jc.mutation.CreationTime(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldCreationTime,
 		})
-		j.CreationTime = *value
+		_node.CreationTime = value
 	}
-	if value := jc.Content; value != nil {
+	if value, ok := jc.mutation.Content(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldContent,
 		})
-		j.Content = *value
+		_node.Content = value
 	}
-	if value := jc.Staged; value != nil {
+	if value, ok := jc.mutation.Staged(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldStaged,
 		})
-		j.Staged = *value
+		_node.Staged = value
 	}
-	if nodes := jc.tasks; len(nodes) > 0 {
+	if nodes := jc.mutation.TasksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -262,12 +311,12 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := jc.tags; len(nodes) > 0 {
+	if nodes := jc.mutation.TagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -281,12 +330,12 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := jc.prev; len(nodes) > 0 {
+	if nodes := jc.mutation.PrevIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: true,
@@ -300,12 +349,13 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.job_next = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := jc.next; len(nodes) > 0 {
+	if nodes := jc.mutation.NextIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -319,12 +369,12 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := jc.owner; len(nodes) > 0 {
+	if nodes := jc.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -338,18 +388,95 @@ func (jc *JobCreate) sqlSave(ctx context.Context) (*Job, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.user_jobs = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, jc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// JobCreateBulk is the builder for creating many Job entities in bulk.
+type JobCreateBulk struct {
+	config
+	builders []*JobCreate
+}
+
+// Save creates the Job entities in the database.
+func (jcb *JobCreateBulk) Save(ctx context.Context) ([]*Job, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(jcb.builders))
+	nodes := make([]*Job, len(jcb.builders))
+	mutators := make([]Mutator, len(jcb.builders))
+	for i := range jcb.builders {
+		func(i int, root context.Context) {
+			builder := jcb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*JobMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, jcb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, jcb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	j.ID = int(id)
-	return j, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, jcb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (jcb *JobCreateBulk) SaveX(ctx context.Context) []*Job {
+	v, err := jcb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (jcb *JobCreateBulk) Exec(ctx context.Context) error {
+	_, err := jcb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (jcb *JobCreateBulk) ExecX(ctx context.Context) {
+	if err := jcb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

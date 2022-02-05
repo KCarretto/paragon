@@ -4,8 +4,6 @@ package task
 
 import (
 	"time"
-
-	"github.com/kcarretto/paragon/ent/schema"
 )
 
 const (
@@ -13,46 +11,51 @@ const (
 	Label = "task"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldQueueTime holds the string denoting the queuetime vertex property in the database.
+	// FieldQueueTime holds the string denoting the queuetime field in the database.
 	FieldQueueTime = "queue_time"
-	// FieldLastChangedTime holds the string denoting the lastchangedtime vertex property in the database.
+	// FieldLastChangedTime holds the string denoting the lastchangedtime field in the database.
 	FieldLastChangedTime = "last_changed_time"
-	// FieldClaimTime holds the string denoting the claimtime vertex property in the database.
+	// FieldClaimTime holds the string denoting the claimtime field in the database.
 	FieldClaimTime = "claim_time"
-	// FieldExecStartTime holds the string denoting the execstarttime vertex property in the database.
+	// FieldExecStartTime holds the string denoting the execstarttime field in the database.
 	FieldExecStartTime = "exec_start_time"
-	// FieldExecStopTime holds the string denoting the execstoptime vertex property in the database.
+	// FieldExecStopTime holds the string denoting the execstoptime field in the database.
 	FieldExecStopTime = "exec_stop_time"
-	// FieldContent holds the string denoting the content vertex property in the database.
+	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
-	// FieldOutput holds the string denoting the output vertex property in the database.
+	// FieldOutput holds the string denoting the output field in the database.
 	FieldOutput = "output"
-	// FieldError holds the string denoting the error vertex property in the database.
+	// FieldError holds the string denoting the error field in the database.
 	FieldError = "error"
-	// FieldSessionID holds the string denoting the sessionid vertex property in the database.
+	// FieldSessionID holds the string denoting the sessionid field in the database.
 	FieldSessionID = "session_id"
-
+	// EdgeTags holds the string denoting the tags edge name in mutations.
+	EdgeTags = "tags"
+	// EdgeJob holds the string denoting the job edge name in mutations.
+	EdgeJob = "job"
+	// EdgeTarget holds the string denoting the target edge name in mutations.
+	EdgeTarget = "target"
 	// Table holds the table name of the task in the database.
 	Table = "tasks"
-	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
+	// TagsTable is the table that holds the tags relation/edge. The primary key declared below.
 	TagsTable = "task_tags"
 	// TagsInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagsInverseTable = "tags"
-	// JobTable is the table the holds the job relation/edge.
+	// JobTable is the table that holds the job relation/edge.
 	JobTable = "tasks"
 	// JobInverseTable is the table name for the Job entity.
 	// It exists in this package in order to avoid circular dependency with the "job" package.
 	JobInverseTable = "jobs"
 	// JobColumn is the table column denoting the job relation/edge.
-	JobColumn = "job_id"
-	// TargetTable is the table the holds the target relation/edge.
+	JobColumn = "job_tasks"
+	// TargetTable is the table that holds the target relation/edge.
 	TargetTable = "tasks"
 	// TargetInverseTable is the table name for the Target entity.
 	// It exists in this package in order to avoid circular dependency with the "target" package.
 	TargetInverseTable = "targets"
 	// TargetColumn is the table column denoting the target relation/edge.
-	TargetColumn = "target_id"
+	TargetColumn = "target_tasks"
 )
 
 // Columns holds all SQL columns for task fields.
@@ -69,10 +72,11 @@ var Columns = []string{
 	FieldSessionID,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the Task type.
+// ForeignKeys holds the SQL foreign-keys that are owned by the "tasks"
+// table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"job_id",
-	"target_id",
+	"job_tasks",
+	"target_tasks",
 }
 
 var (
@@ -81,21 +85,26 @@ var (
 	TagsPrimaryKey = []string{"task_id", "tag_id"}
 )
 
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
+	return false
+}
+
 var (
-	fields = schema.Task{}.Fields()
-
-	// descQueueTime is the schema descriptor for QueueTime field.
-	descQueueTime = fields[0].Descriptor()
-	// DefaultQueueTime holds the default value on creation for the QueueTime field.
-	DefaultQueueTime = descQueueTime.Default.(func() time.Time)
-
-	// descContent is the schema descriptor for Content field.
-	descContent = fields[5].Descriptor()
+	// DefaultQueueTime holds the default value on creation for the "QueueTime" field.
+	DefaultQueueTime func() time.Time
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
-	ContentValidator = descContent.Validators[0].(func(string) error)
-
-	// descSessionID is the schema descriptor for SessionID field.
-	descSessionID = fields[8].Descriptor()
+	ContentValidator func(string) error
 	// SessionIDValidator is a validator for the "SessionID" field. It is called by the builders before save.
-	SessionIDValidator = descSessionID.Validators[0].(func(string) error)
+	SessionIDValidator func(string) error
 )
