@@ -1,3 +1,4 @@
+//go:build !dev
 // +build !dev
 
 package main
@@ -10,7 +11,7 @@ import (
 	"strconv"
 	"time"
 
-	entsql "github.com/facebookincubator/ent/dialect/sql"
+	entsql "entgo.io/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent"
 	"github.com/kcarretto/paragon/ent/migrate"
 

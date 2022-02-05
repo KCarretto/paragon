@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/predicate"
@@ -21,17 +21,19 @@ type LinkQuery struct {
 	config
 	limit      *int
 	offset     *int
-	order      []Order
-	unique     []string
+	unique     *bool
+	order      []OrderFunc
+	fields     []string
 	predicates []predicate.Link
 	// eager-loading edges.
 	withFile *FileQuery
 	withFKs  bool
-	// intermediate query.
-	sql *sql.Selector
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the builder.
+// Where adds a new predicate for the LinkQuery builder.
 func (lq *LinkQuery) Where(ps ...predicate.Link) *LinkQuery {
 	lq.predicates = append(lq.predicates, ps...)
 	return lq
@@ -49,60 +51,79 @@ func (lq *LinkQuery) Offset(offset int) *LinkQuery {
 	return lq
 }
 
+// Unique configures the query builder to filter duplicate records on query.
+// By default, unique is set to true, and can be disabled using this method.
+func (lq *LinkQuery) Unique(unique bool) *LinkQuery {
+	lq.unique = &unique
+	return lq
+}
+
 // Order adds an order step to the query.
-func (lq *LinkQuery) Order(o ...Order) *LinkQuery {
+func (lq *LinkQuery) Order(o ...OrderFunc) *LinkQuery {
 	lq.order = append(lq.order, o...)
 	return lq
 }
 
-// QueryFile chains the current query on the file edge.
+// QueryFile chains the current query on the "file" edge.
 func (lq *LinkQuery) QueryFile() *FileQuery {
 	query := &FileQuery{config: lq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(link.Table, link.FieldID, lq.sqlQuery()),
-		sqlgraph.To(file.Table, file.FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, link.FileTable, link.FileColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := lq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(link.Table, link.FieldID, selector),
+			sqlgraph.To(file.Table, file.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, link.FileTable, link.FileColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(lq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// First returns the first Link entity in the query. Returns *ErrNotFound when no link was found.
+// First returns the first Link entity from the query.
+// Returns a *NotFoundError when no Link was found.
 func (lq *LinkQuery) First(ctx context.Context) (*Link, error) {
-	ls, err := lq.Limit(1).All(ctx)
+	nodes, err := lq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(ls) == 0 {
-		return nil, &ErrNotFound{link.Label}
+	if len(nodes) == 0 {
+		return nil, &NotFoundError{link.Label}
 	}
-	return ls[0], nil
+	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
 func (lq *LinkQuery) FirstX(ctx context.Context) *Link {
-	l, err := lq.First(ctx)
+	node, err := lq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
-	return l
+	return node
 }
 
-// FirstID returns the first Link id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Link ID from the query.
+// Returns a *NotFoundError when no Link ID was found.
 func (lq *LinkQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = lq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{link.Label}
+		err = &NotFoundError{link.Label}
 		return
 	}
 	return ids[0], nil
 }
 
-// FirstXID is like FirstID, but panics if an error occurs.
-func (lq *LinkQuery) FirstXID(ctx context.Context) int {
+// FirstIDX is like FirstID, but panics if an error occurs.
+func (lq *LinkQuery) FirstIDX(ctx context.Context) int {
 	id, err := lq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -110,32 +131,36 @@ func (lq *LinkQuery) FirstXID(ctx context.Context) int {
 	return id
 }
 
-// Only returns the only Link entity in the query, returns an error if not exactly one entity was returned.
+// Only returns a single Link entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when exactly one Link entity is not found.
+// Returns a *NotFoundError when no Link entities are found.
 func (lq *LinkQuery) Only(ctx context.Context) (*Link, error) {
-	ls, err := lq.Limit(2).All(ctx)
+	nodes, err := lq.Limit(2).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	switch len(ls) {
+	switch len(nodes) {
 	case 1:
-		return ls[0], nil
+		return nodes[0], nil
 	case 0:
-		return nil, &ErrNotFound{link.Label}
+		return nil, &NotFoundError{link.Label}
 	default:
-		return nil, &ErrNotSingular{link.Label}
+		return nil, &NotSingularError{link.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
 func (lq *LinkQuery) OnlyX(ctx context.Context) *Link {
-	l, err := lq.Only(ctx)
+	node, err := lq.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return l
+	return node
 }
 
-// OnlyID returns the only Link id in the query, returns an error if not exactly one id was returned.
+// OnlyID is like Only, but returns the only Link ID in the query.
+// Returns a *NotSingularError when exactly one Link ID is not found.
+// Returns a *NotFoundError when no entities are found.
 func (lq *LinkQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = lq.Limit(2).IDs(ctx); err != nil {
@@ -145,15 +170,15 @@ func (lq *LinkQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{link.Label}
+		err = &NotFoundError{link.Label}
 	default:
-		err = &ErrNotSingular{link.Label}
+		err = &NotSingularError{link.Label}
 	}
 	return
 }
 
-// OnlyXID is like OnlyID, but panics if an error occurs.
-func (lq *LinkQuery) OnlyXID(ctx context.Context) int {
+// OnlyIDX is like OnlyID, but panics if an error occurs.
+func (lq *LinkQuery) OnlyIDX(ctx context.Context) int {
 	id, err := lq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -163,19 +188,22 @@ func (lq *LinkQuery) OnlyXID(ctx context.Context) int {
 
 // All executes the query and returns a list of Links.
 func (lq *LinkQuery) All(ctx context.Context) ([]*Link, error) {
+	if err := lq.prepareQuery(ctx); err != nil {
+		return nil, err
+	}
 	return lq.sqlAll(ctx)
 }
 
 // AllX is like All, but panics if an error occurs.
 func (lq *LinkQuery) AllX(ctx context.Context) []*Link {
-	ls, err := lq.All(ctx)
+	nodes, err := lq.All(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return ls
+	return nodes
 }
 
-// IDs executes the query and returns a list of Link ids.
+// IDs executes the query and returns a list of Link IDs.
 func (lq *LinkQuery) IDs(ctx context.Context) ([]int, error) {
 	var ids []int
 	if err := lq.Select(link.FieldID).Scan(ctx, &ids); err != nil {
@@ -195,6 +223,9 @@ func (lq *LinkQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (lq *LinkQuery) Count(ctx context.Context) (int, error) {
+	if err := lq.prepareQuery(ctx); err != nil {
+		return 0, err
+	}
 	return lq.sqlCount(ctx)
 }
 
@@ -209,6 +240,9 @@ func (lq *LinkQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (lq *LinkQuery) Exist(ctx context.Context) (bool, error) {
+	if err := lq.prepareQuery(ctx); err != nil {
+		return false, err
+	}
 	return lq.sqlExist(ctx)
 }
 
@@ -221,23 +255,27 @@ func (lq *LinkQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the query builder, including all associated steps. It can be
+// Clone returns a duplicate of the LinkQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
 func (lq *LinkQuery) Clone() *LinkQuery {
+	if lq == nil {
+		return nil
+	}
 	return &LinkQuery{
 		config:     lq.config,
 		limit:      lq.limit,
 		offset:     lq.offset,
-		order:      append([]Order{}, lq.order...),
-		unique:     append([]string{}, lq.unique...),
+		order:      append([]OrderFunc{}, lq.order...),
 		predicates: append([]predicate.Link{}, lq.predicates...),
+		withFile:   lq.withFile.Clone(),
 		// clone intermediate query.
-		sql: lq.sql.Clone(),
+		sql:  lq.sql.Clone(),
+		path: lq.path,
 	}
 }
 
-//  WithFile tells the query-builder to eager-loads the nodes that are connected to
-// the "file" edge. The optional arguments used to configure the query builder of the edge.
+// WithFile tells the query-builder to eager-load the nodes that are connected to
+// the "file" edge. The optional arguments are used to configure the query builder of the edge.
 func (lq *LinkQuery) WithFile(opts ...func(*FileQuery)) *LinkQuery {
 	query := &FileQuery{config: lq.config}
 	for _, opt := range opts {
@@ -247,7 +285,7 @@ func (lq *LinkQuery) WithFile(opts ...func(*FileQuery)) *LinkQuery {
 	return lq
 }
 
-// GroupBy used to group vertices by one or more fields/columns.
+// GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
@@ -265,11 +303,17 @@ func (lq *LinkQuery) WithFile(opts ...func(*FileQuery)) *LinkQuery {
 func (lq *LinkQuery) GroupBy(field string, fields ...string) *LinkGroupBy {
 	group := &LinkGroupBy{config: lq.config}
 	group.fields = append([]string{field}, fields...)
-	group.sql = lq.sqlQuery()
+	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
+		if err := lq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		return lq.sqlQuery(ctx), nil
+	}
 	return group
 }
 
-// Select one or more fields from the given query.
+// Select allows the selection one or more fields/columns for the given query,
+// instead of selecting all fields in the entity.
 //
 // Example:
 //
@@ -281,18 +325,35 @@ func (lq *LinkQuery) GroupBy(field string, fields ...string) *LinkGroupBy {
 //		Select(link.FieldAlias).
 //		Scan(ctx, &v)
 //
-func (lq *LinkQuery) Select(field string, fields ...string) *LinkSelect {
-	selector := &LinkSelect{config: lq.config}
-	selector.fields = append([]string{field}, fields...)
-	selector.sql = lq.sqlQuery()
-	return selector
+func (lq *LinkQuery) Select(fields ...string) *LinkSelect {
+	lq.fields = append(lq.fields, fields...)
+	return &LinkSelect{LinkQuery: lq}
+}
+
+func (lq *LinkQuery) prepareQuery(ctx context.Context) error {
+	for _, f := range lq.fields {
+		if !link.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+		}
+	}
+	if lq.path != nil {
+		prev, err := lq.path(ctx)
+		if err != nil {
+			return err
+		}
+		lq.sql = prev
+	}
+	return nil
 }
 
 func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 	var (
-		nodes   []*Link
-		withFKs = lq.withFKs
-		_spec   = lq.querySpec()
+		nodes       = []*Link{}
+		withFKs     = lq.withFKs
+		_spec       = lq.querySpec()
+		loadedTypes = [1]bool{
+			lq.withFile != nil,
+		}
 	)
 	if lq.withFile != nil {
 		withFKs = true
@@ -300,26 +361,22 @@ func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, link.ForeignKeys...)
 	}
-	_spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Link{config: lq.config}
 		nodes = append(nodes, node)
-		values := node.scanValues()
-		if withFKs {
-			values = append(values, node.fkValues()...)
-		}
-		return values
+		return node.scanValues(columns)
 	}
-	_spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(columns []string, values []interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		return node.assignValues(values...)
+		node.Edges.loadedTypes = loadedTypes
+		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, lq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -328,10 +385,14 @@ func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Link)
 		for i := range nodes {
-			if fk := nodes[i].file_id; fk != nil {
-				ids = append(ids, *fk)
-				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			if nodes[i].file_links == nil {
+				continue
 			}
+			fk := *nodes[i].file_links
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
 		query.Where(file.IDIn(ids...))
 		neighbors, err := query.All(ctx)
@@ -341,7 +402,7 @@ func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "file_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "file_links" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.File = n
@@ -354,13 +415,17 @@ func (lq *LinkQuery) sqlAll(ctx context.Context) ([]*Link, error) {
 
 func (lq *LinkQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := lq.querySpec()
+	_spec.Node.Columns = lq.fields
+	if len(lq.fields) > 0 {
+		_spec.Unique = lq.unique != nil && *lq.unique
+	}
 	return sqlgraph.CountNodes(ctx, lq.driver, _spec)
 }
 
 func (lq *LinkQuery) sqlExist(ctx context.Context) (bool, error) {
 	n, err := lq.sqlCount(ctx)
 	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %v", err)
+		return false, fmt.Errorf("ent: check existence: %w", err)
 	}
 	return n > 0, nil
 }
@@ -377,6 +442,18 @@ func (lq *LinkQuery) querySpec() *sqlgraph.QuerySpec {
 		},
 		From:   lq.sql,
 		Unique: true,
+	}
+	if unique := lq.unique; unique != nil {
+		_spec.Unique = *unique
+	}
+	if fields := lq.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, link.FieldID)
+		for i := range fields {
+			if fields[i] != link.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
+			}
+		}
 	}
 	if ps := lq.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -401,13 +478,20 @@ func (lq *LinkQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (lq *LinkQuery) sqlQuery() *sql.Selector {
+func (lq *LinkQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(lq.driver.Dialect())
 	t1 := builder.Table(link.Table)
-	selector := builder.Select(t1.Columns(link.Columns...)...).From(t1)
+	columns := lq.fields
+	if len(columns) == 0 {
+		columns = link.Columns
+	}
+	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if lq.sql != nil {
 		selector = lq.sql
-		selector.Select(selector.Columns(link.Columns...)...)
+		selector.Select(selector.Columns(columns...)...)
+	}
+	if lq.unique != nil && *lq.unique {
+		selector.Distinct()
 	}
 	for _, p := range lq.predicates {
 		p(selector)
@@ -426,23 +510,29 @@ func (lq *LinkQuery) sqlQuery() *sql.Selector {
 	return selector
 }
 
-// LinkGroupBy is the builder for group-by Link entities.
+// LinkGroupBy is the group-by builder for Link entities.
 type LinkGroupBy struct {
 	config
 	fields []string
-	fns    []Aggregate
-	// intermediate query.
-	sql *sql.Selector
+	fns    []AggregateFunc
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (lgb *LinkGroupBy) Aggregate(fns ...Aggregate) *LinkGroupBy {
+func (lgb *LinkGroupBy) Aggregate(fns ...AggregateFunc) *LinkGroupBy {
 	lgb.fns = append(lgb.fns, fns...)
 	return lgb
 }
 
-// Scan applies the group-by query and scan the result into the given value.
+// Scan applies the group-by query and scans the result into the given value.
 func (lgb *LinkGroupBy) Scan(ctx context.Context, v interface{}) error {
+	query, err := lgb.path(ctx)
+	if err != nil {
+		return err
+	}
+	lgb.sql = query
 	return lgb.sqlScan(ctx, v)
 }
 
@@ -453,7 +543,8 @@ func (lgb *LinkGroupBy) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from group-by. It is only allowed when querying group-by with one field.
+// Strings returns list of strings from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (lgb *LinkGroupBy) Strings(ctx context.Context) ([]string, error) {
 	if len(lgb.fields) > 1 {
 		return nil, errors.New("ent: LinkGroupBy.Strings is not achievable when grouping more than 1 field")
@@ -474,7 +565,35 @@ func (lgb *LinkGroupBy) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from group-by. It is only allowed when querying group-by with one field.
+// String returns a single string from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (lgb *LinkGroupBy) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = lgb.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkGroupBy.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (lgb *LinkGroupBy) StringX(ctx context.Context) string {
+	v, err := lgb.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (lgb *LinkGroupBy) Ints(ctx context.Context) ([]int, error) {
 	if len(lgb.fields) > 1 {
 		return nil, errors.New("ent: LinkGroupBy.Ints is not achievable when grouping more than 1 field")
@@ -495,7 +614,35 @@ func (lgb *LinkGroupBy) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from group-by. It is only allowed when querying group-by with one field.
+// Int returns a single int from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (lgb *LinkGroupBy) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = lgb.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkGroupBy.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (lgb *LinkGroupBy) IntX(ctx context.Context) int {
+	v, err := lgb.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (lgb *LinkGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 	if len(lgb.fields) > 1 {
 		return nil, errors.New("ent: LinkGroupBy.Float64s is not achievable when grouping more than 1 field")
@@ -516,7 +663,35 @@ func (lgb *LinkGroupBy) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from group-by. It is only allowed when querying group-by with one field.
+// Float64 returns a single float64 from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (lgb *LinkGroupBy) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = lgb.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkGroupBy.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (lgb *LinkGroupBy) Float64X(ctx context.Context) float64 {
+	v, err := lgb.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (lgb *LinkGroupBy) Bools(ctx context.Context) ([]bool, error) {
 	if len(lgb.fields) > 1 {
 		return nil, errors.New("ent: LinkGroupBy.Bools is not achievable when grouping more than 1 field")
@@ -537,9 +712,45 @@ func (lgb *LinkGroupBy) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (lgb *LinkGroupBy) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = lgb.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkGroupBy.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (lgb *LinkGroupBy) BoolX(ctx context.Context) bool {
+	v, err := lgb.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (lgb *LinkGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+	for _, f := range lgb.fields {
+		if !link.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
+		}
+	}
+	selector := lgb.sqlQuery()
+	if err := selector.Err(); err != nil {
+		return err
+	}
 	rows := &sql.Rows{}
-	query, args := lgb.sqlQuery().Query()
+	query, args := selector.Query()
 	if err := lgb.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -548,25 +759,37 @@ func (lgb *LinkGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 }
 
 func (lgb *LinkGroupBy) sqlQuery() *sql.Selector {
-	selector := lgb.sql
-	columns := make([]string, 0, len(lgb.fields)+len(lgb.fns))
-	columns = append(columns, lgb.fields...)
+	selector := lgb.sql.Select()
+	aggregation := make([]string, 0, len(lgb.fns))
 	for _, fn := range lgb.fns {
-		columns = append(columns, fn(selector))
+		aggregation = append(aggregation, fn(selector))
 	}
-	return selector.Select(columns...).GroupBy(lgb.fields...)
+	// If no columns were selected in a custom aggregation function, the default
+	// selection is the fields used for "group-by", and the aggregation functions.
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(lgb.fields)+len(lgb.fns))
+		for _, f := range lgb.fields {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	return selector.GroupBy(selector.Columns(lgb.fields...)...)
 }
 
-// LinkSelect is the builder for select fields of Link entities.
+// LinkSelect is the builder for selecting fields of Link entities.
 type LinkSelect struct {
-	config
-	fields []string
-	// intermediate queries.
+	*LinkQuery
+	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
 
-// Scan applies the selector query and scan the result into the given value.
+// Scan applies the selector query and scans the result into the given value.
 func (ls *LinkSelect) Scan(ctx context.Context, v interface{}) error {
+	if err := ls.prepareQuery(ctx); err != nil {
+		return err
+	}
+	ls.sql = ls.LinkQuery.sqlQuery(ctx)
 	return ls.sqlScan(ctx, v)
 }
 
@@ -577,7 +800,7 @@ func (ls *LinkSelect) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from selector. It is only allowed when selecting one field.
+// Strings returns list of strings from a selector. It is only allowed when selecting one field.
 func (ls *LinkSelect) Strings(ctx context.Context) ([]string, error) {
 	if len(ls.fields) > 1 {
 		return nil, errors.New("ent: LinkSelect.Strings is not achievable when selecting more than 1 field")
@@ -598,7 +821,33 @@ func (ls *LinkSelect) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from selector. It is only allowed when selecting one field.
+// String returns a single string from a selector. It is only allowed when selecting one field.
+func (ls *LinkSelect) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = ls.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkSelect.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (ls *LinkSelect) StringX(ctx context.Context) string {
+	v, err := ls.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from a selector. It is only allowed when selecting one field.
 func (ls *LinkSelect) Ints(ctx context.Context) ([]int, error) {
 	if len(ls.fields) > 1 {
 		return nil, errors.New("ent: LinkSelect.Ints is not achievable when selecting more than 1 field")
@@ -619,7 +868,33 @@ func (ls *LinkSelect) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from selector. It is only allowed when selecting one field.
+// Int returns a single int from a selector. It is only allowed when selecting one field.
+func (ls *LinkSelect) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = ls.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkSelect.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (ls *LinkSelect) IntX(ctx context.Context) int {
+	v, err := ls.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
 func (ls *LinkSelect) Float64s(ctx context.Context) ([]float64, error) {
 	if len(ls.fields) > 1 {
 		return nil, errors.New("ent: LinkSelect.Float64s is not achievable when selecting more than 1 field")
@@ -640,7 +915,33 @@ func (ls *LinkSelect) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from selector. It is only allowed when selecting one field.
+// Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
+func (ls *LinkSelect) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = ls.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkSelect.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (ls *LinkSelect) Float64X(ctx context.Context) float64 {
+	v, err := ls.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from a selector. It is only allowed when selecting one field.
 func (ls *LinkSelect) Bools(ctx context.Context) ([]bool, error) {
 	if len(ls.fields) > 1 {
 		return nil, errors.New("ent: LinkSelect.Bools is not achievable when selecting more than 1 field")
@@ -661,18 +962,38 @@ func (ls *LinkSelect) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a selector. It is only allowed when selecting one field.
+func (ls *LinkSelect) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = ls.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{link.Label}
+	default:
+		err = fmt.Errorf("ent: LinkSelect.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (ls *LinkSelect) BoolX(ctx context.Context) bool {
+	v, err := ls.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (ls *LinkSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
-	query, args := ls.sqlQuery().Query()
+	query, args := ls.sql.Query()
 	if err := ls.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
-}
-
-func (ls *LinkSelect) sqlQuery() sql.Querier {
-	selector := ls.sql
-	selector.Select(selector.Columns(ls.fields...)...)
-	return selector
 }

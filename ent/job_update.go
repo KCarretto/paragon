@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -21,42 +21,29 @@ import (
 // JobUpdate is the builder for updating Job entities.
 type JobUpdate struct {
 	config
-	Name         *string
-	CreationTime *time.Time
-	Content      *string
-	Staged       *bool
-	tasks        map[int]struct{}
-	tags         map[int]struct{}
-	prev         map[int]struct{}
-	next         map[int]struct{}
-	owner        map[int]struct{}
-	removedTasks map[int]struct{}
-	removedTags  map[int]struct{}
-	clearedPrev  bool
-	clearedNext  bool
-	clearedOwner bool
-	predicates   []predicate.Job
+	hooks    []Hook
+	mutation *JobMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the JobUpdate builder.
 func (ju *JobUpdate) Where(ps ...predicate.Job) *JobUpdate {
-	ju.predicates = append(ju.predicates, ps...)
+	ju.mutation.Where(ps...)
 	return ju
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (ju *JobUpdate) SetName(s string) *JobUpdate {
-	ju.Name = &s
+	ju.mutation.SetName(s)
 	return ju
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (ju *JobUpdate) SetCreationTime(t time.Time) *JobUpdate {
-	ju.CreationTime = &t
+	ju.mutation.SetCreationTime(t)
 	return ju
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (ju *JobUpdate) SetNillableCreationTime(t *time.Time) *JobUpdate {
 	if t != nil {
 		ju.SetCreationTime(*t)
@@ -64,30 +51,25 @@ func (ju *JobUpdate) SetNillableCreationTime(t *time.Time) *JobUpdate {
 	return ju
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (ju *JobUpdate) SetContent(s string) *JobUpdate {
-	ju.Content = &s
+	ju.mutation.SetContent(s)
 	return ju
 }
 
-// SetStaged sets the Staged field.
+// SetStaged sets the "Staged" field.
 func (ju *JobUpdate) SetStaged(b bool) *JobUpdate {
-	ju.Staged = &b
+	ju.mutation.SetStaged(b)
 	return ju
 }
 
-// AddTaskIDs adds the tasks edge to Task by ids.
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
 func (ju *JobUpdate) AddTaskIDs(ids ...int) *JobUpdate {
-	if ju.tasks == nil {
-		ju.tasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		ju.tasks[ids[i]] = struct{}{}
-	}
+	ju.mutation.AddTaskIDs(ids...)
 	return ju
 }
 
-// AddTasks adds the tasks edges to Task.
+// AddTasks adds the "tasks" edges to the Task entity.
 func (ju *JobUpdate) AddTasks(t ...*Task) *JobUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -96,18 +78,13 @@ func (ju *JobUpdate) AddTasks(t ...*Task) *JobUpdate {
 	return ju.AddTaskIDs(ids...)
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (ju *JobUpdate) AddTagIDs(ids ...int) *JobUpdate {
-	if ju.tags == nil {
-		ju.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		ju.tags[ids[i]] = struct{}{}
-	}
+	ju.mutation.AddTagIDs(ids...)
 	return ju
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (ju *JobUpdate) AddTags(t ...*Tag) *JobUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -116,16 +93,13 @@ func (ju *JobUpdate) AddTags(t ...*Tag) *JobUpdate {
 	return ju.AddTagIDs(ids...)
 }
 
-// SetPrevID sets the prev edge to Job by id.
+// SetPrevID sets the "prev" edge to the Job entity by ID.
 func (ju *JobUpdate) SetPrevID(id int) *JobUpdate {
-	if ju.prev == nil {
-		ju.prev = make(map[int]struct{})
-	}
-	ju.prev[id] = struct{}{}
+	ju.mutation.SetPrevID(id)
 	return ju
 }
 
-// SetNillablePrevID sets the prev edge to Job by id if the given value is not nil.
+// SetNillablePrevID sets the "prev" edge to the Job entity by ID if the given value is not nil.
 func (ju *JobUpdate) SetNillablePrevID(id *int) *JobUpdate {
 	if id != nil {
 		ju = ju.SetPrevID(*id)
@@ -133,21 +107,18 @@ func (ju *JobUpdate) SetNillablePrevID(id *int) *JobUpdate {
 	return ju
 }
 
-// SetPrev sets the prev edge to Job.
+// SetPrev sets the "prev" edge to the Job entity.
 func (ju *JobUpdate) SetPrev(j *Job) *JobUpdate {
 	return ju.SetPrevID(j.ID)
 }
 
-// SetNextID sets the next edge to Job by id.
+// SetNextID sets the "next" edge to the Job entity by ID.
 func (ju *JobUpdate) SetNextID(id int) *JobUpdate {
-	if ju.next == nil {
-		ju.next = make(map[int]struct{})
-	}
-	ju.next[id] = struct{}{}
+	ju.mutation.SetNextID(id)
 	return ju
 }
 
-// SetNillableNextID sets the next edge to Job by id if the given value is not nil.
+// SetNillableNextID sets the "next" edge to the Job entity by ID if the given value is not nil.
 func (ju *JobUpdate) SetNillableNextID(id *int) *JobUpdate {
 	if id != nil {
 		ju = ju.SetNextID(*id)
@@ -155,37 +126,40 @@ func (ju *JobUpdate) SetNillableNextID(id *int) *JobUpdate {
 	return ju
 }
 
-// SetNext sets the next edge to Job.
+// SetNext sets the "next" edge to the Job entity.
 func (ju *JobUpdate) SetNext(j *Job) *JobUpdate {
 	return ju.SetNextID(j.ID)
 }
 
-// SetOwnerID sets the owner edge to User by id.
+// SetOwnerID sets the "owner" edge to the User entity by ID.
 func (ju *JobUpdate) SetOwnerID(id int) *JobUpdate {
-	if ju.owner == nil {
-		ju.owner = make(map[int]struct{})
-	}
-	ju.owner[id] = struct{}{}
+	ju.mutation.SetOwnerID(id)
 	return ju
 }
 
-// SetOwner sets the owner edge to User.
+// SetOwner sets the "owner" edge to the User entity.
 func (ju *JobUpdate) SetOwner(u *User) *JobUpdate {
 	return ju.SetOwnerID(u.ID)
 }
 
-// RemoveTaskIDs removes the tasks edge to Task by ids.
-func (ju *JobUpdate) RemoveTaskIDs(ids ...int) *JobUpdate {
-	if ju.removedTasks == nil {
-		ju.removedTasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		ju.removedTasks[ids[i]] = struct{}{}
-	}
+// Mutation returns the JobMutation object of the builder.
+func (ju *JobUpdate) Mutation() *JobMutation {
+	return ju.mutation
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (ju *JobUpdate) ClearTasks() *JobUpdate {
+	ju.mutation.ClearTasks()
 	return ju
 }
 
-// RemoveTasks removes tasks edges to Task.
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (ju *JobUpdate) RemoveTaskIDs(ids ...int) *JobUpdate {
+	ju.mutation.RemoveTaskIDs(ids...)
+	return ju
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
 func (ju *JobUpdate) RemoveTasks(t ...*Task) *JobUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -194,18 +168,19 @@ func (ju *JobUpdate) RemoveTasks(t ...*Task) *JobUpdate {
 	return ju.RemoveTaskIDs(ids...)
 }
 
-// RemoveTagIDs removes the tags edge to Tag by ids.
-func (ju *JobUpdate) RemoveTagIDs(ids ...int) *JobUpdate {
-	if ju.removedTags == nil {
-		ju.removedTags = make(map[int]struct{})
-	}
-	for i := range ids {
-		ju.removedTags[ids[i]] = struct{}{}
-	}
+// ClearTags clears all "tags" edges to the Tag entity.
+func (ju *JobUpdate) ClearTags() *JobUpdate {
+	ju.mutation.ClearTags()
 	return ju
 }
 
-// RemoveTags removes tags edges to Tag.
+// RemoveTagIDs removes the "tags" edge to Tag entities by IDs.
+func (ju *JobUpdate) RemoveTagIDs(ids ...int) *JobUpdate {
+	ju.mutation.RemoveTagIDs(ids...)
+	return ju
+}
+
+// RemoveTags removes "tags" edges to Tag entities.
 func (ju *JobUpdate) RemoveTags(t ...*Tag) *JobUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -214,49 +189,60 @@ func (ju *JobUpdate) RemoveTags(t ...*Tag) *JobUpdate {
 	return ju.RemoveTagIDs(ids...)
 }
 
-// ClearPrev clears the prev edge to Job.
+// ClearPrev clears the "prev" edge to the Job entity.
 func (ju *JobUpdate) ClearPrev() *JobUpdate {
-	ju.clearedPrev = true
+	ju.mutation.ClearPrev()
 	return ju
 }
 
-// ClearNext clears the next edge to Job.
+// ClearNext clears the "next" edge to the Job entity.
 func (ju *JobUpdate) ClearNext() *JobUpdate {
-	ju.clearedNext = true
+	ju.mutation.ClearNext()
 	return ju
 }
 
-// ClearOwner clears the owner edge to User.
+// ClearOwner clears the "owner" edge to the User entity.
 func (ju *JobUpdate) ClearOwner() *JobUpdate {
-	ju.clearedOwner = true
+	ju.mutation.ClearOwner()
 	return ju
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (ju *JobUpdate) Save(ctx context.Context) (int, error) {
-	if ju.Name != nil {
-		if err := job.NameValidator(*ju.Name); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(ju.hooks) == 0 {
+		if err = ju.check(); err != nil {
+			return 0, err
+		}
+		affected, err = ju.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*JobMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = ju.check(); err != nil {
+				return 0, err
+			}
+			ju.mutation = mutation
+			affected, err = ju.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(ju.hooks) - 1; i >= 0; i-- {
+			if ju.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = ju.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, ju.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if ju.Content != nil {
-		if err := job.ContentValidator(*ju.Content); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
-		}
-	}
-	if len(ju.prev) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"prev\"")
-	}
-	if len(ju.next) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"next\"")
-	}
-	if len(ju.owner) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"owner\"")
-	}
-	if ju.clearedOwner && ju.owner == nil {
-		return 0, errors.New("ent: clearing a unique edge \"owner\"")
-	}
-	return ju.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -281,6 +267,24 @@ func (ju *JobUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (ju *JobUpdate) check() error {
+	if v, ok := ju.mutation.Name(); ok {
+		if err := job.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Job.Name": %w`, err)}
+		}
+	}
+	if v, ok := ju.mutation.Content(); ok {
+		if err := job.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "Content", err: fmt.Errorf(`ent: validator failed for field "Job.Content": %w`, err)}
+		}
+	}
+	if _, ok := ju.mutation.OwnerID(); ju.mutation.OwnerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Job.owner"`)
+	}
+	return nil
+}
+
 func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -292,42 +296,42 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := ju.predicates; len(ps) > 0 {
+	if ps := ju.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := ju.Name; value != nil {
+	if value, ok := ju.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldName,
 		})
 	}
-	if value := ju.CreationTime; value != nil {
+	if value, ok := ju.mutation.CreationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldCreationTime,
 		})
 	}
-	if value := ju.Content; value != nil {
+	if value, ok := ju.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldContent,
 		})
 	}
-	if value := ju.Staged; value != nil {
+	if value, ok := ju.mutation.Staged(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldStaged,
 		})
 	}
-	if nodes := ju.removedTasks; len(nodes) > 0 {
+	if ju.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -341,12 +345,9 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ju.tasks; len(nodes) > 0 {
+	if nodes := ju.mutation.RemovedTasksIDs(); len(nodes) > 0 && !ju.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -360,31 +361,31 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if nodes := ju.removedTags; len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   job.TagsTable,
-			Columns: job.TagsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: tag.FieldID,
-				},
-			},
-		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ju.tags; len(nodes) > 0 {
+	if nodes := ju.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if ju.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -398,12 +399,47 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ju.mutation.RemovedTagsIDs(); len(nodes) > 0 && !ju.mutation.TagsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := ju.mutation.TagsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ju.clearedPrev {
+	if ju.mutation.PrevCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: true,
@@ -419,7 +455,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ju.prev; len(nodes) > 0 {
+	if nodes := ju.mutation.PrevIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: true,
@@ -433,12 +469,12 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ju.clearedNext {
+	if ju.mutation.NextCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -454,7 +490,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ju.next; len(nodes) > 0 {
+	if nodes := ju.mutation.NextIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -468,12 +504,12 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if ju.clearedOwner {
+	if ju.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -489,7 +525,7 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := ju.owner; len(nodes) > 0 {
+	if nodes := ju.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -503,14 +539,16 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, ju.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{job.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -520,36 +558,24 @@ func (ju *JobUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // JobUpdateOne is the builder for updating a single Job entity.
 type JobUpdateOne struct {
 	config
-	id           int
-	Name         *string
-	CreationTime *time.Time
-	Content      *string
-	Staged       *bool
-	tasks        map[int]struct{}
-	tags         map[int]struct{}
-	prev         map[int]struct{}
-	next         map[int]struct{}
-	owner        map[int]struct{}
-	removedTasks map[int]struct{}
-	removedTags  map[int]struct{}
-	clearedPrev  bool
-	clearedNext  bool
-	clearedOwner bool
+	fields   []string
+	hooks    []Hook
+	mutation *JobMutation
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (juo *JobUpdateOne) SetName(s string) *JobUpdateOne {
-	juo.Name = &s
+	juo.mutation.SetName(s)
 	return juo
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (juo *JobUpdateOne) SetCreationTime(t time.Time) *JobUpdateOne {
-	juo.CreationTime = &t
+	juo.mutation.SetCreationTime(t)
 	return juo
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (juo *JobUpdateOne) SetNillableCreationTime(t *time.Time) *JobUpdateOne {
 	if t != nil {
 		juo.SetCreationTime(*t)
@@ -557,30 +583,25 @@ func (juo *JobUpdateOne) SetNillableCreationTime(t *time.Time) *JobUpdateOne {
 	return juo
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (juo *JobUpdateOne) SetContent(s string) *JobUpdateOne {
-	juo.Content = &s
+	juo.mutation.SetContent(s)
 	return juo
 }
 
-// SetStaged sets the Staged field.
+// SetStaged sets the "Staged" field.
 func (juo *JobUpdateOne) SetStaged(b bool) *JobUpdateOne {
-	juo.Staged = &b
+	juo.mutation.SetStaged(b)
 	return juo
 }
 
-// AddTaskIDs adds the tasks edge to Task by ids.
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
 func (juo *JobUpdateOne) AddTaskIDs(ids ...int) *JobUpdateOne {
-	if juo.tasks == nil {
-		juo.tasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		juo.tasks[ids[i]] = struct{}{}
-	}
+	juo.mutation.AddTaskIDs(ids...)
 	return juo
 }
 
-// AddTasks adds the tasks edges to Task.
+// AddTasks adds the "tasks" edges to the Task entity.
 func (juo *JobUpdateOne) AddTasks(t ...*Task) *JobUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -589,18 +610,13 @@ func (juo *JobUpdateOne) AddTasks(t ...*Task) *JobUpdateOne {
 	return juo.AddTaskIDs(ids...)
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (juo *JobUpdateOne) AddTagIDs(ids ...int) *JobUpdateOne {
-	if juo.tags == nil {
-		juo.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		juo.tags[ids[i]] = struct{}{}
-	}
+	juo.mutation.AddTagIDs(ids...)
 	return juo
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (juo *JobUpdateOne) AddTags(t ...*Tag) *JobUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -609,16 +625,13 @@ func (juo *JobUpdateOne) AddTags(t ...*Tag) *JobUpdateOne {
 	return juo.AddTagIDs(ids...)
 }
 
-// SetPrevID sets the prev edge to Job by id.
+// SetPrevID sets the "prev" edge to the Job entity by ID.
 func (juo *JobUpdateOne) SetPrevID(id int) *JobUpdateOne {
-	if juo.prev == nil {
-		juo.prev = make(map[int]struct{})
-	}
-	juo.prev[id] = struct{}{}
+	juo.mutation.SetPrevID(id)
 	return juo
 }
 
-// SetNillablePrevID sets the prev edge to Job by id if the given value is not nil.
+// SetNillablePrevID sets the "prev" edge to the Job entity by ID if the given value is not nil.
 func (juo *JobUpdateOne) SetNillablePrevID(id *int) *JobUpdateOne {
 	if id != nil {
 		juo = juo.SetPrevID(*id)
@@ -626,21 +639,18 @@ func (juo *JobUpdateOne) SetNillablePrevID(id *int) *JobUpdateOne {
 	return juo
 }
 
-// SetPrev sets the prev edge to Job.
+// SetPrev sets the "prev" edge to the Job entity.
 func (juo *JobUpdateOne) SetPrev(j *Job) *JobUpdateOne {
 	return juo.SetPrevID(j.ID)
 }
 
-// SetNextID sets the next edge to Job by id.
+// SetNextID sets the "next" edge to the Job entity by ID.
 func (juo *JobUpdateOne) SetNextID(id int) *JobUpdateOne {
-	if juo.next == nil {
-		juo.next = make(map[int]struct{})
-	}
-	juo.next[id] = struct{}{}
+	juo.mutation.SetNextID(id)
 	return juo
 }
 
-// SetNillableNextID sets the next edge to Job by id if the given value is not nil.
+// SetNillableNextID sets the "next" edge to the Job entity by ID if the given value is not nil.
 func (juo *JobUpdateOne) SetNillableNextID(id *int) *JobUpdateOne {
 	if id != nil {
 		juo = juo.SetNextID(*id)
@@ -648,37 +658,40 @@ func (juo *JobUpdateOne) SetNillableNextID(id *int) *JobUpdateOne {
 	return juo
 }
 
-// SetNext sets the next edge to Job.
+// SetNext sets the "next" edge to the Job entity.
 func (juo *JobUpdateOne) SetNext(j *Job) *JobUpdateOne {
 	return juo.SetNextID(j.ID)
 }
 
-// SetOwnerID sets the owner edge to User by id.
+// SetOwnerID sets the "owner" edge to the User entity by ID.
 func (juo *JobUpdateOne) SetOwnerID(id int) *JobUpdateOne {
-	if juo.owner == nil {
-		juo.owner = make(map[int]struct{})
-	}
-	juo.owner[id] = struct{}{}
+	juo.mutation.SetOwnerID(id)
 	return juo
 }
 
-// SetOwner sets the owner edge to User.
+// SetOwner sets the "owner" edge to the User entity.
 func (juo *JobUpdateOne) SetOwner(u *User) *JobUpdateOne {
 	return juo.SetOwnerID(u.ID)
 }
 
-// RemoveTaskIDs removes the tasks edge to Task by ids.
-func (juo *JobUpdateOne) RemoveTaskIDs(ids ...int) *JobUpdateOne {
-	if juo.removedTasks == nil {
-		juo.removedTasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		juo.removedTasks[ids[i]] = struct{}{}
-	}
+// Mutation returns the JobMutation object of the builder.
+func (juo *JobUpdateOne) Mutation() *JobMutation {
+	return juo.mutation
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (juo *JobUpdateOne) ClearTasks() *JobUpdateOne {
+	juo.mutation.ClearTasks()
 	return juo
 }
 
-// RemoveTasks removes tasks edges to Task.
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (juo *JobUpdateOne) RemoveTaskIDs(ids ...int) *JobUpdateOne {
+	juo.mutation.RemoveTaskIDs(ids...)
+	return juo
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
 func (juo *JobUpdateOne) RemoveTasks(t ...*Task) *JobUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -687,18 +700,19 @@ func (juo *JobUpdateOne) RemoveTasks(t ...*Task) *JobUpdateOne {
 	return juo.RemoveTaskIDs(ids...)
 }
 
-// RemoveTagIDs removes the tags edge to Tag by ids.
-func (juo *JobUpdateOne) RemoveTagIDs(ids ...int) *JobUpdateOne {
-	if juo.removedTags == nil {
-		juo.removedTags = make(map[int]struct{})
-	}
-	for i := range ids {
-		juo.removedTags[ids[i]] = struct{}{}
-	}
+// ClearTags clears all "tags" edges to the Tag entity.
+func (juo *JobUpdateOne) ClearTags() *JobUpdateOne {
+	juo.mutation.ClearTags()
 	return juo
 }
 
-// RemoveTags removes tags edges to Tag.
+// RemoveTagIDs removes the "tags" edge to Tag entities by IDs.
+func (juo *JobUpdateOne) RemoveTagIDs(ids ...int) *JobUpdateOne {
+	juo.mutation.RemoveTagIDs(ids...)
+	return juo
+}
+
+// RemoveTags removes "tags" edges to Tag entities.
 func (juo *JobUpdateOne) RemoveTags(t ...*Tag) *JobUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -707,58 +721,76 @@ func (juo *JobUpdateOne) RemoveTags(t ...*Tag) *JobUpdateOne {
 	return juo.RemoveTagIDs(ids...)
 }
 
-// ClearPrev clears the prev edge to Job.
+// ClearPrev clears the "prev" edge to the Job entity.
 func (juo *JobUpdateOne) ClearPrev() *JobUpdateOne {
-	juo.clearedPrev = true
+	juo.mutation.ClearPrev()
 	return juo
 }
 
-// ClearNext clears the next edge to Job.
+// ClearNext clears the "next" edge to the Job entity.
 func (juo *JobUpdateOne) ClearNext() *JobUpdateOne {
-	juo.clearedNext = true
+	juo.mutation.ClearNext()
 	return juo
 }
 
-// ClearOwner clears the owner edge to User.
+// ClearOwner clears the "owner" edge to the User entity.
 func (juo *JobUpdateOne) ClearOwner() *JobUpdateOne {
-	juo.clearedOwner = true
+	juo.mutation.ClearOwner()
 	return juo
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (juo *JobUpdateOne) Select(field string, fields ...string) *JobUpdateOne {
+	juo.fields = append([]string{field}, fields...)
+	return juo
+}
+
+// Save executes the query and returns the updated Job entity.
 func (juo *JobUpdateOne) Save(ctx context.Context) (*Job, error) {
-	if juo.Name != nil {
-		if err := job.NameValidator(*juo.Name); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err  error
+		node *Job
+	)
+	if len(juo.hooks) == 0 {
+		if err = juo.check(); err != nil {
+			return nil, err
+		}
+		node, err = juo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*JobMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = juo.check(); err != nil {
+				return nil, err
+			}
+			juo.mutation = mutation
+			node, err = juo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(juo.hooks) - 1; i >= 0; i-- {
+			if juo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = juo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, juo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if juo.Content != nil {
-		if err := job.ContentValidator(*juo.Content); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
-		}
-	}
-	if len(juo.prev) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"prev\"")
-	}
-	if len(juo.next) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"next\"")
-	}
-	if len(juo.owner) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
-	}
-	if juo.clearedOwner && juo.owner == nil {
-		return nil, errors.New("ent: clearing a unique edge \"owner\"")
-	}
-	return juo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (juo *JobUpdateOne) SaveX(ctx context.Context) *Job {
-	j, err := juo.Save(ctx)
+	node, err := juo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return j
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -774,47 +806,88 @@ func (juo *JobUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (juo *JobUpdateOne) check() error {
+	if v, ok := juo.mutation.Name(); ok {
+		if err := job.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Job.Name": %w`, err)}
+		}
+	}
+	if v, ok := juo.mutation.Content(); ok {
+		if err := job.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "Content", err: fmt.Errorf(`ent: validator failed for field "Job.Content": %w`, err)}
+		}
+	}
+	if _, ok := juo.mutation.OwnerID(); juo.mutation.OwnerCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Job.owner"`)
+	}
+	return nil
+}
+
+func (juo *JobUpdateOne) sqlSave(ctx context.Context) (_node *Job, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   job.Table,
 			Columns: job.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  juo.id,
 				Type:   field.TypeInt,
 				Column: job.FieldID,
 			},
 		},
 	}
-	if value := juo.Name; value != nil {
+	id, ok := juo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Job.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := juo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, job.FieldID)
+		for _, f := range fields {
+			if !job.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != job.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := juo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := juo.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldName,
 		})
 	}
-	if value := juo.CreationTime; value != nil {
+	if value, ok := juo.mutation.CreationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldCreationTime,
 		})
 	}
-	if value := juo.Content; value != nil {
+	if value, ok := juo.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldContent,
 		})
 	}
-	if value := juo.Staged; value != nil {
+	if value, ok := juo.mutation.Staged(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: job.FieldStaged,
 		})
 	}
-	if nodes := juo.removedTasks; len(nodes) > 0 {
+	if juo.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -828,12 +901,9 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := juo.tasks; len(nodes) > 0 {
+	if nodes := juo.mutation.RemovedTasksIDs(); len(nodes) > 0 && !juo.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -847,31 +917,31 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if nodes := juo.removedTags; len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.M2M,
-			Inverse: false,
-			Table:   job.TagsTable,
-			Columns: job.TagsPrimaryKey,
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: tag.FieldID,
-				},
-			},
-		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := juo.tags; len(nodes) > 0 {
+	if nodes := juo.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   job.TasksTable,
+			Columns: []string{job.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if juo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -885,12 +955,47 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := juo.mutation.RemovedTagsIDs(); len(nodes) > 0 && !juo.mutation.TagsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := juo.mutation.TagsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   job.TagsTable,
+			Columns: job.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if juo.clearedPrev {
+	if juo.mutation.PrevCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: true,
@@ -906,7 +1011,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := juo.prev; len(nodes) > 0 {
+	if nodes := juo.mutation.PrevIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: true,
@@ -920,12 +1025,12 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if juo.clearedNext {
+	if juo.mutation.NextCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -941,7 +1046,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := juo.next; len(nodes) > 0 {
+	if nodes := juo.mutation.NextIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -955,12 +1060,12 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if juo.clearedOwner {
+	if juo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -976,7 +1081,7 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := juo.owner; len(nodes) > 0 {
+	if nodes := juo.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -990,19 +1095,21 @@ func (juo *JobUpdateOne) sqlSave(ctx context.Context) (j *Job, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	j = &Job{config: juo.config}
-	_spec.Assign = j.assignValues
-	_spec.ScanValues = j.scanValues()
+	_node = &Job{config: juo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, juo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{job.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return j, nil
+	return _node, nil
 }

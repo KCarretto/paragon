@@ -2,40 +2,39 @@
 
 package service
 
-import (
-	"github.com/kcarretto/paragon/ent/schema"
-)
-
 const (
 	// Label holds the string label denoting the service type in the database.
 	Label = "service"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name vertex property in the database.
+	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldPubKey holds the string denoting the pubkey vertex property in the database.
+	// FieldPubKey holds the string denoting the pubkey field in the database.
 	FieldPubKey = "pub_key"
-	// FieldConfig holds the string denoting the config vertex property in the database.
+	// FieldConfig holds the string denoting the config field in the database.
 	FieldConfig = "config"
-	// FieldIsActivated holds the string denoting the isactivated vertex property in the database.
+	// FieldIsActivated holds the string denoting the isactivated field in the database.
 	FieldIsActivated = "is_activated"
-
+	// EdgeTag holds the string denoting the tag edge name in mutations.
+	EdgeTag = "tag"
+	// EdgeEvents holds the string denoting the events edge name in mutations.
+	EdgeEvents = "events"
 	// Table holds the table name of the service in the database.
 	Table = "services"
-	// TagTable is the table the holds the tag relation/edge.
+	// TagTable is the table that holds the tag relation/edge.
 	TagTable = "services"
 	// TagInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagInverseTable = "tags"
 	// TagColumn is the table column denoting the tag relation/edge.
-	TagColumn = "service_tag_id"
-	// EventsTable is the table the holds the events relation/edge.
+	TagColumn = "service_tag"
+	// EventsTable is the table that holds the events relation/edge.
 	EventsTable = "events"
 	// EventsInverseTable is the table name for the Event entity.
 	// It exists in this package in order to avoid circular dependency with the "event" package.
 	EventsInverseTable = "events"
 	// EventsColumn is the table column denoting the events relation/edge.
-	EventsColumn = "svc_owner_id"
+	EventsColumn = "service_events"
 )
 
 // Columns holds all SQL columns for service fields.
@@ -47,31 +46,34 @@ var Columns = []string{
 	FieldIsActivated,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the Service type.
+// ForeignKeys holds the SQL foreign-keys that are owned by the "services"
+// table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"service_tag_id",
+	"service_tag",
+}
+
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
+	return false
 }
 
 var (
-	fields = schema.Service{}.Fields()
-
-	// descName is the schema descriptor for Name field.
-	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
-	NameValidator = descName.Validators[0].(func(string) error)
-
-	// descPubKey is the schema descriptor for PubKey field.
-	descPubKey = fields[1].Descriptor()
+	NameValidator func(string) error
 	// PubKeyValidator is a validator for the "PubKey" field. It is called by the builders before save.
-	PubKeyValidator = descPubKey.Validators[0].(func(string) error)
-
-	// descConfig is the schema descriptor for Config field.
-	descConfig = fields[2].Descriptor()
-	// DefaultConfig holds the default value on creation for the Config field.
-	DefaultConfig = descConfig.Default.(string)
-
-	// descIsActivated is the schema descriptor for IsActivated field.
-	descIsActivated = fields[3].Descriptor()
-	// DefaultIsActivated holds the default value on creation for the IsActivated field.
-	DefaultIsActivated = descIsActivated.Default.(bool)
+	PubKeyValidator func(string) error
+	// DefaultConfig holds the default value on creation for the "Config" field.
+	DefaultConfig string
+	// DefaultIsActivated holds the default value on creation for the "IsActivated" field.
+	DefaultIsActivated bool
 )

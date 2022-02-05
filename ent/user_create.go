@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/user"
@@ -17,41 +17,35 @@ import (
 // UserCreate is the builder for creating a User entity.
 type UserCreate struct {
 	config
-	Name         *string
-	OAuthID      *string
-	PhotoURL     *string
-	SessionToken *string
-	IsActivated  *bool
-	IsAdmin      *bool
-	jobs         map[int]struct{}
-	events       map[int]struct{}
+	mutation *UserMutation
+	hooks    []Hook
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (uc *UserCreate) SetName(s string) *UserCreate {
-	uc.Name = &s
+	uc.mutation.SetName(s)
 	return uc
 }
 
-// SetOAuthID sets the OAuthID field.
+// SetOAuthID sets the "OAuthID" field.
 func (uc *UserCreate) SetOAuthID(s string) *UserCreate {
-	uc.OAuthID = &s
+	uc.mutation.SetOAuthID(s)
 	return uc
 }
 
-// SetPhotoURL sets the PhotoURL field.
+// SetPhotoURL sets the "PhotoURL" field.
 func (uc *UserCreate) SetPhotoURL(s string) *UserCreate {
-	uc.PhotoURL = &s
+	uc.mutation.SetPhotoURL(s)
 	return uc
 }
 
-// SetSessionToken sets the SessionToken field.
+// SetSessionToken sets the "SessionToken" field.
 func (uc *UserCreate) SetSessionToken(s string) *UserCreate {
-	uc.SessionToken = &s
+	uc.mutation.SetSessionToken(s)
 	return uc
 }
 
-// SetNillableSessionToken sets the SessionToken field if the given value is not nil.
+// SetNillableSessionToken sets the "SessionToken" field if the given value is not nil.
 func (uc *UserCreate) SetNillableSessionToken(s *string) *UserCreate {
 	if s != nil {
 		uc.SetSessionToken(*s)
@@ -59,13 +53,13 @@ func (uc *UserCreate) SetNillableSessionToken(s *string) *UserCreate {
 	return uc
 }
 
-// SetIsActivated sets the IsActivated field.
+// SetIsActivated sets the "IsActivated" field.
 func (uc *UserCreate) SetIsActivated(b bool) *UserCreate {
-	uc.IsActivated = &b
+	uc.mutation.SetIsActivated(b)
 	return uc
 }
 
-// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+// SetNillableIsActivated sets the "IsActivated" field if the given value is not nil.
 func (uc *UserCreate) SetNillableIsActivated(b *bool) *UserCreate {
 	if b != nil {
 		uc.SetIsActivated(*b)
@@ -73,13 +67,13 @@ func (uc *UserCreate) SetNillableIsActivated(b *bool) *UserCreate {
 	return uc
 }
 
-// SetIsAdmin sets the IsAdmin field.
+// SetIsAdmin sets the "IsAdmin" field.
 func (uc *UserCreate) SetIsAdmin(b bool) *UserCreate {
-	uc.IsAdmin = &b
+	uc.mutation.SetIsAdmin(b)
 	return uc
 }
 
-// SetNillableIsAdmin sets the IsAdmin field if the given value is not nil.
+// SetNillableIsAdmin sets the "IsAdmin" field if the given value is not nil.
 func (uc *UserCreate) SetNillableIsAdmin(b *bool) *UserCreate {
 	if b != nil {
 		uc.SetIsAdmin(*b)
@@ -87,18 +81,13 @@ func (uc *UserCreate) SetNillableIsAdmin(b *bool) *UserCreate {
 	return uc
 }
 
-// AddJobIDs adds the jobs edge to Job by ids.
+// AddJobIDs adds the "jobs" edge to the Job entity by IDs.
 func (uc *UserCreate) AddJobIDs(ids ...int) *UserCreate {
-	if uc.jobs == nil {
-		uc.jobs = make(map[int]struct{})
-	}
-	for i := range ids {
-		uc.jobs[ids[i]] = struct{}{}
-	}
+	uc.mutation.AddJobIDs(ids...)
 	return uc
 }
 
-// AddJobs adds the jobs edges to Job.
+// AddJobs adds the "jobs" edges to the Job entity.
 func (uc *UserCreate) AddJobs(j ...*Job) *UserCreate {
 	ids := make([]int, len(j))
 	for i := range j {
@@ -107,18 +96,13 @@ func (uc *UserCreate) AddJobs(j ...*Job) *UserCreate {
 	return uc.AddJobIDs(ids...)
 }
 
-// AddEventIDs adds the events edge to Event by ids.
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (uc *UserCreate) AddEventIDs(ids ...int) *UserCreate {
-	if uc.events == nil {
-		uc.events = make(map[int]struct{})
-	}
-	for i := range ids {
-		uc.events[ids[i]] = struct{}{}
-	}
+	uc.mutation.AddEventIDs(ids...)
 	return uc
 }
 
-// AddEvents adds the events edges to Event.
+// AddEvents adds the "events" edges to the Event entity.
 func (uc *UserCreate) AddEvents(e ...*Event) *UserCreate {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -127,34 +111,51 @@ func (uc *UserCreate) AddEvents(e ...*Event) *UserCreate {
 	return uc.AddEventIDs(ids...)
 }
 
+// Mutation returns the UserMutation object of the builder.
+func (uc *UserCreate) Mutation() *UserMutation {
+	return uc.mutation
+}
+
 // Save creates the User in the database.
 func (uc *UserCreate) Save(ctx context.Context) (*User, error) {
-	if uc.Name == nil {
-		return nil, errors.New("ent: missing required field \"Name\"")
-	}
-	if err := user.NameValidator(*uc.Name); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
-	}
-	if uc.OAuthID == nil {
-		return nil, errors.New("ent: missing required field \"OAuthID\"")
-	}
-	if uc.PhotoURL == nil {
-		return nil, errors.New("ent: missing required field \"PhotoURL\"")
-	}
-	if uc.SessionToken != nil {
-		if err := user.SessionTokenValidator(*uc.SessionToken); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"SessionToken\": %v", err)
+	var (
+		err  error
+		node *User
+	)
+	uc.defaults()
+	if len(uc.hooks) == 0 {
+		if err = uc.check(); err != nil {
+			return nil, err
+		}
+		node, err = uc.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*UserMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = uc.check(); err != nil {
+				return nil, err
+			}
+			uc.mutation = mutation
+			if node, err = uc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(uc.hooks) - 1; i >= 0; i-- {
+			if uc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = uc.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, uc.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if uc.IsActivated == nil {
-		v := user.DefaultIsActivated
-		uc.IsActivated = &v
-	}
-	if uc.IsAdmin == nil {
-		v := user.DefaultIsAdmin
-		uc.IsAdmin = &v
-	}
-	return uc.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -166,9 +167,77 @@ func (uc *UserCreate) SaveX(ctx context.Context) *User {
 	return v
 }
 
+// Exec executes the query.
+func (uc *UserCreate) Exec(ctx context.Context) error {
+	_, err := uc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (uc *UserCreate) ExecX(ctx context.Context) {
+	if err := uc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (uc *UserCreate) defaults() {
+	if _, ok := uc.mutation.IsActivated(); !ok {
+		v := user.DefaultIsActivated
+		uc.mutation.SetIsActivated(v)
+	}
+	if _, ok := uc.mutation.IsAdmin(); !ok {
+		v := user.DefaultIsAdmin
+		uc.mutation.SetIsAdmin(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (uc *UserCreate) check() error {
+	if _, ok := uc.mutation.Name(); !ok {
+		return &ValidationError{Name: "Name", err: errors.New(`ent: missing required field "User.Name"`)}
+	}
+	if v, ok := uc.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "User.Name": %w`, err)}
+		}
+	}
+	if _, ok := uc.mutation.OAuthID(); !ok {
+		return &ValidationError{Name: "OAuthID", err: errors.New(`ent: missing required field "User.OAuthID"`)}
+	}
+	if _, ok := uc.mutation.PhotoURL(); !ok {
+		return &ValidationError{Name: "PhotoURL", err: errors.New(`ent: missing required field "User.PhotoURL"`)}
+	}
+	if v, ok := uc.mutation.SessionToken(); ok {
+		if err := user.SessionTokenValidator(v); err != nil {
+			return &ValidationError{Name: "SessionToken", err: fmt.Errorf(`ent: validator failed for field "User.SessionToken": %w`, err)}
+		}
+	}
+	if _, ok := uc.mutation.IsActivated(); !ok {
+		return &ValidationError{Name: "IsActivated", err: errors.New(`ent: missing required field "User.IsActivated"`)}
+	}
+	if _, ok := uc.mutation.IsAdmin(); !ok {
+		return &ValidationError{Name: "IsAdmin", err: errors.New(`ent: missing required field "User.IsAdmin"`)}
+	}
+	return nil
+}
+
 func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
+	_node, _spec := uc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, uc.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 	var (
-		u     = &User{config: uc.config}
+		_node = &User{config: uc.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: user.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -177,55 +246,55 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 			},
 		}
 	)
-	if value := uc.Name; value != nil {
+	if value, ok := uc.mutation.Name(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldName,
 		})
-		u.Name = *value
+		_node.Name = value
 	}
-	if value := uc.OAuthID; value != nil {
+	if value, ok := uc.mutation.OAuthID(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldOAuthID,
 		})
-		u.OAuthID = *value
+		_node.OAuthID = value
 	}
-	if value := uc.PhotoURL; value != nil {
+	if value, ok := uc.mutation.PhotoURL(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldPhotoURL,
 		})
-		u.PhotoURL = *value
+		_node.PhotoURL = value
 	}
-	if value := uc.SessionToken; value != nil {
+	if value, ok := uc.mutation.SessionToken(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldSessionToken,
 		})
-		u.SessionToken = *value
+		_node.SessionToken = value
 	}
-	if value := uc.IsActivated; value != nil {
+	if value, ok := uc.mutation.IsActivated(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldIsActivated,
 		})
-		u.IsActivated = *value
+		_node.IsActivated = value
 	}
-	if value := uc.IsAdmin; value != nil {
+	if value, ok := uc.mutation.IsAdmin(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldIsAdmin,
 		})
-		u.IsAdmin = *value
+		_node.IsAdmin = value
 	}
-	if nodes := uc.jobs; len(nodes) > 0 {
+	if nodes := uc.mutation.JobsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -239,12 +308,12 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := uc.events; len(nodes) > 0 {
+	if nodes := uc.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -258,18 +327,94 @@ func (uc *UserCreate) sqlSave(ctx context.Context) (*User, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, uc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// UserCreateBulk is the builder for creating many User entities in bulk.
+type UserCreateBulk struct {
+	config
+	builders []*UserCreate
+}
+
+// Save creates the User entities in the database.
+func (ucb *UserCreateBulk) Save(ctx context.Context) ([]*User, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(ucb.builders))
+	nodes := make([]*User, len(ucb.builders))
+	mutators := make([]Mutator, len(ucb.builders))
+	for i := range ucb.builders {
+		func(i int, root context.Context) {
+			builder := ucb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*UserMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, ucb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, ucb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	u.ID = int(id)
-	return u, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, ucb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (ucb *UserCreateBulk) SaveX(ctx context.Context) []*User {
+	v, err := ucb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (ucb *UserCreateBulk) Exec(ctx context.Context) error {
+	_, err := ucb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (ucb *UserCreateBulk) ExecX(ctx context.Context) {
+	if err := ucb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

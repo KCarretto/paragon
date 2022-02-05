@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/target"
 )
 
@@ -17,127 +17,183 @@ type Target struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
+	// The name of the Target
 	Name string `json:"Name,omitempty"`
 	// OS holds the value of the "OS" field.
+	// The OS of the target
 	OS target.OS `json:"OS,omitempty"`
 	// PrimaryIP holds the value of the "PrimaryIP" field.
+	// The IP Address for the primary interface of the Target
 	PrimaryIP string `json:"PrimaryIP,omitempty"`
 	// MachineUUID holds the value of the "MachineUUID" field.
+	// The machine UUID of the Target
 	MachineUUID string `json:"MachineUUID,omitempty"`
 	// PublicIP holds the value of the "PublicIP" field.
+	// The Public IP Address for the Target
 	PublicIP string `json:"PublicIP,omitempty"`
 	// PrimaryMAC holds the value of the "PrimaryMAC" field.
+	// The MAC Address for the primary interface of the Target
 	PrimaryMAC string `json:"PrimaryMAC,omitempty"`
 	// Hostname holds the value of the "Hostname" field.
+	// The hostname for the Target
 	Hostname string `json:"Hostname,omitempty"`
 	// LastSeen holds the value of the "LastSeen" field.
+	// The time the Target was last seen
 	LastSeen time.Time `json:"LastSeen,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TargetQuery when eager-loading is set.
-	Edges struct {
-		// Tasks holds the value of the tasks edge.
-		Tasks []*Task
-		// Tags holds the value of the tags edge.
-		Tags []*Tag
-		// Credentials holds the value of the credentials edge.
-		Credentials []*Credential
-	} `json:"edges"`
+	Edges TargetEdges `json:"edges"`
+}
+
+// TargetEdges holds the relations/edges for other nodes in the graph.
+type TargetEdges struct {
+	// Tasks holds the value of the tasks edge.
+	Tasks []*Task `json:"tasks,omitempty"`
+	// Tags holds the value of the tags edge.
+	Tags []*Tag `json:"tags,omitempty"`
+	// Credentials holds the value of the credentials edge.
+	Credentials []*Credential `json:"credentials,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// TasksOrErr returns the Tasks value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) TasksOrErr() ([]*Task, error) {
+	if e.loadedTypes[0] {
+		return e.Tasks, nil
+	}
+	return nil, &NotLoadedError{edge: "tasks"}
+}
+
+// TagsOrErr returns the Tags value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) TagsOrErr() ([]*Tag, error) {
+	if e.loadedTypes[1] {
+		return e.Tags, nil
+	}
+	return nil, &NotLoadedError{edge: "tags"}
+}
+
+// CredentialsOrErr returns the Credentials value or an error if the edge
+// was not loaded in eager-loading.
+func (e TargetEdges) CredentialsOrErr() ([]*Credential, error) {
+	if e.loadedTypes[2] {
+		return e.Credentials, nil
+	}
+	return nil, &NotLoadedError{edge: "credentials"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Target) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // Name
-		&sql.NullString{}, // OS
-		&sql.NullString{}, // PrimaryIP
-		&sql.NullString{}, // MachineUUID
-		&sql.NullString{}, // PublicIP
-		&sql.NullString{}, // PrimaryMAC
-		&sql.NullString{}, // Hostname
-		&sql.NullTime{},   // LastSeen
+func (*Target) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case target.FieldID:
+			values[i] = new(sql.NullInt64)
+		case target.FieldName, target.FieldOS, target.FieldPrimaryIP, target.FieldMachineUUID, target.FieldPublicIP, target.FieldPrimaryMAC, target.FieldHostname:
+			values[i] = new(sql.NullString)
+		case target.FieldLastSeen:
+			values[i] = new(sql.NullTime)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type Target", columns[i])
+		}
 	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Target fields.
-func (t *Target) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(target.Columns); m < n {
+func (t *Target) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	t.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Name", values[0])
-	} else if value.Valid {
-		t.Name = value.String
-	}
-	if value, ok := values[1].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field OS", values[1])
-	} else if value.Valid {
-		t.OS = target.OS(value.String)
-	}
-	if value, ok := values[2].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PrimaryIP", values[2])
-	} else if value.Valid {
-		t.PrimaryIP = value.String
-	}
-	if value, ok := values[3].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field MachineUUID", values[3])
-	} else if value.Valid {
-		t.MachineUUID = value.String
-	}
-	if value, ok := values[4].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PublicIP", values[4])
-	} else if value.Valid {
-		t.PublicIP = value.String
-	}
-	if value, ok := values[5].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field PrimaryMAC", values[5])
-	} else if value.Valid {
-		t.PrimaryMAC = value.String
-	}
-	if value, ok := values[6].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Hostname", values[6])
-	} else if value.Valid {
-		t.Hostname = value.String
-	}
-	if value, ok := values[7].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field LastSeen", values[7])
-	} else if value.Valid {
-		t.LastSeen = value.Time
+	for i := range columns {
+		switch columns[i] {
+		case target.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			t.ID = int(value.Int64)
+		case target.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Name", values[i])
+			} else if value.Valid {
+				t.Name = value.String
+			}
+		case target.FieldOS:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field OS", values[i])
+			} else if value.Valid {
+				t.OS = target.OS(value.String)
+			}
+		case target.FieldPrimaryIP:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field PrimaryIP", values[i])
+			} else if value.Valid {
+				t.PrimaryIP = value.String
+			}
+		case target.FieldMachineUUID:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field MachineUUID", values[i])
+			} else if value.Valid {
+				t.MachineUUID = value.String
+			}
+		case target.FieldPublicIP:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field PublicIP", values[i])
+			} else if value.Valid {
+				t.PublicIP = value.String
+			}
+		case target.FieldPrimaryMAC:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field PrimaryMAC", values[i])
+			} else if value.Valid {
+				t.PrimaryMAC = value.String
+			}
+		case target.FieldHostname:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Hostname", values[i])
+			} else if value.Valid {
+				t.Hostname = value.String
+			}
+		case target.FieldLastSeen:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field LastSeen", values[i])
+			} else if value.Valid {
+				t.LastSeen = value.Time
+			}
+		}
 	}
 	return nil
 }
 
-// QueryTasks queries the tasks edge of the Target.
+// QueryTasks queries the "tasks" edge of the Target entity.
 func (t *Target) QueryTasks() *TaskQuery {
-	return (&TargetClient{t.config}).QueryTasks(t)
+	return (&TargetClient{config: t.config}).QueryTasks(t)
 }
 
-// QueryTags queries the tags edge of the Target.
+// QueryTags queries the "tags" edge of the Target entity.
 func (t *Target) QueryTags() *TagQuery {
-	return (&TargetClient{t.config}).QueryTags(t)
+	return (&TargetClient{config: t.config}).QueryTags(t)
 }
 
-// QueryCredentials queries the credentials edge of the Target.
+// QueryCredentials queries the "credentials" edge of the Target entity.
 func (t *Target) QueryCredentials() *CredentialQuery {
-	return (&TargetClient{t.config}).QueryCredentials(t)
+	return (&TargetClient{config: t.config}).QueryCredentials(t)
 }
 
 // Update returns a builder for updating this Target.
-// Note that, you need to call Target.Unwrap() before calling this method, if this Target
+// Note that you need to call Target.Unwrap() before calling this method if this Target
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (t *Target) Update() *TargetUpdateOne {
-	return (&TargetClient{t.config}).UpdateOne(t)
+	return (&TargetClient{config: t.config}).UpdateOne(t)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the Target entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (t *Target) Unwrap() *Target {
 	tx, ok := t.config.driver.(*txDriver)
 	if !ok {

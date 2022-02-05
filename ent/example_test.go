@@ -7,7 +7,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
 
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/event"
@@ -136,7 +136,7 @@ func ExampleEvent() {
 	e8 := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindCREATEJOB).
+		SetKind(event.KindCREATE_JOB).
 		SaveX(ctx)
 	log.Println("event created:", e8)
 	s9 := client.Service.
@@ -162,7 +162,7 @@ func ExampleEvent() {
 	e := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindCREATEJOB).
+		SetKind(event.KindCREATE_JOB).
 		SetJob(j0).
 		SetFile(f1).
 		SetCredential(c2).
@@ -408,7 +408,7 @@ func ExampleService() {
 	e1 := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindCREATEJOB).
+		SetKind(event.KindCREATE_JOB).
 		SaveX(ctx)
 	log.Println("event created:", e1)
 
@@ -606,7 +606,7 @@ func ExampleUser() {
 	e1 := client.Event.
 		Create().
 		SetCreationTime(time.Now()).
-		SetKind(event.KindCREATEJOB).
+		SetKind(event.KindCREATE_JOB).
 		SaveX(ctx)
 	log.Println("event created:", e1)
 

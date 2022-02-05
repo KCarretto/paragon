@@ -4,11 +4,12 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
@@ -18,45 +19,35 @@ import (
 // UserUpdate is the builder for updating User entities.
 type UserUpdate struct {
 	config
-	Name *string
-
-	PhotoURL          *string
-	SessionToken      *string
-	clearSessionToken bool
-	IsActivated       *bool
-	IsAdmin           *bool
-	jobs              map[int]struct{}
-	events            map[int]struct{}
-	removedJobs       map[int]struct{}
-	removedEvents     map[int]struct{}
-	predicates        []predicate.User
+	hooks    []Hook
+	mutation *UserMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the UserUpdate builder.
 func (uu *UserUpdate) Where(ps ...predicate.User) *UserUpdate {
-	uu.predicates = append(uu.predicates, ps...)
+	uu.mutation.Where(ps...)
 	return uu
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (uu *UserUpdate) SetName(s string) *UserUpdate {
-	uu.Name = &s
+	uu.mutation.SetName(s)
 	return uu
 }
 
-// SetPhotoURL sets the PhotoURL field.
+// SetPhotoURL sets the "PhotoURL" field.
 func (uu *UserUpdate) SetPhotoURL(s string) *UserUpdate {
-	uu.PhotoURL = &s
+	uu.mutation.SetPhotoURL(s)
 	return uu
 }
 
-// SetSessionToken sets the SessionToken field.
+// SetSessionToken sets the "SessionToken" field.
 func (uu *UserUpdate) SetSessionToken(s string) *UserUpdate {
-	uu.SessionToken = &s
+	uu.mutation.SetSessionToken(s)
 	return uu
 }
 
-// SetNillableSessionToken sets the SessionToken field if the given value is not nil.
+// SetNillableSessionToken sets the "SessionToken" field if the given value is not nil.
 func (uu *UserUpdate) SetNillableSessionToken(s *string) *UserUpdate {
 	if s != nil {
 		uu.SetSessionToken(*s)
@@ -64,20 +55,19 @@ func (uu *UserUpdate) SetNillableSessionToken(s *string) *UserUpdate {
 	return uu
 }
 
-// ClearSessionToken clears the value of SessionToken.
+// ClearSessionToken clears the value of the "SessionToken" field.
 func (uu *UserUpdate) ClearSessionToken() *UserUpdate {
-	uu.SessionToken = nil
-	uu.clearSessionToken = true
+	uu.mutation.ClearSessionToken()
 	return uu
 }
 
-// SetIsActivated sets the IsActivated field.
+// SetIsActivated sets the "IsActivated" field.
 func (uu *UserUpdate) SetIsActivated(b bool) *UserUpdate {
-	uu.IsActivated = &b
+	uu.mutation.SetIsActivated(b)
 	return uu
 }
 
-// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+// SetNillableIsActivated sets the "IsActivated" field if the given value is not nil.
 func (uu *UserUpdate) SetNillableIsActivated(b *bool) *UserUpdate {
 	if b != nil {
 		uu.SetIsActivated(*b)
@@ -85,13 +75,13 @@ func (uu *UserUpdate) SetNillableIsActivated(b *bool) *UserUpdate {
 	return uu
 }
 
-// SetIsAdmin sets the IsAdmin field.
+// SetIsAdmin sets the "IsAdmin" field.
 func (uu *UserUpdate) SetIsAdmin(b bool) *UserUpdate {
-	uu.IsAdmin = &b
+	uu.mutation.SetIsAdmin(b)
 	return uu
 }
 
-// SetNillableIsAdmin sets the IsAdmin field if the given value is not nil.
+// SetNillableIsAdmin sets the "IsAdmin" field if the given value is not nil.
 func (uu *UserUpdate) SetNillableIsAdmin(b *bool) *UserUpdate {
 	if b != nil {
 		uu.SetIsAdmin(*b)
@@ -99,18 +89,13 @@ func (uu *UserUpdate) SetNillableIsAdmin(b *bool) *UserUpdate {
 	return uu
 }
 
-// AddJobIDs adds the jobs edge to Job by ids.
+// AddJobIDs adds the "jobs" edge to the Job entity by IDs.
 func (uu *UserUpdate) AddJobIDs(ids ...int) *UserUpdate {
-	if uu.jobs == nil {
-		uu.jobs = make(map[int]struct{})
-	}
-	for i := range ids {
-		uu.jobs[ids[i]] = struct{}{}
-	}
+	uu.mutation.AddJobIDs(ids...)
 	return uu
 }
 
-// AddJobs adds the jobs edges to Job.
+// AddJobs adds the "jobs" edges to the Job entity.
 func (uu *UserUpdate) AddJobs(j ...*Job) *UserUpdate {
 	ids := make([]int, len(j))
 	for i := range j {
@@ -119,18 +104,13 @@ func (uu *UserUpdate) AddJobs(j ...*Job) *UserUpdate {
 	return uu.AddJobIDs(ids...)
 }
 
-// AddEventIDs adds the events edge to Event by ids.
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (uu *UserUpdate) AddEventIDs(ids ...int) *UserUpdate {
-	if uu.events == nil {
-		uu.events = make(map[int]struct{})
-	}
-	for i := range ids {
-		uu.events[ids[i]] = struct{}{}
-	}
+	uu.mutation.AddEventIDs(ids...)
 	return uu
 }
 
-// AddEvents adds the events edges to Event.
+// AddEvents adds the "events" edges to the Event entity.
 func (uu *UserUpdate) AddEvents(e ...*Event) *UserUpdate {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -139,18 +119,24 @@ func (uu *UserUpdate) AddEvents(e ...*Event) *UserUpdate {
 	return uu.AddEventIDs(ids...)
 }
 
-// RemoveJobIDs removes the jobs edge to Job by ids.
-func (uu *UserUpdate) RemoveJobIDs(ids ...int) *UserUpdate {
-	if uu.removedJobs == nil {
-		uu.removedJobs = make(map[int]struct{})
-	}
-	for i := range ids {
-		uu.removedJobs[ids[i]] = struct{}{}
-	}
+// Mutation returns the UserMutation object of the builder.
+func (uu *UserUpdate) Mutation() *UserMutation {
+	return uu.mutation
+}
+
+// ClearJobs clears all "jobs" edges to the Job entity.
+func (uu *UserUpdate) ClearJobs() *UserUpdate {
+	uu.mutation.ClearJobs()
 	return uu
 }
 
-// RemoveJobs removes jobs edges to Job.
+// RemoveJobIDs removes the "jobs" edge to Job entities by IDs.
+func (uu *UserUpdate) RemoveJobIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveJobIDs(ids...)
+	return uu
+}
+
+// RemoveJobs removes "jobs" edges to Job entities.
 func (uu *UserUpdate) RemoveJobs(j ...*Job) *UserUpdate {
 	ids := make([]int, len(j))
 	for i := range j {
@@ -159,18 +145,19 @@ func (uu *UserUpdate) RemoveJobs(j ...*Job) *UserUpdate {
 	return uu.RemoveJobIDs(ids...)
 }
 
-// RemoveEventIDs removes the events edge to Event by ids.
-func (uu *UserUpdate) RemoveEventIDs(ids ...int) *UserUpdate {
-	if uu.removedEvents == nil {
-		uu.removedEvents = make(map[int]struct{})
-	}
-	for i := range ids {
-		uu.removedEvents[ids[i]] = struct{}{}
-	}
+// ClearEvents clears all "events" edges to the Event entity.
+func (uu *UserUpdate) ClearEvents() *UserUpdate {
+	uu.mutation.ClearEvents()
 	return uu
 }
 
-// RemoveEvents removes events edges to Event.
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (uu *UserUpdate) RemoveEventIDs(ids ...int) *UserUpdate {
+	uu.mutation.RemoveEventIDs(ids...)
+	return uu
+}
+
+// RemoveEvents removes "events" edges to Event entities.
 func (uu *UserUpdate) RemoveEvents(e ...*Event) *UserUpdate {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -179,19 +166,42 @@ func (uu *UserUpdate) RemoveEvents(e ...*Event) *UserUpdate {
 	return uu.RemoveEventIDs(ids...)
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (uu *UserUpdate) Save(ctx context.Context) (int, error) {
-	if uu.Name != nil {
-		if err := user.NameValidator(*uu.Name); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(uu.hooks) == 0 {
+		if err = uu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = uu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*UserMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = uu.check(); err != nil {
+				return 0, err
+			}
+			uu.mutation = mutation
+			affected, err = uu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(uu.hooks) - 1; i >= 0; i-- {
+			if uu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = uu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, uu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if uu.SessionToken != nil {
-		if err := user.SessionTokenValidator(*uu.SessionToken); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"SessionToken\": %v", err)
-		}
-	}
-	return uu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -216,6 +226,21 @@ func (uu *UserUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (uu *UserUpdate) check() error {
+	if v, ok := uu.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "User.Name": %w`, err)}
+		}
+	}
+	if v, ok := uu.mutation.SessionToken(); ok {
+		if err := user.SessionTokenValidator(v); err != nil {
+			return &ValidationError{Name: "SessionToken", err: fmt.Errorf(`ent: validator failed for field "User.SessionToken": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -227,55 +252,55 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := uu.predicates; len(ps) > 0 {
+	if ps := uu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := uu.Name; value != nil {
+	if value, ok := uu.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldName,
 		})
 	}
-	if value := uu.PhotoURL; value != nil {
+	if value, ok := uu.mutation.PhotoURL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldPhotoURL,
 		})
 	}
-	if value := uu.SessionToken; value != nil {
+	if value, ok := uu.mutation.SessionToken(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldSessionToken,
 		})
 	}
-	if uu.clearSessionToken {
+	if uu.mutation.SessionTokenCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldSessionToken,
 		})
 	}
-	if value := uu.IsActivated; value != nil {
+	if value, ok := uu.mutation.IsActivated(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldIsActivated,
 		})
 	}
-	if value := uu.IsAdmin; value != nil {
+	if value, ok := uu.mutation.IsAdmin(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldIsAdmin,
 		})
 	}
-	if nodes := uu.removedJobs; len(nodes) > 0 {
+	if uu.mutation.JobsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -289,12 +314,28 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedJobsIDs(); len(nodes) > 0 && !uu.mutation.JobsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.jobs; len(nodes) > 0 {
+	if nodes := uu.mutation.JobsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -308,12 +349,12 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := uu.removedEvents; len(nodes) > 0 {
+	if uu.mutation.EventsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -327,12 +368,28 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uu.mutation.RemovedEventsIDs(); len(nodes) > 0 && !uu.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uu.events; len(nodes) > 0 {
+	if nodes := uu.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -346,14 +403,16 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, uu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{user.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -363,39 +422,30 @@ func (uu *UserUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // UserUpdateOne is the builder for updating a single User entity.
 type UserUpdateOne struct {
 	config
-	id   int
-	Name *string
-
-	PhotoURL          *string
-	SessionToken      *string
-	clearSessionToken bool
-	IsActivated       *bool
-	IsAdmin           *bool
-	jobs              map[int]struct{}
-	events            map[int]struct{}
-	removedJobs       map[int]struct{}
-	removedEvents     map[int]struct{}
+	fields   []string
+	hooks    []Hook
+	mutation *UserMutation
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (uuo *UserUpdateOne) SetName(s string) *UserUpdateOne {
-	uuo.Name = &s
+	uuo.mutation.SetName(s)
 	return uuo
 }
 
-// SetPhotoURL sets the PhotoURL field.
+// SetPhotoURL sets the "PhotoURL" field.
 func (uuo *UserUpdateOne) SetPhotoURL(s string) *UserUpdateOne {
-	uuo.PhotoURL = &s
+	uuo.mutation.SetPhotoURL(s)
 	return uuo
 }
 
-// SetSessionToken sets the SessionToken field.
+// SetSessionToken sets the "SessionToken" field.
 func (uuo *UserUpdateOne) SetSessionToken(s string) *UserUpdateOne {
-	uuo.SessionToken = &s
+	uuo.mutation.SetSessionToken(s)
 	return uuo
 }
 
-// SetNillableSessionToken sets the SessionToken field if the given value is not nil.
+// SetNillableSessionToken sets the "SessionToken" field if the given value is not nil.
 func (uuo *UserUpdateOne) SetNillableSessionToken(s *string) *UserUpdateOne {
 	if s != nil {
 		uuo.SetSessionToken(*s)
@@ -403,20 +453,19 @@ func (uuo *UserUpdateOne) SetNillableSessionToken(s *string) *UserUpdateOne {
 	return uuo
 }
 
-// ClearSessionToken clears the value of SessionToken.
+// ClearSessionToken clears the value of the "SessionToken" field.
 func (uuo *UserUpdateOne) ClearSessionToken() *UserUpdateOne {
-	uuo.SessionToken = nil
-	uuo.clearSessionToken = true
+	uuo.mutation.ClearSessionToken()
 	return uuo
 }
 
-// SetIsActivated sets the IsActivated field.
+// SetIsActivated sets the "IsActivated" field.
 func (uuo *UserUpdateOne) SetIsActivated(b bool) *UserUpdateOne {
-	uuo.IsActivated = &b
+	uuo.mutation.SetIsActivated(b)
 	return uuo
 }
 
-// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+// SetNillableIsActivated sets the "IsActivated" field if the given value is not nil.
 func (uuo *UserUpdateOne) SetNillableIsActivated(b *bool) *UserUpdateOne {
 	if b != nil {
 		uuo.SetIsActivated(*b)
@@ -424,13 +473,13 @@ func (uuo *UserUpdateOne) SetNillableIsActivated(b *bool) *UserUpdateOne {
 	return uuo
 }
 
-// SetIsAdmin sets the IsAdmin field.
+// SetIsAdmin sets the "IsAdmin" field.
 func (uuo *UserUpdateOne) SetIsAdmin(b bool) *UserUpdateOne {
-	uuo.IsAdmin = &b
+	uuo.mutation.SetIsAdmin(b)
 	return uuo
 }
 
-// SetNillableIsAdmin sets the IsAdmin field if the given value is not nil.
+// SetNillableIsAdmin sets the "IsAdmin" field if the given value is not nil.
 func (uuo *UserUpdateOne) SetNillableIsAdmin(b *bool) *UserUpdateOne {
 	if b != nil {
 		uuo.SetIsAdmin(*b)
@@ -438,18 +487,13 @@ func (uuo *UserUpdateOne) SetNillableIsAdmin(b *bool) *UserUpdateOne {
 	return uuo
 }
 
-// AddJobIDs adds the jobs edge to Job by ids.
+// AddJobIDs adds the "jobs" edge to the Job entity by IDs.
 func (uuo *UserUpdateOne) AddJobIDs(ids ...int) *UserUpdateOne {
-	if uuo.jobs == nil {
-		uuo.jobs = make(map[int]struct{})
-	}
-	for i := range ids {
-		uuo.jobs[ids[i]] = struct{}{}
-	}
+	uuo.mutation.AddJobIDs(ids...)
 	return uuo
 }
 
-// AddJobs adds the jobs edges to Job.
+// AddJobs adds the "jobs" edges to the Job entity.
 func (uuo *UserUpdateOne) AddJobs(j ...*Job) *UserUpdateOne {
 	ids := make([]int, len(j))
 	for i := range j {
@@ -458,18 +502,13 @@ func (uuo *UserUpdateOne) AddJobs(j ...*Job) *UserUpdateOne {
 	return uuo.AddJobIDs(ids...)
 }
 
-// AddEventIDs adds the events edge to Event by ids.
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (uuo *UserUpdateOne) AddEventIDs(ids ...int) *UserUpdateOne {
-	if uuo.events == nil {
-		uuo.events = make(map[int]struct{})
-	}
-	for i := range ids {
-		uuo.events[ids[i]] = struct{}{}
-	}
+	uuo.mutation.AddEventIDs(ids...)
 	return uuo
 }
 
-// AddEvents adds the events edges to Event.
+// AddEvents adds the "events" edges to the Event entity.
 func (uuo *UserUpdateOne) AddEvents(e ...*Event) *UserUpdateOne {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -478,18 +517,24 @@ func (uuo *UserUpdateOne) AddEvents(e ...*Event) *UserUpdateOne {
 	return uuo.AddEventIDs(ids...)
 }
 
-// RemoveJobIDs removes the jobs edge to Job by ids.
-func (uuo *UserUpdateOne) RemoveJobIDs(ids ...int) *UserUpdateOne {
-	if uuo.removedJobs == nil {
-		uuo.removedJobs = make(map[int]struct{})
-	}
-	for i := range ids {
-		uuo.removedJobs[ids[i]] = struct{}{}
-	}
+// Mutation returns the UserMutation object of the builder.
+func (uuo *UserUpdateOne) Mutation() *UserMutation {
+	return uuo.mutation
+}
+
+// ClearJobs clears all "jobs" edges to the Job entity.
+func (uuo *UserUpdateOne) ClearJobs() *UserUpdateOne {
+	uuo.mutation.ClearJobs()
 	return uuo
 }
 
-// RemoveJobs removes jobs edges to Job.
+// RemoveJobIDs removes the "jobs" edge to Job entities by IDs.
+func (uuo *UserUpdateOne) RemoveJobIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveJobIDs(ids...)
+	return uuo
+}
+
+// RemoveJobs removes "jobs" edges to Job entities.
 func (uuo *UserUpdateOne) RemoveJobs(j ...*Job) *UserUpdateOne {
 	ids := make([]int, len(j))
 	for i := range j {
@@ -498,18 +543,19 @@ func (uuo *UserUpdateOne) RemoveJobs(j ...*Job) *UserUpdateOne {
 	return uuo.RemoveJobIDs(ids...)
 }
 
-// RemoveEventIDs removes the events edge to Event by ids.
-func (uuo *UserUpdateOne) RemoveEventIDs(ids ...int) *UserUpdateOne {
-	if uuo.removedEvents == nil {
-		uuo.removedEvents = make(map[int]struct{})
-	}
-	for i := range ids {
-		uuo.removedEvents[ids[i]] = struct{}{}
-	}
+// ClearEvents clears all "events" edges to the Event entity.
+func (uuo *UserUpdateOne) ClearEvents() *UserUpdateOne {
+	uuo.mutation.ClearEvents()
 	return uuo
 }
 
-// RemoveEvents removes events edges to Event.
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
+func (uuo *UserUpdateOne) RemoveEventIDs(ids ...int) *UserUpdateOne {
+	uuo.mutation.RemoveEventIDs(ids...)
+	return uuo
+}
+
+// RemoveEvents removes "events" edges to Event entities.
 func (uuo *UserUpdateOne) RemoveEvents(e ...*Event) *UserUpdateOne {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -518,28 +564,58 @@ func (uuo *UserUpdateOne) RemoveEvents(e ...*Event) *UserUpdateOne {
 	return uuo.RemoveEventIDs(ids...)
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (uuo *UserUpdateOne) Select(field string, fields ...string) *UserUpdateOne {
+	uuo.fields = append([]string{field}, fields...)
+	return uuo
+}
+
+// Save executes the query and returns the updated User entity.
 func (uuo *UserUpdateOne) Save(ctx context.Context) (*User, error) {
-	if uuo.Name != nil {
-		if err := user.NameValidator(*uuo.Name); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err  error
+		node *User
+	)
+	if len(uuo.hooks) == 0 {
+		if err = uuo.check(); err != nil {
+			return nil, err
+		}
+		node, err = uuo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*UserMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = uuo.check(); err != nil {
+				return nil, err
+			}
+			uuo.mutation = mutation
+			node, err = uuo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(uuo.hooks) - 1; i >= 0; i-- {
+			if uuo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = uuo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, uuo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if uuo.SessionToken != nil {
-		if err := user.SessionTokenValidator(*uuo.SessionToken); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"SessionToken\": %v", err)
-		}
-	}
-	return uuo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (uuo *UserUpdateOne) SaveX(ctx context.Context) *User {
-	u, err := uuo.Save(ctx)
+	node, err := uuo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return u
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -555,60 +631,98 @@ func (uuo *UserUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (uuo *UserUpdateOne) check() error {
+	if v, ok := uuo.mutation.Name(); ok {
+		if err := user.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "User.Name": %w`, err)}
+		}
+	}
+	if v, ok := uuo.mutation.SessionToken(); ok {
+		if err := user.SessionTokenValidator(v); err != nil {
+			return &ValidationError{Name: "SessionToken", err: fmt.Errorf(`ent: validator failed for field "User.SessionToken": %w`, err)}
+		}
+	}
+	return nil
+}
+
+func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (_node *User, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   user.Table,
 			Columns: user.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  uuo.id,
 				Type:   field.TypeInt,
 				Column: user.FieldID,
 			},
 		},
 	}
-	if value := uuo.Name; value != nil {
+	id, ok := uuo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "User.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := uuo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, user.FieldID)
+		for _, f := range fields {
+			if !user.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != user.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := uuo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := uuo.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldName,
 		})
 	}
-	if value := uuo.PhotoURL; value != nil {
+	if value, ok := uuo.mutation.PhotoURL(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldPhotoURL,
 		})
 	}
-	if value := uuo.SessionToken; value != nil {
+	if value, ok := uuo.mutation.SessionToken(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldSessionToken,
 		})
 	}
-	if uuo.clearSessionToken {
+	if uuo.mutation.SessionTokenCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: user.FieldSessionToken,
 		})
 	}
-	if value := uuo.IsActivated; value != nil {
+	if value, ok := uuo.mutation.IsActivated(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldIsActivated,
 		})
 	}
-	if value := uuo.IsAdmin; value != nil {
+	if value, ok := uuo.mutation.IsAdmin(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: user.FieldIsAdmin,
 		})
 	}
-	if nodes := uuo.removedJobs; len(nodes) > 0 {
+	if uuo.mutation.JobsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -622,12 +736,9 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.jobs; len(nodes) > 0 {
+	if nodes := uuo.mutation.RemovedJobsIDs(); len(nodes) > 0 && !uuo.mutation.JobsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -641,31 +752,31 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if nodes := uuo.removedEvents; len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   user.EventsTable,
-			Columns: []string{user.EventsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: event.FieldID,
-				},
-			},
-		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := uuo.events; len(nodes) > 0 {
+	if nodes := uuo.mutation.JobsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.JobsTable,
+			Columns: []string{user.JobsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: job.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if uuo.mutation.EventsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -679,19 +790,56 @@ func (uuo *UserUpdateOne) sqlSave(ctx context.Context) (u *User, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.RemovedEventsIDs(); len(nodes) > 0 && !uuo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := uuo.mutation.EventsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.EventsTable,
+			Columns: []string{user.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	u = &User{config: uuo.config}
-	_spec.Assign = u.assignValues
-	_spec.ScanValues = u.scanValues()
+	_node = &User{config: uuo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, uuo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{user.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return u, nil
+	return _node, nil
 }

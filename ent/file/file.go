@@ -4,8 +4,6 @@ package file
 
 import (
 	"time"
-
-	"github.com/kcarretto/paragon/ent/schema"
 )
 
 const (
@@ -13,30 +11,31 @@ const (
 	Label = "file"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name vertex property in the database.
+	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldCreationTime holds the string denoting the creationtime vertex property in the database.
+	// FieldCreationTime holds the string denoting the creationtime field in the database.
 	FieldCreationTime = "creation_time"
-	// FieldLastModifiedTime holds the string denoting the lastmodifiedtime vertex property in the database.
+	// FieldLastModifiedTime holds the string denoting the lastmodifiedtime field in the database.
 	FieldLastModifiedTime = "last_modified_time"
-	// FieldSize holds the string denoting the size vertex property in the database.
+	// FieldSize holds the string denoting the size field in the database.
 	FieldSize = "size"
-	// FieldContent holds the string denoting the content vertex property in the database.
+	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
-	// FieldHash holds the string denoting the hash vertex property in the database.
+	// FieldHash holds the string denoting the hash field in the database.
 	FieldHash = "hash"
-	// FieldContentType holds the string denoting the contenttype vertex property in the database.
+	// FieldContentType holds the string denoting the contenttype field in the database.
 	FieldContentType = "content_type"
-
+	// EdgeLinks holds the string denoting the links edge name in mutations.
+	EdgeLinks = "links"
 	// Table holds the table name of the file in the database.
 	Table = "files"
-	// LinksTable is the table the holds the links relation/edge.
+	// LinksTable is the table that holds the links relation/edge.
 	LinksTable = "links"
 	// LinksInverseTable is the table name for the Link entity.
 	// It exists in this package in order to avoid circular dependency with the "link" package.
 	LinksInverseTable = "links"
 	// LinksColumn is the table column denoting the links relation/edge.
-	LinksColumn = "file_id"
+	LinksColumn = "file_links"
 )
 
 // Columns holds all SQL columns for file fields.
@@ -51,42 +50,25 @@ var Columns = []string{
 	FieldContentType,
 }
 
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	return false
+}
+
 var (
-	fields = schema.File{}.Fields()
-
-	// descName is the schema descriptor for Name field.
-	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
-	NameValidator = func() func(string) error {
-		validators := descName.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(Name string) error {
-			for _, fn := range fns {
-				if err := fn(Name); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-
-	// descCreationTime is the schema descriptor for CreationTime field.
-	descCreationTime = fields[1].Descriptor()
-	// DefaultCreationTime holds the default value on creation for the CreationTime field.
-	DefaultCreationTime = descCreationTime.Default.(func() time.Time)
-
-	// descSize is the schema descriptor for Size field.
-	descSize = fields[3].Descriptor()
-	// DefaultSize holds the default value on creation for the Size field.
-	DefaultSize = descSize.Default.(int)
+	NameValidator func(string) error
+	// DefaultCreationTime holds the default value on creation for the "CreationTime" field.
+	DefaultCreationTime func() time.Time
+	// DefaultSize holds the default value on creation for the "Size" field.
+	DefaultSize int
 	// SizeValidator is a validator for the "Size" field. It is called by the builders before save.
-	SizeValidator = descSize.Validators[0].(func(int) error)
-
-	// descHash is the schema descriptor for Hash field.
-	descHash = fields[5].Descriptor()
+	SizeValidator func(int) error
 	// HashValidator is a validator for the "Hash" field. It is called by the builders before save.
-	HashValidator = descHash.Validators[0].(func(string) error)
+	HashValidator func(string) error
 )

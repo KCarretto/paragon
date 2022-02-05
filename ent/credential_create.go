@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/target"
 )
@@ -16,38 +16,35 @@ import (
 // CredentialCreate is the builder for creating a Credential entity.
 type CredentialCreate struct {
 	config
-	principal *string
-	secret    *string
-	kind      *credential.Kind
-	fails     *int
-	target    map[int]struct{}
+	mutation *CredentialMutation
+	hooks    []Hook
 }
 
-// SetPrincipal sets the principal field.
+// SetPrincipal sets the "principal" field.
 func (cc *CredentialCreate) SetPrincipal(s string) *CredentialCreate {
-	cc.principal = &s
+	cc.mutation.SetPrincipal(s)
 	return cc
 }
 
-// SetSecret sets the secret field.
+// SetSecret sets the "secret" field.
 func (cc *CredentialCreate) SetSecret(s string) *CredentialCreate {
-	cc.secret = &s
+	cc.mutation.SetSecret(s)
 	return cc
 }
 
-// SetKind sets the kind field.
+// SetKind sets the "kind" field.
 func (cc *CredentialCreate) SetKind(c credential.Kind) *CredentialCreate {
-	cc.kind = &c
+	cc.mutation.SetKind(c)
 	return cc
 }
 
-// SetFails sets the fails field.
+// SetFails sets the "fails" field.
 func (cc *CredentialCreate) SetFails(i int) *CredentialCreate {
-	cc.fails = &i
+	cc.mutation.SetFails(i)
 	return cc
 }
 
-// SetNillableFails sets the fails field if the given value is not nil.
+// SetNillableFails sets the "fails" field if the given value is not nil.
 func (cc *CredentialCreate) SetNillableFails(i *int) *CredentialCreate {
 	if i != nil {
 		cc.SetFails(*i)
@@ -55,16 +52,13 @@ func (cc *CredentialCreate) SetNillableFails(i *int) *CredentialCreate {
 	return cc
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (cc *CredentialCreate) SetTargetID(id int) *CredentialCreate {
-	if cc.target == nil {
-		cc.target = make(map[int]struct{})
-	}
-	cc.target[id] = struct{}{}
+	cc.mutation.SetTargetID(id)
 	return cc
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (cc *CredentialCreate) SetNillableTargetID(id *int) *CredentialCreate {
 	if id != nil {
 		cc = cc.SetTargetID(*id)
@@ -72,39 +66,56 @@ func (cc *CredentialCreate) SetNillableTargetID(id *int) *CredentialCreate {
 	return cc
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (cc *CredentialCreate) SetTarget(t *Target) *CredentialCreate {
 	return cc.SetTargetID(t.ID)
 }
 
+// Mutation returns the CredentialMutation object of the builder.
+func (cc *CredentialCreate) Mutation() *CredentialMutation {
+	return cc.mutation
+}
+
 // Save creates the Credential in the database.
 func (cc *CredentialCreate) Save(ctx context.Context) (*Credential, error) {
-	if cc.principal == nil {
-		return nil, errors.New("ent: missing required field \"principal\"")
+	var (
+		err  error
+		node *Credential
+	)
+	cc.defaults()
+	if len(cc.hooks) == 0 {
+		if err = cc.check(); err != nil {
+			return nil, err
+		}
+		node, err = cc.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*CredentialMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = cc.check(); err != nil {
+				return nil, err
+			}
+			cc.mutation = mutation
+			if node, err = cc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(cc.hooks) - 1; i >= 0; i-- {
+			if cc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = cc.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, cc.mutation); err != nil {
+			return nil, err
+		}
 	}
-	if cc.secret == nil {
-		return nil, errors.New("ent: missing required field \"secret\"")
-	}
-	if err := credential.SecretValidator(*cc.secret); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"secret\": %v", err)
-	}
-	if cc.kind == nil {
-		return nil, errors.New("ent: missing required field \"kind\"")
-	}
-	if err := credential.KindValidator(*cc.kind); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
-	}
-	if cc.fails == nil {
-		v := credential.DefaultFails
-		cc.fails = &v
-	}
-	if err := credential.FailsValidator(*cc.fails); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
-	}
-	if len(cc.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	return cc.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -116,9 +127,75 @@ func (cc *CredentialCreate) SaveX(ctx context.Context) *Credential {
 	return v
 }
 
+// Exec executes the query.
+func (cc *CredentialCreate) Exec(ctx context.Context) error {
+	_, err := cc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (cc *CredentialCreate) ExecX(ctx context.Context) {
+	if err := cc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (cc *CredentialCreate) defaults() {
+	if _, ok := cc.mutation.Fails(); !ok {
+		v := credential.DefaultFails
+		cc.mutation.SetFails(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (cc *CredentialCreate) check() error {
+	if _, ok := cc.mutation.Principal(); !ok {
+		return &ValidationError{Name: "principal", err: errors.New(`ent: missing required field "Credential.principal"`)}
+	}
+	if _, ok := cc.mutation.Secret(); !ok {
+		return &ValidationError{Name: "secret", err: errors.New(`ent: missing required field "Credential.secret"`)}
+	}
+	if v, ok := cc.mutation.Secret(); ok {
+		if err := credential.SecretValidator(v); err != nil {
+			return &ValidationError{Name: "secret", err: fmt.Errorf(`ent: validator failed for field "Credential.secret": %w`, err)}
+		}
+	}
+	if _, ok := cc.mutation.Kind(); !ok {
+		return &ValidationError{Name: "kind", err: errors.New(`ent: missing required field "Credential.kind"`)}
+	}
+	if v, ok := cc.mutation.Kind(); ok {
+		if err := credential.KindValidator(v); err != nil {
+			return &ValidationError{Name: "kind", err: fmt.Errorf(`ent: validator failed for field "Credential.kind": %w`, err)}
+		}
+	}
+	if _, ok := cc.mutation.Fails(); !ok {
+		return &ValidationError{Name: "fails", err: errors.New(`ent: missing required field "Credential.fails"`)}
+	}
+	if v, ok := cc.mutation.Fails(); ok {
+		if err := credential.FailsValidator(v); err != nil {
+			return &ValidationError{Name: "fails", err: fmt.Errorf(`ent: validator failed for field "Credential.fails": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
+	_node, _spec := cc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (cc *CredentialCreate) createSpec() (*Credential, *sqlgraph.CreateSpec) {
 	var (
-		c     = &Credential{config: cc.config}
+		_node = &Credential{config: cc.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: credential.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -127,39 +204,39 @@ func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
 			},
 		}
 	)
-	if value := cc.principal; value != nil {
+	if value, ok := cc.mutation.Principal(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldPrincipal,
 		})
-		c.Principal = *value
+		_node.Principal = value
 	}
-	if value := cc.secret; value != nil {
+	if value, ok := cc.mutation.Secret(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldSecret,
 		})
-		c.Secret = *value
+		_node.Secret = value
 	}
-	if value := cc.kind; value != nil {
+	if value, ok := cc.mutation.Kind(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldKind,
 		})
-		c.Kind = *value
+		_node.Kind = value
 	}
-	if value := cc.fails; value != nil {
+	if value, ok := cc.mutation.Fails(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldFails,
 		})
-		c.Fails = *value
+		_node.Fails = value
 	}
-	if nodes := cc.target; len(nodes) > 0 {
+	if nodes := cc.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -173,18 +250,95 @@ func (cc *CredentialCreate) sqlSave(ctx context.Context) (*Credential, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.target_credentials = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, cc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// CredentialCreateBulk is the builder for creating many Credential entities in bulk.
+type CredentialCreateBulk struct {
+	config
+	builders []*CredentialCreate
+}
+
+// Save creates the Credential entities in the database.
+func (ccb *CredentialCreateBulk) Save(ctx context.Context) ([]*Credential, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(ccb.builders))
+	nodes := make([]*Credential, len(ccb.builders))
+	mutators := make([]Mutator, len(ccb.builders))
+	for i := range ccb.builders {
+		func(i int, root context.Context) {
+			builder := ccb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*CredentialMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, ccb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, ccb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	c.ID = int(id)
-	return c, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, ccb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (ccb *CredentialCreateBulk) SaveX(ctx context.Context) []*Credential {
+	v, err := ccb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (ccb *CredentialCreateBulk) Exec(ctx context.Context) error {
+	_, err := ccb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (ccb *CredentialCreateBulk) ExecX(ctx context.Context) {
+	if err := ccb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

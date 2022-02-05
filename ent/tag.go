@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/tag"
 )
 
@@ -16,71 +16,118 @@ type Tag struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
+	// The name of the Tag
 	Name string `json:"Name,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the TagQuery when eager-loading is set.
-	Edges struct {
-		// Targets holds the value of the targets edge.
-		Targets []*Target
-		// Tasks holds the value of the tasks edge.
-		Tasks []*Task
-		// Jobs holds the value of the jobs edge.
-		Jobs []*Job
-	} `json:"edges"`
+	Edges TagEdges `json:"edges"`
+}
+
+// TagEdges holds the relations/edges for other nodes in the graph.
+type TagEdges struct {
+	// Targets holds the value of the targets edge.
+	Targets []*Target `json:"targets,omitempty"`
+	// Tasks holds the value of the tasks edge.
+	Tasks []*Task `json:"tasks,omitempty"`
+	// Jobs holds the value of the jobs edge.
+	Jobs []*Job `json:"jobs,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [3]bool
+}
+
+// TargetsOrErr returns the Targets value or an error if the edge
+// was not loaded in eager-loading.
+func (e TagEdges) TargetsOrErr() ([]*Target, error) {
+	if e.loadedTypes[0] {
+		return e.Targets, nil
+	}
+	return nil, &NotLoadedError{edge: "targets"}
+}
+
+// TasksOrErr returns the Tasks value or an error if the edge
+// was not loaded in eager-loading.
+func (e TagEdges) TasksOrErr() ([]*Task, error) {
+	if e.loadedTypes[1] {
+		return e.Tasks, nil
+	}
+	return nil, &NotLoadedError{edge: "tasks"}
+}
+
+// JobsOrErr returns the Jobs value or an error if the edge
+// was not loaded in eager-loading.
+func (e TagEdges) JobsOrErr() ([]*Job, error) {
+	if e.loadedTypes[2] {
+		return e.Jobs, nil
+	}
+	return nil, &NotLoadedError{edge: "jobs"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Tag) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // Name
+func (*Tag) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case tag.FieldID:
+			values[i] = new(sql.NullInt64)
+		case tag.FieldName:
+			values[i] = new(sql.NullString)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type Tag", columns[i])
+		}
 	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Tag fields.
-func (t *Tag) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(tag.Columns); m < n {
+func (t *Tag) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	t.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Name", values[0])
-	} else if value.Valid {
-		t.Name = value.String
+	for i := range columns {
+		switch columns[i] {
+		case tag.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			t.ID = int(value.Int64)
+		case tag.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Name", values[i])
+			} else if value.Valid {
+				t.Name = value.String
+			}
+		}
 	}
 	return nil
 }
 
-// QueryTargets queries the targets edge of the Tag.
+// QueryTargets queries the "targets" edge of the Tag entity.
 func (t *Tag) QueryTargets() *TargetQuery {
-	return (&TagClient{t.config}).QueryTargets(t)
+	return (&TagClient{config: t.config}).QueryTargets(t)
 }
 
-// QueryTasks queries the tasks edge of the Tag.
+// QueryTasks queries the "tasks" edge of the Tag entity.
 func (t *Tag) QueryTasks() *TaskQuery {
-	return (&TagClient{t.config}).QueryTasks(t)
+	return (&TagClient{config: t.config}).QueryTasks(t)
 }
 
-// QueryJobs queries the jobs edge of the Tag.
+// QueryJobs queries the "jobs" edge of the Tag entity.
 func (t *Tag) QueryJobs() *JobQuery {
-	return (&TagClient{t.config}).QueryJobs(t)
+	return (&TagClient{config: t.config}).QueryJobs(t)
 }
 
 // Update returns a builder for updating this Tag.
-// Note that, you need to call Tag.Unwrap() before calling this method, if this Tag
+// Note that you need to call Tag.Unwrap() before calling this method if this Tag
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (t *Tag) Update() *TagUpdateOne {
-	return (&TagClient{t.config}).UpdateOne(t)
+	return (&TagClient{config: t.config}).UpdateOne(t)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the Tag entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (t *Tag) Unwrap() *Tag {
 	tx, ok := t.config.driver.(*txDriver)
 	if !ok {

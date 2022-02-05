@@ -4,8 +4,6 @@ package target
 
 import (
 	"fmt"
-
-	"github.com/kcarretto/paragon/ent/schema"
 )
 
 const (
@@ -13,44 +11,49 @@ const (
 	Label = "target"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name vertex property in the database.
+	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldOS holds the string denoting the os vertex property in the database.
+	// FieldOS holds the string denoting the os field in the database.
 	FieldOS = "os"
-	// FieldPrimaryIP holds the string denoting the primaryip vertex property in the database.
+	// FieldPrimaryIP holds the string denoting the primaryip field in the database.
 	FieldPrimaryIP = "primary_ip"
-	// FieldMachineUUID holds the string denoting the machineuuid vertex property in the database.
+	// FieldMachineUUID holds the string denoting the machineuuid field in the database.
 	FieldMachineUUID = "machine_uuid"
-	// FieldPublicIP holds the string denoting the publicip vertex property in the database.
+	// FieldPublicIP holds the string denoting the publicip field in the database.
 	FieldPublicIP = "public_ip"
-	// FieldPrimaryMAC holds the string denoting the primarymac vertex property in the database.
+	// FieldPrimaryMAC holds the string denoting the primarymac field in the database.
 	FieldPrimaryMAC = "primary_mac"
-	// FieldHostname holds the string denoting the hostname vertex property in the database.
+	// FieldHostname holds the string denoting the hostname field in the database.
 	FieldHostname = "hostname"
-	// FieldLastSeen holds the string denoting the lastseen vertex property in the database.
+	// FieldLastSeen holds the string denoting the lastseen field in the database.
 	FieldLastSeen = "last_seen"
-
+	// EdgeTasks holds the string denoting the tasks edge name in mutations.
+	EdgeTasks = "tasks"
+	// EdgeTags holds the string denoting the tags edge name in mutations.
+	EdgeTags = "tags"
+	// EdgeCredentials holds the string denoting the credentials edge name in mutations.
+	EdgeCredentials = "credentials"
 	// Table holds the table name of the target in the database.
 	Table = "targets"
-	// TasksTable is the table the holds the tasks relation/edge.
+	// TasksTable is the table that holds the tasks relation/edge.
 	TasksTable = "tasks"
 	// TasksInverseTable is the table name for the Task entity.
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "target_id"
-	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
+	TasksColumn = "target_tasks"
+	// TagsTable is the table that holds the tags relation/edge. The primary key declared below.
 	TagsTable = "target_tags"
 	// TagsInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagsInverseTable = "tags"
-	// CredentialsTable is the table the holds the credentials relation/edge.
+	// CredentialsTable is the table that holds the credentials relation/edge.
 	CredentialsTable = "credentials"
 	// CredentialsInverseTable is the table name for the Credential entity.
 	// It exists in this package in order to avoid circular dependency with the "credential" package.
 	CredentialsInverseTable = "credentials"
 	// CredentialsColumn is the table column denoting the credentials relation/edge.
-	CredentialsColumn = "target_id"
+	CredentialsColumn = "target_credentials"
 )
 
 // Columns holds all SQL columns for target fields.
@@ -72,21 +75,24 @@ var (
 	TagsPrimaryKey = []string{"target_id", "tag_id"}
 )
 
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	return false
+}
+
 var (
-	fields = schema.Target{}.Fields()
-
-	// descName is the schema descriptor for Name field.
-	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
-	NameValidator = descName.Validators[0].(func(string) error)
-
-	// descMachineUUID is the schema descriptor for MachineUUID field.
-	descMachineUUID = fields[3].Descriptor()
+	NameValidator func(string) error
 	// MachineUUIDValidator is a validator for the "MachineUUID" field. It is called by the builders before save.
-	MachineUUIDValidator = descMachineUUID.Validators[0].(func(string) error)
+	MachineUUIDValidator func(string) error
 )
 
-// OS defines the type for the OS enum field.
+// OS defines the type for the "OS" enum field.
 type OS string
 
 // OS values.
@@ -97,16 +103,16 @@ const (
 	OSMACOS   OS = "MACOS"
 )
 
-func (s OS) String() string {
-	return string(s)
+func (_os OS) String() string {
+	return string(_os)
 }
 
-// OSValidator is a validator for the "o" field enum values. It is called by the builders before save.
-func OSValidator(o OS) error {
-	switch o {
+// OSValidator is a validator for the "OS" field enum values. It is called by the builders before save.
+func OSValidator(_os OS) error {
+	switch _os {
 	case OSLINUX, OSWINDOWS, OSBSD, OSMACOS:
 		return nil
 	default:
-		return fmt.Errorf("target: invalid enum value for OS field: %q", o)
+		return fmt.Errorf("target: invalid enum value for OS field: %q", _os)
 	}
 }

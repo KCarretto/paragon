@@ -4,12 +4,13 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -20,59 +21,41 @@ import (
 // TargetUpdate is the builder for updating Target entities.
 type TargetUpdate struct {
 	config
-	Name               *string
-	OS                 *target.OS
-	PrimaryIP          *string
-	MachineUUID        *string
-	clearMachineUUID   bool
-	PublicIP           *string
-	clearPublicIP      bool
-	PrimaryMAC         *string
-	clearPrimaryMAC    bool
-	Hostname           *string
-	clearHostname      bool
-	LastSeen           *time.Time
-	clearLastSeen      bool
-	tasks              map[int]struct{}
-	tags               map[int]struct{}
-	credentials        map[int]struct{}
-	removedTasks       map[int]struct{}
-	removedTags        map[int]struct{}
-	removedCredentials map[int]struct{}
-	predicates         []predicate.Target
+	hooks    []Hook
+	mutation *TargetMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the TargetUpdate builder.
 func (tu *TargetUpdate) Where(ps ...predicate.Target) *TargetUpdate {
-	tu.predicates = append(tu.predicates, ps...)
+	tu.mutation.Where(ps...)
 	return tu
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (tu *TargetUpdate) SetName(s string) *TargetUpdate {
-	tu.Name = &s
+	tu.mutation.SetName(s)
 	return tu
 }
 
-// SetOS sets the OS field.
+// SetOS sets the "OS" field.
 func (tu *TargetUpdate) SetOS(t target.OS) *TargetUpdate {
-	tu.OS = &t
+	tu.mutation.SetOS(t)
 	return tu
 }
 
-// SetPrimaryIP sets the PrimaryIP field.
+// SetPrimaryIP sets the "PrimaryIP" field.
 func (tu *TargetUpdate) SetPrimaryIP(s string) *TargetUpdate {
-	tu.PrimaryIP = &s
+	tu.mutation.SetPrimaryIP(s)
 	return tu
 }
 
-// SetMachineUUID sets the MachineUUID field.
+// SetMachineUUID sets the "MachineUUID" field.
 func (tu *TargetUpdate) SetMachineUUID(s string) *TargetUpdate {
-	tu.MachineUUID = &s
+	tu.mutation.SetMachineUUID(s)
 	return tu
 }
 
-// SetNillableMachineUUID sets the MachineUUID field if the given value is not nil.
+// SetNillableMachineUUID sets the "MachineUUID" field if the given value is not nil.
 func (tu *TargetUpdate) SetNillableMachineUUID(s *string) *TargetUpdate {
 	if s != nil {
 		tu.SetMachineUUID(*s)
@@ -80,20 +63,19 @@ func (tu *TargetUpdate) SetNillableMachineUUID(s *string) *TargetUpdate {
 	return tu
 }
 
-// ClearMachineUUID clears the value of MachineUUID.
+// ClearMachineUUID clears the value of the "MachineUUID" field.
 func (tu *TargetUpdate) ClearMachineUUID() *TargetUpdate {
-	tu.MachineUUID = nil
-	tu.clearMachineUUID = true
+	tu.mutation.ClearMachineUUID()
 	return tu
 }
 
-// SetPublicIP sets the PublicIP field.
+// SetPublicIP sets the "PublicIP" field.
 func (tu *TargetUpdate) SetPublicIP(s string) *TargetUpdate {
-	tu.PublicIP = &s
+	tu.mutation.SetPublicIP(s)
 	return tu
 }
 
-// SetNillablePublicIP sets the PublicIP field if the given value is not nil.
+// SetNillablePublicIP sets the "PublicIP" field if the given value is not nil.
 func (tu *TargetUpdate) SetNillablePublicIP(s *string) *TargetUpdate {
 	if s != nil {
 		tu.SetPublicIP(*s)
@@ -101,20 +83,19 @@ func (tu *TargetUpdate) SetNillablePublicIP(s *string) *TargetUpdate {
 	return tu
 }
 
-// ClearPublicIP clears the value of PublicIP.
+// ClearPublicIP clears the value of the "PublicIP" field.
 func (tu *TargetUpdate) ClearPublicIP() *TargetUpdate {
-	tu.PublicIP = nil
-	tu.clearPublicIP = true
+	tu.mutation.ClearPublicIP()
 	return tu
 }
 
-// SetPrimaryMAC sets the PrimaryMAC field.
+// SetPrimaryMAC sets the "PrimaryMAC" field.
 func (tu *TargetUpdate) SetPrimaryMAC(s string) *TargetUpdate {
-	tu.PrimaryMAC = &s
+	tu.mutation.SetPrimaryMAC(s)
 	return tu
 }
 
-// SetNillablePrimaryMAC sets the PrimaryMAC field if the given value is not nil.
+// SetNillablePrimaryMAC sets the "PrimaryMAC" field if the given value is not nil.
 func (tu *TargetUpdate) SetNillablePrimaryMAC(s *string) *TargetUpdate {
 	if s != nil {
 		tu.SetPrimaryMAC(*s)
@@ -122,20 +103,19 @@ func (tu *TargetUpdate) SetNillablePrimaryMAC(s *string) *TargetUpdate {
 	return tu
 }
 
-// ClearPrimaryMAC clears the value of PrimaryMAC.
+// ClearPrimaryMAC clears the value of the "PrimaryMAC" field.
 func (tu *TargetUpdate) ClearPrimaryMAC() *TargetUpdate {
-	tu.PrimaryMAC = nil
-	tu.clearPrimaryMAC = true
+	tu.mutation.ClearPrimaryMAC()
 	return tu
 }
 
-// SetHostname sets the Hostname field.
+// SetHostname sets the "Hostname" field.
 func (tu *TargetUpdate) SetHostname(s string) *TargetUpdate {
-	tu.Hostname = &s
+	tu.mutation.SetHostname(s)
 	return tu
 }
 
-// SetNillableHostname sets the Hostname field if the given value is not nil.
+// SetNillableHostname sets the "Hostname" field if the given value is not nil.
 func (tu *TargetUpdate) SetNillableHostname(s *string) *TargetUpdate {
 	if s != nil {
 		tu.SetHostname(*s)
@@ -143,20 +123,19 @@ func (tu *TargetUpdate) SetNillableHostname(s *string) *TargetUpdate {
 	return tu
 }
 
-// ClearHostname clears the value of Hostname.
+// ClearHostname clears the value of the "Hostname" field.
 func (tu *TargetUpdate) ClearHostname() *TargetUpdate {
-	tu.Hostname = nil
-	tu.clearHostname = true
+	tu.mutation.ClearHostname()
 	return tu
 }
 
-// SetLastSeen sets the LastSeen field.
+// SetLastSeen sets the "LastSeen" field.
 func (tu *TargetUpdate) SetLastSeen(t time.Time) *TargetUpdate {
-	tu.LastSeen = &t
+	tu.mutation.SetLastSeen(t)
 	return tu
 }
 
-// SetNillableLastSeen sets the LastSeen field if the given value is not nil.
+// SetNillableLastSeen sets the "LastSeen" field if the given value is not nil.
 func (tu *TargetUpdate) SetNillableLastSeen(t *time.Time) *TargetUpdate {
 	if t != nil {
 		tu.SetLastSeen(*t)
@@ -164,25 +143,19 @@ func (tu *TargetUpdate) SetNillableLastSeen(t *time.Time) *TargetUpdate {
 	return tu
 }
 
-// ClearLastSeen clears the value of LastSeen.
+// ClearLastSeen clears the value of the "LastSeen" field.
 func (tu *TargetUpdate) ClearLastSeen() *TargetUpdate {
-	tu.LastSeen = nil
-	tu.clearLastSeen = true
+	tu.mutation.ClearLastSeen()
 	return tu
 }
 
-// AddTaskIDs adds the tasks edge to Task by ids.
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
 func (tu *TargetUpdate) AddTaskIDs(ids ...int) *TargetUpdate {
-	if tu.tasks == nil {
-		tu.tasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.tasks[ids[i]] = struct{}{}
-	}
+	tu.mutation.AddTaskIDs(ids...)
 	return tu
 }
 
-// AddTasks adds the tasks edges to Task.
+// AddTasks adds the "tasks" edges to the Task entity.
 func (tu *TargetUpdate) AddTasks(t ...*Task) *TargetUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -191,18 +164,13 @@ func (tu *TargetUpdate) AddTasks(t ...*Task) *TargetUpdate {
 	return tu.AddTaskIDs(ids...)
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (tu *TargetUpdate) AddTagIDs(ids ...int) *TargetUpdate {
-	if tu.tags == nil {
-		tu.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.tags[ids[i]] = struct{}{}
-	}
+	tu.mutation.AddTagIDs(ids...)
 	return tu
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (tu *TargetUpdate) AddTags(t ...*Tag) *TargetUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -211,18 +179,13 @@ func (tu *TargetUpdate) AddTags(t ...*Tag) *TargetUpdate {
 	return tu.AddTagIDs(ids...)
 }
 
-// AddCredentialIDs adds the credentials edge to Credential by ids.
+// AddCredentialIDs adds the "credentials" edge to the Credential entity by IDs.
 func (tu *TargetUpdate) AddCredentialIDs(ids ...int) *TargetUpdate {
-	if tu.credentials == nil {
-		tu.credentials = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.credentials[ids[i]] = struct{}{}
-	}
+	tu.mutation.AddCredentialIDs(ids...)
 	return tu
 }
 
-// AddCredentials adds the credentials edges to Credential.
+// AddCredentials adds the "credentials" edges to the Credential entity.
 func (tu *TargetUpdate) AddCredentials(c ...*Credential) *TargetUpdate {
 	ids := make([]int, len(c))
 	for i := range c {
@@ -231,18 +194,24 @@ func (tu *TargetUpdate) AddCredentials(c ...*Credential) *TargetUpdate {
 	return tu.AddCredentialIDs(ids...)
 }
 
-// RemoveTaskIDs removes the tasks edge to Task by ids.
-func (tu *TargetUpdate) RemoveTaskIDs(ids ...int) *TargetUpdate {
-	if tu.removedTasks == nil {
-		tu.removedTasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.removedTasks[ids[i]] = struct{}{}
-	}
+// Mutation returns the TargetMutation object of the builder.
+func (tu *TargetUpdate) Mutation() *TargetMutation {
+	return tu.mutation
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (tu *TargetUpdate) ClearTasks() *TargetUpdate {
+	tu.mutation.ClearTasks()
 	return tu
 }
 
-// RemoveTasks removes tasks edges to Task.
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (tu *TargetUpdate) RemoveTaskIDs(ids ...int) *TargetUpdate {
+	tu.mutation.RemoveTaskIDs(ids...)
+	return tu
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
 func (tu *TargetUpdate) RemoveTasks(t ...*Task) *TargetUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -251,18 +220,19 @@ func (tu *TargetUpdate) RemoveTasks(t ...*Task) *TargetUpdate {
 	return tu.RemoveTaskIDs(ids...)
 }
 
-// RemoveTagIDs removes the tags edge to Tag by ids.
-func (tu *TargetUpdate) RemoveTagIDs(ids ...int) *TargetUpdate {
-	if tu.removedTags == nil {
-		tu.removedTags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.removedTags[ids[i]] = struct{}{}
-	}
+// ClearTags clears all "tags" edges to the Tag entity.
+func (tu *TargetUpdate) ClearTags() *TargetUpdate {
+	tu.mutation.ClearTags()
 	return tu
 }
 
-// RemoveTags removes tags edges to Tag.
+// RemoveTagIDs removes the "tags" edge to Tag entities by IDs.
+func (tu *TargetUpdate) RemoveTagIDs(ids ...int) *TargetUpdate {
+	tu.mutation.RemoveTagIDs(ids...)
+	return tu
+}
+
+// RemoveTags removes "tags" edges to Tag entities.
 func (tu *TargetUpdate) RemoveTags(t ...*Tag) *TargetUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -271,18 +241,19 @@ func (tu *TargetUpdate) RemoveTags(t ...*Tag) *TargetUpdate {
 	return tu.RemoveTagIDs(ids...)
 }
 
-// RemoveCredentialIDs removes the credentials edge to Credential by ids.
-func (tu *TargetUpdate) RemoveCredentialIDs(ids ...int) *TargetUpdate {
-	if tu.removedCredentials == nil {
-		tu.removedCredentials = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.removedCredentials[ids[i]] = struct{}{}
-	}
+// ClearCredentials clears all "credentials" edges to the Credential entity.
+func (tu *TargetUpdate) ClearCredentials() *TargetUpdate {
+	tu.mutation.ClearCredentials()
 	return tu
 }
 
-// RemoveCredentials removes credentials edges to Credential.
+// RemoveCredentialIDs removes the "credentials" edge to Credential entities by IDs.
+func (tu *TargetUpdate) RemoveCredentialIDs(ids ...int) *TargetUpdate {
+	tu.mutation.RemoveCredentialIDs(ids...)
+	return tu
+}
+
+// RemoveCredentials removes "credentials" edges to Credential entities.
 func (tu *TargetUpdate) RemoveCredentials(c ...*Credential) *TargetUpdate {
 	ids := make([]int, len(c))
 	for i := range c {
@@ -291,24 +262,42 @@ func (tu *TargetUpdate) RemoveCredentials(c ...*Credential) *TargetUpdate {
 	return tu.RemoveCredentialIDs(ids...)
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (tu *TargetUpdate) Save(ctx context.Context) (int, error) {
-	if tu.Name != nil {
-		if err := target.NameValidator(*tu.Name); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(tu.hooks) == 0 {
+		if err = tu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = tu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*TargetMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tu.check(); err != nil {
+				return 0, err
+			}
+			tu.mutation = mutation
+			affected, err = tu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(tu.hooks) - 1; i >= 0; i-- {
+			if tu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = tu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, tu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if tu.OS != nil {
-		if err := target.OSValidator(*tu.OS); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)
-		}
-	}
-	if tu.MachineUUID != nil {
-		if err := target.MachineUUIDValidator(*tu.MachineUUID); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
-		}
-	}
-	return tu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -333,6 +322,26 @@ func (tu *TargetUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (tu *TargetUpdate) check() error {
+	if v, ok := tu.mutation.Name(); ok {
+		if err := target.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Target.Name": %w`, err)}
+		}
+	}
+	if v, ok := tu.mutation.OS(); ok {
+		if err := target.OSValidator(v); err != nil {
+			return &ValidationError{Name: "OS", err: fmt.Errorf(`ent: validator failed for field "Target.OS": %w`, err)}
+		}
+	}
+	if v, ok := tu.mutation.MachineUUID(); ok {
+		if err := target.MachineUUIDValidator(v); err != nil {
+			return &ValidationError{Name: "MachineUUID", err: fmt.Errorf(`ent: validator failed for field "Target.MachineUUID": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -344,100 +353,100 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := tu.predicates; len(ps) > 0 {
+	if ps := tu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := tu.Name; value != nil {
+	if value, ok := tu.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldName,
 		})
 	}
-	if value := tu.OS; value != nil {
+	if value, ok := tu.mutation.OS(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldOS,
 		})
 	}
-	if value := tu.PrimaryIP; value != nil {
+	if value, ok := tu.mutation.PrimaryIP(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldPrimaryIP,
 		})
 	}
-	if value := tu.MachineUUID; value != nil {
+	if value, ok := tu.mutation.MachineUUID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldMachineUUID,
 		})
 	}
-	if tu.clearMachineUUID {
+	if tu.mutation.MachineUUIDCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldMachineUUID,
 		})
 	}
-	if value := tu.PublicIP; value != nil {
+	if value, ok := tu.mutation.PublicIP(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldPublicIP,
 		})
 	}
-	if tu.clearPublicIP {
+	if tu.mutation.PublicIPCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldPublicIP,
 		})
 	}
-	if value := tu.PrimaryMAC; value != nil {
+	if value, ok := tu.mutation.PrimaryMAC(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldPrimaryMAC,
 		})
 	}
-	if tu.clearPrimaryMAC {
+	if tu.mutation.PrimaryMACCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldPrimaryMAC,
 		})
 	}
-	if value := tu.Hostname; value != nil {
+	if value, ok := tu.mutation.Hostname(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldHostname,
 		})
 	}
-	if tu.clearHostname {
+	if tu.mutation.HostnameCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldHostname,
 		})
 	}
-	if value := tu.LastSeen; value != nil {
+	if value, ok := tu.mutation.LastSeen(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldLastSeen,
 		})
 	}
-	if tu.clearLastSeen {
+	if tu.mutation.LastSeenCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: target.FieldLastSeen,
 		})
 	}
-	if nodes := tu.removedTasks; len(nodes) > 0 {
+	if tu.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -451,12 +460,9 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.tasks; len(nodes) > 0 {
+	if nodes := tu.mutation.RemovedTasksIDs(); len(nodes) > 0 && !tu.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -470,12 +476,31 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := tu.removedTags; len(nodes) > 0 {
+	if tu.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -489,12 +514,9 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.tags; len(nodes) > 0 {
+	if nodes := tu.mutation.RemovedTagsIDs(); len(nodes) > 0 && !tu.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -508,31 +530,31 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if nodes := tu.removedCredentials; len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   target.CredentialsTable,
-			Columns: []string{target.CredentialsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: credential.FieldID,
-				},
-			},
-		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.credentials; len(nodes) > 0 {
+	if nodes := tu.mutation.TagsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tu.mutation.CredentialsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -546,14 +568,51 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedCredentialsIDs(); len(nodes) > 0 && !tu.mutation.CredentialsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.CredentialsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{target.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -563,53 +622,36 @@ func (tu *TargetUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // TargetUpdateOne is the builder for updating a single Target entity.
 type TargetUpdateOne struct {
 	config
-	id                 int
-	Name               *string
-	OS                 *target.OS
-	PrimaryIP          *string
-	MachineUUID        *string
-	clearMachineUUID   bool
-	PublicIP           *string
-	clearPublicIP      bool
-	PrimaryMAC         *string
-	clearPrimaryMAC    bool
-	Hostname           *string
-	clearHostname      bool
-	LastSeen           *time.Time
-	clearLastSeen      bool
-	tasks              map[int]struct{}
-	tags               map[int]struct{}
-	credentials        map[int]struct{}
-	removedTasks       map[int]struct{}
-	removedTags        map[int]struct{}
-	removedCredentials map[int]struct{}
+	fields   []string
+	hooks    []Hook
+	mutation *TargetMutation
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (tuo *TargetUpdateOne) SetName(s string) *TargetUpdateOne {
-	tuo.Name = &s
+	tuo.mutation.SetName(s)
 	return tuo
 }
 
-// SetOS sets the OS field.
+// SetOS sets the "OS" field.
 func (tuo *TargetUpdateOne) SetOS(t target.OS) *TargetUpdateOne {
-	tuo.OS = &t
+	tuo.mutation.SetOS(t)
 	return tuo
 }
 
-// SetPrimaryIP sets the PrimaryIP field.
+// SetPrimaryIP sets the "PrimaryIP" field.
 func (tuo *TargetUpdateOne) SetPrimaryIP(s string) *TargetUpdateOne {
-	tuo.PrimaryIP = &s
+	tuo.mutation.SetPrimaryIP(s)
 	return tuo
 }
 
-// SetMachineUUID sets the MachineUUID field.
+// SetMachineUUID sets the "MachineUUID" field.
 func (tuo *TargetUpdateOne) SetMachineUUID(s string) *TargetUpdateOne {
-	tuo.MachineUUID = &s
+	tuo.mutation.SetMachineUUID(s)
 	return tuo
 }
 
-// SetNillableMachineUUID sets the MachineUUID field if the given value is not nil.
+// SetNillableMachineUUID sets the "MachineUUID" field if the given value is not nil.
 func (tuo *TargetUpdateOne) SetNillableMachineUUID(s *string) *TargetUpdateOne {
 	if s != nil {
 		tuo.SetMachineUUID(*s)
@@ -617,20 +659,19 @@ func (tuo *TargetUpdateOne) SetNillableMachineUUID(s *string) *TargetUpdateOne {
 	return tuo
 }
 
-// ClearMachineUUID clears the value of MachineUUID.
+// ClearMachineUUID clears the value of the "MachineUUID" field.
 func (tuo *TargetUpdateOne) ClearMachineUUID() *TargetUpdateOne {
-	tuo.MachineUUID = nil
-	tuo.clearMachineUUID = true
+	tuo.mutation.ClearMachineUUID()
 	return tuo
 }
 
-// SetPublicIP sets the PublicIP field.
+// SetPublicIP sets the "PublicIP" field.
 func (tuo *TargetUpdateOne) SetPublicIP(s string) *TargetUpdateOne {
-	tuo.PublicIP = &s
+	tuo.mutation.SetPublicIP(s)
 	return tuo
 }
 
-// SetNillablePublicIP sets the PublicIP field if the given value is not nil.
+// SetNillablePublicIP sets the "PublicIP" field if the given value is not nil.
 func (tuo *TargetUpdateOne) SetNillablePublicIP(s *string) *TargetUpdateOne {
 	if s != nil {
 		tuo.SetPublicIP(*s)
@@ -638,20 +679,19 @@ func (tuo *TargetUpdateOne) SetNillablePublicIP(s *string) *TargetUpdateOne {
 	return tuo
 }
 
-// ClearPublicIP clears the value of PublicIP.
+// ClearPublicIP clears the value of the "PublicIP" field.
 func (tuo *TargetUpdateOne) ClearPublicIP() *TargetUpdateOne {
-	tuo.PublicIP = nil
-	tuo.clearPublicIP = true
+	tuo.mutation.ClearPublicIP()
 	return tuo
 }
 
-// SetPrimaryMAC sets the PrimaryMAC field.
+// SetPrimaryMAC sets the "PrimaryMAC" field.
 func (tuo *TargetUpdateOne) SetPrimaryMAC(s string) *TargetUpdateOne {
-	tuo.PrimaryMAC = &s
+	tuo.mutation.SetPrimaryMAC(s)
 	return tuo
 }
 
-// SetNillablePrimaryMAC sets the PrimaryMAC field if the given value is not nil.
+// SetNillablePrimaryMAC sets the "PrimaryMAC" field if the given value is not nil.
 func (tuo *TargetUpdateOne) SetNillablePrimaryMAC(s *string) *TargetUpdateOne {
 	if s != nil {
 		tuo.SetPrimaryMAC(*s)
@@ -659,20 +699,19 @@ func (tuo *TargetUpdateOne) SetNillablePrimaryMAC(s *string) *TargetUpdateOne {
 	return tuo
 }
 
-// ClearPrimaryMAC clears the value of PrimaryMAC.
+// ClearPrimaryMAC clears the value of the "PrimaryMAC" field.
 func (tuo *TargetUpdateOne) ClearPrimaryMAC() *TargetUpdateOne {
-	tuo.PrimaryMAC = nil
-	tuo.clearPrimaryMAC = true
+	tuo.mutation.ClearPrimaryMAC()
 	return tuo
 }
 
-// SetHostname sets the Hostname field.
+// SetHostname sets the "Hostname" field.
 func (tuo *TargetUpdateOne) SetHostname(s string) *TargetUpdateOne {
-	tuo.Hostname = &s
+	tuo.mutation.SetHostname(s)
 	return tuo
 }
 
-// SetNillableHostname sets the Hostname field if the given value is not nil.
+// SetNillableHostname sets the "Hostname" field if the given value is not nil.
 func (tuo *TargetUpdateOne) SetNillableHostname(s *string) *TargetUpdateOne {
 	if s != nil {
 		tuo.SetHostname(*s)
@@ -680,20 +719,19 @@ func (tuo *TargetUpdateOne) SetNillableHostname(s *string) *TargetUpdateOne {
 	return tuo
 }
 
-// ClearHostname clears the value of Hostname.
+// ClearHostname clears the value of the "Hostname" field.
 func (tuo *TargetUpdateOne) ClearHostname() *TargetUpdateOne {
-	tuo.Hostname = nil
-	tuo.clearHostname = true
+	tuo.mutation.ClearHostname()
 	return tuo
 }
 
-// SetLastSeen sets the LastSeen field.
+// SetLastSeen sets the "LastSeen" field.
 func (tuo *TargetUpdateOne) SetLastSeen(t time.Time) *TargetUpdateOne {
-	tuo.LastSeen = &t
+	tuo.mutation.SetLastSeen(t)
 	return tuo
 }
 
-// SetNillableLastSeen sets the LastSeen field if the given value is not nil.
+// SetNillableLastSeen sets the "LastSeen" field if the given value is not nil.
 func (tuo *TargetUpdateOne) SetNillableLastSeen(t *time.Time) *TargetUpdateOne {
 	if t != nil {
 		tuo.SetLastSeen(*t)
@@ -701,25 +739,19 @@ func (tuo *TargetUpdateOne) SetNillableLastSeen(t *time.Time) *TargetUpdateOne {
 	return tuo
 }
 
-// ClearLastSeen clears the value of LastSeen.
+// ClearLastSeen clears the value of the "LastSeen" field.
 func (tuo *TargetUpdateOne) ClearLastSeen() *TargetUpdateOne {
-	tuo.LastSeen = nil
-	tuo.clearLastSeen = true
+	tuo.mutation.ClearLastSeen()
 	return tuo
 }
 
-// AddTaskIDs adds the tasks edge to Task by ids.
+// AddTaskIDs adds the "tasks" edge to the Task entity by IDs.
 func (tuo *TargetUpdateOne) AddTaskIDs(ids ...int) *TargetUpdateOne {
-	if tuo.tasks == nil {
-		tuo.tasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.tasks[ids[i]] = struct{}{}
-	}
+	tuo.mutation.AddTaskIDs(ids...)
 	return tuo
 }
 
-// AddTasks adds the tasks edges to Task.
+// AddTasks adds the "tasks" edges to the Task entity.
 func (tuo *TargetUpdateOne) AddTasks(t ...*Task) *TargetUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -728,18 +760,13 @@ func (tuo *TargetUpdateOne) AddTasks(t ...*Task) *TargetUpdateOne {
 	return tuo.AddTaskIDs(ids...)
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (tuo *TargetUpdateOne) AddTagIDs(ids ...int) *TargetUpdateOne {
-	if tuo.tags == nil {
-		tuo.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.tags[ids[i]] = struct{}{}
-	}
+	tuo.mutation.AddTagIDs(ids...)
 	return tuo
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (tuo *TargetUpdateOne) AddTags(t ...*Tag) *TargetUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -748,18 +775,13 @@ func (tuo *TargetUpdateOne) AddTags(t ...*Tag) *TargetUpdateOne {
 	return tuo.AddTagIDs(ids...)
 }
 
-// AddCredentialIDs adds the credentials edge to Credential by ids.
+// AddCredentialIDs adds the "credentials" edge to the Credential entity by IDs.
 func (tuo *TargetUpdateOne) AddCredentialIDs(ids ...int) *TargetUpdateOne {
-	if tuo.credentials == nil {
-		tuo.credentials = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.credentials[ids[i]] = struct{}{}
-	}
+	tuo.mutation.AddCredentialIDs(ids...)
 	return tuo
 }
 
-// AddCredentials adds the credentials edges to Credential.
+// AddCredentials adds the "credentials" edges to the Credential entity.
 func (tuo *TargetUpdateOne) AddCredentials(c ...*Credential) *TargetUpdateOne {
 	ids := make([]int, len(c))
 	for i := range c {
@@ -768,18 +790,24 @@ func (tuo *TargetUpdateOne) AddCredentials(c ...*Credential) *TargetUpdateOne {
 	return tuo.AddCredentialIDs(ids...)
 }
 
-// RemoveTaskIDs removes the tasks edge to Task by ids.
-func (tuo *TargetUpdateOne) RemoveTaskIDs(ids ...int) *TargetUpdateOne {
-	if tuo.removedTasks == nil {
-		tuo.removedTasks = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.removedTasks[ids[i]] = struct{}{}
-	}
+// Mutation returns the TargetMutation object of the builder.
+func (tuo *TargetUpdateOne) Mutation() *TargetMutation {
+	return tuo.mutation
+}
+
+// ClearTasks clears all "tasks" edges to the Task entity.
+func (tuo *TargetUpdateOne) ClearTasks() *TargetUpdateOne {
+	tuo.mutation.ClearTasks()
 	return tuo
 }
 
-// RemoveTasks removes tasks edges to Task.
+// RemoveTaskIDs removes the "tasks" edge to Task entities by IDs.
+func (tuo *TargetUpdateOne) RemoveTaskIDs(ids ...int) *TargetUpdateOne {
+	tuo.mutation.RemoveTaskIDs(ids...)
+	return tuo
+}
+
+// RemoveTasks removes "tasks" edges to Task entities.
 func (tuo *TargetUpdateOne) RemoveTasks(t ...*Task) *TargetUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -788,18 +816,19 @@ func (tuo *TargetUpdateOne) RemoveTasks(t ...*Task) *TargetUpdateOne {
 	return tuo.RemoveTaskIDs(ids...)
 }
 
-// RemoveTagIDs removes the tags edge to Tag by ids.
-func (tuo *TargetUpdateOne) RemoveTagIDs(ids ...int) *TargetUpdateOne {
-	if tuo.removedTags == nil {
-		tuo.removedTags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.removedTags[ids[i]] = struct{}{}
-	}
+// ClearTags clears all "tags" edges to the Tag entity.
+func (tuo *TargetUpdateOne) ClearTags() *TargetUpdateOne {
+	tuo.mutation.ClearTags()
 	return tuo
 }
 
-// RemoveTags removes tags edges to Tag.
+// RemoveTagIDs removes the "tags" edge to Tag entities by IDs.
+func (tuo *TargetUpdateOne) RemoveTagIDs(ids ...int) *TargetUpdateOne {
+	tuo.mutation.RemoveTagIDs(ids...)
+	return tuo
+}
+
+// RemoveTags removes "tags" edges to Tag entities.
 func (tuo *TargetUpdateOne) RemoveTags(t ...*Tag) *TargetUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -808,18 +837,19 @@ func (tuo *TargetUpdateOne) RemoveTags(t ...*Tag) *TargetUpdateOne {
 	return tuo.RemoveTagIDs(ids...)
 }
 
-// RemoveCredentialIDs removes the credentials edge to Credential by ids.
-func (tuo *TargetUpdateOne) RemoveCredentialIDs(ids ...int) *TargetUpdateOne {
-	if tuo.removedCredentials == nil {
-		tuo.removedCredentials = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.removedCredentials[ids[i]] = struct{}{}
-	}
+// ClearCredentials clears all "credentials" edges to the Credential entity.
+func (tuo *TargetUpdateOne) ClearCredentials() *TargetUpdateOne {
+	tuo.mutation.ClearCredentials()
 	return tuo
 }
 
-// RemoveCredentials removes credentials edges to Credential.
+// RemoveCredentialIDs removes the "credentials" edge to Credential entities by IDs.
+func (tuo *TargetUpdateOne) RemoveCredentialIDs(ids ...int) *TargetUpdateOne {
+	tuo.mutation.RemoveCredentialIDs(ids...)
+	return tuo
+}
+
+// RemoveCredentials removes "credentials" edges to Credential entities.
 func (tuo *TargetUpdateOne) RemoveCredentials(c ...*Credential) *TargetUpdateOne {
 	ids := make([]int, len(c))
 	for i := range c {
@@ -828,33 +858,58 @@ func (tuo *TargetUpdateOne) RemoveCredentials(c ...*Credential) *TargetUpdateOne
 	return tuo.RemoveCredentialIDs(ids...)
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (tuo *TargetUpdateOne) Select(field string, fields ...string) *TargetUpdateOne {
+	tuo.fields = append([]string{field}, fields...)
+	return tuo
+}
+
+// Save executes the query and returns the updated Target entity.
 func (tuo *TargetUpdateOne) Save(ctx context.Context) (*Target, error) {
-	if tuo.Name != nil {
-		if err := target.NameValidator(*tuo.Name); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err  error
+		node *Target
+	)
+	if len(tuo.hooks) == 0 {
+		if err = tuo.check(); err != nil {
+			return nil, err
+		}
+		node, err = tuo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*TargetMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tuo.check(); err != nil {
+				return nil, err
+			}
+			tuo.mutation = mutation
+			node, err = tuo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(tuo.hooks) - 1; i >= 0; i-- {
+			if tuo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = tuo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, tuo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if tuo.OS != nil {
-		if err := target.OSValidator(*tuo.OS); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"OS\": %v", err)
-		}
-	}
-	if tuo.MachineUUID != nil {
-		if err := target.MachineUUIDValidator(*tuo.MachineUUID); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"MachineUUID\": %v", err)
-		}
-	}
-	return tuo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (tuo *TargetUpdateOne) SaveX(ctx context.Context) *Target {
-	t, err := tuo.Save(ctx)
+	node, err := tuo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return t
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -870,105 +925,148 @@ func (tuo *TargetUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (tuo *TargetUpdateOne) check() error {
+	if v, ok := tuo.mutation.Name(); ok {
+		if err := target.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Target.Name": %w`, err)}
+		}
+	}
+	if v, ok := tuo.mutation.OS(); ok {
+		if err := target.OSValidator(v); err != nil {
+			return &ValidationError{Name: "OS", err: fmt.Errorf(`ent: validator failed for field "Target.OS": %w`, err)}
+		}
+	}
+	if v, ok := tuo.mutation.MachineUUID(); ok {
+		if err := target.MachineUUIDValidator(v); err != nil {
+			return &ValidationError{Name: "MachineUUID", err: fmt.Errorf(`ent: validator failed for field "Target.MachineUUID": %w`, err)}
+		}
+	}
+	return nil
+}
+
+func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (_node *Target, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   target.Table,
 			Columns: target.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  tuo.id,
 				Type:   field.TypeInt,
 				Column: target.FieldID,
 			},
 		},
 	}
-	if value := tuo.Name; value != nil {
+	id, ok := tuo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Target.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := tuo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, target.FieldID)
+		for _, f := range fields {
+			if !target.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != target.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := tuo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := tuo.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldName,
 		})
 	}
-	if value := tuo.OS; value != nil {
+	if value, ok := tuo.mutation.OS(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldOS,
 		})
 	}
-	if value := tuo.PrimaryIP; value != nil {
+	if value, ok := tuo.mutation.PrimaryIP(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldPrimaryIP,
 		})
 	}
-	if value := tuo.MachineUUID; value != nil {
+	if value, ok := tuo.mutation.MachineUUID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldMachineUUID,
 		})
 	}
-	if tuo.clearMachineUUID {
+	if tuo.mutation.MachineUUIDCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldMachineUUID,
 		})
 	}
-	if value := tuo.PublicIP; value != nil {
+	if value, ok := tuo.mutation.PublicIP(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldPublicIP,
 		})
 	}
-	if tuo.clearPublicIP {
+	if tuo.mutation.PublicIPCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldPublicIP,
 		})
 	}
-	if value := tuo.PrimaryMAC; value != nil {
+	if value, ok := tuo.mutation.PrimaryMAC(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldPrimaryMAC,
 		})
 	}
-	if tuo.clearPrimaryMAC {
+	if tuo.mutation.PrimaryMACCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldPrimaryMAC,
 		})
 	}
-	if value := tuo.Hostname; value != nil {
+	if value, ok := tuo.mutation.Hostname(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldHostname,
 		})
 	}
-	if tuo.clearHostname {
+	if tuo.mutation.HostnameCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: target.FieldHostname,
 		})
 	}
-	if value := tuo.LastSeen; value != nil {
+	if value, ok := tuo.mutation.LastSeen(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: target.FieldLastSeen,
 		})
 	}
-	if tuo.clearLastSeen {
+	if tuo.mutation.LastSeenCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: target.FieldLastSeen,
 		})
 	}
-	if nodes := tuo.removedTasks; len(nodes) > 0 {
+	if tuo.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -982,12 +1080,9 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.tasks; len(nodes) > 0 {
+	if nodes := tuo.mutation.RemovedTasksIDs(); len(nodes) > 0 && !tuo.mutation.TasksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1001,12 +1096,31 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.TasksIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.TasksTable,
+			Columns: []string{target.TasksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: task.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := tuo.removedTags; len(nodes) > 0 {
+	if tuo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -1020,12 +1134,9 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.tags; len(nodes) > 0 {
+	if nodes := tuo.mutation.RemovedTagsIDs(); len(nodes) > 0 && !tuo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -1039,31 +1150,31 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 				},
 			},
 		}
-		for k, _ := range nodes {
-			edge.Target.Nodes = append(edge.Target.Nodes, k)
-		}
-		_spec.Edges.Add = append(_spec.Edges.Add, edge)
-	}
-	if nodes := tuo.removedCredentials; len(nodes) > 0 {
-		edge := &sqlgraph.EdgeSpec{
-			Rel:     sqlgraph.O2M,
-			Inverse: false,
-			Table:   target.CredentialsTable,
-			Columns: []string{target.CredentialsColumn},
-			Bidi:    false,
-			Target: &sqlgraph.EdgeTarget{
-				IDSpec: &sqlgraph.FieldSpec{
-					Type:   field.TypeInt,
-					Column: credential.FieldID,
-				},
-			},
-		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.credentials; len(nodes) > 0 {
+	if nodes := tuo.mutation.TagsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   target.TagsTable,
+			Columns: target.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Add = append(_spec.Edges.Add, edge)
+	}
+	if tuo.mutation.CredentialsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1077,19 +1188,56 @@ func (tuo *TargetUpdateOne) sqlSave(ctx context.Context) (t *Target, err error) 
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedCredentialsIDs(); len(nodes) > 0 && !tuo.mutation.CredentialsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.CredentialsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   target.CredentialsTable,
+			Columns: []string{target.CredentialsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: credential.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	t = &Target{config: tuo.config}
-	_spec.Assign = t.assignValues
-	_spec.ScanValues = t.scanValues()
+	_node = &Target{config: tuo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{target.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return t, nil
+	return _node, nil
 }

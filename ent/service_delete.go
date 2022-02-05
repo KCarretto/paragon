@@ -4,10 +4,11 @@ package ent
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/service"
 )
@@ -15,18 +16,46 @@ import (
 // ServiceDelete is the builder for deleting a Service entity.
 type ServiceDelete struct {
 	config
-	predicates []predicate.Service
+	hooks    []Hook
+	mutation *ServiceMutation
 }
 
-// Where adds a new predicate to the delete builder.
+// Where appends a list predicates to the ServiceDelete builder.
 func (sd *ServiceDelete) Where(ps ...predicate.Service) *ServiceDelete {
-	sd.predicates = append(sd.predicates, ps...)
+	sd.mutation.Where(ps...)
 	return sd
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (sd *ServiceDelete) Exec(ctx context.Context) (int, error) {
-	return sd.sqlExec(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(sd.hooks) == 0 {
+		affected, err = sd.sqlExec(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*ServiceMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			sd.mutation = mutation
+			affected, err = sd.sqlExec(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(sd.hooks) - 1; i >= 0; i-- {
+			if sd.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = sd.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, sd.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -48,7 +77,7 @@ func (sd *ServiceDelete) sqlExec(ctx context.Context) (int, error) {
 			},
 		},
 	}
-	if ps := sd.predicates; len(ps) > 0 {
+	if ps := sd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -70,7 +99,7 @@ func (sdo *ServiceDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{service.Label}
+		return &NotFoundError{service.Label}
 	default:
 		return nil
 	}

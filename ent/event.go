@@ -7,8 +7,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/ent/service"
+	"github.com/kcarretto/paragon/ent/tag"
+	"github.com/kcarretto/paragon/ent/target"
+	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
 // Event is the model entity for the Event schema.
@@ -17,254 +26,469 @@ type Event struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// CreationTime holds the value of the "CreationTime" field.
+	// The timestamp for when the Job was created
 	CreationTime time.Time `json:"CreationTime,omitempty"`
 	// Kind holds the value of the "Kind" field.
+	// The kind of event
 	Kind event.Kind `json:"Kind,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the EventQuery when eager-loading is set.
-	Edges struct {
-		// Job holds the value of the job edge.
-		Job *Job
-		// File holds the value of the file edge.
-		File *File
-		// Credential holds the value of the credential edge.
-		Credential *Credential
-		// Link holds the value of the link edge.
-		Link *Link
-		// Tag holds the value of the tag edge.
-		Tag *Tag
-		// Target holds the value of the target edge.
-		Target *Target
-		// Task holds the value of the task edge.
-		Task *Task
-		// User holds the value of the user edge.
-		User *User
-		// Event holds the value of the event edge.
-		Event *Event
-		// Service holds the value of the service edge.
-		Service *Service
-		// Likers holds the value of the likers edge.
-		Likers []*User
-		// Owner holds the value of the owner edge.
-		Owner *User
-		// SvcOwner holds the value of the svcOwner edge.
-		SvcOwner *Service
-	} `json:"edges"`
-	event_job_id        *int
-	event_file_id       *int
-	event_credential_id *int
-	event_link_id       *int
-	event_tag_id        *int
-	event_target_id     *int
-	event_task_id       *int
-	event_user_id       *int
-	event_event_id      *int
-	event_service_id    *int
-	svc_owner_id        *int
-	owner_id            *int
+	Edges            EventEdges `json:"edges"`
+	event_job        *int
+	event_file       *int
+	event_credential *int
+	event_link       *int
+	event_tag        *int
+	event_target     *int
+	event_task       *int
+	event_user       *int
+	event_event      *int
+	event_service    *int
+	service_events   *int
+	user_events      *int
+}
+
+// EventEdges holds the relations/edges for other nodes in the graph.
+type EventEdges struct {
+	// Job holds the value of the job edge.
+	Job *Job `json:"job,omitempty"`
+	// File holds the value of the file edge.
+	File *File `json:"file,omitempty"`
+	// Credential holds the value of the credential edge.
+	Credential *Credential `json:"credential,omitempty"`
+	// Link holds the value of the link edge.
+	Link *Link `json:"link,omitempty"`
+	// Tag holds the value of the tag edge.
+	Tag *Tag `json:"tag,omitempty"`
+	// Target holds the value of the target edge.
+	Target *Target `json:"target,omitempty"`
+	// Task holds the value of the task edge.
+	Task *Task `json:"task,omitempty"`
+	// User holds the value of the user edge.
+	User *User `json:"user,omitempty"`
+	// Event holds the value of the event edge.
+	Event *Event `json:"event,omitempty"`
+	// Service holds the value of the service edge.
+	Service *Service `json:"service,omitempty"`
+	// Likers holds the value of the likers edge.
+	Likers []*User `json:"likers,omitempty"`
+	// Owner holds the value of the owner edge.
+	Owner *User `json:"owner,omitempty"`
+	// SvcOwner holds the value of the svcOwner edge.
+	SvcOwner *Service `json:"svcOwner,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [13]bool
+}
+
+// JobOrErr returns the Job value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) JobOrErr() (*Job, error) {
+	if e.loadedTypes[0] {
+		if e.Job == nil {
+			// The edge job was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: job.Label}
+		}
+		return e.Job, nil
+	}
+	return nil, &NotLoadedError{edge: "job"}
+}
+
+// FileOrErr returns the File value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) FileOrErr() (*File, error) {
+	if e.loadedTypes[1] {
+		if e.File == nil {
+			// The edge file was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: file.Label}
+		}
+		return e.File, nil
+	}
+	return nil, &NotLoadedError{edge: "file"}
+}
+
+// CredentialOrErr returns the Credential value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) CredentialOrErr() (*Credential, error) {
+	if e.loadedTypes[2] {
+		if e.Credential == nil {
+			// The edge credential was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: credential.Label}
+		}
+		return e.Credential, nil
+	}
+	return nil, &NotLoadedError{edge: "credential"}
+}
+
+// LinkOrErr returns the Link value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) LinkOrErr() (*Link, error) {
+	if e.loadedTypes[3] {
+		if e.Link == nil {
+			// The edge link was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: link.Label}
+		}
+		return e.Link, nil
+	}
+	return nil, &NotLoadedError{edge: "link"}
+}
+
+// TagOrErr returns the Tag value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) TagOrErr() (*Tag, error) {
+	if e.loadedTypes[4] {
+		if e.Tag == nil {
+			// The edge tag was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: tag.Label}
+		}
+		return e.Tag, nil
+	}
+	return nil, &NotLoadedError{edge: "tag"}
+}
+
+// TargetOrErr returns the Target value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) TargetOrErr() (*Target, error) {
+	if e.loadedTypes[5] {
+		if e.Target == nil {
+			// The edge target was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: target.Label}
+		}
+		return e.Target, nil
+	}
+	return nil, &NotLoadedError{edge: "target"}
+}
+
+// TaskOrErr returns the Task value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) TaskOrErr() (*Task, error) {
+	if e.loadedTypes[6] {
+		if e.Task == nil {
+			// The edge task was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: task.Label}
+		}
+		return e.Task, nil
+	}
+	return nil, &NotLoadedError{edge: "task"}
+}
+
+// UserOrErr returns the User value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) UserOrErr() (*User, error) {
+	if e.loadedTypes[7] {
+		if e.User == nil {
+			// The edge user was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.User, nil
+	}
+	return nil, &NotLoadedError{edge: "user"}
+}
+
+// EventOrErr returns the Event value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) EventOrErr() (*Event, error) {
+	if e.loadedTypes[8] {
+		if e.Event == nil {
+			// The edge event was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: event.Label}
+		}
+		return e.Event, nil
+	}
+	return nil, &NotLoadedError{edge: "event"}
+}
+
+// ServiceOrErr returns the Service value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) ServiceOrErr() (*Service, error) {
+	if e.loadedTypes[9] {
+		if e.Service == nil {
+			// The edge service was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: service.Label}
+		}
+		return e.Service, nil
+	}
+	return nil, &NotLoadedError{edge: "service"}
+}
+
+// LikersOrErr returns the Likers value or an error if the edge
+// was not loaded in eager-loading.
+func (e EventEdges) LikersOrErr() ([]*User, error) {
+	if e.loadedTypes[10] {
+		return e.Likers, nil
+	}
+	return nil, &NotLoadedError{edge: "likers"}
+}
+
+// OwnerOrErr returns the Owner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) OwnerOrErr() (*User, error) {
+	if e.loadedTypes[11] {
+		if e.Owner == nil {
+			// The edge owner was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: user.Label}
+		}
+		return e.Owner, nil
+	}
+	return nil, &NotLoadedError{edge: "owner"}
+}
+
+// SvcOwnerOrErr returns the SvcOwner value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e EventEdges) SvcOwnerOrErr() (*Service, error) {
+	if e.loadedTypes[12] {
+		if e.SvcOwner == nil {
+			// The edge svcOwner was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: service.Label}
+		}
+		return e.SvcOwner, nil
+	}
+	return nil, &NotLoadedError{edge: "svcOwner"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Event) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullTime{},   // CreationTime
-		&sql.NullString{}, // Kind
+func (*Event) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case event.FieldID:
+			values[i] = new(sql.NullInt64)
+		case event.FieldKind:
+			values[i] = new(sql.NullString)
+		case event.FieldCreationTime:
+			values[i] = new(sql.NullTime)
+		case event.ForeignKeys[0]: // event_job
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[1]: // event_file
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[2]: // event_credential
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[3]: // event_link
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[4]: // event_tag
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[5]: // event_target
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[6]: // event_task
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[7]: // event_user
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[8]: // event_event
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[9]: // event_service
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[10]: // service_events
+			values[i] = new(sql.NullInt64)
+		case event.ForeignKeys[11]: // user_events
+			values[i] = new(sql.NullInt64)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type Event", columns[i])
+		}
 	}
-}
-
-// fkValues returns the types for scanning foreign-keys values from sql.Rows.
-func (*Event) fkValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{}, // event_job_id
-		&sql.NullInt64{}, // event_file_id
-		&sql.NullInt64{}, // event_credential_id
-		&sql.NullInt64{}, // event_link_id
-		&sql.NullInt64{}, // event_tag_id
-		&sql.NullInt64{}, // event_target_id
-		&sql.NullInt64{}, // event_task_id
-		&sql.NullInt64{}, // event_user_id
-		&sql.NullInt64{}, // event_event_id
-		&sql.NullInt64{}, // event_service_id
-		&sql.NullInt64{}, // svc_owner_id
-		&sql.NullInt64{}, // owner_id
-	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Event fields.
-func (e *Event) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(event.Columns); m < n {
+func (e *Event) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	e.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field CreationTime", values[0])
-	} else if value.Valid {
-		e.CreationTime = value.Time
-	}
-	if value, ok := values[1].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Kind", values[1])
-	} else if value.Valid {
-		e.Kind = event.Kind(value.String)
-	}
-	values = values[2:]
-	if len(values) == len(event.ForeignKeys) {
-		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_job_id", value)
-		} else if value.Valid {
-			e.event_job_id = new(int)
-			*e.event_job_id = int(value.Int64)
-		}
-		if value, ok := values[1].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_file_id", value)
-		} else if value.Valid {
-			e.event_file_id = new(int)
-			*e.event_file_id = int(value.Int64)
-		}
-		if value, ok := values[2].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_credential_id", value)
-		} else if value.Valid {
-			e.event_credential_id = new(int)
-			*e.event_credential_id = int(value.Int64)
-		}
-		if value, ok := values[3].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_link_id", value)
-		} else if value.Valid {
-			e.event_link_id = new(int)
-			*e.event_link_id = int(value.Int64)
-		}
-		if value, ok := values[4].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_tag_id", value)
-		} else if value.Valid {
-			e.event_tag_id = new(int)
-			*e.event_tag_id = int(value.Int64)
-		}
-		if value, ok := values[5].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_target_id", value)
-		} else if value.Valid {
-			e.event_target_id = new(int)
-			*e.event_target_id = int(value.Int64)
-		}
-		if value, ok := values[6].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_task_id", value)
-		} else if value.Valid {
-			e.event_task_id = new(int)
-			*e.event_task_id = int(value.Int64)
-		}
-		if value, ok := values[7].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_user_id", value)
-		} else if value.Valid {
-			e.event_user_id = new(int)
-			*e.event_user_id = int(value.Int64)
-		}
-		if value, ok := values[8].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_event_id", value)
-		} else if value.Valid {
-			e.event_event_id = new(int)
-			*e.event_event_id = int(value.Int64)
-		}
-		if value, ok := values[9].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field event_service_id", value)
-		} else if value.Valid {
-			e.event_service_id = new(int)
-			*e.event_service_id = int(value.Int64)
-		}
-		if value, ok := values[10].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field svc_owner_id", value)
-		} else if value.Valid {
-			e.svc_owner_id = new(int)
-			*e.svc_owner_id = int(value.Int64)
-		}
-		if value, ok := values[11].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field owner_id", value)
-		} else if value.Valid {
-			e.owner_id = new(int)
-			*e.owner_id = int(value.Int64)
+	for i := range columns {
+		switch columns[i] {
+		case event.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			e.ID = int(value.Int64)
+		case event.FieldCreationTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field CreationTime", values[i])
+			} else if value.Valid {
+				e.CreationTime = value.Time
+			}
+		case event.FieldKind:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Kind", values[i])
+			} else if value.Valid {
+				e.Kind = event.Kind(value.String)
+			}
+		case event.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_job", value)
+			} else if value.Valid {
+				e.event_job = new(int)
+				*e.event_job = int(value.Int64)
+			}
+		case event.ForeignKeys[1]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_file", value)
+			} else if value.Valid {
+				e.event_file = new(int)
+				*e.event_file = int(value.Int64)
+			}
+		case event.ForeignKeys[2]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_credential", value)
+			} else if value.Valid {
+				e.event_credential = new(int)
+				*e.event_credential = int(value.Int64)
+			}
+		case event.ForeignKeys[3]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_link", value)
+			} else if value.Valid {
+				e.event_link = new(int)
+				*e.event_link = int(value.Int64)
+			}
+		case event.ForeignKeys[4]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_tag", value)
+			} else if value.Valid {
+				e.event_tag = new(int)
+				*e.event_tag = int(value.Int64)
+			}
+		case event.ForeignKeys[5]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_target", value)
+			} else if value.Valid {
+				e.event_target = new(int)
+				*e.event_target = int(value.Int64)
+			}
+		case event.ForeignKeys[6]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_task", value)
+			} else if value.Valid {
+				e.event_task = new(int)
+				*e.event_task = int(value.Int64)
+			}
+		case event.ForeignKeys[7]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_user", value)
+			} else if value.Valid {
+				e.event_user = new(int)
+				*e.event_user = int(value.Int64)
+			}
+		case event.ForeignKeys[8]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_event", value)
+			} else if value.Valid {
+				e.event_event = new(int)
+				*e.event_event = int(value.Int64)
+			}
+		case event.ForeignKeys[9]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field event_service", value)
+			} else if value.Valid {
+				e.event_service = new(int)
+				*e.event_service = int(value.Int64)
+			}
+		case event.ForeignKeys[10]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field service_events", value)
+			} else if value.Valid {
+				e.service_events = new(int)
+				*e.service_events = int(value.Int64)
+			}
+		case event.ForeignKeys[11]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_events", value)
+			} else if value.Valid {
+				e.user_events = new(int)
+				*e.user_events = int(value.Int64)
+			}
 		}
 	}
 	return nil
 }
 
-// QueryJob queries the job edge of the Event.
+// QueryJob queries the "job" edge of the Event entity.
 func (e *Event) QueryJob() *JobQuery {
-	return (&EventClient{e.config}).QueryJob(e)
+	return (&EventClient{config: e.config}).QueryJob(e)
 }
 
-// QueryFile queries the file edge of the Event.
+// QueryFile queries the "file" edge of the Event entity.
 func (e *Event) QueryFile() *FileQuery {
-	return (&EventClient{e.config}).QueryFile(e)
+	return (&EventClient{config: e.config}).QueryFile(e)
 }
 
-// QueryCredential queries the credential edge of the Event.
+// QueryCredential queries the "credential" edge of the Event entity.
 func (e *Event) QueryCredential() *CredentialQuery {
-	return (&EventClient{e.config}).QueryCredential(e)
+	return (&EventClient{config: e.config}).QueryCredential(e)
 }
 
-// QueryLink queries the link edge of the Event.
+// QueryLink queries the "link" edge of the Event entity.
 func (e *Event) QueryLink() *LinkQuery {
-	return (&EventClient{e.config}).QueryLink(e)
+	return (&EventClient{config: e.config}).QueryLink(e)
 }
 
-// QueryTag queries the tag edge of the Event.
+// QueryTag queries the "tag" edge of the Event entity.
 func (e *Event) QueryTag() *TagQuery {
-	return (&EventClient{e.config}).QueryTag(e)
+	return (&EventClient{config: e.config}).QueryTag(e)
 }
 
-// QueryTarget queries the target edge of the Event.
+// QueryTarget queries the "target" edge of the Event entity.
 func (e *Event) QueryTarget() *TargetQuery {
-	return (&EventClient{e.config}).QueryTarget(e)
+	return (&EventClient{config: e.config}).QueryTarget(e)
 }
 
-// QueryTask queries the task edge of the Event.
+// QueryTask queries the "task" edge of the Event entity.
 func (e *Event) QueryTask() *TaskQuery {
-	return (&EventClient{e.config}).QueryTask(e)
+	return (&EventClient{config: e.config}).QueryTask(e)
 }
 
-// QueryUser queries the user edge of the Event.
+// QueryUser queries the "user" edge of the Event entity.
 func (e *Event) QueryUser() *UserQuery {
-	return (&EventClient{e.config}).QueryUser(e)
+	return (&EventClient{config: e.config}).QueryUser(e)
 }
 
-// QueryEvent queries the event edge of the Event.
+// QueryEvent queries the "event" edge of the Event entity.
 func (e *Event) QueryEvent() *EventQuery {
-	return (&EventClient{e.config}).QueryEvent(e)
+	return (&EventClient{config: e.config}).QueryEvent(e)
 }
 
-// QueryService queries the service edge of the Event.
+// QueryService queries the "service" edge of the Event entity.
 func (e *Event) QueryService() *ServiceQuery {
-	return (&EventClient{e.config}).QueryService(e)
+	return (&EventClient{config: e.config}).QueryService(e)
 }
 
-// QueryLikers queries the likers edge of the Event.
+// QueryLikers queries the "likers" edge of the Event entity.
 func (e *Event) QueryLikers() *UserQuery {
-	return (&EventClient{e.config}).QueryLikers(e)
+	return (&EventClient{config: e.config}).QueryLikers(e)
 }
 
-// QueryOwner queries the owner edge of the Event.
+// QueryOwner queries the "owner" edge of the Event entity.
 func (e *Event) QueryOwner() *UserQuery {
-	return (&EventClient{e.config}).QueryOwner(e)
+	return (&EventClient{config: e.config}).QueryOwner(e)
 }
 
-// QuerySvcOwner queries the svcOwner edge of the Event.
+// QuerySvcOwner queries the "svcOwner" edge of the Event entity.
 func (e *Event) QuerySvcOwner() *ServiceQuery {
-	return (&EventClient{e.config}).QuerySvcOwner(e)
+	return (&EventClient{config: e.config}).QuerySvcOwner(e)
 }
 
 // Update returns a builder for updating this Event.
-// Note that, you need to call Event.Unwrap() before calling this method, if this Event
+// Note that you need to call Event.Unwrap() before calling this method if this Event
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (e *Event) Update() *EventUpdateOne {
-	return (&EventClient{e.config}).UpdateOne(e)
+	return (&EventClient{config: e.config}).UpdateOne(e)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the Event entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (e *Event) Unwrap() *Event {
 	tx, ok := e.config.driver.(*txDriver)
 	if !ok {
