@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -24,8 +24,9 @@ type JobQuery struct {
 	config
 	limit      *int
 	offset     *int
-	order      []Order
-	unique     []string
+	unique     *bool
+	order      []OrderFunc
+	fields     []string
 	predicates []predicate.Job
 	// eager-loading edges.
 	withTasks *TaskQuery
@@ -34,11 +35,12 @@ type JobQuery struct {
 	withNext  *JobQuery
 	withOwner *UserQuery
 	withFKs   bool
-	// intermediate query.
-	sql *sql.Selector
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the builder.
+// Where adds a new predicate for the JobQuery builder.
 func (jq *JobQuery) Where(ps ...predicate.Job) *JobQuery {
 	jq.predicates = append(jq.predicates, ps...)
 	return jq
@@ -56,108 +58,167 @@ func (jq *JobQuery) Offset(offset int) *JobQuery {
 	return jq
 }
 
+// Unique configures the query builder to filter duplicate records on query.
+// By default, unique is set to true, and can be disabled using this method.
+func (jq *JobQuery) Unique(unique bool) *JobQuery {
+	jq.unique = &unique
+	return jq
+}
+
 // Order adds an order step to the query.
-func (jq *JobQuery) Order(o ...Order) *JobQuery {
+func (jq *JobQuery) Order(o ...OrderFunc) *JobQuery {
 	jq.order = append(jq.order, o...)
 	return jq
 }
 
-// QueryTasks chains the current query on the tasks edge.
+// QueryTasks chains the current query on the "tasks" edge.
 func (jq *JobQuery) QueryTasks() *TaskQuery {
 	query := &TaskQuery{config: jq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
-		sqlgraph.To(task.Table, task.FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, job.TasksTable, job.TasksColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := jq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := jq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(job.Table, job.FieldID, selector),
+			sqlgraph.To(task.Table, task.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, job.TasksTable, job.TasksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryTags chains the current query on the tags edge.
+// QueryTags chains the current query on the "tags" edge.
 func (jq *JobQuery) QueryTags() *TagQuery {
 	query := &TagQuery{config: jq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
-		sqlgraph.To(tag.Table, tag.FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, job.TagsTable, job.TagsPrimaryKey...),
-	)
-	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := jq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := jq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(job.Table, job.FieldID, selector),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, job.TagsTable, job.TagsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryPrev chains the current query on the prev edge.
+// QueryPrev chains the current query on the "prev" edge.
 func (jq *JobQuery) QueryPrev() *JobQuery {
 	query := &JobQuery{config: jq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
-		sqlgraph.To(job.Table, job.FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, true, job.PrevTable, job.PrevColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := jq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := jq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(job.Table, job.FieldID, selector),
+			sqlgraph.To(job.Table, job.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, true, job.PrevTable, job.PrevColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryNext chains the current query on the next edge.
+// QueryNext chains the current query on the "next" edge.
 func (jq *JobQuery) QueryNext() *JobQuery {
 	query := &JobQuery{config: jq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
-		sqlgraph.To(job.Table, job.FieldID),
-		sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := jq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := jq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(job.Table, job.FieldID, selector),
+			sqlgraph.To(job.Table, job.FieldID),
+			sqlgraph.Edge(sqlgraph.O2O, false, job.NextTable, job.NextColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryOwner chains the current query on the owner edge.
+// QueryOwner chains the current query on the "owner" edge.
 func (jq *JobQuery) QueryOwner() *UserQuery {
 	query := &UserQuery{config: jq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(job.Table, job.FieldID, jq.sqlQuery()),
-		sqlgraph.To(user.Table, user.FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, job.OwnerTable, job.OwnerColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := jq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := jq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(job.Table, job.FieldID, selector),
+			sqlgraph.To(user.Table, user.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, job.OwnerTable, job.OwnerColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(jq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// First returns the first Job entity in the query. Returns *ErrNotFound when no job was found.
+// First returns the first Job entity from the query.
+// Returns a *NotFoundError when no Job was found.
 func (jq *JobQuery) First(ctx context.Context) (*Job, error) {
-	js, err := jq.Limit(1).All(ctx)
+	nodes, err := jq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(js) == 0 {
-		return nil, &ErrNotFound{job.Label}
+	if len(nodes) == 0 {
+		return nil, &NotFoundError{job.Label}
 	}
-	return js[0], nil
+	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
 func (jq *JobQuery) FirstX(ctx context.Context) *Job {
-	j, err := jq.First(ctx)
+	node, err := jq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
-	return j
+	return node
 }
 
-// FirstID returns the first Job id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Job ID from the query.
+// Returns a *NotFoundError when no Job ID was found.
 func (jq *JobQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = jq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{job.Label}
+		err = &NotFoundError{job.Label}
 		return
 	}
 	return ids[0], nil
 }
 
-// FirstXID is like FirstID, but panics if an error occurs.
-func (jq *JobQuery) FirstXID(ctx context.Context) int {
+// FirstIDX is like FirstID, but panics if an error occurs.
+func (jq *JobQuery) FirstIDX(ctx context.Context) int {
 	id, err := jq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -165,32 +226,36 @@ func (jq *JobQuery) FirstXID(ctx context.Context) int {
 	return id
 }
 
-// Only returns the only Job entity in the query, returns an error if not exactly one entity was returned.
+// Only returns a single Job entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when exactly one Job entity is not found.
+// Returns a *NotFoundError when no Job entities are found.
 func (jq *JobQuery) Only(ctx context.Context) (*Job, error) {
-	js, err := jq.Limit(2).All(ctx)
+	nodes, err := jq.Limit(2).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	switch len(js) {
+	switch len(nodes) {
 	case 1:
-		return js[0], nil
+		return nodes[0], nil
 	case 0:
-		return nil, &ErrNotFound{job.Label}
+		return nil, &NotFoundError{job.Label}
 	default:
-		return nil, &ErrNotSingular{job.Label}
+		return nil, &NotSingularError{job.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
 func (jq *JobQuery) OnlyX(ctx context.Context) *Job {
-	j, err := jq.Only(ctx)
+	node, err := jq.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return j
+	return node
 }
 
-// OnlyID returns the only Job id in the query, returns an error if not exactly one id was returned.
+// OnlyID is like Only, but returns the only Job ID in the query.
+// Returns a *NotSingularError when exactly one Job ID is not found.
+// Returns a *NotFoundError when no entities are found.
 func (jq *JobQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = jq.Limit(2).IDs(ctx); err != nil {
@@ -200,15 +265,15 @@ func (jq *JobQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{job.Label}
+		err = &NotFoundError{job.Label}
 	default:
-		err = &ErrNotSingular{job.Label}
+		err = &NotSingularError{job.Label}
 	}
 	return
 }
 
-// OnlyXID is like OnlyID, but panics if an error occurs.
-func (jq *JobQuery) OnlyXID(ctx context.Context) int {
+// OnlyIDX is like OnlyID, but panics if an error occurs.
+func (jq *JobQuery) OnlyIDX(ctx context.Context) int {
 	id, err := jq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -218,19 +283,22 @@ func (jq *JobQuery) OnlyXID(ctx context.Context) int {
 
 // All executes the query and returns a list of Jobs.
 func (jq *JobQuery) All(ctx context.Context) ([]*Job, error) {
+	if err := jq.prepareQuery(ctx); err != nil {
+		return nil, err
+	}
 	return jq.sqlAll(ctx)
 }
 
 // AllX is like All, but panics if an error occurs.
 func (jq *JobQuery) AllX(ctx context.Context) []*Job {
-	js, err := jq.All(ctx)
+	nodes, err := jq.All(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return js
+	return nodes
 }
 
-// IDs executes the query and returns a list of Job ids.
+// IDs executes the query and returns a list of Job IDs.
 func (jq *JobQuery) IDs(ctx context.Context) ([]int, error) {
 	var ids []int
 	if err := jq.Select(job.FieldID).Scan(ctx, &ids); err != nil {
@@ -250,6 +318,9 @@ func (jq *JobQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (jq *JobQuery) Count(ctx context.Context) (int, error) {
+	if err := jq.prepareQuery(ctx); err != nil {
+		return 0, err
+	}
 	return jq.sqlCount(ctx)
 }
 
@@ -264,6 +335,9 @@ func (jq *JobQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (jq *JobQuery) Exist(ctx context.Context) (bool, error) {
+	if err := jq.prepareQuery(ctx); err != nil {
+		return false, err
+	}
 	return jq.sqlExist(ctx)
 }
 
@@ -276,23 +350,31 @@ func (jq *JobQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the query builder, including all associated steps. It can be
+// Clone returns a duplicate of the JobQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
 func (jq *JobQuery) Clone() *JobQuery {
+	if jq == nil {
+		return nil
+	}
 	return &JobQuery{
 		config:     jq.config,
 		limit:      jq.limit,
 		offset:     jq.offset,
-		order:      append([]Order{}, jq.order...),
-		unique:     append([]string{}, jq.unique...),
+		order:      append([]OrderFunc{}, jq.order...),
 		predicates: append([]predicate.Job{}, jq.predicates...),
+		withTasks:  jq.withTasks.Clone(),
+		withTags:   jq.withTags.Clone(),
+		withPrev:   jq.withPrev.Clone(),
+		withNext:   jq.withNext.Clone(),
+		withOwner:  jq.withOwner.Clone(),
 		// clone intermediate query.
-		sql: jq.sql.Clone(),
+		sql:  jq.sql.Clone(),
+		path: jq.path,
 	}
 }
 
-//  WithTasks tells the query-builder to eager-loads the nodes that are connected to
-// the "tasks" edge. The optional arguments used to configure the query builder of the edge.
+// WithTasks tells the query-builder to eager-load the nodes that are connected to
+// the "tasks" edge. The optional arguments are used to configure the query builder of the edge.
 func (jq *JobQuery) WithTasks(opts ...func(*TaskQuery)) *JobQuery {
 	query := &TaskQuery{config: jq.config}
 	for _, opt := range opts {
@@ -302,8 +384,8 @@ func (jq *JobQuery) WithTasks(opts ...func(*TaskQuery)) *JobQuery {
 	return jq
 }
 
-//  WithTags tells the query-builder to eager-loads the nodes that are connected to
-// the "tags" edge. The optional arguments used to configure the query builder of the edge.
+// WithTags tells the query-builder to eager-load the nodes that are connected to
+// the "tags" edge. The optional arguments are used to configure the query builder of the edge.
 func (jq *JobQuery) WithTags(opts ...func(*TagQuery)) *JobQuery {
 	query := &TagQuery{config: jq.config}
 	for _, opt := range opts {
@@ -313,8 +395,8 @@ func (jq *JobQuery) WithTags(opts ...func(*TagQuery)) *JobQuery {
 	return jq
 }
 
-//  WithPrev tells the query-builder to eager-loads the nodes that are connected to
-// the "prev" edge. The optional arguments used to configure the query builder of the edge.
+// WithPrev tells the query-builder to eager-load the nodes that are connected to
+// the "prev" edge. The optional arguments are used to configure the query builder of the edge.
 func (jq *JobQuery) WithPrev(opts ...func(*JobQuery)) *JobQuery {
 	query := &JobQuery{config: jq.config}
 	for _, opt := range opts {
@@ -324,8 +406,8 @@ func (jq *JobQuery) WithPrev(opts ...func(*JobQuery)) *JobQuery {
 	return jq
 }
 
-//  WithNext tells the query-builder to eager-loads the nodes that are connected to
-// the "next" edge. The optional arguments used to configure the query builder of the edge.
+// WithNext tells the query-builder to eager-load the nodes that are connected to
+// the "next" edge. The optional arguments are used to configure the query builder of the edge.
 func (jq *JobQuery) WithNext(opts ...func(*JobQuery)) *JobQuery {
 	query := &JobQuery{config: jq.config}
 	for _, opt := range opts {
@@ -335,8 +417,8 @@ func (jq *JobQuery) WithNext(opts ...func(*JobQuery)) *JobQuery {
 	return jq
 }
 
-//  WithOwner tells the query-builder to eager-loads the nodes that are connected to
-// the "owner" edge. The optional arguments used to configure the query builder of the edge.
+// WithOwner tells the query-builder to eager-load the nodes that are connected to
+// the "owner" edge. The optional arguments are used to configure the query builder of the edge.
 func (jq *JobQuery) WithOwner(opts ...func(*UserQuery)) *JobQuery {
 	query := &UserQuery{config: jq.config}
 	for _, opt := range opts {
@@ -346,7 +428,7 @@ func (jq *JobQuery) WithOwner(opts ...func(*UserQuery)) *JobQuery {
 	return jq
 }
 
-// GroupBy used to group vertices by one or more fields/columns.
+// GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
@@ -364,11 +446,17 @@ func (jq *JobQuery) WithOwner(opts ...func(*UserQuery)) *JobQuery {
 func (jq *JobQuery) GroupBy(field string, fields ...string) *JobGroupBy {
 	group := &JobGroupBy{config: jq.config}
 	group.fields = append([]string{field}, fields...)
-	group.sql = jq.sqlQuery()
+	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
+		if err := jq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		return jq.sqlQuery(ctx), nil
+	}
 	return group
 }
 
-// Select one or more fields from the given query.
+// Select allows the selection one or more fields/columns for the given query,
+// instead of selecting all fields in the entity.
 //
 // Example:
 //
@@ -380,18 +468,39 @@ func (jq *JobQuery) GroupBy(field string, fields ...string) *JobGroupBy {
 //		Select(job.FieldName).
 //		Scan(ctx, &v)
 //
-func (jq *JobQuery) Select(field string, fields ...string) *JobSelect {
-	selector := &JobSelect{config: jq.config}
-	selector.fields = append([]string{field}, fields...)
-	selector.sql = jq.sqlQuery()
-	return selector
+func (jq *JobQuery) Select(fields ...string) *JobSelect {
+	jq.fields = append(jq.fields, fields...)
+	return &JobSelect{JobQuery: jq}
+}
+
+func (jq *JobQuery) prepareQuery(ctx context.Context) error {
+	for _, f := range jq.fields {
+		if !job.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+		}
+	}
+	if jq.path != nil {
+		prev, err := jq.path(ctx)
+		if err != nil {
+			return err
+		}
+		jq.sql = prev
+	}
+	return nil
 }
 
 func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 	var (
-		nodes   []*Job
-		withFKs = jq.withFKs
-		_spec   = jq.querySpec()
+		nodes       = []*Job{}
+		withFKs     = jq.withFKs
+		_spec       = jq.querySpec()
+		loadedTypes = [5]bool{
+			jq.withTasks != nil,
+			jq.withTags != nil,
+			jq.withPrev != nil,
+			jq.withNext != nil,
+			jq.withOwner != nil,
+		}
 	)
 	if jq.withPrev != nil || jq.withOwner != nil {
 		withFKs = true
@@ -399,26 +508,22 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, job.ForeignKeys...)
 	}
-	_spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Job{config: jq.config}
 		nodes = append(nodes, node)
-		values := node.scanValues()
-		if withFKs {
-			values = append(values, node.fkValues()...)
-		}
-		return values
+		return node.scanValues(columns)
 	}
-	_spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(columns []string, values []interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		return node.assignValues(values...)
+		node.Edges.loadedTypes = loadedTypes
+		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, jq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -429,6 +534,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Tasks = []*Task{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Task(func(s *sql.Selector) {
@@ -439,13 +545,13 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.job_id
+			fk := n.job_tasks
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "job_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "job_tasks" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "job_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "job_tasks" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Tasks = append(node.Edges.Tasks, n)
 		}
@@ -457,6 +563,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
+			node.Edges.Tags = []*Tag{}
 		}
 		var (
 			edgeids []int
@@ -471,9 +578,8 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 			Predicate: func(s *sql.Selector) {
 				s.Where(sql.InValues(job.TagsPrimaryKey[0], fks...))
 			},
-
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{&sql.NullInt64{}, &sql.NullInt64{}}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
 				eout, ok := out.(*sql.NullInt64)
@@ -485,18 +591,20 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
 				}
-				edgeids = append(edgeids, inValue)
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
 				edges[inValue] = append(edges[inValue], node)
 				return nil
 			},
 		}
 		if err := sqlgraph.QueryEdges(ctx, jq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "tags": %v`, err)
+			return nil, fmt.Errorf(`query edges "tags": %w`, err)
 		}
 		query.Where(tag.IDIn(edgeids...))
 		neighbors, err := query.All(ctx)
@@ -518,10 +626,14 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Job)
 		for i := range nodes {
-			if fk := nodes[i].prev_id; fk != nil {
-				ids = append(ids, *fk)
-				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			if nodes[i].job_next == nil {
+				continue
 			}
+			fk := *nodes[i].job_next
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
 		query.Where(job.IDIn(ids...))
 		neighbors, err := query.All(ctx)
@@ -531,7 +643,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "job_next" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Prev = n
@@ -555,13 +667,13 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.prev_id
+			fk := n.job_next
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "prev_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "job_next" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "prev_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "job_next" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Next = n
 		}
@@ -571,10 +683,14 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Job)
 		for i := range nodes {
-			if fk := nodes[i].owner_id; fk != nil {
-				ids = append(ids, *fk)
-				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			if nodes[i].user_jobs == nil {
+				continue
 			}
+			fk := *nodes[i].user_jobs
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
 		query.Where(user.IDIn(ids...))
 		neighbors, err := query.All(ctx)
@@ -584,7 +700,7 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "owner_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "user_jobs" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Owner = n
@@ -597,13 +713,17 @@ func (jq *JobQuery) sqlAll(ctx context.Context) ([]*Job, error) {
 
 func (jq *JobQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := jq.querySpec()
+	_spec.Node.Columns = jq.fields
+	if len(jq.fields) > 0 {
+		_spec.Unique = jq.unique != nil && *jq.unique
+	}
 	return sqlgraph.CountNodes(ctx, jq.driver, _spec)
 }
 
 func (jq *JobQuery) sqlExist(ctx context.Context) (bool, error) {
 	n, err := jq.sqlCount(ctx)
 	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %v", err)
+		return false, fmt.Errorf("ent: check existence: %w", err)
 	}
 	return n > 0, nil
 }
@@ -620,6 +740,18 @@ func (jq *JobQuery) querySpec() *sqlgraph.QuerySpec {
 		},
 		From:   jq.sql,
 		Unique: true,
+	}
+	if unique := jq.unique; unique != nil {
+		_spec.Unique = *unique
+	}
+	if fields := jq.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, job.FieldID)
+		for i := range fields {
+			if fields[i] != job.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
+			}
+		}
 	}
 	if ps := jq.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -644,13 +776,20 @@ func (jq *JobQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (jq *JobQuery) sqlQuery() *sql.Selector {
+func (jq *JobQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(jq.driver.Dialect())
 	t1 := builder.Table(job.Table)
-	selector := builder.Select(t1.Columns(job.Columns...)...).From(t1)
+	columns := jq.fields
+	if len(columns) == 0 {
+		columns = job.Columns
+	}
+	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if jq.sql != nil {
 		selector = jq.sql
-		selector.Select(selector.Columns(job.Columns...)...)
+		selector.Select(selector.Columns(columns...)...)
+	}
+	if jq.unique != nil && *jq.unique {
+		selector.Distinct()
 	}
 	for _, p := range jq.predicates {
 		p(selector)
@@ -669,23 +808,29 @@ func (jq *JobQuery) sqlQuery() *sql.Selector {
 	return selector
 }
 
-// JobGroupBy is the builder for group-by Job entities.
+// JobGroupBy is the group-by builder for Job entities.
 type JobGroupBy struct {
 	config
 	fields []string
-	fns    []Aggregate
-	// intermediate query.
-	sql *sql.Selector
+	fns    []AggregateFunc
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (jgb *JobGroupBy) Aggregate(fns ...Aggregate) *JobGroupBy {
+func (jgb *JobGroupBy) Aggregate(fns ...AggregateFunc) *JobGroupBy {
 	jgb.fns = append(jgb.fns, fns...)
 	return jgb
 }
 
-// Scan applies the group-by query and scan the result into the given value.
+// Scan applies the group-by query and scans the result into the given value.
 func (jgb *JobGroupBy) Scan(ctx context.Context, v interface{}) error {
+	query, err := jgb.path(ctx)
+	if err != nil {
+		return err
+	}
+	jgb.sql = query
 	return jgb.sqlScan(ctx, v)
 }
 
@@ -696,7 +841,8 @@ func (jgb *JobGroupBy) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from group-by. It is only allowed when querying group-by with one field.
+// Strings returns list of strings from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (jgb *JobGroupBy) Strings(ctx context.Context) ([]string, error) {
 	if len(jgb.fields) > 1 {
 		return nil, errors.New("ent: JobGroupBy.Strings is not achievable when grouping more than 1 field")
@@ -717,7 +863,35 @@ func (jgb *JobGroupBy) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from group-by. It is only allowed when querying group-by with one field.
+// String returns a single string from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (jgb *JobGroupBy) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = jgb.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobGroupBy.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (jgb *JobGroupBy) StringX(ctx context.Context) string {
+	v, err := jgb.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (jgb *JobGroupBy) Ints(ctx context.Context) ([]int, error) {
 	if len(jgb.fields) > 1 {
 		return nil, errors.New("ent: JobGroupBy.Ints is not achievable when grouping more than 1 field")
@@ -738,7 +912,35 @@ func (jgb *JobGroupBy) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from group-by. It is only allowed when querying group-by with one field.
+// Int returns a single int from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (jgb *JobGroupBy) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = jgb.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobGroupBy.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (jgb *JobGroupBy) IntX(ctx context.Context) int {
+	v, err := jgb.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (jgb *JobGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 	if len(jgb.fields) > 1 {
 		return nil, errors.New("ent: JobGroupBy.Float64s is not achievable when grouping more than 1 field")
@@ -759,7 +961,35 @@ func (jgb *JobGroupBy) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from group-by. It is only allowed when querying group-by with one field.
+// Float64 returns a single float64 from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (jgb *JobGroupBy) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = jgb.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobGroupBy.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (jgb *JobGroupBy) Float64X(ctx context.Context) float64 {
+	v, err := jgb.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (jgb *JobGroupBy) Bools(ctx context.Context) ([]bool, error) {
 	if len(jgb.fields) > 1 {
 		return nil, errors.New("ent: JobGroupBy.Bools is not achievable when grouping more than 1 field")
@@ -780,9 +1010,45 @@ func (jgb *JobGroupBy) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (jgb *JobGroupBy) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = jgb.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobGroupBy.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (jgb *JobGroupBy) BoolX(ctx context.Context) bool {
+	v, err := jgb.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (jgb *JobGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+	for _, f := range jgb.fields {
+		if !job.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
+		}
+	}
+	selector := jgb.sqlQuery()
+	if err := selector.Err(); err != nil {
+		return err
+	}
 	rows := &sql.Rows{}
-	query, args := jgb.sqlQuery().Query()
+	query, args := selector.Query()
 	if err := jgb.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -791,25 +1057,37 @@ func (jgb *JobGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 }
 
 func (jgb *JobGroupBy) sqlQuery() *sql.Selector {
-	selector := jgb.sql
-	columns := make([]string, 0, len(jgb.fields)+len(jgb.fns))
-	columns = append(columns, jgb.fields...)
+	selector := jgb.sql.Select()
+	aggregation := make([]string, 0, len(jgb.fns))
 	for _, fn := range jgb.fns {
-		columns = append(columns, fn(selector))
+		aggregation = append(aggregation, fn(selector))
 	}
-	return selector.Select(columns...).GroupBy(jgb.fields...)
+	// If no columns were selected in a custom aggregation function, the default
+	// selection is the fields used for "group-by", and the aggregation functions.
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(jgb.fields)+len(jgb.fns))
+		for _, f := range jgb.fields {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	return selector.GroupBy(selector.Columns(jgb.fields...)...)
 }
 
-// JobSelect is the builder for select fields of Job entities.
+// JobSelect is the builder for selecting fields of Job entities.
 type JobSelect struct {
-	config
-	fields []string
-	// intermediate queries.
+	*JobQuery
+	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
 
-// Scan applies the selector query and scan the result into the given value.
+// Scan applies the selector query and scans the result into the given value.
 func (js *JobSelect) Scan(ctx context.Context, v interface{}) error {
+	if err := js.prepareQuery(ctx); err != nil {
+		return err
+	}
+	js.sql = js.JobQuery.sqlQuery(ctx)
 	return js.sqlScan(ctx, v)
 }
 
@@ -820,7 +1098,7 @@ func (js *JobSelect) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from selector. It is only allowed when selecting one field.
+// Strings returns list of strings from a selector. It is only allowed when selecting one field.
 func (js *JobSelect) Strings(ctx context.Context) ([]string, error) {
 	if len(js.fields) > 1 {
 		return nil, errors.New("ent: JobSelect.Strings is not achievable when selecting more than 1 field")
@@ -841,7 +1119,33 @@ func (js *JobSelect) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from selector. It is only allowed when selecting one field.
+// String returns a single string from a selector. It is only allowed when selecting one field.
+func (js *JobSelect) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = js.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobSelect.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (js *JobSelect) StringX(ctx context.Context) string {
+	v, err := js.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from a selector. It is only allowed when selecting one field.
 func (js *JobSelect) Ints(ctx context.Context) ([]int, error) {
 	if len(js.fields) > 1 {
 		return nil, errors.New("ent: JobSelect.Ints is not achievable when selecting more than 1 field")
@@ -862,7 +1166,33 @@ func (js *JobSelect) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from selector. It is only allowed when selecting one field.
+// Int returns a single int from a selector. It is only allowed when selecting one field.
+func (js *JobSelect) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = js.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobSelect.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (js *JobSelect) IntX(ctx context.Context) int {
+	v, err := js.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
 func (js *JobSelect) Float64s(ctx context.Context) ([]float64, error) {
 	if len(js.fields) > 1 {
 		return nil, errors.New("ent: JobSelect.Float64s is not achievable when selecting more than 1 field")
@@ -883,7 +1213,33 @@ func (js *JobSelect) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from selector. It is only allowed when selecting one field.
+// Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
+func (js *JobSelect) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = js.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobSelect.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (js *JobSelect) Float64X(ctx context.Context) float64 {
+	v, err := js.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from a selector. It is only allowed when selecting one field.
 func (js *JobSelect) Bools(ctx context.Context) ([]bool, error) {
 	if len(js.fields) > 1 {
 		return nil, errors.New("ent: JobSelect.Bools is not achievable when selecting more than 1 field")
@@ -904,18 +1260,38 @@ func (js *JobSelect) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a selector. It is only allowed when selecting one field.
+func (js *JobSelect) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = js.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{job.Label}
+	default:
+		err = fmt.Errorf("ent: JobSelect.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (js *JobSelect) BoolX(ctx context.Context) bool {
+	v, err := js.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (js *JobSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
-	query, args := js.sqlQuery().Query()
+	query, args := js.sql.Query()
 	if err := js.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
-}
-
-func (js *JobSelect) sqlQuery() sql.Querier {
-	selector := js.sql
-	selector.Select(selector.Columns(js.fields...)...)
-	return selector
 }

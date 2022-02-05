@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/file"
@@ -25,30 +25,17 @@ import (
 // EventCreate is the builder for creating a Event entity.
 type EventCreate struct {
 	config
-	CreationTime *time.Time
-	Kind         *event.Kind
-	job          map[int]struct{}
-	file         map[int]struct{}
-	credential   map[int]struct{}
-	link         map[int]struct{}
-	tag          map[int]struct{}
-	target       map[int]struct{}
-	task         map[int]struct{}
-	user         map[int]struct{}
-	event        map[int]struct{}
-	service      map[int]struct{}
-	likers       map[int]struct{}
-	owner        map[int]struct{}
-	svcOwner     map[int]struct{}
+	mutation *EventMutation
+	hooks    []Hook
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (ec *EventCreate) SetCreationTime(t time.Time) *EventCreate {
-	ec.CreationTime = &t
+	ec.mutation.SetCreationTime(t)
 	return ec
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (ec *EventCreate) SetNillableCreationTime(t *time.Time) *EventCreate {
 	if t != nil {
 		ec.SetCreationTime(*t)
@@ -56,22 +43,19 @@ func (ec *EventCreate) SetNillableCreationTime(t *time.Time) *EventCreate {
 	return ec
 }
 
-// SetKind sets the Kind field.
+// SetKind sets the "Kind" field.
 func (ec *EventCreate) SetKind(e event.Kind) *EventCreate {
-	ec.Kind = &e
+	ec.mutation.SetKind(e)
 	return ec
 }
 
-// SetJobID sets the job edge to Job by id.
+// SetJobID sets the "job" edge to the Job entity by ID.
 func (ec *EventCreate) SetJobID(id int) *EventCreate {
-	if ec.job == nil {
-		ec.job = make(map[int]struct{})
-	}
-	ec.job[id] = struct{}{}
+	ec.mutation.SetJobID(id)
 	return ec
 }
 
-// SetNillableJobID sets the job edge to Job by id if the given value is not nil.
+// SetNillableJobID sets the "job" edge to the Job entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableJobID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetJobID(*id)
@@ -79,21 +63,18 @@ func (ec *EventCreate) SetNillableJobID(id *int) *EventCreate {
 	return ec
 }
 
-// SetJob sets the job edge to Job.
+// SetJob sets the "job" edge to the Job entity.
 func (ec *EventCreate) SetJob(j *Job) *EventCreate {
 	return ec.SetJobID(j.ID)
 }
 
-// SetFileID sets the file edge to File by id.
+// SetFileID sets the "file" edge to the File entity by ID.
 func (ec *EventCreate) SetFileID(id int) *EventCreate {
-	if ec.file == nil {
-		ec.file = make(map[int]struct{})
-	}
-	ec.file[id] = struct{}{}
+	ec.mutation.SetFileID(id)
 	return ec
 }
 
-// SetNillableFileID sets the file edge to File by id if the given value is not nil.
+// SetNillableFileID sets the "file" edge to the File entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableFileID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetFileID(*id)
@@ -101,21 +82,18 @@ func (ec *EventCreate) SetNillableFileID(id *int) *EventCreate {
 	return ec
 }
 
-// SetFile sets the file edge to File.
+// SetFile sets the "file" edge to the File entity.
 func (ec *EventCreate) SetFile(f *File) *EventCreate {
 	return ec.SetFileID(f.ID)
 }
 
-// SetCredentialID sets the credential edge to Credential by id.
+// SetCredentialID sets the "credential" edge to the Credential entity by ID.
 func (ec *EventCreate) SetCredentialID(id int) *EventCreate {
-	if ec.credential == nil {
-		ec.credential = make(map[int]struct{})
-	}
-	ec.credential[id] = struct{}{}
+	ec.mutation.SetCredentialID(id)
 	return ec
 }
 
-// SetNillableCredentialID sets the credential edge to Credential by id if the given value is not nil.
+// SetNillableCredentialID sets the "credential" edge to the Credential entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableCredentialID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetCredentialID(*id)
@@ -123,21 +101,18 @@ func (ec *EventCreate) SetNillableCredentialID(id *int) *EventCreate {
 	return ec
 }
 
-// SetCredential sets the credential edge to Credential.
+// SetCredential sets the "credential" edge to the Credential entity.
 func (ec *EventCreate) SetCredential(c *Credential) *EventCreate {
 	return ec.SetCredentialID(c.ID)
 }
 
-// SetLinkID sets the link edge to Link by id.
+// SetLinkID sets the "link" edge to the Link entity by ID.
 func (ec *EventCreate) SetLinkID(id int) *EventCreate {
-	if ec.link == nil {
-		ec.link = make(map[int]struct{})
-	}
-	ec.link[id] = struct{}{}
+	ec.mutation.SetLinkID(id)
 	return ec
 }
 
-// SetNillableLinkID sets the link edge to Link by id if the given value is not nil.
+// SetNillableLinkID sets the "link" edge to the Link entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableLinkID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetLinkID(*id)
@@ -145,21 +120,18 @@ func (ec *EventCreate) SetNillableLinkID(id *int) *EventCreate {
 	return ec
 }
 
-// SetLink sets the link edge to Link.
+// SetLink sets the "link" edge to the Link entity.
 func (ec *EventCreate) SetLink(l *Link) *EventCreate {
 	return ec.SetLinkID(l.ID)
 }
 
-// SetTagID sets the tag edge to Tag by id.
+// SetTagID sets the "tag" edge to the Tag entity by ID.
 func (ec *EventCreate) SetTagID(id int) *EventCreate {
-	if ec.tag == nil {
-		ec.tag = make(map[int]struct{})
-	}
-	ec.tag[id] = struct{}{}
+	ec.mutation.SetTagID(id)
 	return ec
 }
 
-// SetNillableTagID sets the tag edge to Tag by id if the given value is not nil.
+// SetNillableTagID sets the "tag" edge to the Tag entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableTagID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetTagID(*id)
@@ -167,21 +139,18 @@ func (ec *EventCreate) SetNillableTagID(id *int) *EventCreate {
 	return ec
 }
 
-// SetTag sets the tag edge to Tag.
+// SetTag sets the "tag" edge to the Tag entity.
 func (ec *EventCreate) SetTag(t *Tag) *EventCreate {
 	return ec.SetTagID(t.ID)
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (ec *EventCreate) SetTargetID(id int) *EventCreate {
-	if ec.target == nil {
-		ec.target = make(map[int]struct{})
-	}
-	ec.target[id] = struct{}{}
+	ec.mutation.SetTargetID(id)
 	return ec
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableTargetID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetTargetID(*id)
@@ -189,21 +158,18 @@ func (ec *EventCreate) SetNillableTargetID(id *int) *EventCreate {
 	return ec
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (ec *EventCreate) SetTarget(t *Target) *EventCreate {
 	return ec.SetTargetID(t.ID)
 }
 
-// SetTaskID sets the task edge to Task by id.
+// SetTaskID sets the "task" edge to the Task entity by ID.
 func (ec *EventCreate) SetTaskID(id int) *EventCreate {
-	if ec.task == nil {
-		ec.task = make(map[int]struct{})
-	}
-	ec.task[id] = struct{}{}
+	ec.mutation.SetTaskID(id)
 	return ec
 }
 
-// SetNillableTaskID sets the task edge to Task by id if the given value is not nil.
+// SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableTaskID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetTaskID(*id)
@@ -211,21 +177,18 @@ func (ec *EventCreate) SetNillableTaskID(id *int) *EventCreate {
 	return ec
 }
 
-// SetTask sets the task edge to Task.
+// SetTask sets the "task" edge to the Task entity.
 func (ec *EventCreate) SetTask(t *Task) *EventCreate {
 	return ec.SetTaskID(t.ID)
 }
 
-// SetUserID sets the user edge to User by id.
+// SetUserID sets the "user" edge to the User entity by ID.
 func (ec *EventCreate) SetUserID(id int) *EventCreate {
-	if ec.user == nil {
-		ec.user = make(map[int]struct{})
-	}
-	ec.user[id] = struct{}{}
+	ec.mutation.SetUserID(id)
 	return ec
 }
 
-// SetNillableUserID sets the user edge to User by id if the given value is not nil.
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableUserID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetUserID(*id)
@@ -233,21 +196,18 @@ func (ec *EventCreate) SetNillableUserID(id *int) *EventCreate {
 	return ec
 }
 
-// SetUser sets the user edge to User.
+// SetUser sets the "user" edge to the User entity.
 func (ec *EventCreate) SetUser(u *User) *EventCreate {
 	return ec.SetUserID(u.ID)
 }
 
-// SetEventID sets the event edge to Event by id.
+// SetEventID sets the "event" edge to the Event entity by ID.
 func (ec *EventCreate) SetEventID(id int) *EventCreate {
-	if ec.event == nil {
-		ec.event = make(map[int]struct{})
-	}
-	ec.event[id] = struct{}{}
+	ec.mutation.SetEventID(id)
 	return ec
 }
 
-// SetNillableEventID sets the event edge to Event by id if the given value is not nil.
+// SetNillableEventID sets the "event" edge to the Event entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableEventID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetEventID(*id)
@@ -255,21 +215,18 @@ func (ec *EventCreate) SetNillableEventID(id *int) *EventCreate {
 	return ec
 }
 
-// SetEvent sets the event edge to Event.
+// SetEvent sets the "event" edge to the Event entity.
 func (ec *EventCreate) SetEvent(e *Event) *EventCreate {
 	return ec.SetEventID(e.ID)
 }
 
-// SetServiceID sets the service edge to Service by id.
+// SetServiceID sets the "service" edge to the Service entity by ID.
 func (ec *EventCreate) SetServiceID(id int) *EventCreate {
-	if ec.service == nil {
-		ec.service = make(map[int]struct{})
-	}
-	ec.service[id] = struct{}{}
+	ec.mutation.SetServiceID(id)
 	return ec
 }
 
-// SetNillableServiceID sets the service edge to Service by id if the given value is not nil.
+// SetNillableServiceID sets the "service" edge to the Service entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableServiceID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetServiceID(*id)
@@ -277,23 +234,18 @@ func (ec *EventCreate) SetNillableServiceID(id *int) *EventCreate {
 	return ec
 }
 
-// SetService sets the service edge to Service.
+// SetService sets the "service" edge to the Service entity.
 func (ec *EventCreate) SetService(s *Service) *EventCreate {
 	return ec.SetServiceID(s.ID)
 }
 
-// AddLikerIDs adds the likers edge to User by ids.
+// AddLikerIDs adds the "likers" edge to the User entity by IDs.
 func (ec *EventCreate) AddLikerIDs(ids ...int) *EventCreate {
-	if ec.likers == nil {
-		ec.likers = make(map[int]struct{})
-	}
-	for i := range ids {
-		ec.likers[ids[i]] = struct{}{}
-	}
+	ec.mutation.AddLikerIDs(ids...)
 	return ec
 }
 
-// AddLikers adds the likers edges to User.
+// AddLikers adds the "likers" edges to the User entity.
 func (ec *EventCreate) AddLikers(u ...*User) *EventCreate {
 	ids := make([]int, len(u))
 	for i := range u {
@@ -302,16 +254,13 @@ func (ec *EventCreate) AddLikers(u ...*User) *EventCreate {
 	return ec.AddLikerIDs(ids...)
 }
 
-// SetOwnerID sets the owner edge to User by id.
+// SetOwnerID sets the "owner" edge to the User entity by ID.
 func (ec *EventCreate) SetOwnerID(id int) *EventCreate {
-	if ec.owner == nil {
-		ec.owner = make(map[int]struct{})
-	}
-	ec.owner[id] = struct{}{}
+	ec.mutation.SetOwnerID(id)
 	return ec
 }
 
-// SetNillableOwnerID sets the owner edge to User by id if the given value is not nil.
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableOwnerID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetOwnerID(*id)
@@ -319,21 +268,18 @@ func (ec *EventCreate) SetNillableOwnerID(id *int) *EventCreate {
 	return ec
 }
 
-// SetOwner sets the owner edge to User.
+// SetOwner sets the "owner" edge to the User entity.
 func (ec *EventCreate) SetOwner(u *User) *EventCreate {
 	return ec.SetOwnerID(u.ID)
 }
 
-// SetSvcOwnerID sets the svcOwner edge to Service by id.
+// SetSvcOwnerID sets the "svcOwner" edge to the Service entity by ID.
 func (ec *EventCreate) SetSvcOwnerID(id int) *EventCreate {
-	if ec.svcOwner == nil {
-		ec.svcOwner = make(map[int]struct{})
-	}
-	ec.svcOwner[id] = struct{}{}
+	ec.mutation.SetSvcOwnerID(id)
 	return ec
 }
 
-// SetNillableSvcOwnerID sets the svcOwner edge to Service by id if the given value is not nil.
+// SetNillableSvcOwnerID sets the "svcOwner" edge to the Service entity by ID if the given value is not nil.
 func (ec *EventCreate) SetNillableSvcOwnerID(id *int) *EventCreate {
 	if id != nil {
 		ec = ec.SetSvcOwnerID(*id)
@@ -341,60 +287,56 @@ func (ec *EventCreate) SetNillableSvcOwnerID(id *int) *EventCreate {
 	return ec
 }
 
-// SetSvcOwner sets the svcOwner edge to Service.
+// SetSvcOwner sets the "svcOwner" edge to the Service entity.
 func (ec *EventCreate) SetSvcOwner(s *Service) *EventCreate {
 	return ec.SetSvcOwnerID(s.ID)
 }
 
+// Mutation returns the EventMutation object of the builder.
+func (ec *EventCreate) Mutation() *EventMutation {
+	return ec.mutation
+}
+
 // Save creates the Event in the database.
 func (ec *EventCreate) Save(ctx context.Context) (*Event, error) {
-	if ec.CreationTime == nil {
-		v := event.DefaultCreationTime()
-		ec.CreationTime = &v
+	var (
+		err  error
+		node *Event
+	)
+	ec.defaults()
+	if len(ec.hooks) == 0 {
+		if err = ec.check(); err != nil {
+			return nil, err
+		}
+		node, err = ec.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*EventMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = ec.check(); err != nil {
+				return nil, err
+			}
+			ec.mutation = mutation
+			if node, err = ec.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(ec.hooks) - 1; i >= 0; i-- {
+			if ec.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = ec.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, ec.mutation); err != nil {
+			return nil, err
+		}
 	}
-	if ec.Kind == nil {
-		return nil, errors.New("ent: missing required field \"Kind\"")
-	}
-	if err := event.KindValidator(*ec.Kind); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Kind\": %v", err)
-	}
-	if len(ec.job) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
-	}
-	if len(ec.file) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"file\"")
-	}
-	if len(ec.credential) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"credential\"")
-	}
-	if len(ec.link) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"link\"")
-	}
-	if len(ec.tag) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"tag\"")
-	}
-	if len(ec.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	if len(ec.task) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"task\"")
-	}
-	if len(ec.user) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"user\"")
-	}
-	if len(ec.event) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"event\"")
-	}
-	if len(ec.service) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"service\"")
-	}
-	if len(ec.owner) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
-	}
-	if len(ec.svcOwner) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"svcOwner\"")
-	}
-	return ec.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -406,9 +348,59 @@ func (ec *EventCreate) SaveX(ctx context.Context) *Event {
 	return v
 }
 
+// Exec executes the query.
+func (ec *EventCreate) Exec(ctx context.Context) error {
+	_, err := ec.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (ec *EventCreate) ExecX(ctx context.Context) {
+	if err := ec.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (ec *EventCreate) defaults() {
+	if _, ok := ec.mutation.CreationTime(); !ok {
+		v := event.DefaultCreationTime()
+		ec.mutation.SetCreationTime(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (ec *EventCreate) check() error {
+	if _, ok := ec.mutation.CreationTime(); !ok {
+		return &ValidationError{Name: "CreationTime", err: errors.New(`ent: missing required field "Event.CreationTime"`)}
+	}
+	if _, ok := ec.mutation.Kind(); !ok {
+		return &ValidationError{Name: "Kind", err: errors.New(`ent: missing required field "Event.Kind"`)}
+	}
+	if v, ok := ec.mutation.Kind(); ok {
+		if err := event.KindValidator(v); err != nil {
+			return &ValidationError{Name: "Kind", err: fmt.Errorf(`ent: validator failed for field "Event.Kind": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
+	_node, _spec := ec.createSpec()
+	if err := sqlgraph.CreateNode(ctx, ec.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (ec *EventCreate) createSpec() (*Event, *sqlgraph.CreateSpec) {
 	var (
-		e     = &Event{config: ec.config}
+		_node = &Event{config: ec.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: event.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -417,23 +409,23 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 			},
 		}
 	)
-	if value := ec.CreationTime; value != nil {
+	if value, ok := ec.mutation.CreationTime(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: event.FieldCreationTime,
 		})
-		e.CreationTime = *value
+		_node.CreationTime = value
 	}
-	if value := ec.Kind; value != nil {
+	if value, ok := ec.mutation.Kind(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: event.FieldKind,
 		})
-		e.Kind = *value
+		_node.Kind = value
 	}
-	if nodes := ec.job; len(nodes) > 0 {
+	if nodes := ec.mutation.JobIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -447,12 +439,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_job = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.file; len(nodes) > 0 {
+	if nodes := ec.mutation.FileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -466,12 +459,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_file = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.credential; len(nodes) > 0 {
+	if nodes := ec.mutation.CredentialIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -485,12 +479,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_credential = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.link; len(nodes) > 0 {
+	if nodes := ec.mutation.LinkIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -504,12 +499,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_link = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.tag; len(nodes) > 0 {
+	if nodes := ec.mutation.TagIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -523,12 +519,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_tag = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.target; len(nodes) > 0 {
+	if nodes := ec.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -542,12 +539,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_target = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.task; len(nodes) > 0 {
+	if nodes := ec.mutation.TaskIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -561,12 +559,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_task = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.user; len(nodes) > 0 {
+	if nodes := ec.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -580,12 +579,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_user = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.event; len(nodes) > 0 {
+	if nodes := ec.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -599,12 +599,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_event = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.service; len(nodes) > 0 {
+	if nodes := ec.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -618,12 +619,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.event_service = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.likers; len(nodes) > 0 {
+	if nodes := ec.mutation.LikersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -637,12 +639,12 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.owner; len(nodes) > 0 {
+	if nodes := ec.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -656,12 +658,13 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.user_events = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := ec.svcOwner; len(nodes) > 0 {
+	if nodes := ec.mutation.SvcOwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -675,18 +678,95 @@ func (ec *EventCreate) sqlSave(ctx context.Context) (*Event, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.service_events = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, ec.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// EventCreateBulk is the builder for creating many Event entities in bulk.
+type EventCreateBulk struct {
+	config
+	builders []*EventCreate
+}
+
+// Save creates the Event entities in the database.
+func (ecb *EventCreateBulk) Save(ctx context.Context) ([]*Event, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(ecb.builders))
+	nodes := make([]*Event, len(ecb.builders))
+	mutators := make([]Mutator, len(ecb.builders))
+	for i := range ecb.builders {
+		func(i int, root context.Context) {
+			builder := ecb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*EventMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, ecb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, ecb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	e.ID = int(id)
-	return e, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, ecb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (ecb *EventCreateBulk) SaveX(ctx context.Context) []*Event {
+	v, err := ecb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (ecb *EventCreateBulk) Exec(ctx context.Context) error {
+	_, err := ecb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (ecb *EventCreateBulk) ExecX(ctx context.Context) {
+	if err := ecb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

@@ -89,7 +89,7 @@ func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) erro
 	digest := base64.StdEncoding.EncodeToString(digestBytes[:])
 	contentType := http.DetectContentType(content)
 	if exists {
-		fileID = fileQuery.OnlyXID(ctx)
+		fileID = fileQuery.OnlyIDX(ctx)
 		svc.Graph.File.UpdateOneID(fileID).
 			SetContent(content).
 			SetHash(digest).
@@ -111,7 +111,7 @@ func (svc Service) HandleFileUpload(w http.ResponseWriter, r *http.Request) erro
 	svc.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetFileID(fileID).
-		SetKind(event.KindUPLOADFILE).
+		SetKind(event.KindUPLOAD_FILE).
 		Save(ctx)
 	fmt.Fprintf(w, `{"data":{"file": {"id": %d}}}`, fileID)
 	return nil

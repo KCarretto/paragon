@@ -3,7 +3,8 @@
 package ent
 
 import (
-	"github.com/facebookincubator/ent/dialect"
+	"entgo.io/ent"
+	"entgo.io/ent/dialect"
 )
 
 // Option function to configure the client.
@@ -17,6 +18,22 @@ type config struct {
 	debug bool
 	// log used for logging on debug mode.
 	log func(...interface{})
+	// hooks to execute on mutations.
+	hooks *hooks
+}
+
+// hooks per client, for fast access.
+type hooks struct {
+	Credential []ent.Hook
+	Event      []ent.Hook
+	File       []ent.Hook
+	Job        []ent.Hook
+	Link       []ent.Hook
+	Service    []ent.Hook
+	Tag        []ent.Hook
+	Target     []ent.Hook
+	Task       []ent.Hook
+	User       []ent.Hook
 }
 
 // Options applies the options on the config object.

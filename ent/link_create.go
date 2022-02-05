@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 )
@@ -17,25 +17,23 @@ import (
 // LinkCreate is the builder for creating a Link entity.
 type LinkCreate struct {
 	config
-	Alias          *string
-	ExpirationTime *time.Time
-	Clicks         *int
-	file           map[int]struct{}
+	mutation *LinkMutation
+	hooks    []Hook
 }
 
-// SetAlias sets the Alias field.
+// SetAlias sets the "Alias" field.
 func (lc *LinkCreate) SetAlias(s string) *LinkCreate {
-	lc.Alias = &s
+	lc.mutation.SetAlias(s)
 	return lc
 }
 
-// SetExpirationTime sets the ExpirationTime field.
+// SetExpirationTime sets the "ExpirationTime" field.
 func (lc *LinkCreate) SetExpirationTime(t time.Time) *LinkCreate {
-	lc.ExpirationTime = &t
+	lc.mutation.SetExpirationTime(t)
 	return lc
 }
 
-// SetNillableExpirationTime sets the ExpirationTime field if the given value is not nil.
+// SetNillableExpirationTime sets the "ExpirationTime" field if the given value is not nil.
 func (lc *LinkCreate) SetNillableExpirationTime(t *time.Time) *LinkCreate {
 	if t != nil {
 		lc.SetExpirationTime(*t)
@@ -43,13 +41,13 @@ func (lc *LinkCreate) SetNillableExpirationTime(t *time.Time) *LinkCreate {
 	return lc
 }
 
-// SetClicks sets the Clicks field.
+// SetClicks sets the "Clicks" field.
 func (lc *LinkCreate) SetClicks(i int) *LinkCreate {
-	lc.Clicks = &i
+	lc.mutation.SetClicks(i)
 	return lc
 }
 
-// SetNillableClicks sets the Clicks field if the given value is not nil.
+// SetNillableClicks sets the "Clicks" field if the given value is not nil.
 func (lc *LinkCreate) SetNillableClicks(i *int) *LinkCreate {
 	if i != nil {
 		lc.SetClicks(*i)
@@ -57,16 +55,13 @@ func (lc *LinkCreate) SetNillableClicks(i *int) *LinkCreate {
 	return lc
 }
 
-// SetFileID sets the file edge to File by id.
+// SetFileID sets the "file" edge to the File entity by ID.
 func (lc *LinkCreate) SetFileID(id int) *LinkCreate {
-	if lc.file == nil {
-		lc.file = make(map[int]struct{})
-	}
-	lc.file[id] = struct{}{}
+	lc.mutation.SetFileID(id)
 	return lc
 }
 
-// SetNillableFileID sets the file edge to File by id if the given value is not nil.
+// SetNillableFileID sets the "file" edge to the File entity by ID if the given value is not nil.
 func (lc *LinkCreate) SetNillableFileID(id *int) *LinkCreate {
 	if id != nil {
 		lc = lc.SetFileID(*id)
@@ -74,30 +69,56 @@ func (lc *LinkCreate) SetNillableFileID(id *int) *LinkCreate {
 	return lc
 }
 
-// SetFile sets the file edge to File.
+// SetFile sets the "file" edge to the File entity.
 func (lc *LinkCreate) SetFile(f *File) *LinkCreate {
 	return lc.SetFileID(f.ID)
 }
 
+// Mutation returns the LinkMutation object of the builder.
+func (lc *LinkCreate) Mutation() *LinkMutation {
+	return lc.mutation
+}
+
 // Save creates the Link in the database.
 func (lc *LinkCreate) Save(ctx context.Context) (*Link, error) {
-	if lc.Alias == nil {
-		return nil, errors.New("ent: missing required field \"Alias\"")
+	var (
+		err  error
+		node *Link
+	)
+	lc.defaults()
+	if len(lc.hooks) == 0 {
+		if err = lc.check(); err != nil {
+			return nil, err
+		}
+		node, err = lc.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*LinkMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = lc.check(); err != nil {
+				return nil, err
+			}
+			lc.mutation = mutation
+			if node, err = lc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(lc.hooks) - 1; i >= 0; i-- {
+			if lc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = lc.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, lc.mutation); err != nil {
+			return nil, err
+		}
 	}
-	if err := link.AliasValidator(*lc.Alias); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Alias\": %v", err)
-	}
-	if lc.Clicks == nil {
-		v := link.DefaultClicks
-		lc.Clicks = &v
-	}
-	if err := link.ClicksValidator(*lc.Clicks); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Clicks\": %v", err)
-	}
-	if len(lc.file) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"file\"")
-	}
-	return lc.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -109,9 +130,64 @@ func (lc *LinkCreate) SaveX(ctx context.Context) *Link {
 	return v
 }
 
+// Exec executes the query.
+func (lc *LinkCreate) Exec(ctx context.Context) error {
+	_, err := lc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (lc *LinkCreate) ExecX(ctx context.Context) {
+	if err := lc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (lc *LinkCreate) defaults() {
+	if _, ok := lc.mutation.Clicks(); !ok {
+		v := link.DefaultClicks
+		lc.mutation.SetClicks(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (lc *LinkCreate) check() error {
+	if _, ok := lc.mutation.Alias(); !ok {
+		return &ValidationError{Name: "Alias", err: errors.New(`ent: missing required field "Link.Alias"`)}
+	}
+	if v, ok := lc.mutation.Alias(); ok {
+		if err := link.AliasValidator(v); err != nil {
+			return &ValidationError{Name: "Alias", err: fmt.Errorf(`ent: validator failed for field "Link.Alias": %w`, err)}
+		}
+	}
+	if _, ok := lc.mutation.Clicks(); !ok {
+		return &ValidationError{Name: "Clicks", err: errors.New(`ent: missing required field "Link.Clicks"`)}
+	}
+	if v, ok := lc.mutation.Clicks(); ok {
+		if err := link.ClicksValidator(v); err != nil {
+			return &ValidationError{Name: "Clicks", err: fmt.Errorf(`ent: validator failed for field "Link.Clicks": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
+	_node, _spec := lc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, lc.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (lc *LinkCreate) createSpec() (*Link, *sqlgraph.CreateSpec) {
 	var (
-		l     = &Link{config: lc.config}
+		_node = &Link{config: lc.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: link.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -120,31 +196,31 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 			},
 		}
 	)
-	if value := lc.Alias; value != nil {
+	if value, ok := lc.mutation.Alias(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldAlias,
 		})
-		l.Alias = *value
+		_node.Alias = value
 	}
-	if value := lc.ExpirationTime; value != nil {
+	if value, ok := lc.mutation.ExpirationTime(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldExpirationTime,
 		})
-		l.ExpirationTime = *value
+		_node.ExpirationTime = value
 	}
-	if value := lc.Clicks; value != nil {
+	if value, ok := lc.mutation.Clicks(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: link.FieldClicks,
 		})
-		l.Clicks = *value
+		_node.Clicks = value
 	}
-	if nodes := lc.file; len(nodes) > 0 {
+	if nodes := lc.mutation.FileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -158,18 +234,95 @@ func (lc *LinkCreate) sqlSave(ctx context.Context) (*Link, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.file_links = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, lc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// LinkCreateBulk is the builder for creating many Link entities in bulk.
+type LinkCreateBulk struct {
+	config
+	builders []*LinkCreate
+}
+
+// Save creates the Link entities in the database.
+func (lcb *LinkCreateBulk) Save(ctx context.Context) ([]*Link, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(lcb.builders))
+	nodes := make([]*Link, len(lcb.builders))
+	mutators := make([]Mutator, len(lcb.builders))
+	for i := range lcb.builders {
+		func(i int, root context.Context) {
+			builder := lcb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*LinkMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, lcb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, lcb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	l.ID = int(id)
-	return l, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, lcb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (lcb *LinkCreateBulk) SaveX(ctx context.Context) []*Link {
+	v, err := lcb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (lcb *LinkCreateBulk) Exec(ctx context.Context) error {
+	_, err := lcb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (lcb *LinkCreateBulk) ExecX(ctx context.Context) {
+	if err := lcb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

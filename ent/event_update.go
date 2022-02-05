@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/file"
@@ -27,50 +27,23 @@ import (
 // EventUpdate is the builder for updating Event entities.
 type EventUpdate struct {
 	config
-	CreationTime      *time.Time
-	Kind              *event.Kind
-	job               map[int]struct{}
-	file              map[int]struct{}
-	credential        map[int]struct{}
-	link              map[int]struct{}
-	tag               map[int]struct{}
-	target            map[int]struct{}
-	task              map[int]struct{}
-	user              map[int]struct{}
-	event             map[int]struct{}
-	service           map[int]struct{}
-	likers            map[int]struct{}
-	owner             map[int]struct{}
-	svcOwner          map[int]struct{}
-	clearedJob        bool
-	clearedFile       bool
-	clearedCredential bool
-	clearedLink       bool
-	clearedTag        bool
-	clearedTarget     bool
-	clearedTask       bool
-	clearedUser       bool
-	clearedEvent      bool
-	clearedService    bool
-	removedLikers     map[int]struct{}
-	clearedOwner      bool
-	clearedSvcOwner   bool
-	predicates        []predicate.Event
+	hooks    []Hook
+	mutation *EventMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the EventUpdate builder.
 func (eu *EventUpdate) Where(ps ...predicate.Event) *EventUpdate {
-	eu.predicates = append(eu.predicates, ps...)
+	eu.mutation.Where(ps...)
 	return eu
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (eu *EventUpdate) SetCreationTime(t time.Time) *EventUpdate {
-	eu.CreationTime = &t
+	eu.mutation.SetCreationTime(t)
 	return eu
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (eu *EventUpdate) SetNillableCreationTime(t *time.Time) *EventUpdate {
 	if t != nil {
 		eu.SetCreationTime(*t)
@@ -78,22 +51,19 @@ func (eu *EventUpdate) SetNillableCreationTime(t *time.Time) *EventUpdate {
 	return eu
 }
 
-// SetKind sets the Kind field.
+// SetKind sets the "Kind" field.
 func (eu *EventUpdate) SetKind(e event.Kind) *EventUpdate {
-	eu.Kind = &e
+	eu.mutation.SetKind(e)
 	return eu
 }
 
-// SetJobID sets the job edge to Job by id.
+// SetJobID sets the "job" edge to the Job entity by ID.
 func (eu *EventUpdate) SetJobID(id int) *EventUpdate {
-	if eu.job == nil {
-		eu.job = make(map[int]struct{})
-	}
-	eu.job[id] = struct{}{}
+	eu.mutation.SetJobID(id)
 	return eu
 }
 
-// SetNillableJobID sets the job edge to Job by id if the given value is not nil.
+// SetNillableJobID sets the "job" edge to the Job entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableJobID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetJobID(*id)
@@ -101,21 +71,18 @@ func (eu *EventUpdate) SetNillableJobID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetJob sets the job edge to Job.
+// SetJob sets the "job" edge to the Job entity.
 func (eu *EventUpdate) SetJob(j *Job) *EventUpdate {
 	return eu.SetJobID(j.ID)
 }
 
-// SetFileID sets the file edge to File by id.
+// SetFileID sets the "file" edge to the File entity by ID.
 func (eu *EventUpdate) SetFileID(id int) *EventUpdate {
-	if eu.file == nil {
-		eu.file = make(map[int]struct{})
-	}
-	eu.file[id] = struct{}{}
+	eu.mutation.SetFileID(id)
 	return eu
 }
 
-// SetNillableFileID sets the file edge to File by id if the given value is not nil.
+// SetNillableFileID sets the "file" edge to the File entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableFileID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetFileID(*id)
@@ -123,21 +90,18 @@ func (eu *EventUpdate) SetNillableFileID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetFile sets the file edge to File.
+// SetFile sets the "file" edge to the File entity.
 func (eu *EventUpdate) SetFile(f *File) *EventUpdate {
 	return eu.SetFileID(f.ID)
 }
 
-// SetCredentialID sets the credential edge to Credential by id.
+// SetCredentialID sets the "credential" edge to the Credential entity by ID.
 func (eu *EventUpdate) SetCredentialID(id int) *EventUpdate {
-	if eu.credential == nil {
-		eu.credential = make(map[int]struct{})
-	}
-	eu.credential[id] = struct{}{}
+	eu.mutation.SetCredentialID(id)
 	return eu
 }
 
-// SetNillableCredentialID sets the credential edge to Credential by id if the given value is not nil.
+// SetNillableCredentialID sets the "credential" edge to the Credential entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableCredentialID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetCredentialID(*id)
@@ -145,21 +109,18 @@ func (eu *EventUpdate) SetNillableCredentialID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetCredential sets the credential edge to Credential.
+// SetCredential sets the "credential" edge to the Credential entity.
 func (eu *EventUpdate) SetCredential(c *Credential) *EventUpdate {
 	return eu.SetCredentialID(c.ID)
 }
 
-// SetLinkID sets the link edge to Link by id.
+// SetLinkID sets the "link" edge to the Link entity by ID.
 func (eu *EventUpdate) SetLinkID(id int) *EventUpdate {
-	if eu.link == nil {
-		eu.link = make(map[int]struct{})
-	}
-	eu.link[id] = struct{}{}
+	eu.mutation.SetLinkID(id)
 	return eu
 }
 
-// SetNillableLinkID sets the link edge to Link by id if the given value is not nil.
+// SetNillableLinkID sets the "link" edge to the Link entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableLinkID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetLinkID(*id)
@@ -167,21 +128,18 @@ func (eu *EventUpdate) SetNillableLinkID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetLink sets the link edge to Link.
+// SetLink sets the "link" edge to the Link entity.
 func (eu *EventUpdate) SetLink(l *Link) *EventUpdate {
 	return eu.SetLinkID(l.ID)
 }
 
-// SetTagID sets the tag edge to Tag by id.
+// SetTagID sets the "tag" edge to the Tag entity by ID.
 func (eu *EventUpdate) SetTagID(id int) *EventUpdate {
-	if eu.tag == nil {
-		eu.tag = make(map[int]struct{})
-	}
-	eu.tag[id] = struct{}{}
+	eu.mutation.SetTagID(id)
 	return eu
 }
 
-// SetNillableTagID sets the tag edge to Tag by id if the given value is not nil.
+// SetNillableTagID sets the "tag" edge to the Tag entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableTagID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetTagID(*id)
@@ -189,21 +147,18 @@ func (eu *EventUpdate) SetNillableTagID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetTag sets the tag edge to Tag.
+// SetTag sets the "tag" edge to the Tag entity.
 func (eu *EventUpdate) SetTag(t *Tag) *EventUpdate {
 	return eu.SetTagID(t.ID)
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (eu *EventUpdate) SetTargetID(id int) *EventUpdate {
-	if eu.target == nil {
-		eu.target = make(map[int]struct{})
-	}
-	eu.target[id] = struct{}{}
+	eu.mutation.SetTargetID(id)
 	return eu
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableTargetID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetTargetID(*id)
@@ -211,21 +166,18 @@ func (eu *EventUpdate) SetNillableTargetID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (eu *EventUpdate) SetTarget(t *Target) *EventUpdate {
 	return eu.SetTargetID(t.ID)
 }
 
-// SetTaskID sets the task edge to Task by id.
+// SetTaskID sets the "task" edge to the Task entity by ID.
 func (eu *EventUpdate) SetTaskID(id int) *EventUpdate {
-	if eu.task == nil {
-		eu.task = make(map[int]struct{})
-	}
-	eu.task[id] = struct{}{}
+	eu.mutation.SetTaskID(id)
 	return eu
 }
 
-// SetNillableTaskID sets the task edge to Task by id if the given value is not nil.
+// SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableTaskID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetTaskID(*id)
@@ -233,21 +185,18 @@ func (eu *EventUpdate) SetNillableTaskID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetTask sets the task edge to Task.
+// SetTask sets the "task" edge to the Task entity.
 func (eu *EventUpdate) SetTask(t *Task) *EventUpdate {
 	return eu.SetTaskID(t.ID)
 }
 
-// SetUserID sets the user edge to User by id.
+// SetUserID sets the "user" edge to the User entity by ID.
 func (eu *EventUpdate) SetUserID(id int) *EventUpdate {
-	if eu.user == nil {
-		eu.user = make(map[int]struct{})
-	}
-	eu.user[id] = struct{}{}
+	eu.mutation.SetUserID(id)
 	return eu
 }
 
-// SetNillableUserID sets the user edge to User by id if the given value is not nil.
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableUserID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetUserID(*id)
@@ -255,21 +204,18 @@ func (eu *EventUpdate) SetNillableUserID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetUser sets the user edge to User.
+// SetUser sets the "user" edge to the User entity.
 func (eu *EventUpdate) SetUser(u *User) *EventUpdate {
 	return eu.SetUserID(u.ID)
 }
 
-// SetEventID sets the event edge to Event by id.
+// SetEventID sets the "event" edge to the Event entity by ID.
 func (eu *EventUpdate) SetEventID(id int) *EventUpdate {
-	if eu.event == nil {
-		eu.event = make(map[int]struct{})
-	}
-	eu.event[id] = struct{}{}
+	eu.mutation.SetEventID(id)
 	return eu
 }
 
-// SetNillableEventID sets the event edge to Event by id if the given value is not nil.
+// SetNillableEventID sets the "event" edge to the Event entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableEventID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetEventID(*id)
@@ -277,21 +223,18 @@ func (eu *EventUpdate) SetNillableEventID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetEvent sets the event edge to Event.
+// SetEvent sets the "event" edge to the Event entity.
 func (eu *EventUpdate) SetEvent(e *Event) *EventUpdate {
 	return eu.SetEventID(e.ID)
 }
 
-// SetServiceID sets the service edge to Service by id.
+// SetServiceID sets the "service" edge to the Service entity by ID.
 func (eu *EventUpdate) SetServiceID(id int) *EventUpdate {
-	if eu.service == nil {
-		eu.service = make(map[int]struct{})
-	}
-	eu.service[id] = struct{}{}
+	eu.mutation.SetServiceID(id)
 	return eu
 }
 
-// SetNillableServiceID sets the service edge to Service by id if the given value is not nil.
+// SetNillableServiceID sets the "service" edge to the Service entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableServiceID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetServiceID(*id)
@@ -299,23 +242,18 @@ func (eu *EventUpdate) SetNillableServiceID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetService sets the service edge to Service.
+// SetService sets the "service" edge to the Service entity.
 func (eu *EventUpdate) SetService(s *Service) *EventUpdate {
 	return eu.SetServiceID(s.ID)
 }
 
-// AddLikerIDs adds the likers edge to User by ids.
+// AddLikerIDs adds the "likers" edge to the User entity by IDs.
 func (eu *EventUpdate) AddLikerIDs(ids ...int) *EventUpdate {
-	if eu.likers == nil {
-		eu.likers = make(map[int]struct{})
-	}
-	for i := range ids {
-		eu.likers[ids[i]] = struct{}{}
-	}
+	eu.mutation.AddLikerIDs(ids...)
 	return eu
 }
 
-// AddLikers adds the likers edges to User.
+// AddLikers adds the "likers" edges to the User entity.
 func (eu *EventUpdate) AddLikers(u ...*User) *EventUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
@@ -324,16 +262,13 @@ func (eu *EventUpdate) AddLikers(u ...*User) *EventUpdate {
 	return eu.AddLikerIDs(ids...)
 }
 
-// SetOwnerID sets the owner edge to User by id.
+// SetOwnerID sets the "owner" edge to the User entity by ID.
 func (eu *EventUpdate) SetOwnerID(id int) *EventUpdate {
-	if eu.owner == nil {
-		eu.owner = make(map[int]struct{})
-	}
-	eu.owner[id] = struct{}{}
+	eu.mutation.SetOwnerID(id)
 	return eu
 }
 
-// SetNillableOwnerID sets the owner edge to User by id if the given value is not nil.
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableOwnerID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetOwnerID(*id)
@@ -341,21 +276,18 @@ func (eu *EventUpdate) SetNillableOwnerID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetOwner sets the owner edge to User.
+// SetOwner sets the "owner" edge to the User entity.
 func (eu *EventUpdate) SetOwner(u *User) *EventUpdate {
 	return eu.SetOwnerID(u.ID)
 }
 
-// SetSvcOwnerID sets the svcOwner edge to Service by id.
+// SetSvcOwnerID sets the "svcOwner" edge to the Service entity by ID.
 func (eu *EventUpdate) SetSvcOwnerID(id int) *EventUpdate {
-	if eu.svcOwner == nil {
-		eu.svcOwner = make(map[int]struct{})
-	}
-	eu.svcOwner[id] = struct{}{}
+	eu.mutation.SetSvcOwnerID(id)
 	return eu
 }
 
-// SetNillableSvcOwnerID sets the svcOwner edge to Service by id if the given value is not nil.
+// SetNillableSvcOwnerID sets the "svcOwner" edge to the Service entity by ID if the given value is not nil.
 func (eu *EventUpdate) SetNillableSvcOwnerID(id *int) *EventUpdate {
 	if id != nil {
 		eu = eu.SetSvcOwnerID(*id)
@@ -363,83 +295,89 @@ func (eu *EventUpdate) SetNillableSvcOwnerID(id *int) *EventUpdate {
 	return eu
 }
 
-// SetSvcOwner sets the svcOwner edge to Service.
+// SetSvcOwner sets the "svcOwner" edge to the Service entity.
 func (eu *EventUpdate) SetSvcOwner(s *Service) *EventUpdate {
 	return eu.SetSvcOwnerID(s.ID)
 }
 
-// ClearJob clears the job edge to Job.
+// Mutation returns the EventMutation object of the builder.
+func (eu *EventUpdate) Mutation() *EventMutation {
+	return eu.mutation
+}
+
+// ClearJob clears the "job" edge to the Job entity.
 func (eu *EventUpdate) ClearJob() *EventUpdate {
-	eu.clearedJob = true
+	eu.mutation.ClearJob()
 	return eu
 }
 
-// ClearFile clears the file edge to File.
+// ClearFile clears the "file" edge to the File entity.
 func (eu *EventUpdate) ClearFile() *EventUpdate {
-	eu.clearedFile = true
+	eu.mutation.ClearFile()
 	return eu
 }
 
-// ClearCredential clears the credential edge to Credential.
+// ClearCredential clears the "credential" edge to the Credential entity.
 func (eu *EventUpdate) ClearCredential() *EventUpdate {
-	eu.clearedCredential = true
+	eu.mutation.ClearCredential()
 	return eu
 }
 
-// ClearLink clears the link edge to Link.
+// ClearLink clears the "link" edge to the Link entity.
 func (eu *EventUpdate) ClearLink() *EventUpdate {
-	eu.clearedLink = true
+	eu.mutation.ClearLink()
 	return eu
 }
 
-// ClearTag clears the tag edge to Tag.
+// ClearTag clears the "tag" edge to the Tag entity.
 func (eu *EventUpdate) ClearTag() *EventUpdate {
-	eu.clearedTag = true
+	eu.mutation.ClearTag()
 	return eu
 }
 
-// ClearTarget clears the target edge to Target.
+// ClearTarget clears the "target" edge to the Target entity.
 func (eu *EventUpdate) ClearTarget() *EventUpdate {
-	eu.clearedTarget = true
+	eu.mutation.ClearTarget()
 	return eu
 }
 
-// ClearTask clears the task edge to Task.
+// ClearTask clears the "task" edge to the Task entity.
 func (eu *EventUpdate) ClearTask() *EventUpdate {
-	eu.clearedTask = true
+	eu.mutation.ClearTask()
 	return eu
 }
 
-// ClearUser clears the user edge to User.
+// ClearUser clears the "user" edge to the User entity.
 func (eu *EventUpdate) ClearUser() *EventUpdate {
-	eu.clearedUser = true
+	eu.mutation.ClearUser()
 	return eu
 }
 
-// ClearEvent clears the event edge to Event.
+// ClearEvent clears the "event" edge to the Event entity.
 func (eu *EventUpdate) ClearEvent() *EventUpdate {
-	eu.clearedEvent = true
+	eu.mutation.ClearEvent()
 	return eu
 }
 
-// ClearService clears the service edge to Service.
+// ClearService clears the "service" edge to the Service entity.
 func (eu *EventUpdate) ClearService() *EventUpdate {
-	eu.clearedService = true
+	eu.mutation.ClearService()
 	return eu
 }
 
-// RemoveLikerIDs removes the likers edge to User by ids.
+// ClearLikers clears all "likers" edges to the User entity.
+func (eu *EventUpdate) ClearLikers() *EventUpdate {
+	eu.mutation.ClearLikers()
+	return eu
+}
+
+// RemoveLikerIDs removes the "likers" edge to User entities by IDs.
 func (eu *EventUpdate) RemoveLikerIDs(ids ...int) *EventUpdate {
-	if eu.removedLikers == nil {
-		eu.removedLikers = make(map[int]struct{})
-	}
-	for i := range ids {
-		eu.removedLikers[ids[i]] = struct{}{}
-	}
+	eu.mutation.RemoveLikerIDs(ids...)
 	return eu
 }
 
-// RemoveLikers removes likers edges to User.
+// RemoveLikers removes "likers" edges to User entities.
 func (eu *EventUpdate) RemoveLikers(u ...*User) *EventUpdate {
 	ids := make([]int, len(u))
 	for i := range u {
@@ -448,62 +386,54 @@ func (eu *EventUpdate) RemoveLikers(u ...*User) *EventUpdate {
 	return eu.RemoveLikerIDs(ids...)
 }
 
-// ClearOwner clears the owner edge to User.
+// ClearOwner clears the "owner" edge to the User entity.
 func (eu *EventUpdate) ClearOwner() *EventUpdate {
-	eu.clearedOwner = true
+	eu.mutation.ClearOwner()
 	return eu
 }
 
-// ClearSvcOwner clears the svcOwner edge to Service.
+// ClearSvcOwner clears the "svcOwner" edge to the Service entity.
 func (eu *EventUpdate) ClearSvcOwner() *EventUpdate {
-	eu.clearedSvcOwner = true
+	eu.mutation.ClearSvcOwner()
 	return eu
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (eu *EventUpdate) Save(ctx context.Context) (int, error) {
-	if eu.Kind != nil {
-		if err := event.KindValidator(*eu.Kind); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Kind\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(eu.hooks) == 0 {
+		if err = eu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = eu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*EventMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = eu.check(); err != nil {
+				return 0, err
+			}
+			eu.mutation = mutation
+			affected, err = eu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(eu.hooks) - 1; i >= 0; i-- {
+			if eu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = eu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, eu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if len(eu.job) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"job\"")
-	}
-	if len(eu.file) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"file\"")
-	}
-	if len(eu.credential) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"credential\"")
-	}
-	if len(eu.link) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"link\"")
-	}
-	if len(eu.tag) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"tag\"")
-	}
-	if len(eu.target) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	if len(eu.task) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"task\"")
-	}
-	if len(eu.user) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"user\"")
-	}
-	if len(eu.event) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"event\"")
-	}
-	if len(eu.service) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"service\"")
-	}
-	if len(eu.owner) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"owner\"")
-	}
-	if len(eu.svcOwner) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"svcOwner\"")
-	}
-	return eu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -528,6 +458,16 @@ func (eu *EventUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (eu *EventUpdate) check() error {
+	if v, ok := eu.mutation.Kind(); ok {
+		if err := event.KindValidator(v); err != nil {
+			return &ValidationError{Name: "Kind", err: fmt.Errorf(`ent: validator failed for field "Event.Kind": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -539,28 +479,28 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := eu.predicates; len(ps) > 0 {
+	if ps := eu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := eu.CreationTime; value != nil {
+	if value, ok := eu.mutation.CreationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: event.FieldCreationTime,
 		})
 	}
-	if value := eu.Kind; value != nil {
+	if value, ok := eu.mutation.Kind(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: event.FieldKind,
 		})
 	}
-	if eu.clearedJob {
+	if eu.mutation.JobCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -576,7 +516,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.job; len(nodes) > 0 {
+	if nodes := eu.mutation.JobIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -590,12 +530,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedFile {
+	if eu.mutation.FileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -611,7 +551,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.file; len(nodes) > 0 {
+	if nodes := eu.mutation.FileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -625,12 +565,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedCredential {
+	if eu.mutation.CredentialCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -646,7 +586,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.credential; len(nodes) > 0 {
+	if nodes := eu.mutation.CredentialIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -660,12 +600,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedLink {
+	if eu.mutation.LinkCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -681,7 +621,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.link; len(nodes) > 0 {
+	if nodes := eu.mutation.LinkIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -695,12 +635,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedTag {
+	if eu.mutation.TagCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -716,7 +656,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.tag; len(nodes) > 0 {
+	if nodes := eu.mutation.TagIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -730,12 +670,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedTarget {
+	if eu.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -751,7 +691,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.target; len(nodes) > 0 {
+	if nodes := eu.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -765,12 +705,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedTask {
+	if eu.mutation.TaskCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -786,7 +726,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.task; len(nodes) > 0 {
+	if nodes := eu.mutation.TaskIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -800,12 +740,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedUser {
+	if eu.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -821,7 +761,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.user; len(nodes) > 0 {
+	if nodes := eu.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -835,12 +775,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedEvent {
+	if eu.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -856,7 +796,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.event; len(nodes) > 0 {
+	if nodes := eu.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -870,12 +810,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedService {
+	if eu.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -891,7 +831,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.service; len(nodes) > 0 {
+	if nodes := eu.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -905,12 +845,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := eu.removedLikers; len(nodes) > 0 {
+	if eu.mutation.LikersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -924,12 +864,28 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := eu.mutation.RemovedLikersIDs(); len(nodes) > 0 && !eu.mutation.LikersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.LikersTable,
+			Columns: []string{event.LikersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.likers; len(nodes) > 0 {
+	if nodes := eu.mutation.LikersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -943,12 +899,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedOwner {
+	if eu.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -964,7 +920,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.owner; len(nodes) > 0 {
+	if nodes := eu.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -978,12 +934,12 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if eu.clearedSvcOwner {
+	if eu.mutation.SvcOwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -999,7 +955,7 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := eu.svcOwner; len(nodes) > 0 {
+	if nodes := eu.mutation.SvcOwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1013,14 +969,16 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, eu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{event.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -1030,44 +988,18 @@ func (eu *EventUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // EventUpdateOne is the builder for updating a single Event entity.
 type EventUpdateOne struct {
 	config
-	id                int
-	CreationTime      *time.Time
-	Kind              *event.Kind
-	job               map[int]struct{}
-	file              map[int]struct{}
-	credential        map[int]struct{}
-	link              map[int]struct{}
-	tag               map[int]struct{}
-	target            map[int]struct{}
-	task              map[int]struct{}
-	user              map[int]struct{}
-	event             map[int]struct{}
-	service           map[int]struct{}
-	likers            map[int]struct{}
-	owner             map[int]struct{}
-	svcOwner          map[int]struct{}
-	clearedJob        bool
-	clearedFile       bool
-	clearedCredential bool
-	clearedLink       bool
-	clearedTag        bool
-	clearedTarget     bool
-	clearedTask       bool
-	clearedUser       bool
-	clearedEvent      bool
-	clearedService    bool
-	removedLikers     map[int]struct{}
-	clearedOwner      bool
-	clearedSvcOwner   bool
+	fields   []string
+	hooks    []Hook
+	mutation *EventMutation
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (euo *EventUpdateOne) SetCreationTime(t time.Time) *EventUpdateOne {
-	euo.CreationTime = &t
+	euo.mutation.SetCreationTime(t)
 	return euo
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableCreationTime(t *time.Time) *EventUpdateOne {
 	if t != nil {
 		euo.SetCreationTime(*t)
@@ -1075,22 +1007,19 @@ func (euo *EventUpdateOne) SetNillableCreationTime(t *time.Time) *EventUpdateOne
 	return euo
 }
 
-// SetKind sets the Kind field.
+// SetKind sets the "Kind" field.
 func (euo *EventUpdateOne) SetKind(e event.Kind) *EventUpdateOne {
-	euo.Kind = &e
+	euo.mutation.SetKind(e)
 	return euo
 }
 
-// SetJobID sets the job edge to Job by id.
+// SetJobID sets the "job" edge to the Job entity by ID.
 func (euo *EventUpdateOne) SetJobID(id int) *EventUpdateOne {
-	if euo.job == nil {
-		euo.job = make(map[int]struct{})
-	}
-	euo.job[id] = struct{}{}
+	euo.mutation.SetJobID(id)
 	return euo
 }
 
-// SetNillableJobID sets the job edge to Job by id if the given value is not nil.
+// SetNillableJobID sets the "job" edge to the Job entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableJobID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetJobID(*id)
@@ -1098,21 +1027,18 @@ func (euo *EventUpdateOne) SetNillableJobID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetJob sets the job edge to Job.
+// SetJob sets the "job" edge to the Job entity.
 func (euo *EventUpdateOne) SetJob(j *Job) *EventUpdateOne {
 	return euo.SetJobID(j.ID)
 }
 
-// SetFileID sets the file edge to File by id.
+// SetFileID sets the "file" edge to the File entity by ID.
 func (euo *EventUpdateOne) SetFileID(id int) *EventUpdateOne {
-	if euo.file == nil {
-		euo.file = make(map[int]struct{})
-	}
-	euo.file[id] = struct{}{}
+	euo.mutation.SetFileID(id)
 	return euo
 }
 
-// SetNillableFileID sets the file edge to File by id if the given value is not nil.
+// SetNillableFileID sets the "file" edge to the File entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableFileID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetFileID(*id)
@@ -1120,21 +1046,18 @@ func (euo *EventUpdateOne) SetNillableFileID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetFile sets the file edge to File.
+// SetFile sets the "file" edge to the File entity.
 func (euo *EventUpdateOne) SetFile(f *File) *EventUpdateOne {
 	return euo.SetFileID(f.ID)
 }
 
-// SetCredentialID sets the credential edge to Credential by id.
+// SetCredentialID sets the "credential" edge to the Credential entity by ID.
 func (euo *EventUpdateOne) SetCredentialID(id int) *EventUpdateOne {
-	if euo.credential == nil {
-		euo.credential = make(map[int]struct{})
-	}
-	euo.credential[id] = struct{}{}
+	euo.mutation.SetCredentialID(id)
 	return euo
 }
 
-// SetNillableCredentialID sets the credential edge to Credential by id if the given value is not nil.
+// SetNillableCredentialID sets the "credential" edge to the Credential entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableCredentialID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetCredentialID(*id)
@@ -1142,21 +1065,18 @@ func (euo *EventUpdateOne) SetNillableCredentialID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetCredential sets the credential edge to Credential.
+// SetCredential sets the "credential" edge to the Credential entity.
 func (euo *EventUpdateOne) SetCredential(c *Credential) *EventUpdateOne {
 	return euo.SetCredentialID(c.ID)
 }
 
-// SetLinkID sets the link edge to Link by id.
+// SetLinkID sets the "link" edge to the Link entity by ID.
 func (euo *EventUpdateOne) SetLinkID(id int) *EventUpdateOne {
-	if euo.link == nil {
-		euo.link = make(map[int]struct{})
-	}
-	euo.link[id] = struct{}{}
+	euo.mutation.SetLinkID(id)
 	return euo
 }
 
-// SetNillableLinkID sets the link edge to Link by id if the given value is not nil.
+// SetNillableLinkID sets the "link" edge to the Link entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableLinkID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetLinkID(*id)
@@ -1164,21 +1084,18 @@ func (euo *EventUpdateOne) SetNillableLinkID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetLink sets the link edge to Link.
+// SetLink sets the "link" edge to the Link entity.
 func (euo *EventUpdateOne) SetLink(l *Link) *EventUpdateOne {
 	return euo.SetLinkID(l.ID)
 }
 
-// SetTagID sets the tag edge to Tag by id.
+// SetTagID sets the "tag" edge to the Tag entity by ID.
 func (euo *EventUpdateOne) SetTagID(id int) *EventUpdateOne {
-	if euo.tag == nil {
-		euo.tag = make(map[int]struct{})
-	}
-	euo.tag[id] = struct{}{}
+	euo.mutation.SetTagID(id)
 	return euo
 }
 
-// SetNillableTagID sets the tag edge to Tag by id if the given value is not nil.
+// SetNillableTagID sets the "tag" edge to the Tag entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableTagID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetTagID(*id)
@@ -1186,21 +1103,18 @@ func (euo *EventUpdateOne) SetNillableTagID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetTag sets the tag edge to Tag.
+// SetTag sets the "tag" edge to the Tag entity.
 func (euo *EventUpdateOne) SetTag(t *Tag) *EventUpdateOne {
 	return euo.SetTagID(t.ID)
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (euo *EventUpdateOne) SetTargetID(id int) *EventUpdateOne {
-	if euo.target == nil {
-		euo.target = make(map[int]struct{})
-	}
-	euo.target[id] = struct{}{}
+	euo.mutation.SetTargetID(id)
 	return euo
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableTargetID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetTargetID(*id)
@@ -1208,21 +1122,18 @@ func (euo *EventUpdateOne) SetNillableTargetID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (euo *EventUpdateOne) SetTarget(t *Target) *EventUpdateOne {
 	return euo.SetTargetID(t.ID)
 }
 
-// SetTaskID sets the task edge to Task by id.
+// SetTaskID sets the "task" edge to the Task entity by ID.
 func (euo *EventUpdateOne) SetTaskID(id int) *EventUpdateOne {
-	if euo.task == nil {
-		euo.task = make(map[int]struct{})
-	}
-	euo.task[id] = struct{}{}
+	euo.mutation.SetTaskID(id)
 	return euo
 }
 
-// SetNillableTaskID sets the task edge to Task by id if the given value is not nil.
+// SetNillableTaskID sets the "task" edge to the Task entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableTaskID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetTaskID(*id)
@@ -1230,21 +1141,18 @@ func (euo *EventUpdateOne) SetNillableTaskID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetTask sets the task edge to Task.
+// SetTask sets the "task" edge to the Task entity.
 func (euo *EventUpdateOne) SetTask(t *Task) *EventUpdateOne {
 	return euo.SetTaskID(t.ID)
 }
 
-// SetUserID sets the user edge to User by id.
+// SetUserID sets the "user" edge to the User entity by ID.
 func (euo *EventUpdateOne) SetUserID(id int) *EventUpdateOne {
-	if euo.user == nil {
-		euo.user = make(map[int]struct{})
-	}
-	euo.user[id] = struct{}{}
+	euo.mutation.SetUserID(id)
 	return euo
 }
 
-// SetNillableUserID sets the user edge to User by id if the given value is not nil.
+// SetNillableUserID sets the "user" edge to the User entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableUserID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetUserID(*id)
@@ -1252,21 +1160,18 @@ func (euo *EventUpdateOne) SetNillableUserID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetUser sets the user edge to User.
+// SetUser sets the "user" edge to the User entity.
 func (euo *EventUpdateOne) SetUser(u *User) *EventUpdateOne {
 	return euo.SetUserID(u.ID)
 }
 
-// SetEventID sets the event edge to Event by id.
+// SetEventID sets the "event" edge to the Event entity by ID.
 func (euo *EventUpdateOne) SetEventID(id int) *EventUpdateOne {
-	if euo.event == nil {
-		euo.event = make(map[int]struct{})
-	}
-	euo.event[id] = struct{}{}
+	euo.mutation.SetEventID(id)
 	return euo
 }
 
-// SetNillableEventID sets the event edge to Event by id if the given value is not nil.
+// SetNillableEventID sets the "event" edge to the Event entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableEventID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetEventID(*id)
@@ -1274,21 +1179,18 @@ func (euo *EventUpdateOne) SetNillableEventID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetEvent sets the event edge to Event.
+// SetEvent sets the "event" edge to the Event entity.
 func (euo *EventUpdateOne) SetEvent(e *Event) *EventUpdateOne {
 	return euo.SetEventID(e.ID)
 }
 
-// SetServiceID sets the service edge to Service by id.
+// SetServiceID sets the "service" edge to the Service entity by ID.
 func (euo *EventUpdateOne) SetServiceID(id int) *EventUpdateOne {
-	if euo.service == nil {
-		euo.service = make(map[int]struct{})
-	}
-	euo.service[id] = struct{}{}
+	euo.mutation.SetServiceID(id)
 	return euo
 }
 
-// SetNillableServiceID sets the service edge to Service by id if the given value is not nil.
+// SetNillableServiceID sets the "service" edge to the Service entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableServiceID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetServiceID(*id)
@@ -1296,23 +1198,18 @@ func (euo *EventUpdateOne) SetNillableServiceID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetService sets the service edge to Service.
+// SetService sets the "service" edge to the Service entity.
 func (euo *EventUpdateOne) SetService(s *Service) *EventUpdateOne {
 	return euo.SetServiceID(s.ID)
 }
 
-// AddLikerIDs adds the likers edge to User by ids.
+// AddLikerIDs adds the "likers" edge to the User entity by IDs.
 func (euo *EventUpdateOne) AddLikerIDs(ids ...int) *EventUpdateOne {
-	if euo.likers == nil {
-		euo.likers = make(map[int]struct{})
-	}
-	for i := range ids {
-		euo.likers[ids[i]] = struct{}{}
-	}
+	euo.mutation.AddLikerIDs(ids...)
 	return euo
 }
 
-// AddLikers adds the likers edges to User.
+// AddLikers adds the "likers" edges to the User entity.
 func (euo *EventUpdateOne) AddLikers(u ...*User) *EventUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
@@ -1321,16 +1218,13 @@ func (euo *EventUpdateOne) AddLikers(u ...*User) *EventUpdateOne {
 	return euo.AddLikerIDs(ids...)
 }
 
-// SetOwnerID sets the owner edge to User by id.
+// SetOwnerID sets the "owner" edge to the User entity by ID.
 func (euo *EventUpdateOne) SetOwnerID(id int) *EventUpdateOne {
-	if euo.owner == nil {
-		euo.owner = make(map[int]struct{})
-	}
-	euo.owner[id] = struct{}{}
+	euo.mutation.SetOwnerID(id)
 	return euo
 }
 
-// SetNillableOwnerID sets the owner edge to User by id if the given value is not nil.
+// SetNillableOwnerID sets the "owner" edge to the User entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableOwnerID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetOwnerID(*id)
@@ -1338,21 +1232,18 @@ func (euo *EventUpdateOne) SetNillableOwnerID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetOwner sets the owner edge to User.
+// SetOwner sets the "owner" edge to the User entity.
 func (euo *EventUpdateOne) SetOwner(u *User) *EventUpdateOne {
 	return euo.SetOwnerID(u.ID)
 }
 
-// SetSvcOwnerID sets the svcOwner edge to Service by id.
+// SetSvcOwnerID sets the "svcOwner" edge to the Service entity by ID.
 func (euo *EventUpdateOne) SetSvcOwnerID(id int) *EventUpdateOne {
-	if euo.svcOwner == nil {
-		euo.svcOwner = make(map[int]struct{})
-	}
-	euo.svcOwner[id] = struct{}{}
+	euo.mutation.SetSvcOwnerID(id)
 	return euo
 }
 
-// SetNillableSvcOwnerID sets the svcOwner edge to Service by id if the given value is not nil.
+// SetNillableSvcOwnerID sets the "svcOwner" edge to the Service entity by ID if the given value is not nil.
 func (euo *EventUpdateOne) SetNillableSvcOwnerID(id *int) *EventUpdateOne {
 	if id != nil {
 		euo = euo.SetSvcOwnerID(*id)
@@ -1360,83 +1251,89 @@ func (euo *EventUpdateOne) SetNillableSvcOwnerID(id *int) *EventUpdateOne {
 	return euo
 }
 
-// SetSvcOwner sets the svcOwner edge to Service.
+// SetSvcOwner sets the "svcOwner" edge to the Service entity.
 func (euo *EventUpdateOne) SetSvcOwner(s *Service) *EventUpdateOne {
 	return euo.SetSvcOwnerID(s.ID)
 }
 
-// ClearJob clears the job edge to Job.
+// Mutation returns the EventMutation object of the builder.
+func (euo *EventUpdateOne) Mutation() *EventMutation {
+	return euo.mutation
+}
+
+// ClearJob clears the "job" edge to the Job entity.
 func (euo *EventUpdateOne) ClearJob() *EventUpdateOne {
-	euo.clearedJob = true
+	euo.mutation.ClearJob()
 	return euo
 }
 
-// ClearFile clears the file edge to File.
+// ClearFile clears the "file" edge to the File entity.
 func (euo *EventUpdateOne) ClearFile() *EventUpdateOne {
-	euo.clearedFile = true
+	euo.mutation.ClearFile()
 	return euo
 }
 
-// ClearCredential clears the credential edge to Credential.
+// ClearCredential clears the "credential" edge to the Credential entity.
 func (euo *EventUpdateOne) ClearCredential() *EventUpdateOne {
-	euo.clearedCredential = true
+	euo.mutation.ClearCredential()
 	return euo
 }
 
-// ClearLink clears the link edge to Link.
+// ClearLink clears the "link" edge to the Link entity.
 func (euo *EventUpdateOne) ClearLink() *EventUpdateOne {
-	euo.clearedLink = true
+	euo.mutation.ClearLink()
 	return euo
 }
 
-// ClearTag clears the tag edge to Tag.
+// ClearTag clears the "tag" edge to the Tag entity.
 func (euo *EventUpdateOne) ClearTag() *EventUpdateOne {
-	euo.clearedTag = true
+	euo.mutation.ClearTag()
 	return euo
 }
 
-// ClearTarget clears the target edge to Target.
+// ClearTarget clears the "target" edge to the Target entity.
 func (euo *EventUpdateOne) ClearTarget() *EventUpdateOne {
-	euo.clearedTarget = true
+	euo.mutation.ClearTarget()
 	return euo
 }
 
-// ClearTask clears the task edge to Task.
+// ClearTask clears the "task" edge to the Task entity.
 func (euo *EventUpdateOne) ClearTask() *EventUpdateOne {
-	euo.clearedTask = true
+	euo.mutation.ClearTask()
 	return euo
 }
 
-// ClearUser clears the user edge to User.
+// ClearUser clears the "user" edge to the User entity.
 func (euo *EventUpdateOne) ClearUser() *EventUpdateOne {
-	euo.clearedUser = true
+	euo.mutation.ClearUser()
 	return euo
 }
 
-// ClearEvent clears the event edge to Event.
+// ClearEvent clears the "event" edge to the Event entity.
 func (euo *EventUpdateOne) ClearEvent() *EventUpdateOne {
-	euo.clearedEvent = true
+	euo.mutation.ClearEvent()
 	return euo
 }
 
-// ClearService clears the service edge to Service.
+// ClearService clears the "service" edge to the Service entity.
 func (euo *EventUpdateOne) ClearService() *EventUpdateOne {
-	euo.clearedService = true
+	euo.mutation.ClearService()
 	return euo
 }
 
-// RemoveLikerIDs removes the likers edge to User by ids.
+// ClearLikers clears all "likers" edges to the User entity.
+func (euo *EventUpdateOne) ClearLikers() *EventUpdateOne {
+	euo.mutation.ClearLikers()
+	return euo
+}
+
+// RemoveLikerIDs removes the "likers" edge to User entities by IDs.
 func (euo *EventUpdateOne) RemoveLikerIDs(ids ...int) *EventUpdateOne {
-	if euo.removedLikers == nil {
-		euo.removedLikers = make(map[int]struct{})
-	}
-	for i := range ids {
-		euo.removedLikers[ids[i]] = struct{}{}
-	}
+	euo.mutation.RemoveLikerIDs(ids...)
 	return euo
 }
 
-// RemoveLikers removes likers edges to User.
+// RemoveLikers removes "likers" edges to User entities.
 func (euo *EventUpdateOne) RemoveLikers(u ...*User) *EventUpdateOne {
 	ids := make([]int, len(u))
 	for i := range u {
@@ -1445,71 +1342,70 @@ func (euo *EventUpdateOne) RemoveLikers(u ...*User) *EventUpdateOne {
 	return euo.RemoveLikerIDs(ids...)
 }
 
-// ClearOwner clears the owner edge to User.
+// ClearOwner clears the "owner" edge to the User entity.
 func (euo *EventUpdateOne) ClearOwner() *EventUpdateOne {
-	euo.clearedOwner = true
+	euo.mutation.ClearOwner()
 	return euo
 }
 
-// ClearSvcOwner clears the svcOwner edge to Service.
+// ClearSvcOwner clears the "svcOwner" edge to the Service entity.
 func (euo *EventUpdateOne) ClearSvcOwner() *EventUpdateOne {
-	euo.clearedSvcOwner = true
+	euo.mutation.ClearSvcOwner()
 	return euo
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (euo *EventUpdateOne) Select(field string, fields ...string) *EventUpdateOne {
+	euo.fields = append([]string{field}, fields...)
+	return euo
+}
+
+// Save executes the query and returns the updated Event entity.
 func (euo *EventUpdateOne) Save(ctx context.Context) (*Event, error) {
-	if euo.Kind != nil {
-		if err := event.KindValidator(*euo.Kind); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Kind\": %v", err)
+	var (
+		err  error
+		node *Event
+	)
+	if len(euo.hooks) == 0 {
+		if err = euo.check(); err != nil {
+			return nil, err
+		}
+		node, err = euo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*EventMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = euo.check(); err != nil {
+				return nil, err
+			}
+			euo.mutation = mutation
+			node, err = euo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(euo.hooks) - 1; i >= 0; i-- {
+			if euo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = euo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, euo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if len(euo.job) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
-	}
-	if len(euo.file) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"file\"")
-	}
-	if len(euo.credential) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"credential\"")
-	}
-	if len(euo.link) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"link\"")
-	}
-	if len(euo.tag) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"tag\"")
-	}
-	if len(euo.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	if len(euo.task) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"task\"")
-	}
-	if len(euo.user) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"user\"")
-	}
-	if len(euo.event) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"event\"")
-	}
-	if len(euo.service) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"service\"")
-	}
-	if len(euo.owner) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"owner\"")
-	}
-	if len(euo.svcOwner) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"svcOwner\"")
-	}
-	return euo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (euo *EventUpdateOne) SaveX(ctx context.Context) *Event {
-	e, err := euo.Save(ctx)
+	node, err := euo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return e
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -1525,33 +1421,66 @@ func (euo *EventUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (euo *EventUpdateOne) check() error {
+	if v, ok := euo.mutation.Kind(); ok {
+		if err := event.KindValidator(v); err != nil {
+			return &ValidationError{Name: "Kind", err: fmt.Errorf(`ent: validator failed for field "Event.Kind": %w`, err)}
+		}
+	}
+	return nil
+}
+
+func (euo *EventUpdateOne) sqlSave(ctx context.Context) (_node *Event, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   event.Table,
 			Columns: event.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  euo.id,
 				Type:   field.TypeInt,
 				Column: event.FieldID,
 			},
 		},
 	}
-	if value := euo.CreationTime; value != nil {
+	id, ok := euo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Event.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := euo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, event.FieldID)
+		for _, f := range fields {
+			if !event.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != event.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := euo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := euo.mutation.CreationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: event.FieldCreationTime,
 		})
 	}
-	if value := euo.Kind; value != nil {
+	if value, ok := euo.mutation.Kind(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: event.FieldKind,
 		})
 	}
-	if euo.clearedJob {
+	if euo.mutation.JobCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1567,7 +1496,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.job; len(nodes) > 0 {
+	if nodes := euo.mutation.JobIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1581,12 +1510,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedFile {
+	if euo.mutation.FileCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1602,7 +1531,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.file; len(nodes) > 0 {
+	if nodes := euo.mutation.FileIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1616,12 +1545,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedCredential {
+	if euo.mutation.CredentialCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1637,7 +1566,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.credential; len(nodes) > 0 {
+	if nodes := euo.mutation.CredentialIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1651,12 +1580,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedLink {
+	if euo.mutation.LinkCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1672,7 +1601,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.link; len(nodes) > 0 {
+	if nodes := euo.mutation.LinkIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1686,12 +1615,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedTag {
+	if euo.mutation.TagCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1707,7 +1636,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.tag; len(nodes) > 0 {
+	if nodes := euo.mutation.TagIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1721,12 +1650,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedTarget {
+	if euo.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1742,7 +1671,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.target; len(nodes) > 0 {
+	if nodes := euo.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1756,12 +1685,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedTask {
+	if euo.mutation.TaskCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1777,7 +1706,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.task; len(nodes) > 0 {
+	if nodes := euo.mutation.TaskIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1791,12 +1720,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedUser {
+	if euo.mutation.UserCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1812,7 +1741,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.user; len(nodes) > 0 {
+	if nodes := euo.mutation.UserIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1826,12 +1755,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedEvent {
+	if euo.mutation.EventCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -1847,7 +1776,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.event; len(nodes) > 0 {
+	if nodes := euo.mutation.EventIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2O,
 			Inverse: false,
@@ -1861,12 +1790,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedService {
+	if euo.mutation.ServiceCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1882,7 +1811,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.service; len(nodes) > 0 {
+	if nodes := euo.mutation.ServiceIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -1896,12 +1825,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := euo.removedLikers; len(nodes) > 0 {
+	if euo.mutation.LikersCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1915,12 +1844,28 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := euo.mutation.RemovedLikersIDs(); len(nodes) > 0 && !euo.mutation.LikersCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   event.LikersTable,
+			Columns: []string{event.LikersColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: user.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.likers; len(nodes) > 0 {
+	if nodes := euo.mutation.LikersIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -1934,12 +1879,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedOwner {
+	if euo.mutation.OwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1955,7 +1900,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.owner; len(nodes) > 0 {
+	if nodes := euo.mutation.OwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1969,12 +1914,12 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if euo.clearedSvcOwner {
+	if euo.mutation.SvcOwnerCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1990,7 +1935,7 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := euo.svcOwner; len(nodes) > 0 {
+	if nodes := euo.mutation.SvcOwnerIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -2004,19 +1949,21 @@ func (euo *EventUpdateOne) sqlSave(ctx context.Context) (e *Event, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	e = &Event{config: euo.config}
-	_spec.Assign = e.assignValues
-	_spec.ScanValues = e.scanValues()
+	_node = &Event{config: euo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, euo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{event.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return e, nil
+	return _node, nil
 }

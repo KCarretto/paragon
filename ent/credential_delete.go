@@ -4,10 +4,11 @@ package ent
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -15,18 +16,46 @@ import (
 // CredentialDelete is the builder for deleting a Credential entity.
 type CredentialDelete struct {
 	config
-	predicates []predicate.Credential
+	hooks    []Hook
+	mutation *CredentialMutation
 }
 
-// Where adds a new predicate to the delete builder.
+// Where appends a list predicates to the CredentialDelete builder.
 func (cd *CredentialDelete) Where(ps ...predicate.Credential) *CredentialDelete {
-	cd.predicates = append(cd.predicates, ps...)
+	cd.mutation.Where(ps...)
 	return cd
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (cd *CredentialDelete) Exec(ctx context.Context) (int, error) {
-	return cd.sqlExec(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(cd.hooks) == 0 {
+		affected, err = cd.sqlExec(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*CredentialMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			cd.mutation = mutation
+			affected, err = cd.sqlExec(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(cd.hooks) - 1; i >= 0; i-- {
+			if cd.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = cd.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, cd.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -48,7 +77,7 @@ func (cd *CredentialDelete) sqlExec(ctx context.Context) (int, error) {
 			},
 		},
 	}
-	if ps := cd.predicates; len(ps) > 0 {
+	if ps := cd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -70,7 +99,7 @@ func (cdo *CredentialDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{credential.Label}
+		return &NotFoundError{credential.Label}
 	default:
 		return nil
 	}

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/target"
@@ -21,17 +21,19 @@ type CredentialQuery struct {
 	config
 	limit      *int
 	offset     *int
-	order      []Order
-	unique     []string
+	unique     *bool
+	order      []OrderFunc
+	fields     []string
 	predicates []predicate.Credential
 	// eager-loading edges.
 	withTarget *TargetQuery
 	withFKs    bool
-	// intermediate query.
-	sql *sql.Selector
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the builder.
+// Where adds a new predicate for the CredentialQuery builder.
 func (cq *CredentialQuery) Where(ps ...predicate.Credential) *CredentialQuery {
 	cq.predicates = append(cq.predicates, ps...)
 	return cq
@@ -49,60 +51,79 @@ func (cq *CredentialQuery) Offset(offset int) *CredentialQuery {
 	return cq
 }
 
+// Unique configures the query builder to filter duplicate records on query.
+// By default, unique is set to true, and can be disabled using this method.
+func (cq *CredentialQuery) Unique(unique bool) *CredentialQuery {
+	cq.unique = &unique
+	return cq
+}
+
 // Order adds an order step to the query.
-func (cq *CredentialQuery) Order(o ...Order) *CredentialQuery {
+func (cq *CredentialQuery) Order(o ...OrderFunc) *CredentialQuery {
 	cq.order = append(cq.order, o...)
 	return cq
 }
 
-// QueryTarget chains the current query on the target edge.
+// QueryTarget chains the current query on the "target" edge.
 func (cq *CredentialQuery) QueryTarget() *TargetQuery {
 	query := &TargetQuery{config: cq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(credential.Table, credential.FieldID, cq.sqlQuery()),
-		sqlgraph.To(target.Table, target.FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, true, credential.TargetTable, credential.TargetColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := cq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(credential.Table, credential.FieldID, selector),
+			sqlgraph.To(target.Table, target.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, true, credential.TargetTable, credential.TargetColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(cq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// First returns the first Credential entity in the query. Returns *ErrNotFound when no credential was found.
+// First returns the first Credential entity from the query.
+// Returns a *NotFoundError when no Credential was found.
 func (cq *CredentialQuery) First(ctx context.Context) (*Credential, error) {
-	cs, err := cq.Limit(1).All(ctx)
+	nodes, err := cq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(cs) == 0 {
-		return nil, &ErrNotFound{credential.Label}
+	if len(nodes) == 0 {
+		return nil, &NotFoundError{credential.Label}
 	}
-	return cs[0], nil
+	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
 func (cq *CredentialQuery) FirstX(ctx context.Context) *Credential {
-	c, err := cq.First(ctx)
+	node, err := cq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
-	return c
+	return node
 }
 
-// FirstID returns the first Credential id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Credential ID from the query.
+// Returns a *NotFoundError when no Credential ID was found.
 func (cq *CredentialQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = cq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{credential.Label}
+		err = &NotFoundError{credential.Label}
 		return
 	}
 	return ids[0], nil
 }
 
-// FirstXID is like FirstID, but panics if an error occurs.
-func (cq *CredentialQuery) FirstXID(ctx context.Context) int {
+// FirstIDX is like FirstID, but panics if an error occurs.
+func (cq *CredentialQuery) FirstIDX(ctx context.Context) int {
 	id, err := cq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -110,32 +131,36 @@ func (cq *CredentialQuery) FirstXID(ctx context.Context) int {
 	return id
 }
 
-// Only returns the only Credential entity in the query, returns an error if not exactly one entity was returned.
+// Only returns a single Credential entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when exactly one Credential entity is not found.
+// Returns a *NotFoundError when no Credential entities are found.
 func (cq *CredentialQuery) Only(ctx context.Context) (*Credential, error) {
-	cs, err := cq.Limit(2).All(ctx)
+	nodes, err := cq.Limit(2).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	switch len(cs) {
+	switch len(nodes) {
 	case 1:
-		return cs[0], nil
+		return nodes[0], nil
 	case 0:
-		return nil, &ErrNotFound{credential.Label}
+		return nil, &NotFoundError{credential.Label}
 	default:
-		return nil, &ErrNotSingular{credential.Label}
+		return nil, &NotSingularError{credential.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
 func (cq *CredentialQuery) OnlyX(ctx context.Context) *Credential {
-	c, err := cq.Only(ctx)
+	node, err := cq.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return c
+	return node
 }
 
-// OnlyID returns the only Credential id in the query, returns an error if not exactly one id was returned.
+// OnlyID is like Only, but returns the only Credential ID in the query.
+// Returns a *NotSingularError when exactly one Credential ID is not found.
+// Returns a *NotFoundError when no entities are found.
 func (cq *CredentialQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = cq.Limit(2).IDs(ctx); err != nil {
@@ -145,15 +170,15 @@ func (cq *CredentialQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{credential.Label}
+		err = &NotFoundError{credential.Label}
 	default:
-		err = &ErrNotSingular{credential.Label}
+		err = &NotSingularError{credential.Label}
 	}
 	return
 }
 
-// OnlyXID is like OnlyID, but panics if an error occurs.
-func (cq *CredentialQuery) OnlyXID(ctx context.Context) int {
+// OnlyIDX is like OnlyID, but panics if an error occurs.
+func (cq *CredentialQuery) OnlyIDX(ctx context.Context) int {
 	id, err := cq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -163,19 +188,22 @@ func (cq *CredentialQuery) OnlyXID(ctx context.Context) int {
 
 // All executes the query and returns a list of Credentials.
 func (cq *CredentialQuery) All(ctx context.Context) ([]*Credential, error) {
+	if err := cq.prepareQuery(ctx); err != nil {
+		return nil, err
+	}
 	return cq.sqlAll(ctx)
 }
 
 // AllX is like All, but panics if an error occurs.
 func (cq *CredentialQuery) AllX(ctx context.Context) []*Credential {
-	cs, err := cq.All(ctx)
+	nodes, err := cq.All(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return cs
+	return nodes
 }
 
-// IDs executes the query and returns a list of Credential ids.
+// IDs executes the query and returns a list of Credential IDs.
 func (cq *CredentialQuery) IDs(ctx context.Context) ([]int, error) {
 	var ids []int
 	if err := cq.Select(credential.FieldID).Scan(ctx, &ids); err != nil {
@@ -195,6 +223,9 @@ func (cq *CredentialQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (cq *CredentialQuery) Count(ctx context.Context) (int, error) {
+	if err := cq.prepareQuery(ctx); err != nil {
+		return 0, err
+	}
 	return cq.sqlCount(ctx)
 }
 
@@ -209,6 +240,9 @@ func (cq *CredentialQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (cq *CredentialQuery) Exist(ctx context.Context) (bool, error) {
+	if err := cq.prepareQuery(ctx); err != nil {
+		return false, err
+	}
 	return cq.sqlExist(ctx)
 }
 
@@ -221,23 +255,27 @@ func (cq *CredentialQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the query builder, including all associated steps. It can be
+// Clone returns a duplicate of the CredentialQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
 func (cq *CredentialQuery) Clone() *CredentialQuery {
+	if cq == nil {
+		return nil
+	}
 	return &CredentialQuery{
 		config:     cq.config,
 		limit:      cq.limit,
 		offset:     cq.offset,
-		order:      append([]Order{}, cq.order...),
-		unique:     append([]string{}, cq.unique...),
+		order:      append([]OrderFunc{}, cq.order...),
 		predicates: append([]predicate.Credential{}, cq.predicates...),
+		withTarget: cq.withTarget.Clone(),
 		// clone intermediate query.
-		sql: cq.sql.Clone(),
+		sql:  cq.sql.Clone(),
+		path: cq.path,
 	}
 }
 
-//  WithTarget tells the query-builder to eager-loads the nodes that are connected to
-// the "target" edge. The optional arguments used to configure the query builder of the edge.
+// WithTarget tells the query-builder to eager-load the nodes that are connected to
+// the "target" edge. The optional arguments are used to configure the query builder of the edge.
 func (cq *CredentialQuery) WithTarget(opts ...func(*TargetQuery)) *CredentialQuery {
 	query := &TargetQuery{config: cq.config}
 	for _, opt := range opts {
@@ -247,7 +285,7 @@ func (cq *CredentialQuery) WithTarget(opts ...func(*TargetQuery)) *CredentialQue
 	return cq
 }
 
-// GroupBy used to group vertices by one or more fields/columns.
+// GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
@@ -265,11 +303,17 @@ func (cq *CredentialQuery) WithTarget(opts ...func(*TargetQuery)) *CredentialQue
 func (cq *CredentialQuery) GroupBy(field string, fields ...string) *CredentialGroupBy {
 	group := &CredentialGroupBy{config: cq.config}
 	group.fields = append([]string{field}, fields...)
-	group.sql = cq.sqlQuery()
+	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
+		if err := cq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		return cq.sqlQuery(ctx), nil
+	}
 	return group
 }
 
-// Select one or more fields from the given query.
+// Select allows the selection one or more fields/columns for the given query,
+// instead of selecting all fields in the entity.
 //
 // Example:
 //
@@ -281,18 +325,35 @@ func (cq *CredentialQuery) GroupBy(field string, fields ...string) *CredentialGr
 //		Select(credential.FieldPrincipal).
 //		Scan(ctx, &v)
 //
-func (cq *CredentialQuery) Select(field string, fields ...string) *CredentialSelect {
-	selector := &CredentialSelect{config: cq.config}
-	selector.fields = append([]string{field}, fields...)
-	selector.sql = cq.sqlQuery()
-	return selector
+func (cq *CredentialQuery) Select(fields ...string) *CredentialSelect {
+	cq.fields = append(cq.fields, fields...)
+	return &CredentialSelect{CredentialQuery: cq}
+}
+
+func (cq *CredentialQuery) prepareQuery(ctx context.Context) error {
+	for _, f := range cq.fields {
+		if !credential.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+		}
+	}
+	if cq.path != nil {
+		prev, err := cq.path(ctx)
+		if err != nil {
+			return err
+		}
+		cq.sql = prev
+	}
+	return nil
 }
 
 func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	var (
-		nodes   []*Credential
-		withFKs = cq.withFKs
-		_spec   = cq.querySpec()
+		nodes       = []*Credential{}
+		withFKs     = cq.withFKs
+		_spec       = cq.querySpec()
+		loadedTypes = [1]bool{
+			cq.withTarget != nil,
+		}
 	)
 	if cq.withTarget != nil {
 		withFKs = true
@@ -300,26 +361,22 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, credential.ForeignKeys...)
 	}
-	_spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Credential{config: cq.config}
 		nodes = append(nodes, node)
-		values := node.scanValues()
-		if withFKs {
-			values = append(values, node.fkValues()...)
-		}
-		return values
+		return node.scanValues(columns)
 	}
-	_spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(columns []string, values []interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		return node.assignValues(values...)
+		node.Edges.loadedTypes = loadedTypes
+		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, cq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -328,10 +385,14 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Credential)
 		for i := range nodes {
-			if fk := nodes[i].target_id; fk != nil {
-				ids = append(ids, *fk)
-				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			if nodes[i].target_credentials == nil {
+				continue
 			}
+			fk := *nodes[i].target_credentials
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
 		query.Where(target.IDIn(ids...))
 		neighbors, err := query.All(ctx)
@@ -341,7 +402,7 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_credentials" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Target = n
@@ -354,13 +415,17 @@ func (cq *CredentialQuery) sqlAll(ctx context.Context) ([]*Credential, error) {
 
 func (cq *CredentialQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := cq.querySpec()
+	_spec.Node.Columns = cq.fields
+	if len(cq.fields) > 0 {
+		_spec.Unique = cq.unique != nil && *cq.unique
+	}
 	return sqlgraph.CountNodes(ctx, cq.driver, _spec)
 }
 
 func (cq *CredentialQuery) sqlExist(ctx context.Context) (bool, error) {
 	n, err := cq.sqlCount(ctx)
 	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %v", err)
+		return false, fmt.Errorf("ent: check existence: %w", err)
 	}
 	return n > 0, nil
 }
@@ -377,6 +442,18 @@ func (cq *CredentialQuery) querySpec() *sqlgraph.QuerySpec {
 		},
 		From:   cq.sql,
 		Unique: true,
+	}
+	if unique := cq.unique; unique != nil {
+		_spec.Unique = *unique
+	}
+	if fields := cq.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, credential.FieldID)
+		for i := range fields {
+			if fields[i] != credential.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
+			}
+		}
 	}
 	if ps := cq.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -401,13 +478,20 @@ func (cq *CredentialQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (cq *CredentialQuery) sqlQuery() *sql.Selector {
+func (cq *CredentialQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(cq.driver.Dialect())
 	t1 := builder.Table(credential.Table)
-	selector := builder.Select(t1.Columns(credential.Columns...)...).From(t1)
+	columns := cq.fields
+	if len(columns) == 0 {
+		columns = credential.Columns
+	}
+	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if cq.sql != nil {
 		selector = cq.sql
-		selector.Select(selector.Columns(credential.Columns...)...)
+		selector.Select(selector.Columns(columns...)...)
+	}
+	if cq.unique != nil && *cq.unique {
+		selector.Distinct()
 	}
 	for _, p := range cq.predicates {
 		p(selector)
@@ -426,23 +510,29 @@ func (cq *CredentialQuery) sqlQuery() *sql.Selector {
 	return selector
 }
 
-// CredentialGroupBy is the builder for group-by Credential entities.
+// CredentialGroupBy is the group-by builder for Credential entities.
 type CredentialGroupBy struct {
 	config
 	fields []string
-	fns    []Aggregate
-	// intermediate query.
-	sql *sql.Selector
+	fns    []AggregateFunc
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (cgb *CredentialGroupBy) Aggregate(fns ...Aggregate) *CredentialGroupBy {
+func (cgb *CredentialGroupBy) Aggregate(fns ...AggregateFunc) *CredentialGroupBy {
 	cgb.fns = append(cgb.fns, fns...)
 	return cgb
 }
 
-// Scan applies the group-by query and scan the result into the given value.
+// Scan applies the group-by query and scans the result into the given value.
 func (cgb *CredentialGroupBy) Scan(ctx context.Context, v interface{}) error {
+	query, err := cgb.path(ctx)
+	if err != nil {
+		return err
+	}
+	cgb.sql = query
 	return cgb.sqlScan(ctx, v)
 }
 
@@ -453,7 +543,8 @@ func (cgb *CredentialGroupBy) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from group-by. It is only allowed when querying group-by with one field.
+// Strings returns list of strings from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (cgb *CredentialGroupBy) Strings(ctx context.Context) ([]string, error) {
 	if len(cgb.fields) > 1 {
 		return nil, errors.New("ent: CredentialGroupBy.Strings is not achievable when grouping more than 1 field")
@@ -474,7 +565,35 @@ func (cgb *CredentialGroupBy) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from group-by. It is only allowed when querying group-by with one field.
+// String returns a single string from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (cgb *CredentialGroupBy) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = cgb.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialGroupBy.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (cgb *CredentialGroupBy) StringX(ctx context.Context) string {
+	v, err := cgb.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (cgb *CredentialGroupBy) Ints(ctx context.Context) ([]int, error) {
 	if len(cgb.fields) > 1 {
 		return nil, errors.New("ent: CredentialGroupBy.Ints is not achievable when grouping more than 1 field")
@@ -495,7 +614,35 @@ func (cgb *CredentialGroupBy) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from group-by. It is only allowed when querying group-by with one field.
+// Int returns a single int from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (cgb *CredentialGroupBy) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = cgb.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialGroupBy.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (cgb *CredentialGroupBy) IntX(ctx context.Context) int {
+	v, err := cgb.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (cgb *CredentialGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 	if len(cgb.fields) > 1 {
 		return nil, errors.New("ent: CredentialGroupBy.Float64s is not achievable when grouping more than 1 field")
@@ -516,7 +663,35 @@ func (cgb *CredentialGroupBy) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from group-by. It is only allowed when querying group-by with one field.
+// Float64 returns a single float64 from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (cgb *CredentialGroupBy) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = cgb.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialGroupBy.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (cgb *CredentialGroupBy) Float64X(ctx context.Context) float64 {
+	v, err := cgb.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (cgb *CredentialGroupBy) Bools(ctx context.Context) ([]bool, error) {
 	if len(cgb.fields) > 1 {
 		return nil, errors.New("ent: CredentialGroupBy.Bools is not achievable when grouping more than 1 field")
@@ -537,9 +712,45 @@ func (cgb *CredentialGroupBy) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (cgb *CredentialGroupBy) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = cgb.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialGroupBy.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (cgb *CredentialGroupBy) BoolX(ctx context.Context) bool {
+	v, err := cgb.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (cgb *CredentialGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+	for _, f := range cgb.fields {
+		if !credential.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
+		}
+	}
+	selector := cgb.sqlQuery()
+	if err := selector.Err(); err != nil {
+		return err
+	}
 	rows := &sql.Rows{}
-	query, args := cgb.sqlQuery().Query()
+	query, args := selector.Query()
 	if err := cgb.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -548,25 +759,37 @@ func (cgb *CredentialGroupBy) sqlScan(ctx context.Context, v interface{}) error 
 }
 
 func (cgb *CredentialGroupBy) sqlQuery() *sql.Selector {
-	selector := cgb.sql
-	columns := make([]string, 0, len(cgb.fields)+len(cgb.fns))
-	columns = append(columns, cgb.fields...)
+	selector := cgb.sql.Select()
+	aggregation := make([]string, 0, len(cgb.fns))
 	for _, fn := range cgb.fns {
-		columns = append(columns, fn(selector))
+		aggregation = append(aggregation, fn(selector))
 	}
-	return selector.Select(columns...).GroupBy(cgb.fields...)
+	// If no columns were selected in a custom aggregation function, the default
+	// selection is the fields used for "group-by", and the aggregation functions.
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(cgb.fields)+len(cgb.fns))
+		for _, f := range cgb.fields {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	return selector.GroupBy(selector.Columns(cgb.fields...)...)
 }
 
-// CredentialSelect is the builder for select fields of Credential entities.
+// CredentialSelect is the builder for selecting fields of Credential entities.
 type CredentialSelect struct {
-	config
-	fields []string
-	// intermediate queries.
+	*CredentialQuery
+	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
 
-// Scan applies the selector query and scan the result into the given value.
+// Scan applies the selector query and scans the result into the given value.
 func (cs *CredentialSelect) Scan(ctx context.Context, v interface{}) error {
+	if err := cs.prepareQuery(ctx); err != nil {
+		return err
+	}
+	cs.sql = cs.CredentialQuery.sqlQuery(ctx)
 	return cs.sqlScan(ctx, v)
 }
 
@@ -577,7 +800,7 @@ func (cs *CredentialSelect) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from selector. It is only allowed when selecting one field.
+// Strings returns list of strings from a selector. It is only allowed when selecting one field.
 func (cs *CredentialSelect) Strings(ctx context.Context) ([]string, error) {
 	if len(cs.fields) > 1 {
 		return nil, errors.New("ent: CredentialSelect.Strings is not achievable when selecting more than 1 field")
@@ -598,7 +821,33 @@ func (cs *CredentialSelect) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from selector. It is only allowed when selecting one field.
+// String returns a single string from a selector. It is only allowed when selecting one field.
+func (cs *CredentialSelect) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = cs.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialSelect.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (cs *CredentialSelect) StringX(ctx context.Context) string {
+	v, err := cs.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from a selector. It is only allowed when selecting one field.
 func (cs *CredentialSelect) Ints(ctx context.Context) ([]int, error) {
 	if len(cs.fields) > 1 {
 		return nil, errors.New("ent: CredentialSelect.Ints is not achievable when selecting more than 1 field")
@@ -619,7 +868,33 @@ func (cs *CredentialSelect) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from selector. It is only allowed when selecting one field.
+// Int returns a single int from a selector. It is only allowed when selecting one field.
+func (cs *CredentialSelect) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = cs.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialSelect.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (cs *CredentialSelect) IntX(ctx context.Context) int {
+	v, err := cs.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
 func (cs *CredentialSelect) Float64s(ctx context.Context) ([]float64, error) {
 	if len(cs.fields) > 1 {
 		return nil, errors.New("ent: CredentialSelect.Float64s is not achievable when selecting more than 1 field")
@@ -640,7 +915,33 @@ func (cs *CredentialSelect) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from selector. It is only allowed when selecting one field.
+// Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
+func (cs *CredentialSelect) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = cs.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialSelect.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (cs *CredentialSelect) Float64X(ctx context.Context) float64 {
+	v, err := cs.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from a selector. It is only allowed when selecting one field.
 func (cs *CredentialSelect) Bools(ctx context.Context) ([]bool, error) {
 	if len(cs.fields) > 1 {
 		return nil, errors.New("ent: CredentialSelect.Bools is not achievable when selecting more than 1 field")
@@ -661,18 +962,38 @@ func (cs *CredentialSelect) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a selector. It is only allowed when selecting one field.
+func (cs *CredentialSelect) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = cs.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{credential.Label}
+	default:
+		err = fmt.Errorf("ent: CredentialSelect.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (cs *CredentialSelect) BoolX(ctx context.Context) bool {
+	v, err := cs.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (cs *CredentialSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
-	query, args := cs.sqlQuery().Query()
+	query, args := cs.sql.Query()
 	if err := cs.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
-}
-
-func (cs *CredentialSelect) sqlQuery() sql.Querier {
-	selector := cs.sql
-	selector.Select(selector.Columns(cs.fields...)...)
-	return selector
 }

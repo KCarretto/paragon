@@ -4,8 +4,6 @@ package job
 
 import (
 	"time"
-
-	"github.com/kcarretto/paragon/ent/schema"
 )
 
 const (
@@ -13,44 +11,53 @@ const (
 	Label = "job"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name vertex property in the database.
+	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldCreationTime holds the string denoting the creationtime vertex property in the database.
+	// FieldCreationTime holds the string denoting the creationtime field in the database.
 	FieldCreationTime = "creation_time"
-	// FieldContent holds the string denoting the content vertex property in the database.
+	// FieldContent holds the string denoting the content field in the database.
 	FieldContent = "content"
-	// FieldStaged holds the string denoting the staged vertex property in the database.
+	// FieldStaged holds the string denoting the staged field in the database.
 	FieldStaged = "staged"
-
+	// EdgeTasks holds the string denoting the tasks edge name in mutations.
+	EdgeTasks = "tasks"
+	// EdgeTags holds the string denoting the tags edge name in mutations.
+	EdgeTags = "tags"
+	// EdgePrev holds the string denoting the prev edge name in mutations.
+	EdgePrev = "prev"
+	// EdgeNext holds the string denoting the next edge name in mutations.
+	EdgeNext = "next"
+	// EdgeOwner holds the string denoting the owner edge name in mutations.
+	EdgeOwner = "owner"
 	// Table holds the table name of the job in the database.
 	Table = "jobs"
-	// TasksTable is the table the holds the tasks relation/edge.
+	// TasksTable is the table that holds the tasks relation/edge.
 	TasksTable = "tasks"
 	// TasksInverseTable is the table name for the Task entity.
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
 	// TasksColumn is the table column denoting the tasks relation/edge.
-	TasksColumn = "job_id"
-	// TagsTable is the table the holds the tags relation/edge. The primary key declared below.
+	TasksColumn = "job_tasks"
+	// TagsTable is the table that holds the tags relation/edge. The primary key declared below.
 	TagsTable = "job_tags"
 	// TagsInverseTable is the table name for the Tag entity.
 	// It exists in this package in order to avoid circular dependency with the "tag" package.
 	TagsInverseTable = "tags"
-	// PrevTable is the table the holds the prev relation/edge.
+	// PrevTable is the table that holds the prev relation/edge.
 	PrevTable = "jobs"
 	// PrevColumn is the table column denoting the prev relation/edge.
-	PrevColumn = "prev_id"
-	// NextTable is the table the holds the next relation/edge.
+	PrevColumn = "job_next"
+	// NextTable is the table that holds the next relation/edge.
 	NextTable = "jobs"
 	// NextColumn is the table column denoting the next relation/edge.
-	NextColumn = "prev_id"
-	// OwnerTable is the table the holds the owner relation/edge.
+	NextColumn = "job_next"
+	// OwnerTable is the table that holds the owner relation/edge.
 	OwnerTable = "jobs"
 	// OwnerInverseTable is the table name for the User entity.
 	// It exists in this package in order to avoid circular dependency with the "user" package.
 	OwnerInverseTable = "users"
 	// OwnerColumn is the table column denoting the owner relation/edge.
-	OwnerColumn = "owner_id"
+	OwnerColumn = "user_jobs"
 )
 
 // Columns holds all SQL columns for job fields.
@@ -62,10 +69,11 @@ var Columns = []string{
 	FieldStaged,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the Job type.
+// ForeignKeys holds the SQL foreign-keys that are owned by the "jobs"
+// table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"prev_id",
-	"owner_id",
+	"job_next",
+	"user_jobs",
 }
 
 var (
@@ -74,21 +82,26 @@ var (
 	TagsPrimaryKey = []string{"job_id", "tag_id"}
 )
 
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
+	return false
+}
+
 var (
-	fields = schema.Job{}.Fields()
-
-	// descName is the schema descriptor for Name field.
-	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
-	NameValidator = descName.Validators[0].(func(string) error)
-
-	// descCreationTime is the schema descriptor for CreationTime field.
-	descCreationTime = fields[1].Descriptor()
-	// DefaultCreationTime holds the default value on creation for the CreationTime field.
-	DefaultCreationTime = descCreationTime.Default.(func() time.Time)
-
-	// descContent is the schema descriptor for Content field.
-	descContent = fields[2].Descriptor()
+	NameValidator func(string) error
+	// DefaultCreationTime holds the default value on creation for the "CreationTime" field.
+	DefaultCreationTime func() time.Time
 	// ContentValidator is a validator for the "Content" field. It is called by the builders before save.
-	ContentValidator = descContent.Validators[0].(func(string) error)
+	ContentValidator func(string) error
 )

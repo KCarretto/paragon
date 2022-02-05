@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/file"
 )
 
@@ -17,105 +17,144 @@ type File struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "Name" field.
+	// The name of the file, used to reference it for downloads
 	Name string `json:"Name,omitempty"`
 	// CreationTime holds the value of the "CreationTime" field.
+	// The timestamp for when the File was created
 	CreationTime time.Time `json:"CreationTime,omitempty"`
 	// LastModifiedTime holds the value of the "LastModifiedTime" field.
+	// The timestamp for when the File was last modified
 	LastModifiedTime time.Time `json:"LastModifiedTime,omitempty"`
 	// Size holds the value of the "Size" field.
+	// The size of the file in bytes
 	Size int `json:"Size,omitempty"`
 	// Content holds the value of the "Content" field.
+	// The content of the file
 	Content []byte `json:"Content,omitempty"`
 	// Hash holds the value of the "Hash" field.
+	// A SHA3 digest of the content field
 	Hash string `json:"Hash,omitempty"`
 	// ContentType holds the value of the "ContentType" field.
+	// The content type of content
 	ContentType string `json:"ContentType,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the FileQuery when eager-loading is set.
-	Edges struct {
-		// Links holds the value of the links edge.
-		Links []*Link
-	} `json:"edges"`
+	Edges FileEdges `json:"edges"`
+}
+
+// FileEdges holds the relations/edges for other nodes in the graph.
+type FileEdges struct {
+	// Links holds the value of the links edge.
+	Links []*Link `json:"links,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// LinksOrErr returns the Links value or an error if the edge
+// was not loaded in eager-loading.
+func (e FileEdges) LinksOrErr() ([]*Link, error) {
+	if e.loadedTypes[0] {
+		return e.Links, nil
+	}
+	return nil, &NotLoadedError{edge: "links"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*File) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // Name
-		&sql.NullTime{},   // CreationTime
-		&sql.NullTime{},   // LastModifiedTime
-		&sql.NullInt64{},  // Size
-		&[]byte{},         // Content
-		&sql.NullString{}, // Hash
-		&sql.NullString{}, // ContentType
+func (*File) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case file.FieldContent:
+			values[i] = new([]byte)
+		case file.FieldID, file.FieldSize:
+			values[i] = new(sql.NullInt64)
+		case file.FieldName, file.FieldHash, file.FieldContentType:
+			values[i] = new(sql.NullString)
+		case file.FieldCreationTime, file.FieldLastModifiedTime:
+			values[i] = new(sql.NullTime)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type File", columns[i])
+		}
 	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the File fields.
-func (f *File) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(file.Columns); m < n {
+func (f *File) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	f.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Name", values[0])
-	} else if value.Valid {
-		f.Name = value.String
-	}
-	if value, ok := values[1].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field CreationTime", values[1])
-	} else if value.Valid {
-		f.CreationTime = value.Time
-	}
-	if value, ok := values[2].(*sql.NullTime); !ok {
-		return fmt.Errorf("unexpected type %T for field LastModifiedTime", values[2])
-	} else if value.Valid {
-		f.LastModifiedTime = value.Time
-	}
-	if value, ok := values[3].(*sql.NullInt64); !ok {
-		return fmt.Errorf("unexpected type %T for field Size", values[3])
-	} else if value.Valid {
-		f.Size = int(value.Int64)
-	}
-	if value, ok := values[4].(*[]byte); !ok {
-		return fmt.Errorf("unexpected type %T for field Content", values[4])
-	} else if value != nil {
-		f.Content = *value
-	}
-	if value, ok := values[5].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field Hash", values[5])
-	} else if value.Valid {
-		f.Hash = value.String
-	}
-	if value, ok := values[6].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field ContentType", values[6])
-	} else if value.Valid {
-		f.ContentType = value.String
+	for i := range columns {
+		switch columns[i] {
+		case file.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			f.ID = int(value.Int64)
+		case file.FieldName:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Name", values[i])
+			} else if value.Valid {
+				f.Name = value.String
+			}
+		case file.FieldCreationTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field CreationTime", values[i])
+			} else if value.Valid {
+				f.CreationTime = value.Time
+			}
+		case file.FieldLastModifiedTime:
+			if value, ok := values[i].(*sql.NullTime); !ok {
+				return fmt.Errorf("unexpected type %T for field LastModifiedTime", values[i])
+			} else if value.Valid {
+				f.LastModifiedTime = value.Time
+			}
+		case file.FieldSize:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field Size", values[i])
+			} else if value.Valid {
+				f.Size = int(value.Int64)
+			}
+		case file.FieldContent:
+			if value, ok := values[i].(*[]byte); !ok {
+				return fmt.Errorf("unexpected type %T for field Content", values[i])
+			} else if value != nil {
+				f.Content = *value
+			}
+		case file.FieldHash:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field Hash", values[i])
+			} else if value.Valid {
+				f.Hash = value.String
+			}
+		case file.FieldContentType:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field ContentType", values[i])
+			} else if value.Valid {
+				f.ContentType = value.String
+			}
+		}
 	}
 	return nil
 }
 
-// QueryLinks queries the links edge of the File.
+// QueryLinks queries the "links" edge of the File entity.
 func (f *File) QueryLinks() *LinkQuery {
-	return (&FileClient{f.config}).QueryLinks(f)
+	return (&FileClient{config: f.config}).QueryLinks(f)
 }
 
 // Update returns a builder for updating this File.
-// Note that, you need to call File.Unwrap() before calling this method, if this File
+// Note that you need to call File.Unwrap() before calling this method if this File
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (f *File) Update() *FileUpdateOne {
-	return (&FileClient{f.config}).UpdateOne(f)
+	return (&FileClient{config: f.config}).UpdateOne(f)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the File entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (f *File) Unwrap() *File {
 	tx, ok := f.config.driver.(*txDriver)
 	if !ok {

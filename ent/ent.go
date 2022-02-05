@@ -3,38 +3,94 @@
 package ent
 
 import (
-	"context"
+	"errors"
 	"fmt"
-	"strings"
 
-	"github.com/facebookincubator/ent/dialect"
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent"
+	"entgo.io/ent/dialect/sql"
+	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/event"
+	"github.com/kcarretto/paragon/ent/file"
+	"github.com/kcarretto/paragon/ent/job"
+	"github.com/kcarretto/paragon/ent/link"
+	"github.com/kcarretto/paragon/ent/service"
+	"github.com/kcarretto/paragon/ent/tag"
+	"github.com/kcarretto/paragon/ent/target"
+	"github.com/kcarretto/paragon/ent/task"
+	"github.com/kcarretto/paragon/ent/user"
 )
 
-// Order applies an ordering on either graph traversal or sql selector.
-type Order func(*sql.Selector)
+// ent aliases to avoid import conflicts in user's code.
+type (
+	Op         = ent.Op
+	Hook       = ent.Hook
+	Value      = ent.Value
+	Query      = ent.Query
+	Policy     = ent.Policy
+	Mutator    = ent.Mutator
+	Mutation   = ent.Mutation
+	MutateFunc = ent.MutateFunc
+)
+
+// OrderFunc applies an ordering on the sql selector.
+type OrderFunc func(*sql.Selector)
+
+// columnChecker returns a function indicates if the column exists in the given column.
+func columnChecker(table string) func(string) error {
+	checks := map[string]func(string) bool{
+		credential.Table: credential.ValidColumn,
+		event.Table:      event.ValidColumn,
+		file.Table:       file.ValidColumn,
+		job.Table:        job.ValidColumn,
+		link.Table:       link.ValidColumn,
+		service.Table:    service.ValidColumn,
+		tag.Table:        tag.ValidColumn,
+		target.Table:     target.ValidColumn,
+		task.Table:       task.ValidColumn,
+		user.Table:       user.ValidColumn,
+	}
+	check, ok := checks[table]
+	if !ok {
+		return func(string) error {
+			return fmt.Errorf("unknown table %q", table)
+		}
+	}
+	return func(column string) error {
+		if !check(column) {
+			return fmt.Errorf("unknown column %q for table %q", column, table)
+		}
+		return nil
+	}
+}
 
 // Asc applies the given fields in ASC order.
-func Asc(fields ...string) Order {
+func Asc(fields ...string) OrderFunc {
 	return func(s *sql.Selector) {
+		check := columnChecker(s.TableName())
 		for _, f := range fields {
-			s.OrderBy(sql.Asc(f))
+			if err := check(f); err != nil {
+				s.AddError(&ValidationError{Name: f, err: fmt.Errorf("ent: %w", err)})
+			}
+			s.OrderBy(sql.Asc(s.C(f)))
 		}
 	}
 }
 
 // Desc applies the given fields in DESC order.
-func Desc(fields ...string) Order {
+func Desc(fields ...string) OrderFunc {
 	return func(s *sql.Selector) {
+		check := columnChecker(s.TableName())
 		for _, f := range fields {
-			s.OrderBy(sql.Desc(f))
+			if err := check(f); err != nil {
+				s.AddError(&ValidationError{Name: f, err: fmt.Errorf("ent: %w", err)})
+			}
+			s.OrderBy(sql.Desc(s.C(f)))
 		}
 	}
 }
 
-// Aggregate applies an aggregation step on the group-by traversal/selector.
-type Aggregate func(*sql.Selector) string
+// AggregateFunc applies an aggregation step on the group-by traversal/selector.
+type AggregateFunc func(*sql.Selector) string
 
 // As is a pseudo aggregation function for renaming another other functions with custom names. For example:
 //
@@ -42,64 +98,112 @@ type Aggregate func(*sql.Selector) string
 //	Aggregate(ent.As(ent.Sum(field1), "sum_field1"), (ent.As(ent.Sum(field2), "sum_field2")).
 //	Scan(ctx, &v)
 //
-func As(fn Aggregate, end string) Aggregate {
+func As(fn AggregateFunc, end string) AggregateFunc {
 	return func(s *sql.Selector) string {
 		return sql.As(fn(s), end)
 	}
 }
 
 // Count applies the "count" aggregation function on each group.
-func Count() Aggregate {
+func Count() AggregateFunc {
 	return func(s *sql.Selector) string {
 		return sql.Count("*")
 	}
 }
 
 // Max applies the "max" aggregation function on the given field of each group.
-func Max(field string) Aggregate {
+func Max(field string) AggregateFunc {
 	return func(s *sql.Selector) string {
+		check := columnChecker(s.TableName())
+		if err := check(field); err != nil {
+			s.AddError(&ValidationError{Name: field, err: fmt.Errorf("ent: %w", err)})
+			return ""
+		}
 		return sql.Max(s.C(field))
 	}
 }
 
 // Mean applies the "mean" aggregation function on the given field of each group.
-func Mean(field string) Aggregate {
+func Mean(field string) AggregateFunc {
 	return func(s *sql.Selector) string {
+		check := columnChecker(s.TableName())
+		if err := check(field); err != nil {
+			s.AddError(&ValidationError{Name: field, err: fmt.Errorf("ent: %w", err)})
+			return ""
+		}
 		return sql.Avg(s.C(field))
 	}
 }
 
 // Min applies the "min" aggregation function on the given field of each group.
-func Min(field string) Aggregate {
+func Min(field string) AggregateFunc {
 	return func(s *sql.Selector) string {
+		check := columnChecker(s.TableName())
+		if err := check(field); err != nil {
+			s.AddError(&ValidationError{Name: field, err: fmt.Errorf("ent: %w", err)})
+			return ""
+		}
 		return sql.Min(s.C(field))
 	}
 }
 
 // Sum applies the "sum" aggregation function on the given field of each group.
-func Sum(field string) Aggregate {
+func Sum(field string) AggregateFunc {
 	return func(s *sql.Selector) string {
+		check := columnChecker(s.TableName())
+		if err := check(field); err != nil {
+			s.AddError(&ValidationError{Name: field, err: fmt.Errorf("ent: %w", err)})
+			return ""
+		}
 		return sql.Sum(s.C(field))
 	}
 }
 
-// ErrNotFound returns when trying to fetch a specific entity and it was not found in the database.
-type ErrNotFound struct {
+// ValidationError returns when validating a field or edge fails.
+type ValidationError struct {
+	Name string // Field or edge name.
+	err  error
+}
+
+// Error implements the error interface.
+func (e *ValidationError) Error() string {
+	return e.err.Error()
+}
+
+// Unwrap implements the errors.Wrapper interface.
+func (e *ValidationError) Unwrap() error {
+	return e.err
+}
+
+// IsValidationError returns a boolean indicating whether the error is a validation error.
+func IsValidationError(err error) bool {
+	if err == nil {
+		return false
+	}
+	var e *ValidationError
+	return errors.As(err, &e)
+}
+
+// NotFoundError returns when trying to fetch a specific entity and it was not found in the database.
+type NotFoundError struct {
 	label string
 }
 
 // Error implements the error interface.
-func (e *ErrNotFound) Error() string {
-	return fmt.Sprintf("ent: %s not found", e.label)
+func (e *NotFoundError) Error() string {
+	return "ent: " + e.label + " not found"
 }
 
 // IsNotFound returns a boolean indicating whether the error is a not found error.
 func IsNotFound(err error) bool {
-	_, ok := err.(*ErrNotFound)
-	return ok
+	if err == nil {
+		return false
+	}
+	var e *NotFoundError
+	return errors.As(err, &e)
 }
 
-// MaskNotFound masks nor found error.
+// MaskNotFound masks not found error.
 func MaskNotFound(err error) error {
 	if IsNotFound(err) {
 		return nil
@@ -107,20 +211,42 @@ func MaskNotFound(err error) error {
 	return err
 }
 
-// ErrNotSingular returns when trying to fetch a singular entity and more then one was found in the database.
-type ErrNotSingular struct {
+// NotSingularError returns when trying to fetch a singular entity and more then one was found in the database.
+type NotSingularError struct {
 	label string
 }
 
 // Error implements the error interface.
-func (e *ErrNotSingular) Error() string {
-	return fmt.Sprintf("ent: %s not singular", e.label)
+func (e *NotSingularError) Error() string {
+	return "ent: " + e.label + " not singular"
 }
 
 // IsNotSingular returns a boolean indicating whether the error is a not singular error.
 func IsNotSingular(err error) bool {
-	_, ok := err.(*ErrNotSingular)
-	return ok
+	if err == nil {
+		return false
+	}
+	var e *NotSingularError
+	return errors.As(err, &e)
+}
+
+// NotLoadedError returns when trying to get a node that was not loaded by the query.
+type NotLoadedError struct {
+	edge string
+}
+
+// Error implements the error interface.
+func (e *NotLoadedError) Error() string {
+	return "ent: " + e.edge + " edge was not loaded"
+}
+
+// IsNotLoaded returns a boolean indicating whether the error is a not loaded error.
+func IsNotLoaded(err error) bool {
+	if err == nil {
+		return false
+	}
+	var e *NotLoadedError
+	return errors.As(err, &e)
 }
 
 // ConstraintError returns when trying to create/update one or more entities and
@@ -133,7 +259,7 @@ type ConstraintError struct {
 
 // Error implements the error interface.
 func (e ConstraintError) Error() string {
-	return fmt.Sprintf("ent: constraint failed: %s", e.msg)
+	return "ent: constraint failed: " + e.msg
 }
 
 // Unwrap implements the errors.Wrapper interface.
@@ -143,79 +269,9 @@ func (e *ConstraintError) Unwrap() error {
 
 // IsConstraintError returns a boolean indicating whether the error is a constraint failure.
 func IsConstraintError(err error) bool {
-	_, ok := err.(*ConstraintError)
-	return ok
-}
-
-func isSQLConstraintError(err error) (*ConstraintError, bool) {
-	var (
-		msg = err.Error()
-		// error format per dialect.
-		errors = [...]string{
-			"Error 1062",               // MySQL 1062 error (ER_DUP_ENTRY).
-			"UNIQUE constraint failed", // SQLite.
-			"duplicate key value violates unique constraint", // PostgreSQL.
-		}
-	)
-	if _, ok := err.(*sqlgraph.ConstraintError); ok {
-		return &ConstraintError{msg, err}, true
+	if err == nil {
+		return false
 	}
-	for i := range errors {
-		if strings.Contains(msg, errors[i]) {
-			return &ConstraintError{msg, err}, true
-		}
-	}
-	return nil, false
-}
-
-// rollback calls to tx.Rollback and wraps the given error with the rollback error if occurred.
-func rollback(tx dialect.Tx, err error) error {
-	if rerr := tx.Rollback(); rerr != nil {
-		err = fmt.Errorf("%s: %v", err.Error(), rerr)
-	}
-	if err, ok := isSQLConstraintError(err); ok {
-		return err
-	}
-	return err
-}
-
-// insertLastID invokes the insert query on the transaction and returns the LastInsertID.
-func insertLastID(ctx context.Context, tx dialect.Tx, insert *sql.InsertBuilder) (int64, error) {
-	query, args := insert.Query()
-	// PostgreSQL does not support the LastInsertId() method of sql.Result
-	// on Exec, and should be extracted manually using the `RETURNING` clause.
-	if insert.Dialect() == dialect.Postgres {
-		rows := &sql.Rows{}
-		if err := tx.Query(ctx, query, args, rows); err != nil {
-			return 0, err
-		}
-		defer rows.Close()
-		if !rows.Next() {
-			return 0, fmt.Errorf("no rows found for query: %v", query)
-		}
-		var id int64
-		if err := rows.Scan(&id); err != nil {
-			return 0, err
-		}
-		return id, nil
-	}
-	// MySQL, SQLite, etc.
-	var res sql.Result
-	if err := tx.Exec(ctx, query, args, &res); err != nil {
-		return 0, err
-	}
-	id, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-	return id, nil
-}
-
-// keys returns the keys/ids from the edge map.
-func keys(m map[int]struct{}) []int {
-	s := make([]int, 0, len(m))
-	for id := range m {
-		s = append(s, id)
-	}
-	return s
+	var e *ConstraintError
+	return errors.As(err, &e)
 }

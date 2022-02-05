@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -24,18 +24,20 @@ type TargetQuery struct {
 	config
 	limit      *int
 	offset     *int
-	order      []Order
-	unique     []string
+	unique     *bool
+	order      []OrderFunc
+	fields     []string
 	predicates []predicate.Target
 	// eager-loading edges.
 	withTasks       *TaskQuery
 	withTags        *TagQuery
 	withCredentials *CredentialQuery
-	// intermediate query.
-	sql *sql.Selector
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the builder.
+// Where adds a new predicate for the TargetQuery builder.
 func (tq *TargetQuery) Where(ps ...predicate.Target) *TargetQuery {
 	tq.predicates = append(tq.predicates, ps...)
 	return tq
@@ -53,84 +55,123 @@ func (tq *TargetQuery) Offset(offset int) *TargetQuery {
 	return tq
 }
 
+// Unique configures the query builder to filter duplicate records on query.
+// By default, unique is set to true, and can be disabled using this method.
+func (tq *TargetQuery) Unique(unique bool) *TargetQuery {
+	tq.unique = &unique
+	return tq
+}
+
 // Order adds an order step to the query.
-func (tq *TargetQuery) Order(o ...Order) *TargetQuery {
+func (tq *TargetQuery) Order(o ...OrderFunc) *TargetQuery {
 	tq.order = append(tq.order, o...)
 	return tq
 }
 
-// QueryTasks chains the current query on the tasks edge.
+// QueryTasks chains the current query on the "tasks" edge.
 func (tq *TargetQuery) QueryTasks() *TaskQuery {
 	query := &TaskQuery{config: tq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(target.Table, target.FieldID, tq.sqlQuery()),
-		sqlgraph.To(task.Table, task.FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, target.TasksTable, target.TasksColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(target.Table, target.FieldID, selector),
+			sqlgraph.To(task.Table, task.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, target.TasksTable, target.TasksColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryTags chains the current query on the tags edge.
+// QueryTags chains the current query on the "tags" edge.
 func (tq *TargetQuery) QueryTags() *TagQuery {
 	query := &TagQuery{config: tq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(target.Table, target.FieldID, tq.sqlQuery()),
-		sqlgraph.To(tag.Table, tag.FieldID),
-		sqlgraph.Edge(sqlgraph.M2M, false, target.TagsTable, target.TagsPrimaryKey...),
-	)
-	query.sql = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(target.Table, target.FieldID, selector),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2M, false, target.TagsTable, target.TagsPrimaryKey...),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryCredentials chains the current query on the credentials edge.
+// QueryCredentials chains the current query on the "credentials" edge.
 func (tq *TargetQuery) QueryCredentials() *CredentialQuery {
 	query := &CredentialQuery{config: tq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(target.Table, target.FieldID, tq.sqlQuery()),
-		sqlgraph.To(credential.Table, credential.FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, target.CredentialsTable, target.CredentialsColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := tq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(target.Table, target.FieldID, selector),
+			sqlgraph.To(credential.Table, credential.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, target.CredentialsTable, target.CredentialsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(tq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// First returns the first Target entity in the query. Returns *ErrNotFound when no target was found.
+// First returns the first Target entity from the query.
+// Returns a *NotFoundError when no Target was found.
 func (tq *TargetQuery) First(ctx context.Context) (*Target, error) {
-	ts, err := tq.Limit(1).All(ctx)
+	nodes, err := tq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(ts) == 0 {
-		return nil, &ErrNotFound{target.Label}
+	if len(nodes) == 0 {
+		return nil, &NotFoundError{target.Label}
 	}
-	return ts[0], nil
+	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
 func (tq *TargetQuery) FirstX(ctx context.Context) *Target {
-	t, err := tq.First(ctx)
+	node, err := tq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
-	return t
+	return node
 }
 
-// FirstID returns the first Target id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Target ID from the query.
+// Returns a *NotFoundError when no Target ID was found.
 func (tq *TargetQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = tq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{target.Label}
+		err = &NotFoundError{target.Label}
 		return
 	}
 	return ids[0], nil
 }
 
-// FirstXID is like FirstID, but panics if an error occurs.
-func (tq *TargetQuery) FirstXID(ctx context.Context) int {
+// FirstIDX is like FirstID, but panics if an error occurs.
+func (tq *TargetQuery) FirstIDX(ctx context.Context) int {
 	id, err := tq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -138,32 +179,36 @@ func (tq *TargetQuery) FirstXID(ctx context.Context) int {
 	return id
 }
 
-// Only returns the only Target entity in the query, returns an error if not exactly one entity was returned.
+// Only returns a single Target entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when exactly one Target entity is not found.
+// Returns a *NotFoundError when no Target entities are found.
 func (tq *TargetQuery) Only(ctx context.Context) (*Target, error) {
-	ts, err := tq.Limit(2).All(ctx)
+	nodes, err := tq.Limit(2).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	switch len(ts) {
+	switch len(nodes) {
 	case 1:
-		return ts[0], nil
+		return nodes[0], nil
 	case 0:
-		return nil, &ErrNotFound{target.Label}
+		return nil, &NotFoundError{target.Label}
 	default:
-		return nil, &ErrNotSingular{target.Label}
+		return nil, &NotSingularError{target.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
 func (tq *TargetQuery) OnlyX(ctx context.Context) *Target {
-	t, err := tq.Only(ctx)
+	node, err := tq.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return t
+	return node
 }
 
-// OnlyID returns the only Target id in the query, returns an error if not exactly one id was returned.
+// OnlyID is like Only, but returns the only Target ID in the query.
+// Returns a *NotSingularError when exactly one Target ID is not found.
+// Returns a *NotFoundError when no entities are found.
 func (tq *TargetQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = tq.Limit(2).IDs(ctx); err != nil {
@@ -173,15 +218,15 @@ func (tq *TargetQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{target.Label}
+		err = &NotFoundError{target.Label}
 	default:
-		err = &ErrNotSingular{target.Label}
+		err = &NotSingularError{target.Label}
 	}
 	return
 }
 
-// OnlyXID is like OnlyID, but panics if an error occurs.
-func (tq *TargetQuery) OnlyXID(ctx context.Context) int {
+// OnlyIDX is like OnlyID, but panics if an error occurs.
+func (tq *TargetQuery) OnlyIDX(ctx context.Context) int {
 	id, err := tq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -191,19 +236,22 @@ func (tq *TargetQuery) OnlyXID(ctx context.Context) int {
 
 // All executes the query and returns a list of Targets.
 func (tq *TargetQuery) All(ctx context.Context) ([]*Target, error) {
+	if err := tq.prepareQuery(ctx); err != nil {
+		return nil, err
+	}
 	return tq.sqlAll(ctx)
 }
 
 // AllX is like All, but panics if an error occurs.
 func (tq *TargetQuery) AllX(ctx context.Context) []*Target {
-	ts, err := tq.All(ctx)
+	nodes, err := tq.All(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return ts
+	return nodes
 }
 
-// IDs executes the query and returns a list of Target ids.
+// IDs executes the query and returns a list of Target IDs.
 func (tq *TargetQuery) IDs(ctx context.Context) ([]int, error) {
 	var ids []int
 	if err := tq.Select(target.FieldID).Scan(ctx, &ids); err != nil {
@@ -223,6 +271,9 @@ func (tq *TargetQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (tq *TargetQuery) Count(ctx context.Context) (int, error) {
+	if err := tq.prepareQuery(ctx); err != nil {
+		return 0, err
+	}
 	return tq.sqlCount(ctx)
 }
 
@@ -237,6 +288,9 @@ func (tq *TargetQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (tq *TargetQuery) Exist(ctx context.Context) (bool, error) {
+	if err := tq.prepareQuery(ctx); err != nil {
+		return false, err
+	}
 	return tq.sqlExist(ctx)
 }
 
@@ -249,23 +303,29 @@ func (tq *TargetQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the query builder, including all associated steps. It can be
+// Clone returns a duplicate of the TargetQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
 func (tq *TargetQuery) Clone() *TargetQuery {
+	if tq == nil {
+		return nil
+	}
 	return &TargetQuery{
-		config:     tq.config,
-		limit:      tq.limit,
-		offset:     tq.offset,
-		order:      append([]Order{}, tq.order...),
-		unique:     append([]string{}, tq.unique...),
-		predicates: append([]predicate.Target{}, tq.predicates...),
+		config:          tq.config,
+		limit:           tq.limit,
+		offset:          tq.offset,
+		order:           append([]OrderFunc{}, tq.order...),
+		predicates:      append([]predicate.Target{}, tq.predicates...),
+		withTasks:       tq.withTasks.Clone(),
+		withTags:        tq.withTags.Clone(),
+		withCredentials: tq.withCredentials.Clone(),
 		// clone intermediate query.
-		sql: tq.sql.Clone(),
+		sql:  tq.sql.Clone(),
+		path: tq.path,
 	}
 }
 
-//  WithTasks tells the query-builder to eager-loads the nodes that are connected to
-// the "tasks" edge. The optional arguments used to configure the query builder of the edge.
+// WithTasks tells the query-builder to eager-load the nodes that are connected to
+// the "tasks" edge. The optional arguments are used to configure the query builder of the edge.
 func (tq *TargetQuery) WithTasks(opts ...func(*TaskQuery)) *TargetQuery {
 	query := &TaskQuery{config: tq.config}
 	for _, opt := range opts {
@@ -275,8 +335,8 @@ func (tq *TargetQuery) WithTasks(opts ...func(*TaskQuery)) *TargetQuery {
 	return tq
 }
 
-//  WithTags tells the query-builder to eager-loads the nodes that are connected to
-// the "tags" edge. The optional arguments used to configure the query builder of the edge.
+// WithTags tells the query-builder to eager-load the nodes that are connected to
+// the "tags" edge. The optional arguments are used to configure the query builder of the edge.
 func (tq *TargetQuery) WithTags(opts ...func(*TagQuery)) *TargetQuery {
 	query := &TagQuery{config: tq.config}
 	for _, opt := range opts {
@@ -286,8 +346,8 @@ func (tq *TargetQuery) WithTags(opts ...func(*TagQuery)) *TargetQuery {
 	return tq
 }
 
-//  WithCredentials tells the query-builder to eager-loads the nodes that are connected to
-// the "credentials" edge. The optional arguments used to configure the query builder of the edge.
+// WithCredentials tells the query-builder to eager-load the nodes that are connected to
+// the "credentials" edge. The optional arguments are used to configure the query builder of the edge.
 func (tq *TargetQuery) WithCredentials(opts ...func(*CredentialQuery)) *TargetQuery {
 	query := &CredentialQuery{config: tq.config}
 	for _, opt := range opts {
@@ -297,7 +357,7 @@ func (tq *TargetQuery) WithCredentials(opts ...func(*CredentialQuery)) *TargetQu
 	return tq
 }
 
-// GroupBy used to group vertices by one or more fields/columns.
+// GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
@@ -315,11 +375,17 @@ func (tq *TargetQuery) WithCredentials(opts ...func(*CredentialQuery)) *TargetQu
 func (tq *TargetQuery) GroupBy(field string, fields ...string) *TargetGroupBy {
 	group := &TargetGroupBy{config: tq.config}
 	group.fields = append([]string{field}, fields...)
-	group.sql = tq.sqlQuery()
+	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
+		if err := tq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		return tq.sqlQuery(ctx), nil
+	}
 	return group
 }
 
-// Select one or more fields from the given query.
+// Select allows the selection one or more fields/columns for the given query,
+// instead of selecting all fields in the entity.
 //
 // Example:
 //
@@ -331,35 +397,53 @@ func (tq *TargetQuery) GroupBy(field string, fields ...string) *TargetGroupBy {
 //		Select(target.FieldName).
 //		Scan(ctx, &v)
 //
-func (tq *TargetQuery) Select(field string, fields ...string) *TargetSelect {
-	selector := &TargetSelect{config: tq.config}
-	selector.fields = append([]string{field}, fields...)
-	selector.sql = tq.sqlQuery()
-	return selector
+func (tq *TargetQuery) Select(fields ...string) *TargetSelect {
+	tq.fields = append(tq.fields, fields...)
+	return &TargetSelect{TargetQuery: tq}
+}
+
+func (tq *TargetQuery) prepareQuery(ctx context.Context) error {
+	for _, f := range tq.fields {
+		if !target.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+		}
+	}
+	if tq.path != nil {
+		prev, err := tq.path(ctx)
+		if err != nil {
+			return err
+		}
+		tq.sql = prev
+	}
+	return nil
 }
 
 func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 	var (
-		nodes []*Target
-		_spec = tq.querySpec()
+		nodes       = []*Target{}
+		_spec       = tq.querySpec()
+		loadedTypes = [3]bool{
+			tq.withTasks != nil,
+			tq.withTags != nil,
+			tq.withCredentials != nil,
+		}
 	)
-	_spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Target{config: tq.config}
 		nodes = append(nodes, node)
-		values := node.scanValues()
-		return values
+		return node.scanValues(columns)
 	}
-	_spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(columns []string, values []interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		return node.assignValues(values...)
+		node.Edges.loadedTypes = loadedTypes
+		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, tq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -370,6 +454,7 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Tasks = []*Task{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Task(func(s *sql.Selector) {
@@ -380,13 +465,13 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.target_id
+			fk := n.target_tasks
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "target_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "target_tasks" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_tasks" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Tasks = append(node.Edges.Tasks, n)
 		}
@@ -398,6 +483,7 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 		for _, node := range nodes {
 			ids[node.ID] = node
 			fks = append(fks, node.ID)
+			node.Edges.Tags = []*Tag{}
 		}
 		var (
 			edgeids []int
@@ -412,9 +498,8 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			Predicate: func(s *sql.Selector) {
 				s.Where(sql.InValues(target.TagsPrimaryKey[0], fks...))
 			},
-
 			ScanValues: func() [2]interface{} {
-				return [2]interface{}{&sql.NullInt64{}, &sql.NullInt64{}}
+				return [2]interface{}{new(sql.NullInt64), new(sql.NullInt64)}
 			},
 			Assign: func(out, in interface{}) error {
 				eout, ok := out.(*sql.NullInt64)
@@ -426,18 +511,20 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 					return fmt.Errorf("unexpected id value for edge-in")
 				}
 				outValue := int(eout.Int64)
-				inValue := int(eout.Int64)
+				inValue := int(ein.Int64)
 				node, ok := ids[outValue]
 				if !ok {
 					return fmt.Errorf("unexpected node id in edges: %v", outValue)
 				}
-				edgeids = append(edgeids, inValue)
+				if _, ok := edges[inValue]; !ok {
+					edgeids = append(edgeids, inValue)
+				}
 				edges[inValue] = append(edges[inValue], node)
 				return nil
 			},
 		}
 		if err := sqlgraph.QueryEdges(ctx, tq.driver, _spec); err != nil {
-			return nil, fmt.Errorf(`query edges "tags": %v`, err)
+			return nil, fmt.Errorf(`query edges "tags": %w`, err)
 		}
 		query.Where(tag.IDIn(edgeids...))
 		neighbors, err := query.All(ctx)
@@ -461,6 +548,7 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Credentials = []*Credential{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Credential(func(s *sql.Selector) {
@@ -471,13 +559,13 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.target_id
+			fk := n.target_credentials
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "target_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "target_credentials" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "target_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "target_credentials" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Credentials = append(node.Edges.Credentials, n)
 		}
@@ -488,13 +576,17 @@ func (tq *TargetQuery) sqlAll(ctx context.Context) ([]*Target, error) {
 
 func (tq *TargetQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := tq.querySpec()
+	_spec.Node.Columns = tq.fields
+	if len(tq.fields) > 0 {
+		_spec.Unique = tq.unique != nil && *tq.unique
+	}
 	return sqlgraph.CountNodes(ctx, tq.driver, _spec)
 }
 
 func (tq *TargetQuery) sqlExist(ctx context.Context) (bool, error) {
 	n, err := tq.sqlCount(ctx)
 	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %v", err)
+		return false, fmt.Errorf("ent: check existence: %w", err)
 	}
 	return n > 0, nil
 }
@@ -511,6 +603,18 @@ func (tq *TargetQuery) querySpec() *sqlgraph.QuerySpec {
 		},
 		From:   tq.sql,
 		Unique: true,
+	}
+	if unique := tq.unique; unique != nil {
+		_spec.Unique = *unique
+	}
+	if fields := tq.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, target.FieldID)
+		for i := range fields {
+			if fields[i] != target.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
+			}
+		}
 	}
 	if ps := tq.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -535,13 +639,20 @@ func (tq *TargetQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (tq *TargetQuery) sqlQuery() *sql.Selector {
+func (tq *TargetQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(tq.driver.Dialect())
 	t1 := builder.Table(target.Table)
-	selector := builder.Select(t1.Columns(target.Columns...)...).From(t1)
+	columns := tq.fields
+	if len(columns) == 0 {
+		columns = target.Columns
+	}
+	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if tq.sql != nil {
 		selector = tq.sql
-		selector.Select(selector.Columns(target.Columns...)...)
+		selector.Select(selector.Columns(columns...)...)
+	}
+	if tq.unique != nil && *tq.unique {
+		selector.Distinct()
 	}
 	for _, p := range tq.predicates {
 		p(selector)
@@ -560,23 +671,29 @@ func (tq *TargetQuery) sqlQuery() *sql.Selector {
 	return selector
 }
 
-// TargetGroupBy is the builder for group-by Target entities.
+// TargetGroupBy is the group-by builder for Target entities.
 type TargetGroupBy struct {
 	config
 	fields []string
-	fns    []Aggregate
-	// intermediate query.
-	sql *sql.Selector
+	fns    []AggregateFunc
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (tgb *TargetGroupBy) Aggregate(fns ...Aggregate) *TargetGroupBy {
+func (tgb *TargetGroupBy) Aggregate(fns ...AggregateFunc) *TargetGroupBy {
 	tgb.fns = append(tgb.fns, fns...)
 	return tgb
 }
 
-// Scan applies the group-by query and scan the result into the given value.
+// Scan applies the group-by query and scans the result into the given value.
 func (tgb *TargetGroupBy) Scan(ctx context.Context, v interface{}) error {
+	query, err := tgb.path(ctx)
+	if err != nil {
+		return err
+	}
+	tgb.sql = query
 	return tgb.sqlScan(ctx, v)
 }
 
@@ -587,7 +704,8 @@ func (tgb *TargetGroupBy) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from group-by. It is only allowed when querying group-by with one field.
+// Strings returns list of strings from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (tgb *TargetGroupBy) Strings(ctx context.Context) ([]string, error) {
 	if len(tgb.fields) > 1 {
 		return nil, errors.New("ent: TargetGroupBy.Strings is not achievable when grouping more than 1 field")
@@ -608,7 +726,35 @@ func (tgb *TargetGroupBy) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from group-by. It is only allowed when querying group-by with one field.
+// String returns a single string from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (tgb *TargetGroupBy) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = tgb.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetGroupBy.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (tgb *TargetGroupBy) StringX(ctx context.Context) string {
+	v, err := tgb.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (tgb *TargetGroupBy) Ints(ctx context.Context) ([]int, error) {
 	if len(tgb.fields) > 1 {
 		return nil, errors.New("ent: TargetGroupBy.Ints is not achievable when grouping more than 1 field")
@@ -629,7 +775,35 @@ func (tgb *TargetGroupBy) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from group-by. It is only allowed when querying group-by with one field.
+// Int returns a single int from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (tgb *TargetGroupBy) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = tgb.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetGroupBy.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (tgb *TargetGroupBy) IntX(ctx context.Context) int {
+	v, err := tgb.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (tgb *TargetGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 	if len(tgb.fields) > 1 {
 		return nil, errors.New("ent: TargetGroupBy.Float64s is not achievable when grouping more than 1 field")
@@ -650,7 +824,35 @@ func (tgb *TargetGroupBy) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from group-by. It is only allowed when querying group-by with one field.
+// Float64 returns a single float64 from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (tgb *TargetGroupBy) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = tgb.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetGroupBy.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (tgb *TargetGroupBy) Float64X(ctx context.Context) float64 {
+	v, err := tgb.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (tgb *TargetGroupBy) Bools(ctx context.Context) ([]bool, error) {
 	if len(tgb.fields) > 1 {
 		return nil, errors.New("ent: TargetGroupBy.Bools is not achievable when grouping more than 1 field")
@@ -671,9 +873,45 @@ func (tgb *TargetGroupBy) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (tgb *TargetGroupBy) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = tgb.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetGroupBy.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (tgb *TargetGroupBy) BoolX(ctx context.Context) bool {
+	v, err := tgb.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (tgb *TargetGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+	for _, f := range tgb.fields {
+		if !target.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
+		}
+	}
+	selector := tgb.sqlQuery()
+	if err := selector.Err(); err != nil {
+		return err
+	}
 	rows := &sql.Rows{}
-	query, args := tgb.sqlQuery().Query()
+	query, args := selector.Query()
 	if err := tgb.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -682,25 +920,37 @@ func (tgb *TargetGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 }
 
 func (tgb *TargetGroupBy) sqlQuery() *sql.Selector {
-	selector := tgb.sql
-	columns := make([]string, 0, len(tgb.fields)+len(tgb.fns))
-	columns = append(columns, tgb.fields...)
+	selector := tgb.sql.Select()
+	aggregation := make([]string, 0, len(tgb.fns))
 	for _, fn := range tgb.fns {
-		columns = append(columns, fn(selector))
+		aggregation = append(aggregation, fn(selector))
 	}
-	return selector.Select(columns...).GroupBy(tgb.fields...)
+	// If no columns were selected in a custom aggregation function, the default
+	// selection is the fields used for "group-by", and the aggregation functions.
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(tgb.fields)+len(tgb.fns))
+		for _, f := range tgb.fields {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	return selector.GroupBy(selector.Columns(tgb.fields...)...)
 }
 
-// TargetSelect is the builder for select fields of Target entities.
+// TargetSelect is the builder for selecting fields of Target entities.
 type TargetSelect struct {
-	config
-	fields []string
-	// intermediate queries.
+	*TargetQuery
+	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
 
-// Scan applies the selector query and scan the result into the given value.
+// Scan applies the selector query and scans the result into the given value.
 func (ts *TargetSelect) Scan(ctx context.Context, v interface{}) error {
+	if err := ts.prepareQuery(ctx); err != nil {
+		return err
+	}
+	ts.sql = ts.TargetQuery.sqlQuery(ctx)
 	return ts.sqlScan(ctx, v)
 }
 
@@ -711,7 +961,7 @@ func (ts *TargetSelect) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from selector. It is only allowed when selecting one field.
+// Strings returns list of strings from a selector. It is only allowed when selecting one field.
 func (ts *TargetSelect) Strings(ctx context.Context) ([]string, error) {
 	if len(ts.fields) > 1 {
 		return nil, errors.New("ent: TargetSelect.Strings is not achievable when selecting more than 1 field")
@@ -732,7 +982,33 @@ func (ts *TargetSelect) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from selector. It is only allowed when selecting one field.
+// String returns a single string from a selector. It is only allowed when selecting one field.
+func (ts *TargetSelect) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = ts.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetSelect.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (ts *TargetSelect) StringX(ctx context.Context) string {
+	v, err := ts.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from a selector. It is only allowed when selecting one field.
 func (ts *TargetSelect) Ints(ctx context.Context) ([]int, error) {
 	if len(ts.fields) > 1 {
 		return nil, errors.New("ent: TargetSelect.Ints is not achievable when selecting more than 1 field")
@@ -753,7 +1029,33 @@ func (ts *TargetSelect) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from selector. It is only allowed when selecting one field.
+// Int returns a single int from a selector. It is only allowed when selecting one field.
+func (ts *TargetSelect) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = ts.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetSelect.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (ts *TargetSelect) IntX(ctx context.Context) int {
+	v, err := ts.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
 func (ts *TargetSelect) Float64s(ctx context.Context) ([]float64, error) {
 	if len(ts.fields) > 1 {
 		return nil, errors.New("ent: TargetSelect.Float64s is not achievable when selecting more than 1 field")
@@ -774,7 +1076,33 @@ func (ts *TargetSelect) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from selector. It is only allowed when selecting one field.
+// Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
+func (ts *TargetSelect) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = ts.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetSelect.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (ts *TargetSelect) Float64X(ctx context.Context) float64 {
+	v, err := ts.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from a selector. It is only allowed when selecting one field.
 func (ts *TargetSelect) Bools(ctx context.Context) ([]bool, error) {
 	if len(ts.fields) > 1 {
 		return nil, errors.New("ent: TargetSelect.Bools is not achievable when selecting more than 1 field")
@@ -795,18 +1123,38 @@ func (ts *TargetSelect) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a selector. It is only allowed when selecting one field.
+func (ts *TargetSelect) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = ts.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{target.Label}
+	default:
+		err = fmt.Errorf("ent: TargetSelect.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (ts *TargetSelect) BoolX(ctx context.Context) bool {
+	v, err := ts.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (ts *TargetSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
-	query, args := ts.sqlQuery().Query()
+	query, args := ts.sql.Query()
 	if err := ts.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
-}
-
-func (ts *TargetSelect) sqlQuery() sql.Querier {
-	selector := ts.sql
-	selector.Select(selector.Columns(ts.fields...)...)
-	return selector
 }

@@ -3,11 +3,10 @@ module github.com/kcarretto/paragon
 go 1.13
 
 require (
-	entgo.io/ent v0.10.0 // indirect
+	entgo.io/ent v0.10.0
 	github.com/99designs/gqlgen v0.10.2
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/chzyer/logex v1.2.0 // indirect
-	github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e // indirect
 	github.com/chzyer/test v0.0.0-20210722231415-061457976a23 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/go-ole/go-ole v1.2.4 // indirect

@@ -9,9 +9,9 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/service"
@@ -23,18 +23,20 @@ type ServiceQuery struct {
 	config
 	limit      *int
 	offset     *int
-	order      []Order
-	unique     []string
+	unique     *bool
+	order      []OrderFunc
+	fields     []string
 	predicates []predicate.Service
 	// eager-loading edges.
 	withTag    *TagQuery
 	withEvents *EventQuery
 	withFKs    bool
-	// intermediate query.
-	sql *sql.Selector
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
-// Where adds a new predicate for the builder.
+// Where adds a new predicate for the ServiceQuery builder.
 func (sq *ServiceQuery) Where(ps ...predicate.Service) *ServiceQuery {
 	sq.predicates = append(sq.predicates, ps...)
 	return sq
@@ -52,72 +54,101 @@ func (sq *ServiceQuery) Offset(offset int) *ServiceQuery {
 	return sq
 }
 
+// Unique configures the query builder to filter duplicate records on query.
+// By default, unique is set to true, and can be disabled using this method.
+func (sq *ServiceQuery) Unique(unique bool) *ServiceQuery {
+	sq.unique = &unique
+	return sq
+}
+
 // Order adds an order step to the query.
-func (sq *ServiceQuery) Order(o ...Order) *ServiceQuery {
+func (sq *ServiceQuery) Order(o ...OrderFunc) *ServiceQuery {
 	sq.order = append(sq.order, o...)
 	return sq
 }
 
-// QueryTag chains the current query on the tag edge.
+// QueryTag chains the current query on the "tag" edge.
 func (sq *ServiceQuery) QueryTag() *TagQuery {
 	query := &TagQuery{config: sq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(service.Table, service.FieldID, sq.sqlQuery()),
-		sqlgraph.To(tag.Table, tag.FieldID),
-		sqlgraph.Edge(sqlgraph.M2O, false, service.TagTable, service.TagColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, selector),
+			sqlgraph.To(tag.Table, tag.FieldID),
+			sqlgraph.Edge(sqlgraph.M2O, false, service.TagTable, service.TagColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// QueryEvents chains the current query on the events edge.
+// QueryEvents chains the current query on the "events" edge.
 func (sq *ServiceQuery) QueryEvents() *EventQuery {
 	query := &EventQuery{config: sq.config}
-	step := sqlgraph.NewStep(
-		sqlgraph.From(service.Table, service.FieldID, sq.sqlQuery()),
-		sqlgraph.To(event.Table, event.FieldID),
-		sqlgraph.Edge(sqlgraph.O2M, false, service.EventsTable, service.EventsColumn),
-	)
-	query.sql = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+	query.path = func(ctx context.Context) (fromU *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		selector := sq.sqlQuery(ctx)
+		if err := selector.Err(); err != nil {
+			return nil, err
+		}
+		step := sqlgraph.NewStep(
+			sqlgraph.From(service.Table, service.FieldID, selector),
+			sqlgraph.To(event.Table, event.FieldID),
+			sqlgraph.Edge(sqlgraph.O2M, false, service.EventsTable, service.EventsColumn),
+		)
+		fromU = sqlgraph.SetNeighbors(sq.driver.Dialect(), step)
+		return fromU, nil
+	}
 	return query
 }
 
-// First returns the first Service entity in the query. Returns *ErrNotFound when no service was found.
+// First returns the first Service entity from the query.
+// Returns a *NotFoundError when no Service was found.
 func (sq *ServiceQuery) First(ctx context.Context) (*Service, error) {
-	sSlice, err := sq.Limit(1).All(ctx)
+	nodes, err := sq.Limit(1).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	if len(sSlice) == 0 {
-		return nil, &ErrNotFound{service.Label}
+	if len(nodes) == 0 {
+		return nil, &NotFoundError{service.Label}
 	}
-	return sSlice[0], nil
+	return nodes[0], nil
 }
 
 // FirstX is like First, but panics if an error occurs.
 func (sq *ServiceQuery) FirstX(ctx context.Context) *Service {
-	s, err := sq.First(ctx)
+	node, err := sq.First(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
 	}
-	return s
+	return node
 }
 
-// FirstID returns the first Service id in the query. Returns *ErrNotFound when no id was found.
+// FirstID returns the first Service ID from the query.
+// Returns a *NotFoundError when no Service ID was found.
 func (sq *ServiceQuery) FirstID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = sq.Limit(1).IDs(ctx); err != nil {
 		return
 	}
 	if len(ids) == 0 {
-		err = &ErrNotFound{service.Label}
+		err = &NotFoundError{service.Label}
 		return
 	}
 	return ids[0], nil
 }
 
-// FirstXID is like FirstID, but panics if an error occurs.
-func (sq *ServiceQuery) FirstXID(ctx context.Context) int {
+// FirstIDX is like FirstID, but panics if an error occurs.
+func (sq *ServiceQuery) FirstIDX(ctx context.Context) int {
 	id, err := sq.FirstID(ctx)
 	if err != nil && !IsNotFound(err) {
 		panic(err)
@@ -125,32 +156,36 @@ func (sq *ServiceQuery) FirstXID(ctx context.Context) int {
 	return id
 }
 
-// Only returns the only Service entity in the query, returns an error if not exactly one entity was returned.
+// Only returns a single Service entity found by the query, ensuring it only returns one.
+// Returns a *NotSingularError when exactly one Service entity is not found.
+// Returns a *NotFoundError when no Service entities are found.
 func (sq *ServiceQuery) Only(ctx context.Context) (*Service, error) {
-	sSlice, err := sq.Limit(2).All(ctx)
+	nodes, err := sq.Limit(2).All(ctx)
 	if err != nil {
 		return nil, err
 	}
-	switch len(sSlice) {
+	switch len(nodes) {
 	case 1:
-		return sSlice[0], nil
+		return nodes[0], nil
 	case 0:
-		return nil, &ErrNotFound{service.Label}
+		return nil, &NotFoundError{service.Label}
 	default:
-		return nil, &ErrNotSingular{service.Label}
+		return nil, &NotSingularError{service.Label}
 	}
 }
 
 // OnlyX is like Only, but panics if an error occurs.
 func (sq *ServiceQuery) OnlyX(ctx context.Context) *Service {
-	s, err := sq.Only(ctx)
+	node, err := sq.Only(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return node
 }
 
-// OnlyID returns the only Service id in the query, returns an error if not exactly one id was returned.
+// OnlyID is like Only, but returns the only Service ID in the query.
+// Returns a *NotSingularError when exactly one Service ID is not found.
+// Returns a *NotFoundError when no entities are found.
 func (sq *ServiceQuery) OnlyID(ctx context.Context) (id int, err error) {
 	var ids []int
 	if ids, err = sq.Limit(2).IDs(ctx); err != nil {
@@ -160,15 +195,15 @@ func (sq *ServiceQuery) OnlyID(ctx context.Context) (id int, err error) {
 	case 1:
 		id = ids[0]
 	case 0:
-		err = &ErrNotFound{service.Label}
+		err = &NotFoundError{service.Label}
 	default:
-		err = &ErrNotSingular{service.Label}
+		err = &NotSingularError{service.Label}
 	}
 	return
 }
 
-// OnlyXID is like OnlyID, but panics if an error occurs.
-func (sq *ServiceQuery) OnlyXID(ctx context.Context) int {
+// OnlyIDX is like OnlyID, but panics if an error occurs.
+func (sq *ServiceQuery) OnlyIDX(ctx context.Context) int {
 	id, err := sq.OnlyID(ctx)
 	if err != nil {
 		panic(err)
@@ -178,19 +213,22 @@ func (sq *ServiceQuery) OnlyXID(ctx context.Context) int {
 
 // All executes the query and returns a list of Services.
 func (sq *ServiceQuery) All(ctx context.Context) ([]*Service, error) {
+	if err := sq.prepareQuery(ctx); err != nil {
+		return nil, err
+	}
 	return sq.sqlAll(ctx)
 }
 
 // AllX is like All, but panics if an error occurs.
 func (sq *ServiceQuery) AllX(ctx context.Context) []*Service {
-	sSlice, err := sq.All(ctx)
+	nodes, err := sq.All(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return sSlice
+	return nodes
 }
 
-// IDs executes the query and returns a list of Service ids.
+// IDs executes the query and returns a list of Service IDs.
 func (sq *ServiceQuery) IDs(ctx context.Context) ([]int, error) {
 	var ids []int
 	if err := sq.Select(service.FieldID).Scan(ctx, &ids); err != nil {
@@ -210,6 +248,9 @@ func (sq *ServiceQuery) IDsX(ctx context.Context) []int {
 
 // Count returns the count of the given query.
 func (sq *ServiceQuery) Count(ctx context.Context) (int, error) {
+	if err := sq.prepareQuery(ctx); err != nil {
+		return 0, err
+	}
 	return sq.sqlCount(ctx)
 }
 
@@ -224,6 +265,9 @@ func (sq *ServiceQuery) CountX(ctx context.Context) int {
 
 // Exist returns true if the query has elements in the graph.
 func (sq *ServiceQuery) Exist(ctx context.Context) (bool, error) {
+	if err := sq.prepareQuery(ctx); err != nil {
+		return false, err
+	}
 	return sq.sqlExist(ctx)
 }
 
@@ -236,23 +280,28 @@ func (sq *ServiceQuery) ExistX(ctx context.Context) bool {
 	return exist
 }
 
-// Clone returns a duplicate of the query builder, including all associated steps. It can be
+// Clone returns a duplicate of the ServiceQuery builder, including all associated steps. It can be
 // used to prepare common query builders and use them differently after the clone is made.
 func (sq *ServiceQuery) Clone() *ServiceQuery {
+	if sq == nil {
+		return nil
+	}
 	return &ServiceQuery{
 		config:     sq.config,
 		limit:      sq.limit,
 		offset:     sq.offset,
-		order:      append([]Order{}, sq.order...),
-		unique:     append([]string{}, sq.unique...),
+		order:      append([]OrderFunc{}, sq.order...),
 		predicates: append([]predicate.Service{}, sq.predicates...),
+		withTag:    sq.withTag.Clone(),
+		withEvents: sq.withEvents.Clone(),
 		// clone intermediate query.
-		sql: sq.sql.Clone(),
+		sql:  sq.sql.Clone(),
+		path: sq.path,
 	}
 }
 
-//  WithTag tells the query-builder to eager-loads the nodes that are connected to
-// the "tag" edge. The optional arguments used to configure the query builder of the edge.
+// WithTag tells the query-builder to eager-load the nodes that are connected to
+// the "tag" edge. The optional arguments are used to configure the query builder of the edge.
 func (sq *ServiceQuery) WithTag(opts ...func(*TagQuery)) *ServiceQuery {
 	query := &TagQuery{config: sq.config}
 	for _, opt := range opts {
@@ -262,8 +311,8 @@ func (sq *ServiceQuery) WithTag(opts ...func(*TagQuery)) *ServiceQuery {
 	return sq
 }
 
-//  WithEvents tells the query-builder to eager-loads the nodes that are connected to
-// the "events" edge. The optional arguments used to configure the query builder of the edge.
+// WithEvents tells the query-builder to eager-load the nodes that are connected to
+// the "events" edge. The optional arguments are used to configure the query builder of the edge.
 func (sq *ServiceQuery) WithEvents(opts ...func(*EventQuery)) *ServiceQuery {
 	query := &EventQuery{config: sq.config}
 	for _, opt := range opts {
@@ -273,7 +322,7 @@ func (sq *ServiceQuery) WithEvents(opts ...func(*EventQuery)) *ServiceQuery {
 	return sq
 }
 
-// GroupBy used to group vertices by one or more fields/columns.
+// GroupBy is used to group vertices by one or more fields/columns.
 // It is often used with aggregate functions, like: count, max, mean, min, sum.
 //
 // Example:
@@ -291,11 +340,17 @@ func (sq *ServiceQuery) WithEvents(opts ...func(*EventQuery)) *ServiceQuery {
 func (sq *ServiceQuery) GroupBy(field string, fields ...string) *ServiceGroupBy {
 	group := &ServiceGroupBy{config: sq.config}
 	group.fields = append([]string{field}, fields...)
-	group.sql = sq.sqlQuery()
+	group.path = func(ctx context.Context) (prev *sql.Selector, err error) {
+		if err := sq.prepareQuery(ctx); err != nil {
+			return nil, err
+		}
+		return sq.sqlQuery(ctx), nil
+	}
 	return group
 }
 
-// Select one or more fields from the given query.
+// Select allows the selection one or more fields/columns for the given query,
+// instead of selecting all fields in the entity.
 //
 // Example:
 //
@@ -307,18 +362,36 @@ func (sq *ServiceQuery) GroupBy(field string, fields ...string) *ServiceGroupBy 
 //		Select(service.FieldName).
 //		Scan(ctx, &v)
 //
-func (sq *ServiceQuery) Select(field string, fields ...string) *ServiceSelect {
-	selector := &ServiceSelect{config: sq.config}
-	selector.fields = append([]string{field}, fields...)
-	selector.sql = sq.sqlQuery()
-	return selector
+func (sq *ServiceQuery) Select(fields ...string) *ServiceSelect {
+	sq.fields = append(sq.fields, fields...)
+	return &ServiceSelect{ServiceQuery: sq}
+}
+
+func (sq *ServiceQuery) prepareQuery(ctx context.Context) error {
+	for _, f := range sq.fields {
+		if !service.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+		}
+	}
+	if sq.path != nil {
+		prev, err := sq.path(ctx)
+		if err != nil {
+			return err
+		}
+		sq.sql = prev
+	}
+	return nil
 }
 
 func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 	var (
-		nodes   []*Service
-		withFKs = sq.withFKs
-		_spec   = sq.querySpec()
+		nodes       = []*Service{}
+		withFKs     = sq.withFKs
+		_spec       = sq.querySpec()
+		loadedTypes = [2]bool{
+			sq.withTag != nil,
+			sq.withEvents != nil,
+		}
 	)
 	if sq.withTag != nil {
 		withFKs = true
@@ -326,26 +399,22 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 	if withFKs {
 		_spec.Node.Columns = append(_spec.Node.Columns, service.ForeignKeys...)
 	}
-	_spec.ScanValues = func() []interface{} {
+	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Service{config: sq.config}
 		nodes = append(nodes, node)
-		values := node.scanValues()
-		if withFKs {
-			values = append(values, node.fkValues()...)
-		}
-		return values
+		return node.scanValues(columns)
 	}
-	_spec.Assign = func(values ...interface{}) error {
+	_spec.Assign = func(columns []string, values []interface{}) error {
 		if len(nodes) == 0 {
 			return fmt.Errorf("ent: Assign called without calling ScanValues")
 		}
 		node := nodes[len(nodes)-1]
-		return node.assignValues(values...)
+		node.Edges.loadedTypes = loadedTypes
+		return node.assignValues(columns, values)
 	}
 	if err := sqlgraph.QueryNodes(ctx, sq.driver, _spec); err != nil {
 		return nil, err
 	}
-
 	if len(nodes) == 0 {
 		return nodes, nil
 	}
@@ -354,10 +423,14 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 		ids := make([]int, 0, len(nodes))
 		nodeids := make(map[int][]*Service)
 		for i := range nodes {
-			if fk := nodes[i].service_tag_id; fk != nil {
-				ids = append(ids, *fk)
-				nodeids[*fk] = append(nodeids[*fk], nodes[i])
+			if nodes[i].service_tag == nil {
+				continue
 			}
+			fk := *nodes[i].service_tag
+			if _, ok := nodeids[fk]; !ok {
+				ids = append(ids, fk)
+			}
+			nodeids[fk] = append(nodeids[fk], nodes[i])
 		}
 		query.Where(tag.IDIn(ids...))
 		neighbors, err := query.All(ctx)
@@ -367,7 +440,7 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 		for _, n := range neighbors {
 			nodes, ok := nodeids[n.ID]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "service_tag_id" returned %v`, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "service_tag" returned %v`, n.ID)
 			}
 			for i := range nodes {
 				nodes[i].Edges.Tag = n
@@ -381,6 +454,7 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 		for i := range nodes {
 			fks = append(fks, nodes[i].ID)
 			nodeids[nodes[i].ID] = nodes[i]
+			nodes[i].Edges.Events = []*Event{}
 		}
 		query.withFKs = true
 		query.Where(predicate.Event(func(s *sql.Selector) {
@@ -391,13 +465,13 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 			return nil, err
 		}
 		for _, n := range neighbors {
-			fk := n.svc_owner_id
+			fk := n.service_events
 			if fk == nil {
-				return nil, fmt.Errorf(`foreign-key "svc_owner_id" is nil for node %v`, n.ID)
+				return nil, fmt.Errorf(`foreign-key "service_events" is nil for node %v`, n.ID)
 			}
 			node, ok := nodeids[*fk]
 			if !ok {
-				return nil, fmt.Errorf(`unexpected foreign-key "svc_owner_id" returned %v for node %v`, *fk, n.ID)
+				return nil, fmt.Errorf(`unexpected foreign-key "service_events" returned %v for node %v`, *fk, n.ID)
 			}
 			node.Edges.Events = append(node.Edges.Events, n)
 		}
@@ -408,13 +482,17 @@ func (sq *ServiceQuery) sqlAll(ctx context.Context) ([]*Service, error) {
 
 func (sq *ServiceQuery) sqlCount(ctx context.Context) (int, error) {
 	_spec := sq.querySpec()
+	_spec.Node.Columns = sq.fields
+	if len(sq.fields) > 0 {
+		_spec.Unique = sq.unique != nil && *sq.unique
+	}
 	return sqlgraph.CountNodes(ctx, sq.driver, _spec)
 }
 
 func (sq *ServiceQuery) sqlExist(ctx context.Context) (bool, error) {
 	n, err := sq.sqlCount(ctx)
 	if err != nil {
-		return false, fmt.Errorf("ent: check existence: %v", err)
+		return false, fmt.Errorf("ent: check existence: %w", err)
 	}
 	return n > 0, nil
 }
@@ -431,6 +509,18 @@ func (sq *ServiceQuery) querySpec() *sqlgraph.QuerySpec {
 		},
 		From:   sq.sql,
 		Unique: true,
+	}
+	if unique := sq.unique; unique != nil {
+		_spec.Unique = *unique
+	}
+	if fields := sq.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, service.FieldID)
+		for i := range fields {
+			if fields[i] != service.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, fields[i])
+			}
+		}
 	}
 	if ps := sq.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
@@ -455,13 +545,20 @@ func (sq *ServiceQuery) querySpec() *sqlgraph.QuerySpec {
 	return _spec
 }
 
-func (sq *ServiceQuery) sqlQuery() *sql.Selector {
+func (sq *ServiceQuery) sqlQuery(ctx context.Context) *sql.Selector {
 	builder := sql.Dialect(sq.driver.Dialect())
 	t1 := builder.Table(service.Table)
-	selector := builder.Select(t1.Columns(service.Columns...)...).From(t1)
+	columns := sq.fields
+	if len(columns) == 0 {
+		columns = service.Columns
+	}
+	selector := builder.Select(t1.Columns(columns...)...).From(t1)
 	if sq.sql != nil {
 		selector = sq.sql
-		selector.Select(selector.Columns(service.Columns...)...)
+		selector.Select(selector.Columns(columns...)...)
+	}
+	if sq.unique != nil && *sq.unique {
+		selector.Distinct()
 	}
 	for _, p := range sq.predicates {
 		p(selector)
@@ -480,23 +577,29 @@ func (sq *ServiceQuery) sqlQuery() *sql.Selector {
 	return selector
 }
 
-// ServiceGroupBy is the builder for group-by Service entities.
+// ServiceGroupBy is the group-by builder for Service entities.
 type ServiceGroupBy struct {
 	config
 	fields []string
-	fns    []Aggregate
-	// intermediate query.
-	sql *sql.Selector
+	fns    []AggregateFunc
+	// intermediate query (i.e. traversal path).
+	sql  *sql.Selector
+	path func(context.Context) (*sql.Selector, error)
 }
 
 // Aggregate adds the given aggregation functions to the group-by query.
-func (sgb *ServiceGroupBy) Aggregate(fns ...Aggregate) *ServiceGroupBy {
+func (sgb *ServiceGroupBy) Aggregate(fns ...AggregateFunc) *ServiceGroupBy {
 	sgb.fns = append(sgb.fns, fns...)
 	return sgb
 }
 
-// Scan applies the group-by query and scan the result into the given value.
+// Scan applies the group-by query and scans the result into the given value.
 func (sgb *ServiceGroupBy) Scan(ctx context.Context, v interface{}) error {
+	query, err := sgb.path(ctx)
+	if err != nil {
+		return err
+	}
+	sgb.sql = query
 	return sgb.sqlScan(ctx, v)
 }
 
@@ -507,7 +610,8 @@ func (sgb *ServiceGroupBy) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from group-by. It is only allowed when querying group-by with one field.
+// Strings returns list of strings from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (sgb *ServiceGroupBy) Strings(ctx context.Context) ([]string, error) {
 	if len(sgb.fields) > 1 {
 		return nil, errors.New("ent: ServiceGroupBy.Strings is not achievable when grouping more than 1 field")
@@ -528,7 +632,35 @@ func (sgb *ServiceGroupBy) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from group-by. It is only allowed when querying group-by with one field.
+// String returns a single string from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (sgb *ServiceGroupBy) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = sgb.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceGroupBy.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (sgb *ServiceGroupBy) StringX(ctx context.Context) string {
+	v, err := sgb.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (sgb *ServiceGroupBy) Ints(ctx context.Context) ([]int, error) {
 	if len(sgb.fields) > 1 {
 		return nil, errors.New("ent: ServiceGroupBy.Ints is not achievable when grouping more than 1 field")
@@ -549,7 +681,35 @@ func (sgb *ServiceGroupBy) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from group-by. It is only allowed when querying group-by with one field.
+// Int returns a single int from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (sgb *ServiceGroupBy) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = sgb.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceGroupBy.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (sgb *ServiceGroupBy) IntX(ctx context.Context) int {
+	v, err := sgb.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (sgb *ServiceGroupBy) Float64s(ctx context.Context) ([]float64, error) {
 	if len(sgb.fields) > 1 {
 		return nil, errors.New("ent: ServiceGroupBy.Float64s is not achievable when grouping more than 1 field")
@@ -570,7 +730,35 @@ func (sgb *ServiceGroupBy) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from group-by. It is only allowed when querying group-by with one field.
+// Float64 returns a single float64 from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (sgb *ServiceGroupBy) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = sgb.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceGroupBy.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (sgb *ServiceGroupBy) Float64X(ctx context.Context) float64 {
+	v, err := sgb.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from group-by.
+// It is only allowed when executing a group-by query with one field.
 func (sgb *ServiceGroupBy) Bools(ctx context.Context) ([]bool, error) {
 	if len(sgb.fields) > 1 {
 		return nil, errors.New("ent: ServiceGroupBy.Bools is not achievable when grouping more than 1 field")
@@ -591,9 +779,45 @@ func (sgb *ServiceGroupBy) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a group-by query.
+// It is only allowed when executing a group-by query with one field.
+func (sgb *ServiceGroupBy) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = sgb.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceGroupBy.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (sgb *ServiceGroupBy) BoolX(ctx context.Context) bool {
+	v, err := sgb.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (sgb *ServiceGroupBy) sqlScan(ctx context.Context, v interface{}) error {
+	for _, f := range sgb.fields {
+		if !service.ValidColumn(f) {
+			return &ValidationError{Name: f, err: fmt.Errorf("invalid field %q for group-by", f)}
+		}
+	}
+	selector := sgb.sqlQuery()
+	if err := selector.Err(); err != nil {
+		return err
+	}
 	rows := &sql.Rows{}
-	query, args := sgb.sqlQuery().Query()
+	query, args := selector.Query()
 	if err := sgb.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
@@ -602,25 +826,37 @@ func (sgb *ServiceGroupBy) sqlScan(ctx context.Context, v interface{}) error {
 }
 
 func (sgb *ServiceGroupBy) sqlQuery() *sql.Selector {
-	selector := sgb.sql
-	columns := make([]string, 0, len(sgb.fields)+len(sgb.fns))
-	columns = append(columns, sgb.fields...)
+	selector := sgb.sql.Select()
+	aggregation := make([]string, 0, len(sgb.fns))
 	for _, fn := range sgb.fns {
-		columns = append(columns, fn(selector))
+		aggregation = append(aggregation, fn(selector))
 	}
-	return selector.Select(columns...).GroupBy(sgb.fields...)
+	// If no columns were selected in a custom aggregation function, the default
+	// selection is the fields used for "group-by", and the aggregation functions.
+	if len(selector.SelectedColumns()) == 0 {
+		columns := make([]string, 0, len(sgb.fields)+len(sgb.fns))
+		for _, f := range sgb.fields {
+			columns = append(columns, selector.C(f))
+		}
+		columns = append(columns, aggregation...)
+		selector.Select(columns...)
+	}
+	return selector.GroupBy(selector.Columns(sgb.fields...)...)
 }
 
-// ServiceSelect is the builder for select fields of Service entities.
+// ServiceSelect is the builder for selecting fields of Service entities.
 type ServiceSelect struct {
-	config
-	fields []string
-	// intermediate queries.
+	*ServiceQuery
+	// intermediate query (i.e. traversal path).
 	sql *sql.Selector
 }
 
-// Scan applies the selector query and scan the result into the given value.
+// Scan applies the selector query and scans the result into the given value.
 func (ss *ServiceSelect) Scan(ctx context.Context, v interface{}) error {
+	if err := ss.prepareQuery(ctx); err != nil {
+		return err
+	}
+	ss.sql = ss.ServiceQuery.sqlQuery(ctx)
 	return ss.sqlScan(ctx, v)
 }
 
@@ -631,7 +867,7 @@ func (ss *ServiceSelect) ScanX(ctx context.Context, v interface{}) {
 	}
 }
 
-// Strings returns list of strings from selector. It is only allowed when selecting one field.
+// Strings returns list of strings from a selector. It is only allowed when selecting one field.
 func (ss *ServiceSelect) Strings(ctx context.Context) ([]string, error) {
 	if len(ss.fields) > 1 {
 		return nil, errors.New("ent: ServiceSelect.Strings is not achievable when selecting more than 1 field")
@@ -652,7 +888,33 @@ func (ss *ServiceSelect) StringsX(ctx context.Context) []string {
 	return v
 }
 
-// Ints returns list of ints from selector. It is only allowed when selecting one field.
+// String returns a single string from a selector. It is only allowed when selecting one field.
+func (ss *ServiceSelect) String(ctx context.Context) (_ string, err error) {
+	var v []string
+	if v, err = ss.Strings(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceSelect.Strings returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// StringX is like String, but panics if an error occurs.
+func (ss *ServiceSelect) StringX(ctx context.Context) string {
+	v, err := ss.String(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Ints returns list of ints from a selector. It is only allowed when selecting one field.
 func (ss *ServiceSelect) Ints(ctx context.Context) ([]int, error) {
 	if len(ss.fields) > 1 {
 		return nil, errors.New("ent: ServiceSelect.Ints is not achievable when selecting more than 1 field")
@@ -673,7 +935,33 @@ func (ss *ServiceSelect) IntsX(ctx context.Context) []int {
 	return v
 }
 
-// Float64s returns list of float64s from selector. It is only allowed when selecting one field.
+// Int returns a single int from a selector. It is only allowed when selecting one field.
+func (ss *ServiceSelect) Int(ctx context.Context) (_ int, err error) {
+	var v []int
+	if v, err = ss.Ints(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceSelect.Ints returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// IntX is like Int, but panics if an error occurs.
+func (ss *ServiceSelect) IntX(ctx context.Context) int {
+	v, err := ss.Int(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Float64s returns list of float64s from a selector. It is only allowed when selecting one field.
 func (ss *ServiceSelect) Float64s(ctx context.Context) ([]float64, error) {
 	if len(ss.fields) > 1 {
 		return nil, errors.New("ent: ServiceSelect.Float64s is not achievable when selecting more than 1 field")
@@ -694,7 +982,33 @@ func (ss *ServiceSelect) Float64sX(ctx context.Context) []float64 {
 	return v
 }
 
-// Bools returns list of bools from selector. It is only allowed when selecting one field.
+// Float64 returns a single float64 from a selector. It is only allowed when selecting one field.
+func (ss *ServiceSelect) Float64(ctx context.Context) (_ float64, err error) {
+	var v []float64
+	if v, err = ss.Float64s(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceSelect.Float64s returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// Float64X is like Float64, but panics if an error occurs.
+func (ss *ServiceSelect) Float64X(ctx context.Context) float64 {
+	v, err := ss.Float64(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Bools returns list of bools from a selector. It is only allowed when selecting one field.
 func (ss *ServiceSelect) Bools(ctx context.Context) ([]bool, error) {
 	if len(ss.fields) > 1 {
 		return nil, errors.New("ent: ServiceSelect.Bools is not achievable when selecting more than 1 field")
@@ -715,18 +1029,38 @@ func (ss *ServiceSelect) BoolsX(ctx context.Context) []bool {
 	return v
 }
 
+// Bool returns a single bool from a selector. It is only allowed when selecting one field.
+func (ss *ServiceSelect) Bool(ctx context.Context) (_ bool, err error) {
+	var v []bool
+	if v, err = ss.Bools(ctx); err != nil {
+		return
+	}
+	switch len(v) {
+	case 1:
+		return v[0], nil
+	case 0:
+		err = &NotFoundError{service.Label}
+	default:
+		err = fmt.Errorf("ent: ServiceSelect.Bools returned %d results when one was expected", len(v))
+	}
+	return
+}
+
+// BoolX is like Bool, but panics if an error occurs.
+func (ss *ServiceSelect) BoolX(ctx context.Context) bool {
+	v, err := ss.Bool(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
 func (ss *ServiceSelect) sqlScan(ctx context.Context, v interface{}) error {
 	rows := &sql.Rows{}
-	query, args := ss.sqlQuery().Query()
+	query, args := ss.sql.Query()
 	if err := ss.driver.Query(ctx, query, args, rows); err != nil {
 		return err
 	}
 	defer rows.Close()
 	return sql.ScanSlice(rows, v)
-}
-
-func (ss *ServiceSelect) sqlQuery() sql.Querier {
-	selector := ss.sql
-	selector.Select(selector.Columns(ss.fields...)...)
-	return selector
 }

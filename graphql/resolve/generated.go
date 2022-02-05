@@ -457,7 +457,7 @@ func (r *mutationResolver) CreateJob(ctx context.Context, input *models.CreateJo
 		SetCreationTime(currentTime).
 		SetOwner(actor).
 		SetJob(job).
-		SetKind(event.KindCREATEJOB).
+		SetKind(event.KindCREATE_JOB).
 		Save(ctx)
 	if err != nil {
 		return job, err
@@ -577,7 +577,7 @@ func (r *mutationResolver) CreateTarget(ctx context.Context, input *models.Creat
 		SetNillableSvcOwnerID(svcID).
 		SetNillableOwnerID(userID).
 		SetTarget(target).
-		SetKind(event.KindCREATETARGET).
+		SetKind(event.KindCREATE_TARGET).
 		Save(ctx)
 	if err != nil {
 		return target, err
@@ -636,7 +636,7 @@ func (r *mutationResolver) AddCredentialForTarget(ctx context.Context, input *mo
 		SetOwner(auth.GetUser(ctx)).
 		SetCredential(c).
 		SetTarget(t).
-		SetKind(event.KindADDCREDENTIALFORTARGET).
+		SetKind(event.KindADD_CREDENTIAL_FOR_TARGET).
 		Save(ctx)
 	return t, err
 }
@@ -672,7 +672,7 @@ func (r *mutationResolver) AddCredentialForTargets(ctx context.Context, input *m
 			SetOwner(auth.GetUser(ctx)).
 			SetCredential(c).
 			SetTarget(t).
-			SetKind(event.KindADDCREDENTIALFORTARGET).
+			SetKind(event.KindADD_CREDENTIAL_FOR_TARGET).
 			Save(ctx)
 	}
 
@@ -852,7 +852,7 @@ func (r *mutationResolver) CreateLink(ctx context.Context, input *models.CreateL
 	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetLink(link).
-		SetKind(event.KindCREATELINK).
+		SetKind(event.KindCREATE_LINK).
 		Save(ctx)
 	if err != nil {
 		return link, err
@@ -890,7 +890,7 @@ func (r *mutationResolver) ActivateUser(ctx context.Context, input *models.Activ
 	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetUser(user).
-		SetKind(event.KindACTIVATEUSER).
+		SetKind(event.KindACTIVATE_USER).
 		Save(ctx)
 	if err != nil {
 		return user, err
@@ -968,7 +968,7 @@ func (r *mutationResolver) ActivateService(ctx context.Context, input *models.Ac
 	_, err = r.Graph.Event.Create().
 		SetOwner(auth.GetUser(ctx)).
 		SetService(svc).
-		SetKind(event.KindACTIVATESERVICE).
+		SetKind(event.KindACTIVATE_SERVICE).
 		Save(ctx)
 	if err != nil {
 		return svc, err
