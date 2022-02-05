@@ -26,6 +26,16 @@ type TarGZBundler struct {
 	Buffer *bytes.Buffer
 }
 
+// NewTarGZBundler initializes a new tar bundler of the provided files.
+func NewTarGZBundler(files ...NamedReader) (*TarGZBundler, error) {
+	bundler := &TarGZBundler{}
+	if err := bundler.Bundle(files...); err != nil {
+		return nil, err
+	}
+
+	return bundler, nil
+}
+
 // Bundle is used to add multiple files into a tar bundle
 func (tb *TarGZBundler) Bundle(files ...NamedReader) error {
 	tb.Buffer = &bytes.Buffer{}
