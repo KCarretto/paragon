@@ -6,8 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
 	"github.com/kcarretto/paragon/ent/credential"
+	"github.com/kcarretto/paragon/ent/target"
 )
 
 // Credential is the model entity for the Credential schema.
@@ -16,98 +17,128 @@ type Credential struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Principal holds the value of the "principal" field.
+	// The principal for the Credential
 	Principal string `json:"principal,omitempty"`
 	// Secret holds the value of the "secret" field.
+	// The secret for the Credential
 	Secret string `json:"secret,omitempty"`
 	// Kind holds the value of the "kind" field.
+	// The kind of the credential (password, key, etc)
 	Kind credential.Kind `json:"kind,omitempty"`
 	// Fails holds the value of the "fails" field.
+	// The number of failures for the Credential
 	Fails int `json:"fails,omitempty"`
 	// Edges holds the relations/edges for other nodes in the graph.
 	// The values are being populated by the CredentialQuery when eager-loading is set.
-	Edges struct {
-		// Target holds the value of the target edge.
-		Target *Target
-	} `json:"edges"`
-	target_id *int
+	Edges              CredentialEdges `json:"edges"`
+	target_credentials *int
+}
+
+// CredentialEdges holds the relations/edges for other nodes in the graph.
+type CredentialEdges struct {
+	// Target holds the value of the target edge.
+	Target *Target `json:"target,omitempty"`
+	// loadedTypes holds the information for reporting if a
+	// type was loaded (or requested) in eager-loading or not.
+	loadedTypes [1]bool
+}
+
+// TargetOrErr returns the Target value or an error if the edge
+// was not loaded in eager-loading, or loaded but was not found.
+func (e CredentialEdges) TargetOrErr() (*Target, error) {
+	if e.loadedTypes[0] {
+		if e.Target == nil {
+			// The edge target was loaded in eager-loading,
+			// but was not found.
+			return nil, &NotFoundError{label: target.Label}
+		}
+		return e.Target, nil
+	}
+	return nil, &NotLoadedError{edge: "target"}
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
-func (*Credential) scanValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{},  // id
-		&sql.NullString{}, // principal
-		&sql.NullString{}, // secret
-		&sql.NullString{}, // kind
-		&sql.NullInt64{},  // fails
+func (*Credential) scanValues(columns []string) ([]interface{}, error) {
+	values := make([]interface{}, len(columns))
+	for i := range columns {
+		switch columns[i] {
+		case credential.FieldID, credential.FieldFails:
+			values[i] = new(sql.NullInt64)
+		case credential.FieldPrincipal, credential.FieldSecret, credential.FieldKind:
+			values[i] = new(sql.NullString)
+		case credential.ForeignKeys[0]: // target_credentials
+			values[i] = new(sql.NullInt64)
+		default:
+			return nil, fmt.Errorf("unexpected column %q for type Credential", columns[i])
+		}
 	}
-}
-
-// fkValues returns the types for scanning foreign-keys values from sql.Rows.
-func (*Credential) fkValues() []interface{} {
-	return []interface{}{
-		&sql.NullInt64{}, // target_id
-	}
+	return values, nil
 }
 
 // assignValues assigns the values that were returned from sql.Rows (after scanning)
 // to the Credential fields.
-func (c *Credential) assignValues(values ...interface{}) error {
-	if m, n := len(values), len(credential.Columns); m < n {
+func (c *Credential) assignValues(columns []string, values []interface{}) error {
+	if m, n := len(values), len(columns); m < n {
 		return fmt.Errorf("mismatch number of scan values: %d != %d", m, n)
 	}
-	value, ok := values[0].(*sql.NullInt64)
-	if !ok {
-		return fmt.Errorf("unexpected type %T for field id", value)
-	}
-	c.ID = int(value.Int64)
-	values = values[1:]
-	if value, ok := values[0].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field principal", values[0])
-	} else if value.Valid {
-		c.Principal = value.String
-	}
-	if value, ok := values[1].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field secret", values[1])
-	} else if value.Valid {
-		c.Secret = value.String
-	}
-	if value, ok := values[2].(*sql.NullString); !ok {
-		return fmt.Errorf("unexpected type %T for field kind", values[2])
-	} else if value.Valid {
-		c.Kind = credential.Kind(value.String)
-	}
-	if value, ok := values[3].(*sql.NullInt64); !ok {
-		return fmt.Errorf("unexpected type %T for field fails", values[3])
-	} else if value.Valid {
-		c.Fails = int(value.Int64)
-	}
-	values = values[4:]
-	if len(values) == len(credential.ForeignKeys) {
-		if value, ok := values[0].(*sql.NullInt64); !ok {
-			return fmt.Errorf("unexpected type %T for edge-field target_id", value)
-		} else if value.Valid {
-			c.target_id = new(int)
-			*c.target_id = int(value.Int64)
+	for i := range columns {
+		switch columns[i] {
+		case credential.FieldID:
+			value, ok := values[i].(*sql.NullInt64)
+			if !ok {
+				return fmt.Errorf("unexpected type %T for field id", value)
+			}
+			c.ID = int(value.Int64)
+		case credential.FieldPrincipal:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field principal", values[i])
+			} else if value.Valid {
+				c.Principal = value.String
+			}
+		case credential.FieldSecret:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field secret", values[i])
+			} else if value.Valid {
+				c.Secret = value.String
+			}
+		case credential.FieldKind:
+			if value, ok := values[i].(*sql.NullString); !ok {
+				return fmt.Errorf("unexpected type %T for field kind", values[i])
+			} else if value.Valid {
+				c.Kind = credential.Kind(value.String)
+			}
+		case credential.FieldFails:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for field fails", values[i])
+			} else if value.Valid {
+				c.Fails = int(value.Int64)
+			}
+		case credential.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field target_credentials", value)
+			} else if value.Valid {
+				c.target_credentials = new(int)
+				*c.target_credentials = int(value.Int64)
+			}
 		}
 	}
 	return nil
 }
 
-// QueryTarget queries the target edge of the Credential.
+// QueryTarget queries the "target" edge of the Credential entity.
 func (c *Credential) QueryTarget() *TargetQuery {
-	return (&CredentialClient{c.config}).QueryTarget(c)
+	return (&CredentialClient{config: c.config}).QueryTarget(c)
 }
 
 // Update returns a builder for updating this Credential.
-// Note that, you need to call Credential.Unwrap() before calling this method, if this Credential
+// Note that you need to call Credential.Unwrap() before calling this method if this Credential
 // was returned from a transaction, and the transaction was committed or rolled back.
 func (c *Credential) Update() *CredentialUpdateOne {
-	return (&CredentialClient{c.config}).UpdateOne(c)
+	return (&CredentialClient{config: c.config}).UpdateOne(c)
 }
 
-// Unwrap unwraps the entity that was returned from a transaction after it was closed,
-// so that all next queries will be executed through the driver which created the transaction.
+// Unwrap unwraps the Credential entity that was returned from a transaction after it was closed,
+// so that all future queries will be executed through the driver which created the transaction.
 func (c *Credential) Unwrap() *Credential {
 	tx, ok := c.config.driver.(*txDriver)
 	if !ok {

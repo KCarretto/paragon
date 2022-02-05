@@ -4,10 +4,11 @@ package ent
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/predicate"
 )
@@ -15,18 +16,46 @@ import (
 // FileDelete is the builder for deleting a File entity.
 type FileDelete struct {
 	config
-	predicates []predicate.File
+	hooks    []Hook
+	mutation *FileMutation
 }
 
-// Where adds a new predicate to the delete builder.
+// Where appends a list predicates to the FileDelete builder.
 func (fd *FileDelete) Where(ps ...predicate.File) *FileDelete {
-	fd.predicates = append(fd.predicates, ps...)
+	fd.mutation.Where(ps...)
 	return fd
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (fd *FileDelete) Exec(ctx context.Context) (int, error) {
-	return fd.sqlExec(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(fd.hooks) == 0 {
+		affected, err = fd.sqlExec(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*FileMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			fd.mutation = mutation
+			affected, err = fd.sqlExec(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(fd.hooks) - 1; i >= 0; i-- {
+			if fd.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = fd.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, fd.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -48,7 +77,7 @@ func (fd *FileDelete) sqlExec(ctx context.Context) (int, error) {
 			},
 		},
 	}
-	if ps := fd.predicates; len(ps) > 0 {
+	if ps := fd.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -70,7 +99,7 @@ func (fdo *FileDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{file.Label}
+		return &NotFoundError{file.Label}
 	default:
 		return nil
 	}

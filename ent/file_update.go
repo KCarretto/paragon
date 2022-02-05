@@ -4,12 +4,13 @@ package ent
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 	"github.com/kcarretto/paragon/ent/predicate"
@@ -18,38 +19,29 @@ import (
 // FileUpdate is the builder for updating File entities.
 type FileUpdate struct {
 	config
-	Name             *string
-	CreationTime     *time.Time
-	LastModifiedTime *time.Time
-	Size             *int
-	addSize          *int
-	Content          *[]byte
-	Hash             *string
-	ContentType      *string
-	links            map[int]struct{}
-	removedLinks     map[int]struct{}
-	predicates       []predicate.File
+	hooks    []Hook
+	mutation *FileMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the FileUpdate builder.
 func (fu *FileUpdate) Where(ps ...predicate.File) *FileUpdate {
-	fu.predicates = append(fu.predicates, ps...)
+	fu.mutation.Where(ps...)
 	return fu
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (fu *FileUpdate) SetName(s string) *FileUpdate {
-	fu.Name = &s
+	fu.mutation.SetName(s)
 	return fu
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (fu *FileUpdate) SetCreationTime(t time.Time) *FileUpdate {
-	fu.CreationTime = &t
+	fu.mutation.SetCreationTime(t)
 	return fu
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (fu *FileUpdate) SetNillableCreationTime(t *time.Time) *FileUpdate {
 	if t != nil {
 		fu.SetCreationTime(*t)
@@ -57,20 +49,20 @@ func (fu *FileUpdate) SetNillableCreationTime(t *time.Time) *FileUpdate {
 	return fu
 }
 
-// SetLastModifiedTime sets the LastModifiedTime field.
+// SetLastModifiedTime sets the "LastModifiedTime" field.
 func (fu *FileUpdate) SetLastModifiedTime(t time.Time) *FileUpdate {
-	fu.LastModifiedTime = &t
+	fu.mutation.SetLastModifiedTime(t)
 	return fu
 }
 
-// SetSize sets the Size field.
+// SetSize sets the "Size" field.
 func (fu *FileUpdate) SetSize(i int) *FileUpdate {
-	fu.Size = &i
-	fu.addSize = nil
+	fu.mutation.ResetSize()
+	fu.mutation.SetSize(i)
 	return fu
 }
 
-// SetNillableSize sets the Size field if the given value is not nil.
+// SetNillableSize sets the "Size" field if the given value is not nil.
 func (fu *FileUpdate) SetNillableSize(i *int) *FileUpdate {
 	if i != nil {
 		fu.SetSize(*i)
@@ -78,46 +70,37 @@ func (fu *FileUpdate) SetNillableSize(i *int) *FileUpdate {
 	return fu
 }
 
-// AddSize adds i to Size.
+// AddSize adds i to the "Size" field.
 func (fu *FileUpdate) AddSize(i int) *FileUpdate {
-	if fu.addSize == nil {
-		fu.addSize = &i
-	} else {
-		*fu.addSize += i
-	}
+	fu.mutation.AddSize(i)
 	return fu
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (fu *FileUpdate) SetContent(b []byte) *FileUpdate {
-	fu.Content = &b
+	fu.mutation.SetContent(b)
 	return fu
 }
 
-// SetHash sets the Hash field.
+// SetHash sets the "Hash" field.
 func (fu *FileUpdate) SetHash(s string) *FileUpdate {
-	fu.Hash = &s
+	fu.mutation.SetHash(s)
 	return fu
 }
 
-// SetContentType sets the ContentType field.
+// SetContentType sets the "ContentType" field.
 func (fu *FileUpdate) SetContentType(s string) *FileUpdate {
-	fu.ContentType = &s
+	fu.mutation.SetContentType(s)
 	return fu
 }
 
-// AddLinkIDs adds the links edge to Link by ids.
+// AddLinkIDs adds the "links" edge to the Link entity by IDs.
 func (fu *FileUpdate) AddLinkIDs(ids ...int) *FileUpdate {
-	if fu.links == nil {
-		fu.links = make(map[int]struct{})
-	}
-	for i := range ids {
-		fu.links[ids[i]] = struct{}{}
-	}
+	fu.mutation.AddLinkIDs(ids...)
 	return fu
 }
 
-// AddLinks adds the links edges to Link.
+// AddLinks adds the "links" edges to the Link entity.
 func (fu *FileUpdate) AddLinks(l ...*Link) *FileUpdate {
 	ids := make([]int, len(l))
 	for i := range l {
@@ -126,18 +109,24 @@ func (fu *FileUpdate) AddLinks(l ...*Link) *FileUpdate {
 	return fu.AddLinkIDs(ids...)
 }
 
-// RemoveLinkIDs removes the links edge to Link by ids.
-func (fu *FileUpdate) RemoveLinkIDs(ids ...int) *FileUpdate {
-	if fu.removedLinks == nil {
-		fu.removedLinks = make(map[int]struct{})
-	}
-	for i := range ids {
-		fu.removedLinks[ids[i]] = struct{}{}
-	}
+// Mutation returns the FileMutation object of the builder.
+func (fu *FileUpdate) Mutation() *FileMutation {
+	return fu.mutation
+}
+
+// ClearLinks clears all "links" edges to the Link entity.
+func (fu *FileUpdate) ClearLinks() *FileUpdate {
+	fu.mutation.ClearLinks()
 	return fu
 }
 
-// RemoveLinks removes links edges to Link.
+// RemoveLinkIDs removes the "links" edge to Link entities by IDs.
+func (fu *FileUpdate) RemoveLinkIDs(ids ...int) *FileUpdate {
+	fu.mutation.RemoveLinkIDs(ids...)
+	return fu
+}
+
+// RemoveLinks removes "links" edges to Link entities.
 func (fu *FileUpdate) RemoveLinks(l ...*Link) *FileUpdate {
 	ids := make([]int, len(l))
 	for i := range l {
@@ -146,24 +135,42 @@ func (fu *FileUpdate) RemoveLinks(l ...*Link) *FileUpdate {
 	return fu.RemoveLinkIDs(ids...)
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (fu *FileUpdate) Save(ctx context.Context) (int, error) {
-	if fu.Name != nil {
-		if err := file.NameValidator(*fu.Name); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(fu.hooks) == 0 {
+		if err = fu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = fu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*FileMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = fu.check(); err != nil {
+				return 0, err
+			}
+			fu.mutation = mutation
+			affected, err = fu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(fu.hooks) - 1; i >= 0; i-- {
+			if fu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = fu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, fu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if fu.Size != nil {
-		if err := file.SizeValidator(*fu.Size); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Size\": %v", err)
-		}
-	}
-	if fu.Hash != nil {
-		if err := file.HashValidator(*fu.Hash); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Hash\": %v", err)
-		}
-	}
-	return fu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -188,6 +195,26 @@ func (fu *FileUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (fu *FileUpdate) check() error {
+	if v, ok := fu.mutation.Name(); ok {
+		if err := file.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "File.Name": %w`, err)}
+		}
+	}
+	if v, ok := fu.mutation.Size(); ok {
+		if err := file.SizeValidator(v); err != nil {
+			return &ValidationError{Name: "Size", err: fmt.Errorf(`ent: validator failed for field "File.Size": %w`, err)}
+		}
+	}
+	if v, ok := fu.mutation.Hash(); ok {
+		if err := file.HashValidator(v); err != nil {
+			return &ValidationError{Name: "Hash", err: fmt.Errorf(`ent: validator failed for field "File.Hash": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -199,70 +226,70 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := fu.predicates; len(ps) > 0 {
+	if ps := fu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := fu.Name; value != nil {
+	if value, ok := fu.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldName,
 		})
 	}
-	if value := fu.CreationTime; value != nil {
+	if value, ok := fu.mutation.CreationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldCreationTime,
 		})
 	}
-	if value := fu.LastModifiedTime; value != nil {
+	if value, ok := fu.mutation.LastModifiedTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldLastModifiedTime,
 		})
 	}
-	if value := fu.Size; value != nil {
+	if value, ok := fu.mutation.Size(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldSize,
 		})
 	}
-	if value := fu.addSize; value != nil {
+	if value, ok := fu.mutation.AddedSize(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldSize,
 		})
 	}
-	if value := fu.Content; value != nil {
+	if value, ok := fu.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBytes,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldContent,
 		})
 	}
-	if value := fu.Hash; value != nil {
+	if value, ok := fu.mutation.Hash(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldHash,
 		})
 	}
-	if value := fu.ContentType; value != nil {
+	if value, ok := fu.mutation.ContentType(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldContentType,
 		})
 	}
-	if nodes := fu.removedLinks; len(nodes) > 0 {
+	if fu.mutation.LinksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -276,12 +303,28 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fu.mutation.RemovedLinksIDs(); len(nodes) > 0 && !fu.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := fu.links; len(nodes) > 0 {
+	if nodes := fu.mutation.LinksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -295,14 +338,16 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, fu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{file.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -312,32 +357,24 @@ func (fu *FileUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // FileUpdateOne is the builder for updating a single File entity.
 type FileUpdateOne struct {
 	config
-	id               int
-	Name             *string
-	CreationTime     *time.Time
-	LastModifiedTime *time.Time
-	Size             *int
-	addSize          *int
-	Content          *[]byte
-	Hash             *string
-	ContentType      *string
-	links            map[int]struct{}
-	removedLinks     map[int]struct{}
+	fields   []string
+	hooks    []Hook
+	mutation *FileMutation
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (fuo *FileUpdateOne) SetName(s string) *FileUpdateOne {
-	fuo.Name = &s
+	fuo.mutation.SetName(s)
 	return fuo
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (fuo *FileUpdateOne) SetCreationTime(t time.Time) *FileUpdateOne {
-	fuo.CreationTime = &t
+	fuo.mutation.SetCreationTime(t)
 	return fuo
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (fuo *FileUpdateOne) SetNillableCreationTime(t *time.Time) *FileUpdateOne {
 	if t != nil {
 		fuo.SetCreationTime(*t)
@@ -345,20 +382,20 @@ func (fuo *FileUpdateOne) SetNillableCreationTime(t *time.Time) *FileUpdateOne {
 	return fuo
 }
 
-// SetLastModifiedTime sets the LastModifiedTime field.
+// SetLastModifiedTime sets the "LastModifiedTime" field.
 func (fuo *FileUpdateOne) SetLastModifiedTime(t time.Time) *FileUpdateOne {
-	fuo.LastModifiedTime = &t
+	fuo.mutation.SetLastModifiedTime(t)
 	return fuo
 }
 
-// SetSize sets the Size field.
+// SetSize sets the "Size" field.
 func (fuo *FileUpdateOne) SetSize(i int) *FileUpdateOne {
-	fuo.Size = &i
-	fuo.addSize = nil
+	fuo.mutation.ResetSize()
+	fuo.mutation.SetSize(i)
 	return fuo
 }
 
-// SetNillableSize sets the Size field if the given value is not nil.
+// SetNillableSize sets the "Size" field if the given value is not nil.
 func (fuo *FileUpdateOne) SetNillableSize(i *int) *FileUpdateOne {
 	if i != nil {
 		fuo.SetSize(*i)
@@ -366,46 +403,37 @@ func (fuo *FileUpdateOne) SetNillableSize(i *int) *FileUpdateOne {
 	return fuo
 }
 
-// AddSize adds i to Size.
+// AddSize adds i to the "Size" field.
 func (fuo *FileUpdateOne) AddSize(i int) *FileUpdateOne {
-	if fuo.addSize == nil {
-		fuo.addSize = &i
-	} else {
-		*fuo.addSize += i
-	}
+	fuo.mutation.AddSize(i)
 	return fuo
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (fuo *FileUpdateOne) SetContent(b []byte) *FileUpdateOne {
-	fuo.Content = &b
+	fuo.mutation.SetContent(b)
 	return fuo
 }
 
-// SetHash sets the Hash field.
+// SetHash sets the "Hash" field.
 func (fuo *FileUpdateOne) SetHash(s string) *FileUpdateOne {
-	fuo.Hash = &s
+	fuo.mutation.SetHash(s)
 	return fuo
 }
 
-// SetContentType sets the ContentType field.
+// SetContentType sets the "ContentType" field.
 func (fuo *FileUpdateOne) SetContentType(s string) *FileUpdateOne {
-	fuo.ContentType = &s
+	fuo.mutation.SetContentType(s)
 	return fuo
 }
 
-// AddLinkIDs adds the links edge to Link by ids.
+// AddLinkIDs adds the "links" edge to the Link entity by IDs.
 func (fuo *FileUpdateOne) AddLinkIDs(ids ...int) *FileUpdateOne {
-	if fuo.links == nil {
-		fuo.links = make(map[int]struct{})
-	}
-	for i := range ids {
-		fuo.links[ids[i]] = struct{}{}
-	}
+	fuo.mutation.AddLinkIDs(ids...)
 	return fuo
 }
 
-// AddLinks adds the links edges to Link.
+// AddLinks adds the "links" edges to the Link entity.
 func (fuo *FileUpdateOne) AddLinks(l ...*Link) *FileUpdateOne {
 	ids := make([]int, len(l))
 	for i := range l {
@@ -414,18 +442,24 @@ func (fuo *FileUpdateOne) AddLinks(l ...*Link) *FileUpdateOne {
 	return fuo.AddLinkIDs(ids...)
 }
 
-// RemoveLinkIDs removes the links edge to Link by ids.
-func (fuo *FileUpdateOne) RemoveLinkIDs(ids ...int) *FileUpdateOne {
-	if fuo.removedLinks == nil {
-		fuo.removedLinks = make(map[int]struct{})
-	}
-	for i := range ids {
-		fuo.removedLinks[ids[i]] = struct{}{}
-	}
+// Mutation returns the FileMutation object of the builder.
+func (fuo *FileUpdateOne) Mutation() *FileMutation {
+	return fuo.mutation
+}
+
+// ClearLinks clears all "links" edges to the Link entity.
+func (fuo *FileUpdateOne) ClearLinks() *FileUpdateOne {
+	fuo.mutation.ClearLinks()
 	return fuo
 }
 
-// RemoveLinks removes links edges to Link.
+// RemoveLinkIDs removes the "links" edge to Link entities by IDs.
+func (fuo *FileUpdateOne) RemoveLinkIDs(ids ...int) *FileUpdateOne {
+	fuo.mutation.RemoveLinkIDs(ids...)
+	return fuo
+}
+
+// RemoveLinks removes "links" edges to Link entities.
 func (fuo *FileUpdateOne) RemoveLinks(l ...*Link) *FileUpdateOne {
 	ids := make([]int, len(l))
 	for i := range l {
@@ -434,33 +468,58 @@ func (fuo *FileUpdateOne) RemoveLinks(l ...*Link) *FileUpdateOne {
 	return fuo.RemoveLinkIDs(ids...)
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (fuo *FileUpdateOne) Select(field string, fields ...string) *FileUpdateOne {
+	fuo.fields = append([]string{field}, fields...)
+	return fuo
+}
+
+// Save executes the query and returns the updated File entity.
 func (fuo *FileUpdateOne) Save(ctx context.Context) (*File, error) {
-	if fuo.Name != nil {
-		if err := file.NameValidator(*fuo.Name); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err  error
+		node *File
+	)
+	if len(fuo.hooks) == 0 {
+		if err = fuo.check(); err != nil {
+			return nil, err
+		}
+		node, err = fuo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*FileMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = fuo.check(); err != nil {
+				return nil, err
+			}
+			fuo.mutation = mutation
+			node, err = fuo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(fuo.hooks) - 1; i >= 0; i-- {
+			if fuo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = fuo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, fuo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if fuo.Size != nil {
-		if err := file.SizeValidator(*fuo.Size); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Size\": %v", err)
-		}
-	}
-	if fuo.Hash != nil {
-		if err := file.HashValidator(*fuo.Hash); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Hash\": %v", err)
-		}
-	}
-	return fuo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (fuo *FileUpdateOne) SaveX(ctx context.Context) *File {
-	f, err := fuo.Save(ctx)
+	node, err := fuo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return f
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -476,75 +535,118 @@ func (fuo *FileUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (f *File, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (fuo *FileUpdateOne) check() error {
+	if v, ok := fuo.mutation.Name(); ok {
+		if err := file.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "File.Name": %w`, err)}
+		}
+	}
+	if v, ok := fuo.mutation.Size(); ok {
+		if err := file.SizeValidator(v); err != nil {
+			return &ValidationError{Name: "Size", err: fmt.Errorf(`ent: validator failed for field "File.Size": %w`, err)}
+		}
+	}
+	if v, ok := fuo.mutation.Hash(); ok {
+		if err := file.HashValidator(v); err != nil {
+			return &ValidationError{Name: "Hash", err: fmt.Errorf(`ent: validator failed for field "File.Hash": %w`, err)}
+		}
+	}
+	return nil
+}
+
+func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (_node *File, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   file.Table,
 			Columns: file.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  fuo.id,
 				Type:   field.TypeInt,
 				Column: file.FieldID,
 			},
 		},
 	}
-	if value := fuo.Name; value != nil {
+	id, ok := fuo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "File.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := fuo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, file.FieldID)
+		for _, f := range fields {
+			if !file.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != file.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := fuo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := fuo.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldName,
 		})
 	}
-	if value := fuo.CreationTime; value != nil {
+	if value, ok := fuo.mutation.CreationTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldCreationTime,
 		})
 	}
-	if value := fuo.LastModifiedTime; value != nil {
+	if value, ok := fuo.mutation.LastModifiedTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldLastModifiedTime,
 		})
 	}
-	if value := fuo.Size; value != nil {
+	if value, ok := fuo.mutation.Size(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldSize,
 		})
 	}
-	if value := fuo.addSize; value != nil {
+	if value, ok := fuo.mutation.AddedSize(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldSize,
 		})
 	}
-	if value := fuo.Content; value != nil {
+	if value, ok := fuo.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBytes,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldContent,
 		})
 	}
-	if value := fuo.Hash; value != nil {
+	if value, ok := fuo.mutation.Hash(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldHash,
 		})
 	}
-	if value := fuo.ContentType; value != nil {
+	if value, ok := fuo.mutation.ContentType(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldContentType,
 		})
 	}
-	if nodes := fuo.removedLinks; len(nodes) > 0 {
+	if fuo.mutation.LinksCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -558,12 +660,28 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (f *File, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := fuo.mutation.RemovedLinksIDs(); len(nodes) > 0 && !fuo.mutation.LinksCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   file.LinksTable,
+			Columns: []string{file.LinksColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: link.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := fuo.links; len(nodes) > 0 {
+	if nodes := fuo.mutation.LinksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -577,19 +695,21 @@ func (fuo *FileUpdateOne) sqlSave(ctx context.Context) (f *File, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	f = &File{config: fuo.config}
-	_spec.Assign = f.assignValues
-	_spec.ScanValues = f.scanValues()
+	_node = &File{config: fuo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, fuo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{file.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return f, nil
+	return _node, nil
 }

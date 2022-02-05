@@ -2,31 +2,32 @@
 
 package tag
 
-import (
-	"github.com/kcarretto/paragon/ent/schema"
-)
-
 const (
 	// Label holds the string label denoting the tag type in the database.
 	Label = "tag"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name vertex property in the database.
+	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-
+	// EdgeTargets holds the string denoting the targets edge name in mutations.
+	EdgeTargets = "targets"
+	// EdgeTasks holds the string denoting the tasks edge name in mutations.
+	EdgeTasks = "tasks"
+	// EdgeJobs holds the string denoting the jobs edge name in mutations.
+	EdgeJobs = "jobs"
 	// Table holds the table name of the tag in the database.
 	Table = "tags"
-	// TargetsTable is the table the holds the targets relation/edge. The primary key declared below.
+	// TargetsTable is the table that holds the targets relation/edge. The primary key declared below.
 	TargetsTable = "target_tags"
 	// TargetsInverseTable is the table name for the Target entity.
 	// It exists in this package in order to avoid circular dependency with the "target" package.
 	TargetsInverseTable = "targets"
-	// TasksTable is the table the holds the tasks relation/edge. The primary key declared below.
+	// TasksTable is the table that holds the tasks relation/edge. The primary key declared below.
 	TasksTable = "task_tags"
 	// TasksInverseTable is the table name for the Task entity.
 	// It exists in this package in order to avoid circular dependency with the "task" package.
 	TasksInverseTable = "tasks"
-	// JobsTable is the table the holds the jobs relation/edge. The primary key declared below.
+	// JobsTable is the table that holds the jobs relation/edge. The primary key declared below.
 	JobsTable = "job_tags"
 	// JobsInverseTable is the table name for the Job entity.
 	// It exists in this package in order to avoid circular dependency with the "job" package.
@@ -51,11 +52,17 @@ var (
 	JobsPrimaryKey = []string{"job_id", "tag_id"}
 )
 
-var (
-	fields = schema.Tag{}.Fields()
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	return false
+}
 
-	// descName is the schema descriptor for Name field.
-	descName = fields[0].Descriptor()
+var (
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
-	NameValidator = descName.Validators[0].(func(string) error)
+	NameValidator func(string) error
 )

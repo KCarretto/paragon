@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/credential"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/target"
@@ -18,48 +18,42 @@ import (
 // CredentialUpdate is the builder for updating Credential entities.
 type CredentialUpdate struct {
 	config
-	principal     *string
-	secret        *string
-	kind          *credential.Kind
-	fails         *int
-	addfails      *int
-	target        map[int]struct{}
-	clearedTarget bool
-	predicates    []predicate.Credential
+	hooks    []Hook
+	mutation *CredentialMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the CredentialUpdate builder.
 func (cu *CredentialUpdate) Where(ps ...predicate.Credential) *CredentialUpdate {
-	cu.predicates = append(cu.predicates, ps...)
+	cu.mutation.Where(ps...)
 	return cu
 }
 
-// SetPrincipal sets the principal field.
+// SetPrincipal sets the "principal" field.
 func (cu *CredentialUpdate) SetPrincipal(s string) *CredentialUpdate {
-	cu.principal = &s
+	cu.mutation.SetPrincipal(s)
 	return cu
 }
 
-// SetSecret sets the secret field.
+// SetSecret sets the "secret" field.
 func (cu *CredentialUpdate) SetSecret(s string) *CredentialUpdate {
-	cu.secret = &s
+	cu.mutation.SetSecret(s)
 	return cu
 }
 
-// SetKind sets the kind field.
+// SetKind sets the "kind" field.
 func (cu *CredentialUpdate) SetKind(c credential.Kind) *CredentialUpdate {
-	cu.kind = &c
+	cu.mutation.SetKind(c)
 	return cu
 }
 
-// SetFails sets the fails field.
+// SetFails sets the "fails" field.
 func (cu *CredentialUpdate) SetFails(i int) *CredentialUpdate {
-	cu.fails = &i
-	cu.addfails = nil
+	cu.mutation.ResetFails()
+	cu.mutation.SetFails(i)
 	return cu
 }
 
-// SetNillableFails sets the fails field if the given value is not nil.
+// SetNillableFails sets the "fails" field if the given value is not nil.
 func (cu *CredentialUpdate) SetNillableFails(i *int) *CredentialUpdate {
 	if i != nil {
 		cu.SetFails(*i)
@@ -67,26 +61,19 @@ func (cu *CredentialUpdate) SetNillableFails(i *int) *CredentialUpdate {
 	return cu
 }
 
-// AddFails adds i to fails.
+// AddFails adds i to the "fails" field.
 func (cu *CredentialUpdate) AddFails(i int) *CredentialUpdate {
-	if cu.addfails == nil {
-		cu.addfails = &i
-	} else {
-		*cu.addfails += i
-	}
+	cu.mutation.AddFails(i)
 	return cu
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (cu *CredentialUpdate) SetTargetID(id int) *CredentialUpdate {
-	if cu.target == nil {
-		cu.target = make(map[int]struct{})
-	}
-	cu.target[id] = struct{}{}
+	cu.mutation.SetTargetID(id)
 	return cu
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (cu *CredentialUpdate) SetNillableTargetID(id *int) *CredentialUpdate {
 	if id != nil {
 		cu = cu.SetTargetID(*id)
@@ -94,38 +81,58 @@ func (cu *CredentialUpdate) SetNillableTargetID(id *int) *CredentialUpdate {
 	return cu
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (cu *CredentialUpdate) SetTarget(t *Target) *CredentialUpdate {
 	return cu.SetTargetID(t.ID)
 }
 
-// ClearTarget clears the target edge to Target.
+// Mutation returns the CredentialMutation object of the builder.
+func (cu *CredentialUpdate) Mutation() *CredentialMutation {
+	return cu.mutation
+}
+
+// ClearTarget clears the "target" edge to the Target entity.
 func (cu *CredentialUpdate) ClearTarget() *CredentialUpdate {
-	cu.clearedTarget = true
+	cu.mutation.ClearTarget()
 	return cu
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (cu *CredentialUpdate) Save(ctx context.Context) (int, error) {
-	if cu.secret != nil {
-		if err := credential.SecretValidator(*cu.secret); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"secret\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(cu.hooks) == 0 {
+		if err = cu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = cu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*CredentialMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = cu.check(); err != nil {
+				return 0, err
+			}
+			cu.mutation = mutation
+			affected, err = cu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(cu.hooks) - 1; i >= 0; i-- {
+			if cu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = cu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, cu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if cu.kind != nil {
-		if err := credential.KindValidator(*cu.kind); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
-		}
-	}
-	if cu.fails != nil {
-		if err := credential.FailsValidator(*cu.fails); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
-		}
-	}
-	if len(cu.target) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	return cu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -150,6 +157,26 @@ func (cu *CredentialUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (cu *CredentialUpdate) check() error {
+	if v, ok := cu.mutation.Secret(); ok {
+		if err := credential.SecretValidator(v); err != nil {
+			return &ValidationError{Name: "secret", err: fmt.Errorf(`ent: validator failed for field "Credential.secret": %w`, err)}
+		}
+	}
+	if v, ok := cu.mutation.Kind(); ok {
+		if err := credential.KindValidator(v); err != nil {
+			return &ValidationError{Name: "kind", err: fmt.Errorf(`ent: validator failed for field "Credential.kind": %w`, err)}
+		}
+	}
+	if v, ok := cu.mutation.Fails(); ok {
+		if err := credential.FailsValidator(v); err != nil {
+			return &ValidationError{Name: "fails", err: fmt.Errorf(`ent: validator failed for field "Credential.fails": %w`, err)}
+		}
+	}
+	return nil
+}
+
 func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -161,49 +188,49 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := cu.predicates; len(ps) > 0 {
+	if ps := cu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := cu.principal; value != nil {
+	if value, ok := cu.mutation.Principal(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldPrincipal,
 		})
 	}
-	if value := cu.secret; value != nil {
+	if value, ok := cu.mutation.Secret(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldSecret,
 		})
 	}
-	if value := cu.kind; value != nil {
+	if value, ok := cu.mutation.Kind(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldKind,
 		})
 	}
-	if value := cu.fails; value != nil {
+	if value, ok := cu.mutation.Fails(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldFails,
 		})
 	}
-	if value := cu.addfails; value != nil {
+	if value, ok := cu.mutation.AddedFails(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldFails,
 		})
 	}
-	if cu.clearedTarget {
+	if cu.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -219,7 +246,7 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := cu.target; len(nodes) > 0 {
+	if nodes := cu.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -233,14 +260,16 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, cu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{credential.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -250,42 +279,37 @@ func (cu *CredentialUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // CredentialUpdateOne is the builder for updating a single Credential entity.
 type CredentialUpdateOne struct {
 	config
-	id            int
-	principal     *string
-	secret        *string
-	kind          *credential.Kind
-	fails         *int
-	addfails      *int
-	target        map[int]struct{}
-	clearedTarget bool
+	fields   []string
+	hooks    []Hook
+	mutation *CredentialMutation
 }
 
-// SetPrincipal sets the principal field.
+// SetPrincipal sets the "principal" field.
 func (cuo *CredentialUpdateOne) SetPrincipal(s string) *CredentialUpdateOne {
-	cuo.principal = &s
+	cuo.mutation.SetPrincipal(s)
 	return cuo
 }
 
-// SetSecret sets the secret field.
+// SetSecret sets the "secret" field.
 func (cuo *CredentialUpdateOne) SetSecret(s string) *CredentialUpdateOne {
-	cuo.secret = &s
+	cuo.mutation.SetSecret(s)
 	return cuo
 }
 
-// SetKind sets the kind field.
+// SetKind sets the "kind" field.
 func (cuo *CredentialUpdateOne) SetKind(c credential.Kind) *CredentialUpdateOne {
-	cuo.kind = &c
+	cuo.mutation.SetKind(c)
 	return cuo
 }
 
-// SetFails sets the fails field.
+// SetFails sets the "fails" field.
 func (cuo *CredentialUpdateOne) SetFails(i int) *CredentialUpdateOne {
-	cuo.fails = &i
-	cuo.addfails = nil
+	cuo.mutation.ResetFails()
+	cuo.mutation.SetFails(i)
 	return cuo
 }
 
-// SetNillableFails sets the fails field if the given value is not nil.
+// SetNillableFails sets the "fails" field if the given value is not nil.
 func (cuo *CredentialUpdateOne) SetNillableFails(i *int) *CredentialUpdateOne {
 	if i != nil {
 		cuo.SetFails(*i)
@@ -293,26 +317,19 @@ func (cuo *CredentialUpdateOne) SetNillableFails(i *int) *CredentialUpdateOne {
 	return cuo
 }
 
-// AddFails adds i to fails.
+// AddFails adds i to the "fails" field.
 func (cuo *CredentialUpdateOne) AddFails(i int) *CredentialUpdateOne {
-	if cuo.addfails == nil {
-		cuo.addfails = &i
-	} else {
-		*cuo.addfails += i
-	}
+	cuo.mutation.AddFails(i)
 	return cuo
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (cuo *CredentialUpdateOne) SetTargetID(id int) *CredentialUpdateOne {
-	if cuo.target == nil {
-		cuo.target = make(map[int]struct{})
-	}
-	cuo.target[id] = struct{}{}
+	cuo.mutation.SetTargetID(id)
 	return cuo
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (cuo *CredentialUpdateOne) SetNillableTargetID(id *int) *CredentialUpdateOne {
 	if id != nil {
 		cuo = cuo.SetTargetID(*id)
@@ -320,47 +337,74 @@ func (cuo *CredentialUpdateOne) SetNillableTargetID(id *int) *CredentialUpdateOn
 	return cuo
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (cuo *CredentialUpdateOne) SetTarget(t *Target) *CredentialUpdateOne {
 	return cuo.SetTargetID(t.ID)
 }
 
-// ClearTarget clears the target edge to Target.
+// Mutation returns the CredentialMutation object of the builder.
+func (cuo *CredentialUpdateOne) Mutation() *CredentialMutation {
+	return cuo.mutation
+}
+
+// ClearTarget clears the "target" edge to the Target entity.
 func (cuo *CredentialUpdateOne) ClearTarget() *CredentialUpdateOne {
-	cuo.clearedTarget = true
+	cuo.mutation.ClearTarget()
 	return cuo
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (cuo *CredentialUpdateOne) Select(field string, fields ...string) *CredentialUpdateOne {
+	cuo.fields = append([]string{field}, fields...)
+	return cuo
+}
+
+// Save executes the query and returns the updated Credential entity.
 func (cuo *CredentialUpdateOne) Save(ctx context.Context) (*Credential, error) {
-	if cuo.secret != nil {
-		if err := credential.SecretValidator(*cuo.secret); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"secret\": %v", err)
+	var (
+		err  error
+		node *Credential
+	)
+	if len(cuo.hooks) == 0 {
+		if err = cuo.check(); err != nil {
+			return nil, err
+		}
+		node, err = cuo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*CredentialMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = cuo.check(); err != nil {
+				return nil, err
+			}
+			cuo.mutation = mutation
+			node, err = cuo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(cuo.hooks) - 1; i >= 0; i-- {
+			if cuo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = cuo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, cuo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if cuo.kind != nil {
-		if err := credential.KindValidator(*cuo.kind); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"kind\": %v", err)
-		}
-	}
-	if cuo.fails != nil {
-		if err := credential.FailsValidator(*cuo.fails); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"fails\": %v", err)
-		}
-	}
-	if len(cuo.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	return cuo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (cuo *CredentialUpdateOne) SaveX(ctx context.Context) *Credential {
-	c, err := cuo.Save(ctx)
+	node, err := cuo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return c
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -376,54 +420,97 @@ func (cuo *CredentialUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (cuo *CredentialUpdateOne) check() error {
+	if v, ok := cuo.mutation.Secret(); ok {
+		if err := credential.SecretValidator(v); err != nil {
+			return &ValidationError{Name: "secret", err: fmt.Errorf(`ent: validator failed for field "Credential.secret": %w`, err)}
+		}
+	}
+	if v, ok := cuo.mutation.Kind(); ok {
+		if err := credential.KindValidator(v); err != nil {
+			return &ValidationError{Name: "kind", err: fmt.Errorf(`ent: validator failed for field "Credential.kind": %w`, err)}
+		}
+	}
+	if v, ok := cuo.mutation.Fails(); ok {
+		if err := credential.FailsValidator(v); err != nil {
+			return &ValidationError{Name: "fails", err: fmt.Errorf(`ent: validator failed for field "Credential.fails": %w`, err)}
+		}
+	}
+	return nil
+}
+
+func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (_node *Credential, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   credential.Table,
 			Columns: credential.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  cuo.id,
 				Type:   field.TypeInt,
 				Column: credential.FieldID,
 			},
 		},
 	}
-	if value := cuo.principal; value != nil {
+	id, ok := cuo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Credential.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := cuo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, credential.FieldID)
+		for _, f := range fields {
+			if !credential.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != credential.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := cuo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := cuo.mutation.Principal(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldPrincipal,
 		})
 	}
-	if value := cuo.secret; value != nil {
+	if value, ok := cuo.mutation.Secret(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldSecret,
 		})
 	}
-	if value := cuo.kind; value != nil {
+	if value, ok := cuo.mutation.Kind(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeEnum,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldKind,
 		})
 	}
-	if value := cuo.fails; value != nil {
+	if value, ok := cuo.mutation.Fails(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldFails,
 		})
 	}
-	if value := cuo.addfails; value != nil {
+	if value, ok := cuo.mutation.AddedFails(); ok {
 		_spec.Fields.Add = append(_spec.Fields.Add, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: credential.FieldFails,
 		})
 	}
-	if cuo.clearedTarget {
+	if cuo.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -439,7 +526,7 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := cuo.target; len(nodes) > 0 {
+	if nodes := cuo.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -453,19 +540,21 @@ func (cuo *CredentialUpdateOne) sqlSave(ctx context.Context) (c *Credential, err
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	c = &Credential{config: cuo.config}
-	_spec.Assign = c.assignValues
-	_spec.ScanValues = c.scanValues()
+	_node = &Credential{config: cuo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, cuo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{credential.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return c, nil
+	return _node, nil
 }

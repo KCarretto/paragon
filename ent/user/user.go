@@ -2,44 +2,43 @@
 
 package user
 
-import (
-	"github.com/kcarretto/paragon/ent/schema"
-)
-
 const (
 	// Label holds the string label denoting the user type in the database.
 	Label = "user"
 	// FieldID holds the string denoting the id field in the database.
 	FieldID = "id"
-	// FieldName holds the string denoting the name vertex property in the database.
+	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
-	// FieldOAuthID holds the string denoting the oauthid vertex property in the database.
-	FieldOAuthID = "o_auth_id"
-	// FieldPhotoURL holds the string denoting the photourl vertex property in the database.
+	// FieldOAuthID holds the string denoting the oauthid field in the database.
+	FieldOAuthID = "oauth_id"
+	// FieldPhotoURL holds the string denoting the photourl field in the database.
 	FieldPhotoURL = "photo_url"
-	// FieldSessionToken holds the string denoting the sessiontoken vertex property in the database.
+	// FieldSessionToken holds the string denoting the sessiontoken field in the database.
 	FieldSessionToken = "session_token"
-	// FieldIsActivated holds the string denoting the isactivated vertex property in the database.
+	// FieldIsActivated holds the string denoting the isactivated field in the database.
 	FieldIsActivated = "is_activated"
-	// FieldIsAdmin holds the string denoting the isadmin vertex property in the database.
+	// FieldIsAdmin holds the string denoting the isadmin field in the database.
 	FieldIsAdmin = "is_admin"
-
+	// EdgeJobs holds the string denoting the jobs edge name in mutations.
+	EdgeJobs = "jobs"
+	// EdgeEvents holds the string denoting the events edge name in mutations.
+	EdgeEvents = "events"
 	// Table holds the table name of the user in the database.
 	Table = "users"
-	// JobsTable is the table the holds the jobs relation/edge.
+	// JobsTable is the table that holds the jobs relation/edge.
 	JobsTable = "jobs"
 	// JobsInverseTable is the table name for the Job entity.
 	// It exists in this package in order to avoid circular dependency with the "job" package.
 	JobsInverseTable = "jobs"
 	// JobsColumn is the table column denoting the jobs relation/edge.
-	JobsColumn = "owner_id"
-	// EventsTable is the table the holds the events relation/edge.
+	JobsColumn = "user_jobs"
+	// EventsTable is the table that holds the events relation/edge.
 	EventsTable = "events"
 	// EventsInverseTable is the table name for the Event entity.
 	// It exists in this package in order to avoid circular dependency with the "event" package.
 	EventsInverseTable = "events"
 	// EventsColumn is the table column denoting the events relation/edge.
-	EventsColumn = "owner_id"
+	EventsColumn = "user_events"
 )
 
 // Columns holds all SQL columns for user fields.
@@ -53,45 +52,34 @@ var Columns = []string{
 	FieldIsAdmin,
 }
 
-// ForeignKeys holds the SQL foreign-keys that are owned by the User type.
+// ForeignKeys holds the SQL foreign-keys that are owned by the "users"
+// table and are not defined as standalone fields in the schema.
 var ForeignKeys = []string{
-	"event_liker_id",
+	"event_likers",
+}
+
+// ValidColumn reports if the column name is valid (part of the table columns).
+func ValidColumn(column string) bool {
+	for i := range Columns {
+		if column == Columns[i] {
+			return true
+		}
+	}
+	for i := range ForeignKeys {
+		if column == ForeignKeys[i] {
+			return true
+		}
+	}
+	return false
 }
 
 var (
-	fields = schema.User{}.Fields()
-
-	// descName is the schema descriptor for Name field.
-	descName = fields[0].Descriptor()
 	// NameValidator is a validator for the "Name" field. It is called by the builders before save.
-	NameValidator = func() func(string) error {
-		validators := descName.Validators
-		fns := [...]func(string) error{
-			validators[0].(func(string) error),
-			validators[1].(func(string) error),
-		}
-		return func(Name string) error {
-			for _, fn := range fns {
-				if err := fn(Name); err != nil {
-					return err
-				}
-			}
-			return nil
-		}
-	}()
-
-	// descSessionToken is the schema descriptor for SessionToken field.
-	descSessionToken = fields[3].Descriptor()
+	NameValidator func(string) error
 	// SessionTokenValidator is a validator for the "SessionToken" field. It is called by the builders before save.
-	SessionTokenValidator = descSessionToken.Validators[0].(func(string) error)
-
-	// descIsActivated is the schema descriptor for IsActivated field.
-	descIsActivated = fields[4].Descriptor()
-	// DefaultIsActivated holds the default value on creation for the IsActivated field.
-	DefaultIsActivated = descIsActivated.Default.(bool)
-
-	// descIsAdmin is the schema descriptor for IsAdmin field.
-	descIsAdmin = fields[5].Descriptor()
-	// DefaultIsAdmin holds the default value on creation for the IsAdmin field.
-	DefaultIsAdmin = descIsAdmin.Default.(bool)
+	SessionTokenValidator func(string) error
+	// DefaultIsActivated holds the default value on creation for the "IsActivated" field.
+	DefaultIsActivated bool
+	// DefaultIsAdmin holds the default value on creation for the "IsAdmin" field.
+	DefaultIsAdmin bool
 )

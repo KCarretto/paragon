@@ -4,10 +4,11 @@ package ent
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
 )
@@ -15,18 +16,46 @@ import (
 // TagDelete is the builder for deleting a Tag entity.
 type TagDelete struct {
 	config
-	predicates []predicate.Tag
+	hooks    []Hook
+	mutation *TagMutation
 }
 
-// Where adds a new predicate to the delete builder.
+// Where appends a list predicates to the TagDelete builder.
 func (td *TagDelete) Where(ps ...predicate.Tag) *TagDelete {
-	td.predicates = append(td.predicates, ps...)
+	td.mutation.Where(ps...)
 	return td
 }
 
 // Exec executes the deletion query and returns how many vertices were deleted.
 func (td *TagDelete) Exec(ctx context.Context) (int, error) {
-	return td.sqlExec(ctx)
+	var (
+		err      error
+		affected int
+	)
+	if len(td.hooks) == 0 {
+		affected, err = td.sqlExec(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*TagMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			td.mutation = mutation
+			affected, err = td.sqlExec(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(td.hooks) - 1; i >= 0; i-- {
+			if td.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = td.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, td.mutation); err != nil {
+			return 0, err
+		}
+	}
+	return affected, err
 }
 
 // ExecX is like Exec, but panics if an error occurs.
@@ -48,7 +77,7 @@ func (td *TagDelete) sqlExec(ctx context.Context) (int, error) {
 			},
 		},
 	}
-	if ps := td.predicates; len(ps) > 0 {
+	if ps := td.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
@@ -70,7 +99,7 @@ func (tdo *TagDeleteOne) Exec(ctx context.Context) error {
 	case err != nil:
 		return err
 	case n == 0:
-		return &ErrNotFound{tag.Label}
+		return &NotFoundError{tag.Label}
 	default:
 		return nil
 	}

@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/job"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -21,43 +21,23 @@ import (
 // TaskUpdate is the builder for updating Task entities.
 type TaskUpdate struct {
 	config
-	QueueTime          *time.Time
-	LastChangedTime    *time.Time
-	ClaimTime          *time.Time
-	clearClaimTime     bool
-	ExecStartTime      *time.Time
-	clearExecStartTime bool
-	ExecStopTime       *time.Time
-	clearExecStopTime  bool
-	Content            *string
-	Output             *string
-	clearOutput        bool
-	Error              *string
-	clearError         bool
-	SessionID          *string
-	clearSessionID     bool
-	tags               map[int]struct{}
-	job                map[int]struct{}
-	target             map[int]struct{}
-	removedTags        map[int]struct{}
-	clearedJob         bool
-	clearedTarget      bool
-	predicates         []predicate.Task
+	hooks    []Hook
+	mutation *TaskMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the TaskUpdate builder.
 func (tu *TaskUpdate) Where(ps ...predicate.Task) *TaskUpdate {
-	tu.predicates = append(tu.predicates, ps...)
+	tu.mutation.Where(ps...)
 	return tu
 }
 
-// SetQueueTime sets the QueueTime field.
+// SetQueueTime sets the "QueueTime" field.
 func (tu *TaskUpdate) SetQueueTime(t time.Time) *TaskUpdate {
-	tu.QueueTime = &t
+	tu.mutation.SetQueueTime(t)
 	return tu
 }
 
-// SetNillableQueueTime sets the QueueTime field if the given value is not nil.
+// SetNillableQueueTime sets the "QueueTime" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableQueueTime(t *time.Time) *TaskUpdate {
 	if t != nil {
 		tu.SetQueueTime(*t)
@@ -65,19 +45,19 @@ func (tu *TaskUpdate) SetNillableQueueTime(t *time.Time) *TaskUpdate {
 	return tu
 }
 
-// SetLastChangedTime sets the LastChangedTime field.
+// SetLastChangedTime sets the "LastChangedTime" field.
 func (tu *TaskUpdate) SetLastChangedTime(t time.Time) *TaskUpdate {
-	tu.LastChangedTime = &t
+	tu.mutation.SetLastChangedTime(t)
 	return tu
 }
 
-// SetClaimTime sets the ClaimTime field.
+// SetClaimTime sets the "ClaimTime" field.
 func (tu *TaskUpdate) SetClaimTime(t time.Time) *TaskUpdate {
-	tu.ClaimTime = &t
+	tu.mutation.SetClaimTime(t)
 	return tu
 }
 
-// SetNillableClaimTime sets the ClaimTime field if the given value is not nil.
+// SetNillableClaimTime sets the "ClaimTime" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableClaimTime(t *time.Time) *TaskUpdate {
 	if t != nil {
 		tu.SetClaimTime(*t)
@@ -85,20 +65,19 @@ func (tu *TaskUpdate) SetNillableClaimTime(t *time.Time) *TaskUpdate {
 	return tu
 }
 
-// ClearClaimTime clears the value of ClaimTime.
+// ClearClaimTime clears the value of the "ClaimTime" field.
 func (tu *TaskUpdate) ClearClaimTime() *TaskUpdate {
-	tu.ClaimTime = nil
-	tu.clearClaimTime = true
+	tu.mutation.ClearClaimTime()
 	return tu
 }
 
-// SetExecStartTime sets the ExecStartTime field.
+// SetExecStartTime sets the "ExecStartTime" field.
 func (tu *TaskUpdate) SetExecStartTime(t time.Time) *TaskUpdate {
-	tu.ExecStartTime = &t
+	tu.mutation.SetExecStartTime(t)
 	return tu
 }
 
-// SetNillableExecStartTime sets the ExecStartTime field if the given value is not nil.
+// SetNillableExecStartTime sets the "ExecStartTime" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableExecStartTime(t *time.Time) *TaskUpdate {
 	if t != nil {
 		tu.SetExecStartTime(*t)
@@ -106,20 +85,19 @@ func (tu *TaskUpdate) SetNillableExecStartTime(t *time.Time) *TaskUpdate {
 	return tu
 }
 
-// ClearExecStartTime clears the value of ExecStartTime.
+// ClearExecStartTime clears the value of the "ExecStartTime" field.
 func (tu *TaskUpdate) ClearExecStartTime() *TaskUpdate {
-	tu.ExecStartTime = nil
-	tu.clearExecStartTime = true
+	tu.mutation.ClearExecStartTime()
 	return tu
 }
 
-// SetExecStopTime sets the ExecStopTime field.
+// SetExecStopTime sets the "ExecStopTime" field.
 func (tu *TaskUpdate) SetExecStopTime(t time.Time) *TaskUpdate {
-	tu.ExecStopTime = &t
+	tu.mutation.SetExecStopTime(t)
 	return tu
 }
 
-// SetNillableExecStopTime sets the ExecStopTime field if the given value is not nil.
+// SetNillableExecStopTime sets the "ExecStopTime" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableExecStopTime(t *time.Time) *TaskUpdate {
 	if t != nil {
 		tu.SetExecStopTime(*t)
@@ -127,26 +105,25 @@ func (tu *TaskUpdate) SetNillableExecStopTime(t *time.Time) *TaskUpdate {
 	return tu
 }
 
-// ClearExecStopTime clears the value of ExecStopTime.
+// ClearExecStopTime clears the value of the "ExecStopTime" field.
 func (tu *TaskUpdate) ClearExecStopTime() *TaskUpdate {
-	tu.ExecStopTime = nil
-	tu.clearExecStopTime = true
+	tu.mutation.ClearExecStopTime()
 	return tu
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (tu *TaskUpdate) SetContent(s string) *TaskUpdate {
-	tu.Content = &s
+	tu.mutation.SetContent(s)
 	return tu
 }
 
-// SetOutput sets the Output field.
+// SetOutput sets the "Output" field.
 func (tu *TaskUpdate) SetOutput(s string) *TaskUpdate {
-	tu.Output = &s
+	tu.mutation.SetOutput(s)
 	return tu
 }
 
-// SetNillableOutput sets the Output field if the given value is not nil.
+// SetNillableOutput sets the "Output" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableOutput(s *string) *TaskUpdate {
 	if s != nil {
 		tu.SetOutput(*s)
@@ -154,20 +131,19 @@ func (tu *TaskUpdate) SetNillableOutput(s *string) *TaskUpdate {
 	return tu
 }
 
-// ClearOutput clears the value of Output.
+// ClearOutput clears the value of the "Output" field.
 func (tu *TaskUpdate) ClearOutput() *TaskUpdate {
-	tu.Output = nil
-	tu.clearOutput = true
+	tu.mutation.ClearOutput()
 	return tu
 }
 
-// SetError sets the Error field.
+// SetError sets the "Error" field.
 func (tu *TaskUpdate) SetError(s string) *TaskUpdate {
-	tu.Error = &s
+	tu.mutation.SetError(s)
 	return tu
 }
 
-// SetNillableError sets the Error field if the given value is not nil.
+// SetNillableError sets the "Error" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableError(s *string) *TaskUpdate {
 	if s != nil {
 		tu.SetError(*s)
@@ -175,20 +151,19 @@ func (tu *TaskUpdate) SetNillableError(s *string) *TaskUpdate {
 	return tu
 }
 
-// ClearError clears the value of Error.
+// ClearError clears the value of the "Error" field.
 func (tu *TaskUpdate) ClearError() *TaskUpdate {
-	tu.Error = nil
-	tu.clearError = true
+	tu.mutation.ClearError()
 	return tu
 }
 
-// SetSessionID sets the SessionID field.
+// SetSessionID sets the "SessionID" field.
 func (tu *TaskUpdate) SetSessionID(s string) *TaskUpdate {
-	tu.SessionID = &s
+	tu.mutation.SetSessionID(s)
 	return tu
 }
 
-// SetNillableSessionID sets the SessionID field if the given value is not nil.
+// SetNillableSessionID sets the "SessionID" field if the given value is not nil.
 func (tu *TaskUpdate) SetNillableSessionID(s *string) *TaskUpdate {
 	if s != nil {
 		tu.SetSessionID(*s)
@@ -196,25 +171,19 @@ func (tu *TaskUpdate) SetNillableSessionID(s *string) *TaskUpdate {
 	return tu
 }
 
-// ClearSessionID clears the value of SessionID.
+// ClearSessionID clears the value of the "SessionID" field.
 func (tu *TaskUpdate) ClearSessionID() *TaskUpdate {
-	tu.SessionID = nil
-	tu.clearSessionID = true
+	tu.mutation.ClearSessionID()
 	return tu
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (tu *TaskUpdate) AddTagIDs(ids ...int) *TaskUpdate {
-	if tu.tags == nil {
-		tu.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.tags[ids[i]] = struct{}{}
-	}
+	tu.mutation.AddTagIDs(ids...)
 	return tu
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (tu *TaskUpdate) AddTags(t ...*Tag) *TaskUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -223,30 +192,24 @@ func (tu *TaskUpdate) AddTags(t ...*Tag) *TaskUpdate {
 	return tu.AddTagIDs(ids...)
 }
 
-// SetJobID sets the job edge to Job by id.
+// SetJobID sets the "job" edge to the Job entity by ID.
 func (tu *TaskUpdate) SetJobID(id int) *TaskUpdate {
-	if tu.job == nil {
-		tu.job = make(map[int]struct{})
-	}
-	tu.job[id] = struct{}{}
+	tu.mutation.SetJobID(id)
 	return tu
 }
 
-// SetJob sets the job edge to Job.
+// SetJob sets the "job" edge to the Job entity.
 func (tu *TaskUpdate) SetJob(j *Job) *TaskUpdate {
 	return tu.SetJobID(j.ID)
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (tu *TaskUpdate) SetTargetID(id int) *TaskUpdate {
-	if tu.target == nil {
-		tu.target = make(map[int]struct{})
-	}
-	tu.target[id] = struct{}{}
+	tu.mutation.SetTargetID(id)
 	return tu
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (tu *TaskUpdate) SetNillableTargetID(id *int) *TaskUpdate {
 	if id != nil {
 		tu = tu.SetTargetID(*id)
@@ -254,23 +217,29 @@ func (tu *TaskUpdate) SetNillableTargetID(id *int) *TaskUpdate {
 	return tu
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (tu *TaskUpdate) SetTarget(t *Target) *TaskUpdate {
 	return tu.SetTargetID(t.ID)
 }
 
-// RemoveTagIDs removes the tags edge to Tag by ids.
-func (tu *TaskUpdate) RemoveTagIDs(ids ...int) *TaskUpdate {
-	if tu.removedTags == nil {
-		tu.removedTags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tu.removedTags[ids[i]] = struct{}{}
-	}
+// Mutation returns the TaskMutation object of the builder.
+func (tu *TaskUpdate) Mutation() *TaskMutation {
+	return tu.mutation
+}
+
+// ClearTags clears all "tags" edges to the Tag entity.
+func (tu *TaskUpdate) ClearTags() *TaskUpdate {
+	tu.mutation.ClearTags()
 	return tu
 }
 
-// RemoveTags removes tags edges to Tag.
+// RemoveTagIDs removes the "tags" edge to Tag entities by IDs.
+func (tu *TaskUpdate) RemoveTagIDs(ids ...int) *TaskUpdate {
+	tu.mutation.RemoveTagIDs(ids...)
+	return tu
+}
+
+// RemoveTags removes "tags" edges to Tag entities.
 func (tu *TaskUpdate) RemoveTags(t ...*Tag) *TaskUpdate {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -279,40 +248,54 @@ func (tu *TaskUpdate) RemoveTags(t ...*Tag) *TaskUpdate {
 	return tu.RemoveTagIDs(ids...)
 }
 
-// ClearJob clears the job edge to Job.
+// ClearJob clears the "job" edge to the Job entity.
 func (tu *TaskUpdate) ClearJob() *TaskUpdate {
-	tu.clearedJob = true
+	tu.mutation.ClearJob()
 	return tu
 }
 
-// ClearTarget clears the target edge to Target.
+// ClearTarget clears the "target" edge to the Target entity.
 func (tu *TaskUpdate) ClearTarget() *TaskUpdate {
-	tu.clearedTarget = true
+	tu.mutation.ClearTarget()
 	return tu
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (tu *TaskUpdate) Save(ctx context.Context) (int, error) {
-	if tu.Content != nil {
-		if err := task.ContentValidator(*tu.Content); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(tu.hooks) == 0 {
+		if err = tu.check(); err != nil {
+			return 0, err
+		}
+		affected, err = tu.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*TaskMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tu.check(); err != nil {
+				return 0, err
+			}
+			tu.mutation = mutation
+			affected, err = tu.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(tu.hooks) - 1; i >= 0; i-- {
+			if tu.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = tu.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, tu.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if tu.SessionID != nil {
-		if err := task.SessionIDValidator(*tu.SessionID); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"SessionID\": %v", err)
-		}
-	}
-	if len(tu.job) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"job\"")
-	}
-	if tu.clearedJob && tu.job == nil {
-		return 0, errors.New("ent: clearing a unique edge \"job\"")
-	}
-	if len(tu.target) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	return tu.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -337,6 +320,24 @@ func (tu *TaskUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (tu *TaskUpdate) check() error {
+	if v, ok := tu.mutation.Content(); ok {
+		if err := task.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "Content", err: fmt.Errorf(`ent: validator failed for field "Task.Content": %w`, err)}
+		}
+	}
+	if v, ok := tu.mutation.SessionID(); ok {
+		if err := task.SessionIDValidator(v); err != nil {
+			return &ValidationError{Name: "SessionID", err: fmt.Errorf(`ent: validator failed for field "Task.SessionID": %w`, err)}
+		}
+	}
+	if _, ok := tu.mutation.JobID(); tu.mutation.JobCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Task.job"`)
+	}
+	return nil
+}
+
 func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -348,113 +349,113 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := tu.predicates; len(ps) > 0 {
+	if ps := tu.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := tu.QueueTime; value != nil {
+	if value, ok := tu.mutation.QueueTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldQueueTime,
 		})
 	}
-	if value := tu.LastChangedTime; value != nil {
+	if value, ok := tu.mutation.LastChangedTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldLastChangedTime,
 		})
 	}
-	if value := tu.ClaimTime; value != nil {
+	if value, ok := tu.mutation.ClaimTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldClaimTime,
 		})
 	}
-	if tu.clearClaimTime {
+	if tu.mutation.ClaimTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldClaimTime,
 		})
 	}
-	if value := tu.ExecStartTime; value != nil {
+	if value, ok := tu.mutation.ExecStartTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldExecStartTime,
 		})
 	}
-	if tu.clearExecStartTime {
+	if tu.mutation.ExecStartTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStartTime,
 		})
 	}
-	if value := tu.ExecStopTime; value != nil {
+	if value, ok := tu.mutation.ExecStopTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldExecStopTime,
 		})
 	}
-	if tu.clearExecStopTime {
+	if tu.mutation.ExecStopTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStopTime,
 		})
 	}
-	if value := tu.Content; value != nil {
+	if value, ok := tu.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldContent,
 		})
 	}
-	if value := tu.Output; value != nil {
+	if value, ok := tu.mutation.Output(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldOutput,
 		})
 	}
-	if tu.clearOutput {
+	if tu.mutation.OutputCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldOutput,
 		})
 	}
-	if value := tu.Error; value != nil {
+	if value, ok := tu.mutation.Error(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldError,
 		})
 	}
-	if tu.clearError {
+	if tu.mutation.ErrorCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldError,
 		})
 	}
-	if value := tu.SessionID; value != nil {
+	if value, ok := tu.mutation.SessionID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldSessionID,
 		})
 	}
-	if tu.clearSessionID {
+	if tu.mutation.SessionIDCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldSessionID,
 		})
 	}
-	if nodes := tu.removedTags; len(nodes) > 0 {
+	if tu.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -468,12 +469,28 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tu.mutation.RemovedTagsIDs(); len(nodes) > 0 && !tu.mutation.TagsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   task.TagsTable,
+			Columns: task.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.tags; len(nodes) > 0 {
+	if nodes := tu.mutation.TagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -487,12 +504,12 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.clearedJob {
+	if tu.mutation.JobCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -508,7 +525,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.job; len(nodes) > 0 {
+	if nodes := tu.mutation.JobIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -522,12 +539,12 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tu.clearedTarget {
+	if tu.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -543,7 +560,7 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tu.target; len(nodes) > 0 {
+	if nodes := tu.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -557,14 +574,16 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, tu.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{task.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -574,37 +593,18 @@ func (tu *TaskUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // TaskUpdateOne is the builder for updating a single Task entity.
 type TaskUpdateOne struct {
 	config
-	id                 int
-	QueueTime          *time.Time
-	LastChangedTime    *time.Time
-	ClaimTime          *time.Time
-	clearClaimTime     bool
-	ExecStartTime      *time.Time
-	clearExecStartTime bool
-	ExecStopTime       *time.Time
-	clearExecStopTime  bool
-	Content            *string
-	Output             *string
-	clearOutput        bool
-	Error              *string
-	clearError         bool
-	SessionID          *string
-	clearSessionID     bool
-	tags               map[int]struct{}
-	job                map[int]struct{}
-	target             map[int]struct{}
-	removedTags        map[int]struct{}
-	clearedJob         bool
-	clearedTarget      bool
+	fields   []string
+	hooks    []Hook
+	mutation *TaskMutation
 }
 
-// SetQueueTime sets the QueueTime field.
+// SetQueueTime sets the "QueueTime" field.
 func (tuo *TaskUpdateOne) SetQueueTime(t time.Time) *TaskUpdateOne {
-	tuo.QueueTime = &t
+	tuo.mutation.SetQueueTime(t)
 	return tuo
 }
 
-// SetNillableQueueTime sets the QueueTime field if the given value is not nil.
+// SetNillableQueueTime sets the "QueueTime" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableQueueTime(t *time.Time) *TaskUpdateOne {
 	if t != nil {
 		tuo.SetQueueTime(*t)
@@ -612,19 +612,19 @@ func (tuo *TaskUpdateOne) SetNillableQueueTime(t *time.Time) *TaskUpdateOne {
 	return tuo
 }
 
-// SetLastChangedTime sets the LastChangedTime field.
+// SetLastChangedTime sets the "LastChangedTime" field.
 func (tuo *TaskUpdateOne) SetLastChangedTime(t time.Time) *TaskUpdateOne {
-	tuo.LastChangedTime = &t
+	tuo.mutation.SetLastChangedTime(t)
 	return tuo
 }
 
-// SetClaimTime sets the ClaimTime field.
+// SetClaimTime sets the "ClaimTime" field.
 func (tuo *TaskUpdateOne) SetClaimTime(t time.Time) *TaskUpdateOne {
-	tuo.ClaimTime = &t
+	tuo.mutation.SetClaimTime(t)
 	return tuo
 }
 
-// SetNillableClaimTime sets the ClaimTime field if the given value is not nil.
+// SetNillableClaimTime sets the "ClaimTime" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableClaimTime(t *time.Time) *TaskUpdateOne {
 	if t != nil {
 		tuo.SetClaimTime(*t)
@@ -632,20 +632,19 @@ func (tuo *TaskUpdateOne) SetNillableClaimTime(t *time.Time) *TaskUpdateOne {
 	return tuo
 }
 
-// ClearClaimTime clears the value of ClaimTime.
+// ClearClaimTime clears the value of the "ClaimTime" field.
 func (tuo *TaskUpdateOne) ClearClaimTime() *TaskUpdateOne {
-	tuo.ClaimTime = nil
-	tuo.clearClaimTime = true
+	tuo.mutation.ClearClaimTime()
 	return tuo
 }
 
-// SetExecStartTime sets the ExecStartTime field.
+// SetExecStartTime sets the "ExecStartTime" field.
 func (tuo *TaskUpdateOne) SetExecStartTime(t time.Time) *TaskUpdateOne {
-	tuo.ExecStartTime = &t
+	tuo.mutation.SetExecStartTime(t)
 	return tuo
 }
 
-// SetNillableExecStartTime sets the ExecStartTime field if the given value is not nil.
+// SetNillableExecStartTime sets the "ExecStartTime" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableExecStartTime(t *time.Time) *TaskUpdateOne {
 	if t != nil {
 		tuo.SetExecStartTime(*t)
@@ -653,20 +652,19 @@ func (tuo *TaskUpdateOne) SetNillableExecStartTime(t *time.Time) *TaskUpdateOne 
 	return tuo
 }
 
-// ClearExecStartTime clears the value of ExecStartTime.
+// ClearExecStartTime clears the value of the "ExecStartTime" field.
 func (tuo *TaskUpdateOne) ClearExecStartTime() *TaskUpdateOne {
-	tuo.ExecStartTime = nil
-	tuo.clearExecStartTime = true
+	tuo.mutation.ClearExecStartTime()
 	return tuo
 }
 
-// SetExecStopTime sets the ExecStopTime field.
+// SetExecStopTime sets the "ExecStopTime" field.
 func (tuo *TaskUpdateOne) SetExecStopTime(t time.Time) *TaskUpdateOne {
-	tuo.ExecStopTime = &t
+	tuo.mutation.SetExecStopTime(t)
 	return tuo
 }
 
-// SetNillableExecStopTime sets the ExecStopTime field if the given value is not nil.
+// SetNillableExecStopTime sets the "ExecStopTime" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableExecStopTime(t *time.Time) *TaskUpdateOne {
 	if t != nil {
 		tuo.SetExecStopTime(*t)
@@ -674,26 +672,25 @@ func (tuo *TaskUpdateOne) SetNillableExecStopTime(t *time.Time) *TaskUpdateOne {
 	return tuo
 }
 
-// ClearExecStopTime clears the value of ExecStopTime.
+// ClearExecStopTime clears the value of the "ExecStopTime" field.
 func (tuo *TaskUpdateOne) ClearExecStopTime() *TaskUpdateOne {
-	tuo.ExecStopTime = nil
-	tuo.clearExecStopTime = true
+	tuo.mutation.ClearExecStopTime()
 	return tuo
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (tuo *TaskUpdateOne) SetContent(s string) *TaskUpdateOne {
-	tuo.Content = &s
+	tuo.mutation.SetContent(s)
 	return tuo
 }
 
-// SetOutput sets the Output field.
+// SetOutput sets the "Output" field.
 func (tuo *TaskUpdateOne) SetOutput(s string) *TaskUpdateOne {
-	tuo.Output = &s
+	tuo.mutation.SetOutput(s)
 	return tuo
 }
 
-// SetNillableOutput sets the Output field if the given value is not nil.
+// SetNillableOutput sets the "Output" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableOutput(s *string) *TaskUpdateOne {
 	if s != nil {
 		tuo.SetOutput(*s)
@@ -701,20 +698,19 @@ func (tuo *TaskUpdateOne) SetNillableOutput(s *string) *TaskUpdateOne {
 	return tuo
 }
 
-// ClearOutput clears the value of Output.
+// ClearOutput clears the value of the "Output" field.
 func (tuo *TaskUpdateOne) ClearOutput() *TaskUpdateOne {
-	tuo.Output = nil
-	tuo.clearOutput = true
+	tuo.mutation.ClearOutput()
 	return tuo
 }
 
-// SetError sets the Error field.
+// SetError sets the "Error" field.
 func (tuo *TaskUpdateOne) SetError(s string) *TaskUpdateOne {
-	tuo.Error = &s
+	tuo.mutation.SetError(s)
 	return tuo
 }
 
-// SetNillableError sets the Error field if the given value is not nil.
+// SetNillableError sets the "Error" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableError(s *string) *TaskUpdateOne {
 	if s != nil {
 		tuo.SetError(*s)
@@ -722,20 +718,19 @@ func (tuo *TaskUpdateOne) SetNillableError(s *string) *TaskUpdateOne {
 	return tuo
 }
 
-// ClearError clears the value of Error.
+// ClearError clears the value of the "Error" field.
 func (tuo *TaskUpdateOne) ClearError() *TaskUpdateOne {
-	tuo.Error = nil
-	tuo.clearError = true
+	tuo.mutation.ClearError()
 	return tuo
 }
 
-// SetSessionID sets the SessionID field.
+// SetSessionID sets the "SessionID" field.
 func (tuo *TaskUpdateOne) SetSessionID(s string) *TaskUpdateOne {
-	tuo.SessionID = &s
+	tuo.mutation.SetSessionID(s)
 	return tuo
 }
 
-// SetNillableSessionID sets the SessionID field if the given value is not nil.
+// SetNillableSessionID sets the "SessionID" field if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableSessionID(s *string) *TaskUpdateOne {
 	if s != nil {
 		tuo.SetSessionID(*s)
@@ -743,25 +738,19 @@ func (tuo *TaskUpdateOne) SetNillableSessionID(s *string) *TaskUpdateOne {
 	return tuo
 }
 
-// ClearSessionID clears the value of SessionID.
+// ClearSessionID clears the value of the "SessionID" field.
 func (tuo *TaskUpdateOne) ClearSessionID() *TaskUpdateOne {
-	tuo.SessionID = nil
-	tuo.clearSessionID = true
+	tuo.mutation.ClearSessionID()
 	return tuo
 }
 
-// AddTagIDs adds the tags edge to Tag by ids.
+// AddTagIDs adds the "tags" edge to the Tag entity by IDs.
 func (tuo *TaskUpdateOne) AddTagIDs(ids ...int) *TaskUpdateOne {
-	if tuo.tags == nil {
-		tuo.tags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.tags[ids[i]] = struct{}{}
-	}
+	tuo.mutation.AddTagIDs(ids...)
 	return tuo
 }
 
-// AddTags adds the tags edges to Tag.
+// AddTags adds the "tags" edges to the Tag entity.
 func (tuo *TaskUpdateOne) AddTags(t ...*Tag) *TaskUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -770,30 +759,24 @@ func (tuo *TaskUpdateOne) AddTags(t ...*Tag) *TaskUpdateOne {
 	return tuo.AddTagIDs(ids...)
 }
 
-// SetJobID sets the job edge to Job by id.
+// SetJobID sets the "job" edge to the Job entity by ID.
 func (tuo *TaskUpdateOne) SetJobID(id int) *TaskUpdateOne {
-	if tuo.job == nil {
-		tuo.job = make(map[int]struct{})
-	}
-	tuo.job[id] = struct{}{}
+	tuo.mutation.SetJobID(id)
 	return tuo
 }
 
-// SetJob sets the job edge to Job.
+// SetJob sets the "job" edge to the Job entity.
 func (tuo *TaskUpdateOne) SetJob(j *Job) *TaskUpdateOne {
 	return tuo.SetJobID(j.ID)
 }
 
-// SetTargetID sets the target edge to Target by id.
+// SetTargetID sets the "target" edge to the Target entity by ID.
 func (tuo *TaskUpdateOne) SetTargetID(id int) *TaskUpdateOne {
-	if tuo.target == nil {
-		tuo.target = make(map[int]struct{})
-	}
-	tuo.target[id] = struct{}{}
+	tuo.mutation.SetTargetID(id)
 	return tuo
 }
 
-// SetNillableTargetID sets the target edge to Target by id if the given value is not nil.
+// SetNillableTargetID sets the "target" edge to the Target entity by ID if the given value is not nil.
 func (tuo *TaskUpdateOne) SetNillableTargetID(id *int) *TaskUpdateOne {
 	if id != nil {
 		tuo = tuo.SetTargetID(*id)
@@ -801,23 +784,29 @@ func (tuo *TaskUpdateOne) SetNillableTargetID(id *int) *TaskUpdateOne {
 	return tuo
 }
 
-// SetTarget sets the target edge to Target.
+// SetTarget sets the "target" edge to the Target entity.
 func (tuo *TaskUpdateOne) SetTarget(t *Target) *TaskUpdateOne {
 	return tuo.SetTargetID(t.ID)
 }
 
-// RemoveTagIDs removes the tags edge to Tag by ids.
-func (tuo *TaskUpdateOne) RemoveTagIDs(ids ...int) *TaskUpdateOne {
-	if tuo.removedTags == nil {
-		tuo.removedTags = make(map[int]struct{})
-	}
-	for i := range ids {
-		tuo.removedTags[ids[i]] = struct{}{}
-	}
+// Mutation returns the TaskMutation object of the builder.
+func (tuo *TaskUpdateOne) Mutation() *TaskMutation {
+	return tuo.mutation
+}
+
+// ClearTags clears all "tags" edges to the Tag entity.
+func (tuo *TaskUpdateOne) ClearTags() *TaskUpdateOne {
+	tuo.mutation.ClearTags()
 	return tuo
 }
 
-// RemoveTags removes tags edges to Tag.
+// RemoveTagIDs removes the "tags" edge to Tag entities by IDs.
+func (tuo *TaskUpdateOne) RemoveTagIDs(ids ...int) *TaskUpdateOne {
+	tuo.mutation.RemoveTagIDs(ids...)
+	return tuo
+}
+
+// RemoveTags removes "tags" edges to Tag entities.
 func (tuo *TaskUpdateOne) RemoveTags(t ...*Tag) *TaskUpdateOne {
 	ids := make([]int, len(t))
 	for i := range t {
@@ -826,49 +815,70 @@ func (tuo *TaskUpdateOne) RemoveTags(t ...*Tag) *TaskUpdateOne {
 	return tuo.RemoveTagIDs(ids...)
 }
 
-// ClearJob clears the job edge to Job.
+// ClearJob clears the "job" edge to the Job entity.
 func (tuo *TaskUpdateOne) ClearJob() *TaskUpdateOne {
-	tuo.clearedJob = true
+	tuo.mutation.ClearJob()
 	return tuo
 }
 
-// ClearTarget clears the target edge to Target.
+// ClearTarget clears the "target" edge to the Target entity.
 func (tuo *TaskUpdateOne) ClearTarget() *TaskUpdateOne {
-	tuo.clearedTarget = true
+	tuo.mutation.ClearTarget()
 	return tuo
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (tuo *TaskUpdateOne) Select(field string, fields ...string) *TaskUpdateOne {
+	tuo.fields = append([]string{field}, fields...)
+	return tuo
+}
+
+// Save executes the query and returns the updated Task entity.
 func (tuo *TaskUpdateOne) Save(ctx context.Context) (*Task, error) {
-	if tuo.Content != nil {
-		if err := task.ContentValidator(*tuo.Content); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Content\": %v", err)
+	var (
+		err  error
+		node *Task
+	)
+	if len(tuo.hooks) == 0 {
+		if err = tuo.check(); err != nil {
+			return nil, err
+		}
+		node, err = tuo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*TaskMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = tuo.check(); err != nil {
+				return nil, err
+			}
+			tuo.mutation = mutation
+			node, err = tuo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(tuo.hooks) - 1; i >= 0; i-- {
+			if tuo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = tuo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, tuo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if tuo.SessionID != nil {
-		if err := task.SessionIDValidator(*tuo.SessionID); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"SessionID\": %v", err)
-		}
-	}
-	if len(tuo.job) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"job\"")
-	}
-	if tuo.clearedJob && tuo.job == nil {
-		return nil, errors.New("ent: clearing a unique edge \"job\"")
-	}
-	if len(tuo.target) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"target\"")
-	}
-	return tuo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (tuo *TaskUpdateOne) SaveX(ctx context.Context) *Task {
-	t, err := tuo.Save(ctx)
+	node, err := tuo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return t
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -884,118 +894,159 @@ func (tuo *TaskUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (tuo *TaskUpdateOne) check() error {
+	if v, ok := tuo.mutation.Content(); ok {
+		if err := task.ContentValidator(v); err != nil {
+			return &ValidationError{Name: "Content", err: fmt.Errorf(`ent: validator failed for field "Task.Content": %w`, err)}
+		}
+	}
+	if v, ok := tuo.mutation.SessionID(); ok {
+		if err := task.SessionIDValidator(v); err != nil {
+			return &ValidationError{Name: "SessionID", err: fmt.Errorf(`ent: validator failed for field "Task.SessionID": %w`, err)}
+		}
+	}
+	if _, ok := tuo.mutation.JobID(); tuo.mutation.JobCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Task.job"`)
+	}
+	return nil
+}
+
+func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (_node *Task, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   task.Table,
 			Columns: task.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  tuo.id,
 				Type:   field.TypeInt,
 				Column: task.FieldID,
 			},
 		},
 	}
-	if value := tuo.QueueTime; value != nil {
+	id, ok := tuo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Task.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := tuo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, task.FieldID)
+		for _, f := range fields {
+			if !task.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != task.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := tuo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := tuo.mutation.QueueTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldQueueTime,
 		})
 	}
-	if value := tuo.LastChangedTime; value != nil {
+	if value, ok := tuo.mutation.LastChangedTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldLastChangedTime,
 		})
 	}
-	if value := tuo.ClaimTime; value != nil {
+	if value, ok := tuo.mutation.ClaimTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldClaimTime,
 		})
 	}
-	if tuo.clearClaimTime {
+	if tuo.mutation.ClaimTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldClaimTime,
 		})
 	}
-	if value := tuo.ExecStartTime; value != nil {
+	if value, ok := tuo.mutation.ExecStartTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldExecStartTime,
 		})
 	}
-	if tuo.clearExecStartTime {
+	if tuo.mutation.ExecStartTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStartTime,
 		})
 	}
-	if value := tuo.ExecStopTime; value != nil {
+	if value, ok := tuo.mutation.ExecStopTime(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldExecStopTime,
 		})
 	}
-	if tuo.clearExecStopTime {
+	if tuo.mutation.ExecStopTimeCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
 			Column: task.FieldExecStopTime,
 		})
 	}
-	if value := tuo.Content; value != nil {
+	if value, ok := tuo.mutation.Content(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldContent,
 		})
 	}
-	if value := tuo.Output; value != nil {
+	if value, ok := tuo.mutation.Output(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldOutput,
 		})
 	}
-	if tuo.clearOutput {
+	if tuo.mutation.OutputCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldOutput,
 		})
 	}
-	if value := tuo.Error; value != nil {
+	if value, ok := tuo.mutation.Error(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldError,
 		})
 	}
-	if tuo.clearError {
+	if tuo.mutation.ErrorCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldError,
 		})
 	}
-	if value := tuo.SessionID; value != nil {
+	if value, ok := tuo.mutation.SessionID(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: task.FieldSessionID,
 		})
 	}
-	if tuo.clearSessionID {
+	if tuo.mutation.SessionIDCleared() {
 		_spec.Fields.Clear = append(_spec.Fields.Clear, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
 			Column: task.FieldSessionID,
 		})
 	}
-	if nodes := tuo.removedTags; len(nodes) > 0 {
+	if tuo.mutation.TagsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -1009,12 +1060,28 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := tuo.mutation.RemovedTagsIDs(); len(nodes) > 0 && !tuo.mutation.TagsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.M2M,
+			Inverse: false,
+			Table:   task.TagsTable,
+			Columns: task.TagsPrimaryKey,
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: tag.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.tags; len(nodes) > 0 {
+	if nodes := tuo.mutation.TagsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2M,
 			Inverse: false,
@@ -1028,12 +1095,12 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.clearedJob {
+	if tuo.mutation.JobCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1049,7 +1116,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.job; len(nodes) > 0 {
+	if nodes := tuo.mutation.JobIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1063,12 +1130,12 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if tuo.clearedTarget {
+	if tuo.mutation.TargetCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1084,7 +1151,7 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := tuo.target; len(nodes) > 0 {
+	if nodes := tuo.mutation.TargetIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: true,
@@ -1098,19 +1165,21 @@ func (tuo *TaskUpdateOne) sqlSave(ctx context.Context) (t *Task, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	t = &Task{config: tuo.config}
-	_spec.Assign = t.assignValues
-	_spec.ScanValues = t.scanValues()
+	_node = &Task{config: tuo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, tuo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{task.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return t, nil
+	return _node, nil
 }

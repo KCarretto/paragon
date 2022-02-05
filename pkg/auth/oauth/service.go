@@ -120,7 +120,7 @@ func (svc Service) HandleOAuth(w http.ResponseWriter, req *http.Request) error {
 		svc.Graph.Event.Create().
 			SetOwner(usr).
 			SetUser(usr).
-			SetKind(event.KindCREATEUSER).
+			SetKind(event.KindCREATE_USER).
 			Save(req.Context())
 	}
 

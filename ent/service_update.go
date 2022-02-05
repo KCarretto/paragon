@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql"
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/predicate"
 	"github.com/kcarretto/paragon/ent/service"
@@ -19,42 +19,35 @@ import (
 // ServiceUpdate is the builder for updating Service entities.
 type ServiceUpdate struct {
 	config
-	Name          *string
-	PubKey        *string
-	Config        *string
-	IsActivated   *bool
-	tag           map[int]struct{}
-	events        map[int]struct{}
-	clearedTag    bool
-	removedEvents map[int]struct{}
-	predicates    []predicate.Service
+	hooks    []Hook
+	mutation *ServiceMutation
 }
 
-// Where adds a new predicate for the builder.
+// Where appends a list predicates to the ServiceUpdate builder.
 func (su *ServiceUpdate) Where(ps ...predicate.Service) *ServiceUpdate {
-	su.predicates = append(su.predicates, ps...)
+	su.mutation.Where(ps...)
 	return su
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (su *ServiceUpdate) SetName(s string) *ServiceUpdate {
-	su.Name = &s
+	su.mutation.SetName(s)
 	return su
 }
 
-// SetPubKey sets the PubKey field.
+// SetPubKey sets the "PubKey" field.
 func (su *ServiceUpdate) SetPubKey(s string) *ServiceUpdate {
-	su.PubKey = &s
+	su.mutation.SetPubKey(s)
 	return su
 }
 
-// SetConfig sets the Config field.
+// SetConfig sets the "Config" field.
 func (su *ServiceUpdate) SetConfig(s string) *ServiceUpdate {
-	su.Config = &s
+	su.mutation.SetConfig(s)
 	return su
 }
 
-// SetNillableConfig sets the Config field if the given value is not nil.
+// SetNillableConfig sets the "Config" field if the given value is not nil.
 func (su *ServiceUpdate) SetNillableConfig(s *string) *ServiceUpdate {
 	if s != nil {
 		su.SetConfig(*s)
@@ -62,13 +55,13 @@ func (su *ServiceUpdate) SetNillableConfig(s *string) *ServiceUpdate {
 	return su
 }
 
-// SetIsActivated sets the IsActivated field.
+// SetIsActivated sets the "IsActivated" field.
 func (su *ServiceUpdate) SetIsActivated(b bool) *ServiceUpdate {
-	su.IsActivated = &b
+	su.mutation.SetIsActivated(b)
 	return su
 }
 
-// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+// SetNillableIsActivated sets the "IsActivated" field if the given value is not nil.
 func (su *ServiceUpdate) SetNillableIsActivated(b *bool) *ServiceUpdate {
 	if b != nil {
 		su.SetIsActivated(*b)
@@ -76,32 +69,24 @@ func (su *ServiceUpdate) SetNillableIsActivated(b *bool) *ServiceUpdate {
 	return su
 }
 
-// SetTagID sets the tag edge to Tag by id.
+// SetTagID sets the "tag" edge to the Tag entity by ID.
 func (su *ServiceUpdate) SetTagID(id int) *ServiceUpdate {
-	if su.tag == nil {
-		su.tag = make(map[int]struct{})
-	}
-	su.tag[id] = struct{}{}
+	su.mutation.SetTagID(id)
 	return su
 }
 
-// SetTag sets the tag edge to Tag.
+// SetTag sets the "tag" edge to the Tag entity.
 func (su *ServiceUpdate) SetTag(t *Tag) *ServiceUpdate {
 	return su.SetTagID(t.ID)
 }
 
-// AddEventIDs adds the events edge to Event by ids.
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (su *ServiceUpdate) AddEventIDs(ids ...int) *ServiceUpdate {
-	if su.events == nil {
-		su.events = make(map[int]struct{})
-	}
-	for i := range ids {
-		su.events[ids[i]] = struct{}{}
-	}
+	su.mutation.AddEventIDs(ids...)
 	return su
 }
 
-// AddEvents adds the events edges to Event.
+// AddEvents adds the "events" edges to the Event entity.
 func (su *ServiceUpdate) AddEvents(e ...*Event) *ServiceUpdate {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -110,24 +95,30 @@ func (su *ServiceUpdate) AddEvents(e ...*Event) *ServiceUpdate {
 	return su.AddEventIDs(ids...)
 }
 
-// ClearTag clears the tag edge to Tag.
+// Mutation returns the ServiceMutation object of the builder.
+func (su *ServiceUpdate) Mutation() *ServiceMutation {
+	return su.mutation
+}
+
+// ClearTag clears the "tag" edge to the Tag entity.
 func (su *ServiceUpdate) ClearTag() *ServiceUpdate {
-	su.clearedTag = true
+	su.mutation.ClearTag()
 	return su
 }
 
-// RemoveEventIDs removes the events edge to Event by ids.
+// ClearEvents clears all "events" edges to the Event entity.
+func (su *ServiceUpdate) ClearEvents() *ServiceUpdate {
+	su.mutation.ClearEvents()
+	return su
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
 func (su *ServiceUpdate) RemoveEventIDs(ids ...int) *ServiceUpdate {
-	if su.removedEvents == nil {
-		su.removedEvents = make(map[int]struct{})
-	}
-	for i := range ids {
-		su.removedEvents[ids[i]] = struct{}{}
-	}
+	su.mutation.RemoveEventIDs(ids...)
 	return su
 }
 
-// RemoveEvents removes events edges to Event.
+// RemoveEvents removes "events" edges to Event entities.
 func (su *ServiceUpdate) RemoveEvents(e ...*Event) *ServiceUpdate {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -136,25 +127,42 @@ func (su *ServiceUpdate) RemoveEvents(e ...*Event) *ServiceUpdate {
 	return su.RemoveEventIDs(ids...)
 }
 
-// Save executes the query and returns the number of rows/vertices matched by this operation.
+// Save executes the query and returns the number of nodes affected by the update operation.
 func (su *ServiceUpdate) Save(ctx context.Context) (int, error) {
-	if su.Name != nil {
-		if err := service.NameValidator(*su.Name); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err      error
+		affected int
+	)
+	if len(su.hooks) == 0 {
+		if err = su.check(); err != nil {
+			return 0, err
+		}
+		affected, err = su.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*ServiceMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = su.check(); err != nil {
+				return 0, err
+			}
+			su.mutation = mutation
+			affected, err = su.sqlSave(ctx)
+			mutation.done = true
+			return affected, err
+		})
+		for i := len(su.hooks) - 1; i >= 0; i-- {
+			if su.hooks[i] == nil {
+				return 0, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = su.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, su.mutation); err != nil {
+			return 0, err
 		}
 	}
-	if su.PubKey != nil {
-		if err := service.PubKeyValidator(*su.PubKey); err != nil {
-			return 0, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
-		}
-	}
-	if len(su.tag) > 1 {
-		return 0, errors.New("ent: multiple assignments on a unique edge \"tag\"")
-	}
-	if su.clearedTag && su.tag == nil {
-		return 0, errors.New("ent: clearing a unique edge \"tag\"")
-	}
-	return su.sqlSave(ctx)
+	return affected, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
@@ -179,6 +187,24 @@ func (su *ServiceUpdate) ExecX(ctx context.Context) {
 	}
 }
 
+// check runs all checks and user-defined validators on the builder.
+func (su *ServiceUpdate) check() error {
+	if v, ok := su.mutation.Name(); ok {
+		if err := service.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Service.Name": %w`, err)}
+		}
+	}
+	if v, ok := su.mutation.PubKey(); ok {
+		if err := service.PubKeyValidator(v); err != nil {
+			return &ValidationError{Name: "PubKey", err: fmt.Errorf(`ent: validator failed for field "Service.PubKey": %w`, err)}
+		}
+	}
+	if _, ok := su.mutation.TagID(); su.mutation.TagCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Service.tag"`)
+	}
+	return nil
+}
+
 func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
@@ -190,42 +216,42 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 			},
 		},
 	}
-	if ps := su.predicates; len(ps) > 0 {
+	if ps := su.mutation.predicates; len(ps) > 0 {
 		_spec.Predicate = func(selector *sql.Selector) {
 			for i := range ps {
 				ps[i](selector)
 			}
 		}
 	}
-	if value := su.Name; value != nil {
+	if value, ok := su.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldName,
 		})
 	}
-	if value := su.PubKey; value != nil {
+	if value, ok := su.mutation.PubKey(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldPubKey,
 		})
 	}
-	if value := su.Config; value != nil {
+	if value, ok := su.mutation.Config(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldConfig,
 		})
 	}
-	if value := su.IsActivated; value != nil {
+	if value, ok := su.mutation.IsActivated(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldIsActivated,
 		})
 	}
-	if su.clearedTag {
+	if su.mutation.TagCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -241,7 +267,7 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.tag; len(nodes) > 0 {
+	if nodes := su.mutation.TagIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -255,12 +281,12 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := su.removedEvents; len(nodes) > 0 {
+	if su.mutation.EventsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -274,12 +300,28 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := su.mutation.RemovedEventsIDs(); len(nodes) > 0 && !su.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.EventsTable,
+			Columns: []string{service.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := su.events; len(nodes) > 0 {
+	if nodes := su.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -293,14 +335,16 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
 	if n, err = sqlgraph.UpdateNodes(ctx, su.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{service.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return 0, err
 	}
@@ -310,36 +354,30 @@ func (su *ServiceUpdate) sqlSave(ctx context.Context) (n int, err error) {
 // ServiceUpdateOne is the builder for updating a single Service entity.
 type ServiceUpdateOne struct {
 	config
-	id            int
-	Name          *string
-	PubKey        *string
-	Config        *string
-	IsActivated   *bool
-	tag           map[int]struct{}
-	events        map[int]struct{}
-	clearedTag    bool
-	removedEvents map[int]struct{}
+	fields   []string
+	hooks    []Hook
+	mutation *ServiceMutation
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (suo *ServiceUpdateOne) SetName(s string) *ServiceUpdateOne {
-	suo.Name = &s
+	suo.mutation.SetName(s)
 	return suo
 }
 
-// SetPubKey sets the PubKey field.
+// SetPubKey sets the "PubKey" field.
 func (suo *ServiceUpdateOne) SetPubKey(s string) *ServiceUpdateOne {
-	suo.PubKey = &s
+	suo.mutation.SetPubKey(s)
 	return suo
 }
 
-// SetConfig sets the Config field.
+// SetConfig sets the "Config" field.
 func (suo *ServiceUpdateOne) SetConfig(s string) *ServiceUpdateOne {
-	suo.Config = &s
+	suo.mutation.SetConfig(s)
 	return suo
 }
 
-// SetNillableConfig sets the Config field if the given value is not nil.
+// SetNillableConfig sets the "Config" field if the given value is not nil.
 func (suo *ServiceUpdateOne) SetNillableConfig(s *string) *ServiceUpdateOne {
 	if s != nil {
 		suo.SetConfig(*s)
@@ -347,13 +385,13 @@ func (suo *ServiceUpdateOne) SetNillableConfig(s *string) *ServiceUpdateOne {
 	return suo
 }
 
-// SetIsActivated sets the IsActivated field.
+// SetIsActivated sets the "IsActivated" field.
 func (suo *ServiceUpdateOne) SetIsActivated(b bool) *ServiceUpdateOne {
-	suo.IsActivated = &b
+	suo.mutation.SetIsActivated(b)
 	return suo
 }
 
-// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+// SetNillableIsActivated sets the "IsActivated" field if the given value is not nil.
 func (suo *ServiceUpdateOne) SetNillableIsActivated(b *bool) *ServiceUpdateOne {
 	if b != nil {
 		suo.SetIsActivated(*b)
@@ -361,32 +399,24 @@ func (suo *ServiceUpdateOne) SetNillableIsActivated(b *bool) *ServiceUpdateOne {
 	return suo
 }
 
-// SetTagID sets the tag edge to Tag by id.
+// SetTagID sets the "tag" edge to the Tag entity by ID.
 func (suo *ServiceUpdateOne) SetTagID(id int) *ServiceUpdateOne {
-	if suo.tag == nil {
-		suo.tag = make(map[int]struct{})
-	}
-	suo.tag[id] = struct{}{}
+	suo.mutation.SetTagID(id)
 	return suo
 }
 
-// SetTag sets the tag edge to Tag.
+// SetTag sets the "tag" edge to the Tag entity.
 func (suo *ServiceUpdateOne) SetTag(t *Tag) *ServiceUpdateOne {
 	return suo.SetTagID(t.ID)
 }
 
-// AddEventIDs adds the events edge to Event by ids.
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (suo *ServiceUpdateOne) AddEventIDs(ids ...int) *ServiceUpdateOne {
-	if suo.events == nil {
-		suo.events = make(map[int]struct{})
-	}
-	for i := range ids {
-		suo.events[ids[i]] = struct{}{}
-	}
+	suo.mutation.AddEventIDs(ids...)
 	return suo
 }
 
-// AddEvents adds the events edges to Event.
+// AddEvents adds the "events" edges to the Event entity.
 func (suo *ServiceUpdateOne) AddEvents(e ...*Event) *ServiceUpdateOne {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -395,24 +425,30 @@ func (suo *ServiceUpdateOne) AddEvents(e ...*Event) *ServiceUpdateOne {
 	return suo.AddEventIDs(ids...)
 }
 
-// ClearTag clears the tag edge to Tag.
+// Mutation returns the ServiceMutation object of the builder.
+func (suo *ServiceUpdateOne) Mutation() *ServiceMutation {
+	return suo.mutation
+}
+
+// ClearTag clears the "tag" edge to the Tag entity.
 func (suo *ServiceUpdateOne) ClearTag() *ServiceUpdateOne {
-	suo.clearedTag = true
+	suo.mutation.ClearTag()
 	return suo
 }
 
-// RemoveEventIDs removes the events edge to Event by ids.
+// ClearEvents clears all "events" edges to the Event entity.
+func (suo *ServiceUpdateOne) ClearEvents() *ServiceUpdateOne {
+	suo.mutation.ClearEvents()
+	return suo
+}
+
+// RemoveEventIDs removes the "events" edge to Event entities by IDs.
 func (suo *ServiceUpdateOne) RemoveEventIDs(ids ...int) *ServiceUpdateOne {
-	if suo.removedEvents == nil {
-		suo.removedEvents = make(map[int]struct{})
-	}
-	for i := range ids {
-		suo.removedEvents[ids[i]] = struct{}{}
-	}
+	suo.mutation.RemoveEventIDs(ids...)
 	return suo
 }
 
-// RemoveEvents removes events edges to Event.
+// RemoveEvents removes "events" edges to Event entities.
 func (suo *ServiceUpdateOne) RemoveEvents(e ...*Event) *ServiceUpdateOne {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -421,34 +457,58 @@ func (suo *ServiceUpdateOne) RemoveEvents(e ...*Event) *ServiceUpdateOne {
 	return suo.RemoveEventIDs(ids...)
 }
 
-// Save executes the query and returns the updated entity.
+// Select allows selecting one or more fields (columns) of the returned entity.
+// The default is selecting all fields defined in the entity schema.
+func (suo *ServiceUpdateOne) Select(field string, fields ...string) *ServiceUpdateOne {
+	suo.fields = append([]string{field}, fields...)
+	return suo
+}
+
+// Save executes the query and returns the updated Service entity.
 func (suo *ServiceUpdateOne) Save(ctx context.Context) (*Service, error) {
-	if suo.Name != nil {
-		if err := service.NameValidator(*suo.Name); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
+	var (
+		err  error
+		node *Service
+	)
+	if len(suo.hooks) == 0 {
+		if err = suo.check(); err != nil {
+			return nil, err
+		}
+		node, err = suo.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*ServiceMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = suo.check(); err != nil {
+				return nil, err
+			}
+			suo.mutation = mutation
+			node, err = suo.sqlSave(ctx)
+			mutation.done = true
+			return node, err
+		})
+		for i := len(suo.hooks) - 1; i >= 0; i-- {
+			if suo.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = suo.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, suo.mutation); err != nil {
+			return nil, err
 		}
 	}
-	if suo.PubKey != nil {
-		if err := service.PubKeyValidator(*suo.PubKey); err != nil {
-			return nil, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
-		}
-	}
-	if len(suo.tag) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"tag\"")
-	}
-	if suo.clearedTag && suo.tag == nil {
-		return nil, errors.New("ent: clearing a unique edge \"tag\"")
-	}
-	return suo.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX is like Save, but panics if an error occurs.
 func (suo *ServiceUpdateOne) SaveX(ctx context.Context) *Service {
-	s, err := suo.Save(ctx)
+	node, err := suo.Save(ctx)
 	if err != nil {
 		panic(err)
 	}
-	return s
+	return node
 }
 
 // Exec executes the query on the entity.
@@ -464,47 +524,88 @@ func (suo *ServiceUpdateOne) ExecX(ctx context.Context) {
 	}
 }
 
-func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error) {
+// check runs all checks and user-defined validators on the builder.
+func (suo *ServiceUpdateOne) check() error {
+	if v, ok := suo.mutation.Name(); ok {
+		if err := service.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Service.Name": %w`, err)}
+		}
+	}
+	if v, ok := suo.mutation.PubKey(); ok {
+		if err := service.PubKeyValidator(v); err != nil {
+			return &ValidationError{Name: "PubKey", err: fmt.Errorf(`ent: validator failed for field "Service.PubKey": %w`, err)}
+		}
+	}
+	if _, ok := suo.mutation.TagID(); suo.mutation.TagCleared() && !ok {
+		return errors.New(`ent: clearing a required unique edge "Service.tag"`)
+	}
+	return nil
+}
+
+func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (_node *Service, err error) {
 	_spec := &sqlgraph.UpdateSpec{
 		Node: &sqlgraph.NodeSpec{
 			Table:   service.Table,
 			Columns: service.Columns,
 			ID: &sqlgraph.FieldSpec{
-				Value:  suo.id,
 				Type:   field.TypeInt,
 				Column: service.FieldID,
 			},
 		},
 	}
-	if value := suo.Name; value != nil {
+	id, ok := suo.mutation.ID()
+	if !ok {
+		return nil, &ValidationError{Name: "id", err: errors.New(`ent: missing "Service.id" for update`)}
+	}
+	_spec.Node.ID.Value = id
+	if fields := suo.fields; len(fields) > 0 {
+		_spec.Node.Columns = make([]string, 0, len(fields))
+		_spec.Node.Columns = append(_spec.Node.Columns, service.FieldID)
+		for _, f := range fields {
+			if !service.ValidColumn(f) {
+				return nil, &ValidationError{Name: f, err: fmt.Errorf("ent: invalid field %q for query", f)}
+			}
+			if f != service.FieldID {
+				_spec.Node.Columns = append(_spec.Node.Columns, f)
+			}
+		}
+	}
+	if ps := suo.mutation.predicates; len(ps) > 0 {
+		_spec.Predicate = func(selector *sql.Selector) {
+			for i := range ps {
+				ps[i](selector)
+			}
+		}
+	}
+	if value, ok := suo.mutation.Name(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldName,
 		})
 	}
-	if value := suo.PubKey; value != nil {
+	if value, ok := suo.mutation.PubKey(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldPubKey,
 		})
 	}
-	if value := suo.Config; value != nil {
+	if value, ok := suo.mutation.Config(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldConfig,
 		})
 	}
-	if value := suo.IsActivated; value != nil {
+	if value, ok := suo.mutation.IsActivated(); ok {
 		_spec.Fields.Set = append(_spec.Fields.Set, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldIsActivated,
 		})
 	}
-	if suo.clearedTag {
+	if suo.mutation.TagCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -520,7 +621,7 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.tag; len(nodes) > 0 {
+	if nodes := suo.mutation.TagIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -534,12 +635,12 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	if nodes := suo.removedEvents; len(nodes) > 0 {
+	if suo.mutation.EventsCleared() {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -553,12 +654,28 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 				},
 			},
 		}
-		for k, _ := range nodes {
+		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
+	}
+	if nodes := suo.mutation.RemovedEventsIDs(); len(nodes) > 0 && !suo.mutation.EventsCleared() {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   service.EventsTable,
+			Columns: []string{service.EventsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: event.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Clear = append(_spec.Edges.Clear, edge)
 	}
-	if nodes := suo.events; len(nodes) > 0 {
+	if nodes := suo.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -572,19 +689,21 @@ func (suo *ServiceUpdateOne) sqlSave(ctx context.Context) (s *Service, err error
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges.Add = append(_spec.Edges.Add, edge)
 	}
-	s = &Service{config: suo.config}
-	_spec.Assign = s.assignValues
-	_spec.ScanValues = s.scanValues()
+	_node = &Service{config: suo.config}
+	_spec.Assign = _node.assignValues
+	_spec.ScanValues = _node.scanValues
 	if err = sqlgraph.UpdateNode(ctx, suo.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
+		if _, ok := err.(*sqlgraph.NotFoundError); ok {
+			err = &NotFoundError{service.Label}
+		} else if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
 		}
 		return nil, err
 	}
-	return s, nil
+	return _node, nil
 }

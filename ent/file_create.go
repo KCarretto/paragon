@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/file"
 	"github.com/kcarretto/paragon/ent/link"
 )
@@ -17,29 +17,23 @@ import (
 // FileCreate is the builder for creating a File entity.
 type FileCreate struct {
 	config
-	Name             *string
-	CreationTime     *time.Time
-	LastModifiedTime *time.Time
-	Size             *int
-	Content          *[]byte
-	Hash             *string
-	ContentType      *string
-	links            map[int]struct{}
+	mutation *FileMutation
+	hooks    []Hook
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (fc *FileCreate) SetName(s string) *FileCreate {
-	fc.Name = &s
+	fc.mutation.SetName(s)
 	return fc
 }
 
-// SetCreationTime sets the CreationTime field.
+// SetCreationTime sets the "CreationTime" field.
 func (fc *FileCreate) SetCreationTime(t time.Time) *FileCreate {
-	fc.CreationTime = &t
+	fc.mutation.SetCreationTime(t)
 	return fc
 }
 
-// SetNillableCreationTime sets the CreationTime field if the given value is not nil.
+// SetNillableCreationTime sets the "CreationTime" field if the given value is not nil.
 func (fc *FileCreate) SetNillableCreationTime(t *time.Time) *FileCreate {
 	if t != nil {
 		fc.SetCreationTime(*t)
@@ -47,19 +41,19 @@ func (fc *FileCreate) SetNillableCreationTime(t *time.Time) *FileCreate {
 	return fc
 }
 
-// SetLastModifiedTime sets the LastModifiedTime field.
+// SetLastModifiedTime sets the "LastModifiedTime" field.
 func (fc *FileCreate) SetLastModifiedTime(t time.Time) *FileCreate {
-	fc.LastModifiedTime = &t
+	fc.mutation.SetLastModifiedTime(t)
 	return fc
 }
 
-// SetSize sets the Size field.
+// SetSize sets the "Size" field.
 func (fc *FileCreate) SetSize(i int) *FileCreate {
-	fc.Size = &i
+	fc.mutation.SetSize(i)
 	return fc
 }
 
-// SetNillableSize sets the Size field if the given value is not nil.
+// SetNillableSize sets the "Size" field if the given value is not nil.
 func (fc *FileCreate) SetNillableSize(i *int) *FileCreate {
 	if i != nil {
 		fc.SetSize(*i)
@@ -67,36 +61,31 @@ func (fc *FileCreate) SetNillableSize(i *int) *FileCreate {
 	return fc
 }
 
-// SetContent sets the Content field.
+// SetContent sets the "Content" field.
 func (fc *FileCreate) SetContent(b []byte) *FileCreate {
-	fc.Content = &b
+	fc.mutation.SetContent(b)
 	return fc
 }
 
-// SetHash sets the Hash field.
+// SetHash sets the "Hash" field.
 func (fc *FileCreate) SetHash(s string) *FileCreate {
-	fc.Hash = &s
+	fc.mutation.SetHash(s)
 	return fc
 }
 
-// SetContentType sets the ContentType field.
+// SetContentType sets the "ContentType" field.
 func (fc *FileCreate) SetContentType(s string) *FileCreate {
-	fc.ContentType = &s
+	fc.mutation.SetContentType(s)
 	return fc
 }
 
-// AddLinkIDs adds the links edge to Link by ids.
+// AddLinkIDs adds the "links" edge to the Link entity by IDs.
 func (fc *FileCreate) AddLinkIDs(ids ...int) *FileCreate {
-	if fc.links == nil {
-		fc.links = make(map[int]struct{})
-	}
-	for i := range ids {
-		fc.links[ids[i]] = struct{}{}
-	}
+	fc.mutation.AddLinkIDs(ids...)
 	return fc
 }
 
-// AddLinks adds the links edges to Link.
+// AddLinks adds the "links" edges to the Link entity.
 func (fc *FileCreate) AddLinks(l ...*Link) *FileCreate {
 	ids := make([]int, len(l))
 	for i := range l {
@@ -105,41 +94,51 @@ func (fc *FileCreate) AddLinks(l ...*Link) *FileCreate {
 	return fc.AddLinkIDs(ids...)
 }
 
+// Mutation returns the FileMutation object of the builder.
+func (fc *FileCreate) Mutation() *FileMutation {
+	return fc.mutation
+}
+
 // Save creates the File in the database.
 func (fc *FileCreate) Save(ctx context.Context) (*File, error) {
-	if fc.Name == nil {
-		return nil, errors.New("ent: missing required field \"Name\"")
+	var (
+		err  error
+		node *File
+	)
+	fc.defaults()
+	if len(fc.hooks) == 0 {
+		if err = fc.check(); err != nil {
+			return nil, err
+		}
+		node, err = fc.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*FileMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = fc.check(); err != nil {
+				return nil, err
+			}
+			fc.mutation = mutation
+			if node, err = fc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(fc.hooks) - 1; i >= 0; i-- {
+			if fc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = fc.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, fc.mutation); err != nil {
+			return nil, err
+		}
 	}
-	if err := file.NameValidator(*fc.Name); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
-	}
-	if fc.CreationTime == nil {
-		v := file.DefaultCreationTime()
-		fc.CreationTime = &v
-	}
-	if fc.LastModifiedTime == nil {
-		return nil, errors.New("ent: missing required field \"LastModifiedTime\"")
-	}
-	if fc.Size == nil {
-		v := file.DefaultSize
-		fc.Size = &v
-	}
-	if err := file.SizeValidator(*fc.Size); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Size\": %v", err)
-	}
-	if fc.Content == nil {
-		return nil, errors.New("ent: missing required field \"Content\"")
-	}
-	if fc.Hash == nil {
-		return nil, errors.New("ent: missing required field \"Hash\"")
-	}
-	if err := file.HashValidator(*fc.Hash); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Hash\": %v", err)
-	}
-	if fc.ContentType == nil {
-		return nil, errors.New("ent: missing required field \"ContentType\"")
-	}
-	return fc.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -151,9 +150,88 @@ func (fc *FileCreate) SaveX(ctx context.Context) *File {
 	return v
 }
 
+// Exec executes the query.
+func (fc *FileCreate) Exec(ctx context.Context) error {
+	_, err := fc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (fc *FileCreate) ExecX(ctx context.Context) {
+	if err := fc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (fc *FileCreate) defaults() {
+	if _, ok := fc.mutation.CreationTime(); !ok {
+		v := file.DefaultCreationTime()
+		fc.mutation.SetCreationTime(v)
+	}
+	if _, ok := fc.mutation.Size(); !ok {
+		v := file.DefaultSize
+		fc.mutation.SetSize(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (fc *FileCreate) check() error {
+	if _, ok := fc.mutation.Name(); !ok {
+		return &ValidationError{Name: "Name", err: errors.New(`ent: missing required field "File.Name"`)}
+	}
+	if v, ok := fc.mutation.Name(); ok {
+		if err := file.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "File.Name": %w`, err)}
+		}
+	}
+	if _, ok := fc.mutation.CreationTime(); !ok {
+		return &ValidationError{Name: "CreationTime", err: errors.New(`ent: missing required field "File.CreationTime"`)}
+	}
+	if _, ok := fc.mutation.LastModifiedTime(); !ok {
+		return &ValidationError{Name: "LastModifiedTime", err: errors.New(`ent: missing required field "File.LastModifiedTime"`)}
+	}
+	if _, ok := fc.mutation.Size(); !ok {
+		return &ValidationError{Name: "Size", err: errors.New(`ent: missing required field "File.Size"`)}
+	}
+	if v, ok := fc.mutation.Size(); ok {
+		if err := file.SizeValidator(v); err != nil {
+			return &ValidationError{Name: "Size", err: fmt.Errorf(`ent: validator failed for field "File.Size": %w`, err)}
+		}
+	}
+	if _, ok := fc.mutation.Content(); !ok {
+		return &ValidationError{Name: "Content", err: errors.New(`ent: missing required field "File.Content"`)}
+	}
+	if _, ok := fc.mutation.Hash(); !ok {
+		return &ValidationError{Name: "Hash", err: errors.New(`ent: missing required field "File.Hash"`)}
+	}
+	if v, ok := fc.mutation.Hash(); ok {
+		if err := file.HashValidator(v); err != nil {
+			return &ValidationError{Name: "Hash", err: fmt.Errorf(`ent: validator failed for field "File.Hash": %w`, err)}
+		}
+	}
+	if _, ok := fc.mutation.ContentType(); !ok {
+		return &ValidationError{Name: "ContentType", err: errors.New(`ent: missing required field "File.ContentType"`)}
+	}
+	return nil
+}
+
 func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
+	_node, _spec := fc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, fc.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (fc *FileCreate) createSpec() (*File, *sqlgraph.CreateSpec) {
 	var (
-		f     = &File{config: fc.config}
+		_node = &File{config: fc.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: file.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -162,63 +240,63 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 			},
 		}
 	)
-	if value := fc.Name; value != nil {
+	if value, ok := fc.mutation.Name(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldName,
 		})
-		f.Name = *value
+		_node.Name = value
 	}
-	if value := fc.CreationTime; value != nil {
+	if value, ok := fc.mutation.CreationTime(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldCreationTime,
 		})
-		f.CreationTime = *value
+		_node.CreationTime = value
 	}
-	if value := fc.LastModifiedTime; value != nil {
+	if value, ok := fc.mutation.LastModifiedTime(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeTime,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldLastModifiedTime,
 		})
-		f.LastModifiedTime = *value
+		_node.LastModifiedTime = value
 	}
-	if value := fc.Size; value != nil {
+	if value, ok := fc.mutation.Size(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeInt,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldSize,
 		})
-		f.Size = *value
+		_node.Size = value
 	}
-	if value := fc.Content; value != nil {
+	if value, ok := fc.mutation.Content(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBytes,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldContent,
 		})
-		f.Content = *value
+		_node.Content = value
 	}
-	if value := fc.Hash; value != nil {
+	if value, ok := fc.mutation.Hash(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldHash,
 		})
-		f.Hash = *value
+		_node.Hash = value
 	}
-	if value := fc.ContentType; value != nil {
+	if value, ok := fc.mutation.ContentType(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: file.FieldContentType,
 		})
-		f.ContentType = *value
+		_node.ContentType = value
 	}
-	if nodes := fc.links; len(nodes) > 0 {
+	if nodes := fc.mutation.LinksIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -232,18 +310,94 @@ func (fc *FileCreate) sqlSave(ctx context.Context) (*File, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, fc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// FileCreateBulk is the builder for creating many File entities in bulk.
+type FileCreateBulk struct {
+	config
+	builders []*FileCreate
+}
+
+// Save creates the File entities in the database.
+func (fcb *FileCreateBulk) Save(ctx context.Context) ([]*File, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(fcb.builders))
+	nodes := make([]*File, len(fcb.builders))
+	mutators := make([]Mutator, len(fcb.builders))
+	for i := range fcb.builders {
+		func(i int, root context.Context) {
+			builder := fcb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*FileMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, fcb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, fcb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	f.ID = int(id)
-	return f, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, fcb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (fcb *FileCreateBulk) SaveX(ctx context.Context) []*File {
+	v, err := fcb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (fcb *FileCreateBulk) Exec(ctx context.Context) error {
+	_, err := fcb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (fcb *FileCreateBulk) ExecX(ctx context.Context) {
+	if err := fcb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/facebookincubator/ent/dialect/sql/sqlgraph"
-	"github.com/facebookincubator/ent/schema/field"
+	"entgo.io/ent/dialect/sql/sqlgraph"
+	"entgo.io/ent/schema/field"
 	"github.com/kcarretto/paragon/ent/event"
 	"github.com/kcarretto/paragon/ent/service"
 	"github.com/kcarretto/paragon/ent/tag"
@@ -17,33 +17,29 @@ import (
 // ServiceCreate is the builder for creating a Service entity.
 type ServiceCreate struct {
 	config
-	Name        *string
-	PubKey      *string
-	Config      *string
-	IsActivated *bool
-	tag         map[int]struct{}
-	events      map[int]struct{}
+	mutation *ServiceMutation
+	hooks    []Hook
 }
 
-// SetName sets the Name field.
+// SetName sets the "Name" field.
 func (sc *ServiceCreate) SetName(s string) *ServiceCreate {
-	sc.Name = &s
+	sc.mutation.SetName(s)
 	return sc
 }
 
-// SetPubKey sets the PubKey field.
+// SetPubKey sets the "PubKey" field.
 func (sc *ServiceCreate) SetPubKey(s string) *ServiceCreate {
-	sc.PubKey = &s
+	sc.mutation.SetPubKey(s)
 	return sc
 }
 
-// SetConfig sets the Config field.
+// SetConfig sets the "Config" field.
 func (sc *ServiceCreate) SetConfig(s string) *ServiceCreate {
-	sc.Config = &s
+	sc.mutation.SetConfig(s)
 	return sc
 }
 
-// SetNillableConfig sets the Config field if the given value is not nil.
+// SetNillableConfig sets the "Config" field if the given value is not nil.
 func (sc *ServiceCreate) SetNillableConfig(s *string) *ServiceCreate {
 	if s != nil {
 		sc.SetConfig(*s)
@@ -51,13 +47,13 @@ func (sc *ServiceCreate) SetNillableConfig(s *string) *ServiceCreate {
 	return sc
 }
 
-// SetIsActivated sets the IsActivated field.
+// SetIsActivated sets the "IsActivated" field.
 func (sc *ServiceCreate) SetIsActivated(b bool) *ServiceCreate {
-	sc.IsActivated = &b
+	sc.mutation.SetIsActivated(b)
 	return sc
 }
 
-// SetNillableIsActivated sets the IsActivated field if the given value is not nil.
+// SetNillableIsActivated sets the "IsActivated" field if the given value is not nil.
 func (sc *ServiceCreate) SetNillableIsActivated(b *bool) *ServiceCreate {
 	if b != nil {
 		sc.SetIsActivated(*b)
@@ -65,32 +61,24 @@ func (sc *ServiceCreate) SetNillableIsActivated(b *bool) *ServiceCreate {
 	return sc
 }
 
-// SetTagID sets the tag edge to Tag by id.
+// SetTagID sets the "tag" edge to the Tag entity by ID.
 func (sc *ServiceCreate) SetTagID(id int) *ServiceCreate {
-	if sc.tag == nil {
-		sc.tag = make(map[int]struct{})
-	}
-	sc.tag[id] = struct{}{}
+	sc.mutation.SetTagID(id)
 	return sc
 }
 
-// SetTag sets the tag edge to Tag.
+// SetTag sets the "tag" edge to the Tag entity.
 func (sc *ServiceCreate) SetTag(t *Tag) *ServiceCreate {
 	return sc.SetTagID(t.ID)
 }
 
-// AddEventIDs adds the events edge to Event by ids.
+// AddEventIDs adds the "events" edge to the Event entity by IDs.
 func (sc *ServiceCreate) AddEventIDs(ids ...int) *ServiceCreate {
-	if sc.events == nil {
-		sc.events = make(map[int]struct{})
-	}
-	for i := range ids {
-		sc.events[ids[i]] = struct{}{}
-	}
+	sc.mutation.AddEventIDs(ids...)
 	return sc
 }
 
-// AddEvents adds the events edges to Event.
+// AddEvents adds the "events" edges to the Event entity.
 func (sc *ServiceCreate) AddEvents(e ...*Event) *ServiceCreate {
 	ids := make([]int, len(e))
 	for i := range e {
@@ -99,35 +87,51 @@ func (sc *ServiceCreate) AddEvents(e ...*Event) *ServiceCreate {
 	return sc.AddEventIDs(ids...)
 }
 
+// Mutation returns the ServiceMutation object of the builder.
+func (sc *ServiceCreate) Mutation() *ServiceMutation {
+	return sc.mutation
+}
+
 // Save creates the Service in the database.
 func (sc *ServiceCreate) Save(ctx context.Context) (*Service, error) {
-	if sc.Name == nil {
-		return nil, errors.New("ent: missing required field \"Name\"")
+	var (
+		err  error
+		node *Service
+	)
+	sc.defaults()
+	if len(sc.hooks) == 0 {
+		if err = sc.check(); err != nil {
+			return nil, err
+		}
+		node, err = sc.sqlSave(ctx)
+	} else {
+		var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+			mutation, ok := m.(*ServiceMutation)
+			if !ok {
+				return nil, fmt.Errorf("unexpected mutation type %T", m)
+			}
+			if err = sc.check(); err != nil {
+				return nil, err
+			}
+			sc.mutation = mutation
+			if node, err = sc.sqlSave(ctx); err != nil {
+				return nil, err
+			}
+			mutation.id = &node.ID
+			mutation.done = true
+			return node, err
+		})
+		for i := len(sc.hooks) - 1; i >= 0; i-- {
+			if sc.hooks[i] == nil {
+				return nil, fmt.Errorf("ent: uninitialized hook (forgotten import ent/runtime?)")
+			}
+			mut = sc.hooks[i](mut)
+		}
+		if _, err := mut.Mutate(ctx, sc.mutation); err != nil {
+			return nil, err
+		}
 	}
-	if err := service.NameValidator(*sc.Name); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"Name\": %v", err)
-	}
-	if sc.PubKey == nil {
-		return nil, errors.New("ent: missing required field \"PubKey\"")
-	}
-	if err := service.PubKeyValidator(*sc.PubKey); err != nil {
-		return nil, fmt.Errorf("ent: validator failed for field \"PubKey\": %v", err)
-	}
-	if sc.Config == nil {
-		v := service.DefaultConfig
-		sc.Config = &v
-	}
-	if sc.IsActivated == nil {
-		v := service.DefaultIsActivated
-		sc.IsActivated = &v
-	}
-	if len(sc.tag) > 1 {
-		return nil, errors.New("ent: multiple assignments on a unique edge \"tag\"")
-	}
-	if sc.tag == nil {
-		return nil, errors.New("ent: missing required edge \"tag\"")
-	}
-	return sc.sqlSave(ctx)
+	return node, err
 }
 
 // SaveX calls Save and panics if Save returns an error.
@@ -139,9 +143,77 @@ func (sc *ServiceCreate) SaveX(ctx context.Context) *Service {
 	return v
 }
 
+// Exec executes the query.
+func (sc *ServiceCreate) Exec(ctx context.Context) error {
+	_, err := sc.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (sc *ServiceCreate) ExecX(ctx context.Context) {
+	if err := sc.Exec(ctx); err != nil {
+		panic(err)
+	}
+}
+
+// defaults sets the default values of the builder before save.
+func (sc *ServiceCreate) defaults() {
+	if _, ok := sc.mutation.Config(); !ok {
+		v := service.DefaultConfig
+		sc.mutation.SetConfig(v)
+	}
+	if _, ok := sc.mutation.IsActivated(); !ok {
+		v := service.DefaultIsActivated
+		sc.mutation.SetIsActivated(v)
+	}
+}
+
+// check runs all checks and user-defined validators on the builder.
+func (sc *ServiceCreate) check() error {
+	if _, ok := sc.mutation.Name(); !ok {
+		return &ValidationError{Name: "Name", err: errors.New(`ent: missing required field "Service.Name"`)}
+	}
+	if v, ok := sc.mutation.Name(); ok {
+		if err := service.NameValidator(v); err != nil {
+			return &ValidationError{Name: "Name", err: fmt.Errorf(`ent: validator failed for field "Service.Name": %w`, err)}
+		}
+	}
+	if _, ok := sc.mutation.PubKey(); !ok {
+		return &ValidationError{Name: "PubKey", err: errors.New(`ent: missing required field "Service.PubKey"`)}
+	}
+	if v, ok := sc.mutation.PubKey(); ok {
+		if err := service.PubKeyValidator(v); err != nil {
+			return &ValidationError{Name: "PubKey", err: fmt.Errorf(`ent: validator failed for field "Service.PubKey": %w`, err)}
+		}
+	}
+	if _, ok := sc.mutation.Config(); !ok {
+		return &ValidationError{Name: "Config", err: errors.New(`ent: missing required field "Service.Config"`)}
+	}
+	if _, ok := sc.mutation.IsActivated(); !ok {
+		return &ValidationError{Name: "IsActivated", err: errors.New(`ent: missing required field "Service.IsActivated"`)}
+	}
+	if _, ok := sc.mutation.TagID(); !ok {
+		return &ValidationError{Name: "tag", err: errors.New(`ent: missing required edge "Service.tag"`)}
+	}
+	return nil
+}
+
 func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
+	_node, _spec := sc.createSpec()
+	if err := sqlgraph.CreateNode(ctx, sc.driver, _spec); err != nil {
+		if sqlgraph.IsConstraintError(err) {
+			err = &ConstraintError{err.Error(), err}
+		}
+		return nil, err
+	}
+	id := _spec.ID.Value.(int64)
+	_node.ID = int(id)
+	return _node, nil
+}
+
+func (sc *ServiceCreate) createSpec() (*Service, *sqlgraph.CreateSpec) {
 	var (
-		s     = &Service{config: sc.config}
+		_node = &Service{config: sc.config}
 		_spec = &sqlgraph.CreateSpec{
 			Table: service.Table,
 			ID: &sqlgraph.FieldSpec{
@@ -150,39 +222,39 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 			},
 		}
 	)
-	if value := sc.Name; value != nil {
+	if value, ok := sc.mutation.Name(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldName,
 		})
-		s.Name = *value
+		_node.Name = value
 	}
-	if value := sc.PubKey; value != nil {
+	if value, ok := sc.mutation.PubKey(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldPubKey,
 		})
-		s.PubKey = *value
+		_node.PubKey = value
 	}
-	if value := sc.Config; value != nil {
+	if value, ok := sc.mutation.Config(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeString,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldConfig,
 		})
-		s.Config = *value
+		_node.Config = value
 	}
-	if value := sc.IsActivated; value != nil {
+	if value, ok := sc.mutation.IsActivated(); ok {
 		_spec.Fields = append(_spec.Fields, &sqlgraph.FieldSpec{
 			Type:   field.TypeBool,
-			Value:  *value,
+			Value:  value,
 			Column: service.FieldIsActivated,
 		})
-		s.IsActivated = *value
+		_node.IsActivated = value
 	}
-	if nodes := sc.tag; len(nodes) > 0 {
+	if nodes := sc.mutation.TagIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.M2O,
 			Inverse: false,
@@ -196,12 +268,13 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
+		_node.service_tag = &nodes[0]
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if nodes := sc.events; len(nodes) > 0 {
+	if nodes := sc.mutation.EventsIDs(); len(nodes) > 0 {
 		edge := &sqlgraph.EdgeSpec{
 			Rel:     sqlgraph.O2M,
 			Inverse: false,
@@ -215,18 +288,94 @@ func (sc *ServiceCreate) sqlSave(ctx context.Context) (*Service, error) {
 				},
 			},
 		}
-		for k, _ := range nodes {
+		for _, k := range nodes {
 			edge.Target.Nodes = append(edge.Target.Nodes, k)
 		}
 		_spec.Edges = append(_spec.Edges, edge)
 	}
-	if err := sqlgraph.CreateNode(ctx, sc.driver, _spec); err != nil {
-		if cerr, ok := isSQLConstraintError(err); ok {
-			err = cerr
-		}
-		return nil, err
+	return _node, _spec
+}
+
+// ServiceCreateBulk is the builder for creating many Service entities in bulk.
+type ServiceCreateBulk struct {
+	config
+	builders []*ServiceCreate
+}
+
+// Save creates the Service entities in the database.
+func (scb *ServiceCreateBulk) Save(ctx context.Context) ([]*Service, error) {
+	specs := make([]*sqlgraph.CreateSpec, len(scb.builders))
+	nodes := make([]*Service, len(scb.builders))
+	mutators := make([]Mutator, len(scb.builders))
+	for i := range scb.builders {
+		func(i int, root context.Context) {
+			builder := scb.builders[i]
+			builder.defaults()
+			var mut Mutator = MutateFunc(func(ctx context.Context, m Mutation) (Value, error) {
+				mutation, ok := m.(*ServiceMutation)
+				if !ok {
+					return nil, fmt.Errorf("unexpected mutation type %T", m)
+				}
+				if err := builder.check(); err != nil {
+					return nil, err
+				}
+				builder.mutation = mutation
+				nodes[i], specs[i] = builder.createSpec()
+				var err error
+				if i < len(mutators)-1 {
+					_, err = mutators[i+1].Mutate(root, scb.builders[i+1].mutation)
+				} else {
+					spec := &sqlgraph.BatchCreateSpec{Nodes: specs}
+					// Invoke the actual operation on the latest mutation in the chain.
+					if err = sqlgraph.BatchCreate(ctx, scb.driver, spec); err != nil {
+						if sqlgraph.IsConstraintError(err) {
+							err = &ConstraintError{err.Error(), err}
+						}
+					}
+				}
+				if err != nil {
+					return nil, err
+				}
+				mutation.id = &nodes[i].ID
+				mutation.done = true
+				if specs[i].ID.Value != nil {
+					id := specs[i].ID.Value.(int64)
+					nodes[i].ID = int(id)
+				}
+				return nodes[i], nil
+			})
+			for i := len(builder.hooks) - 1; i >= 0; i-- {
+				mut = builder.hooks[i](mut)
+			}
+			mutators[i] = mut
+		}(i, ctx)
 	}
-	id := _spec.ID.Value.(int64)
-	s.ID = int(id)
-	return s, nil
+	if len(mutators) > 0 {
+		if _, err := mutators[0].Mutate(ctx, scb.builders[0].mutation); err != nil {
+			return nil, err
+		}
+	}
+	return nodes, nil
+}
+
+// SaveX is like Save, but panics if an error occurs.
+func (scb *ServiceCreateBulk) SaveX(ctx context.Context) []*Service {
+	v, err := scb.Save(ctx)
+	if err != nil {
+		panic(err)
+	}
+	return v
+}
+
+// Exec executes the query.
+func (scb *ServiceCreateBulk) Exec(ctx context.Context) error {
+	_, err := scb.Save(ctx)
+	return err
+}
+
+// ExecX is like Exec, but panics if an error occurs.
+func (scb *ServiceCreateBulk) ExecX(ctx context.Context) {
+	if err := scb.Exec(ctx); err != nil {
+		panic(err)
+	}
 }

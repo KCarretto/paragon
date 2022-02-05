@@ -3,7 +3,7 @@
 package predicate
 
 import (
-	"github.com/facebookincubator/ent/dialect/sql"
+	"entgo.io/ent/dialect/sql"
 )
 
 // Credential is the predicate function for credential builders.

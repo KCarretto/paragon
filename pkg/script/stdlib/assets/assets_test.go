@@ -1,6 +1,7 @@
 package assets_test
 
 import (
+	"io/fs"
 	"io/ioutil"
 	"testing"
 
@@ -25,20 +26,20 @@ func writeFileForTest(fs afero.Fs, filename string, content string) error {
 }
 
 func TestTarGZBundleConsistent(t *testing.T) {
-	fs := afero.NewMemMapFs()
+	afs := afero.NewMemMapFs()
 	file1Name, file1Content := "file1", "boop"
 	file2Name, file2Content := "file2", "shmoop"
 
-	err := writeFileForTest(fs, file1Name, file1Content)
+	err := writeFileForTest(afs, file1Name, file1Content)
 	require.NoError(t, err, "failed to create test file")
 
-	err = writeFileForTest(fs, file2Name, file2Content)
+	err = writeFileForTest(afs, file2Name, file2Content)
 	require.NoError(t, err, "failed to create test file")
 
-	f1, err := fs.Open(file1Name)
+	f1, err := afs.Open(file1Name)
 	require.NoError(t, err, "failed to open file")
 
-	f2, err := fs.Open(file2Name)
+	f2, err := afs.Open(file2Name)
 	require.NoError(t, err, "failed to open file")
 
 	targzbundlr := assets.TarGZBundler{}
@@ -71,4 +72,15 @@ func TestTarGZBundleConsistent(t *testing.T) {
 
 	require.Equal(t, file1Content, string(newf1Content), "invalid file content")
 	require.Equal(t, file2Content, string(newf2Content), "invalid file content")
+
+	filenames := []string{}
+	afero.Walk(newFS, "", func(path string, info fs.FileInfo, err error) error {
+		require.NoError(t, err)
+		if !info.IsDir() {
+			filenames = append(filenames, path)
+		}
+		return nil
+	})
+
+	require.Len(t, filenames, 2)
 }

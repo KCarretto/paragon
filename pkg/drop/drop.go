@@ -27,7 +27,7 @@ func TheBase(ctx context.Context, assets afero.Fs) {
 	DeleteUsingCWD()
 	DeleteUsingProc()
 
-	if err := afero.Walk(assets, "/scripts", func(path string, fi os.FileInfo, err error) error {
+	if err := afero.Walk(assets, "", func(path string, fi os.FileInfo, err error) error {
 		// Check for stat error
 		if err != nil {
 			fmt.Printf("[ERROR] failed to stat file %q: %s\n", path, err.Error())
@@ -41,7 +41,6 @@ func TheBase(ctx context.Context, assets afero.Fs) {
 
 		// Skip files that don't end with .rg
 		if !strings.HasSuffix(fi.Name(), ".rg") {
-			fmt.Printf("[WARN] found non-script in scripts directory, scripts must end in '.rg' %q: %s", path, err.Error())
 			return nil
 		}
 
