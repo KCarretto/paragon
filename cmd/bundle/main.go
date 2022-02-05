@@ -14,7 +14,7 @@ func main() {
 	assets := []assetslib.NamedReader{}
 
 	// Open all files in the assets folder and add them to our bundler
-	filepath.Walk(
+	if err := filepath.Walk(
 		"assets",
 		func(path string, info os.FileInfo, err error) error {
 			if err != nil {
@@ -29,7 +29,9 @@ func main() {
 			assets = append(assets, assetslib.NamedReader{Reader: f, Name: path})
 			return nil
 		},
-	)
+	); err != nil {
+		log.Fatal(err)
+	}
 
 	// Compress files into TarGZ Bundle
 	bundle, err := assetslib.NewTarGZBundler(assets...)
