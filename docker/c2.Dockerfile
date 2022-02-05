@@ -1,5 +1,5 @@
 # Dependency Cache
-FROM golang:1.13.1-alpine as base
+FROM golang:1.18beta2-alpine as base
 WORKDIR /app
 RUN apk add alpine-sdk git \
     && mkdir -p /app/build
