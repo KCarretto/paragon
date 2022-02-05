@@ -5,15 +5,22 @@ go 1.13
 require (
 	entgo.io/ent v0.10.0
 	github.com/99designs/gqlgen v0.10.2
+	github.com/NYTimes/gziphandler v1.1.1 // indirect
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/chzyer/logex v1.2.0 // indirect
 	github.com/chzyer/test v0.0.0-20210722231415-061457976a23 // indirect
+	github.com/creack/pty v1.1.17 // indirect
 	github.com/denisbrodbeck/machineid v1.0.1
+	github.com/elazarl/go-bindata-assetfs v1.0.1 // indirect
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.3.0
+	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
+	github.com/kost/go-ntlmssp v0.0.0-20190601005913-a22bdd33b2a4 // indirect
+	github.com/kost/tty2web v2.2.0+incompatible // indirect
 	github.com/mattn/go-sqlite3 v1.14.10
 	github.com/nats-io/nats.go v1.9.1
 	github.com/pkg/errors v0.9.1

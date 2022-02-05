@@ -87,7 +87,7 @@ func (agent *Agent) collectMetadata() {
 		agent.Metadata.PrimaryIP = ip.String()
 		break
 	}
-
+	// agent.transport.TaskExecutor = agent.Metadata
 }
 
 // isMulticastCapable reports whether ifi is an IP multicast-capable
