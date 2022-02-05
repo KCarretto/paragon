@@ -16,3 +16,5 @@ export { default as XProfileView } from "./XProfileView";
 export { default as XRunView } from "./XRunView";
 export { default as XTargetView, TARGET_QUERY } from "./XTargetView";
 export { default as XTaskView } from "./XTaskView";
+export { default as XTerminalView, TERMINAL_QUERY } from "./XTerminalView";
+

@@ -2,8 +2,8 @@ import { useQuery } from "@apollo/react-hooks";
 import gql from "graphql-tag";
 import moment from "moment";
 import * as React from "react";
-import { useParams } from "react-router-dom";
-import { Header, Icon, Table } from "semantic-ui-react";
+import { Link, useParams } from "react-router-dom";
+import { Button, Header, Icon, Table } from "semantic-ui-react";
 import { XCredentialSummary } from "../components/credential";
 import { XClipboard } from "../components/form";
 import { XBoundary, XCardGroup } from "../components/layout";
@@ -96,6 +96,10 @@ const XTargetView = () => {
 
       <XErrorMessage title="Error Loading Target" err={error} />
       <XBoundary boundary={whenLoading} show={!loading}>
+        <Button icon labelPosition='right' color="green" as={Link} to={"/terminal/" + id}>
+          <Icon name="terminal"></Icon>
+          Shell
+        </Button>
         <Header size="large" block inverted>
           <Header.Content>Metadata</Header.Content>
         </Header>
