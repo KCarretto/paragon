@@ -12,11 +12,22 @@ import (
 	libfile "github.com/kcarretto/paragon/pkg/script/stdlib/file"
 	libnet "github.com/kcarretto/paragon/pkg/script/stdlib/net"
 	libproc "github.com/kcarretto/paragon/pkg/script/stdlib/process"
+	"go.uber.org/zap"
 
 	"github.com/shirou/gopsutil/net"
 	"github.com/shirou/gopsutil/process"
 	"github.com/spf13/afero"
 )
+
+func newLogger() *zap.Logger {
+	logger, err := zap.NewDevelopment()
+	if err != nil {
+		panic(err)
+	}
+	return logger
+}
+
+var logger = newLogger().Named("renegade")
 
 //go:generate go run ../gendoc.go -lib sys -func file -param path@String -retval f@File -doc "Prepare a descriptor for a file on the system. The descriptor may be used with the file library."
 func file(parser script.ArgParser) (script.Retval, error) {
@@ -33,6 +44,7 @@ func file(parser script.ArgParser) (script.Retval, error) {
 
 //go:generate go run ../gendoc.go -lib sys -func exec -param executable@String -param disown@?Bool -retval output@String -retval err@Error -doc "Exec uses the os/exec.command to execute the passed executable/params. Disown will optionally spawn a process but prevent it's output from being returned."
 func exec(parser script.ArgParser) (script.Retval, error) {
+	logger.Debug("Exec")
 	err := parser.RestrictKwargs("disown")
 	if err != nil {
 		return nil, err

@@ -24,6 +24,7 @@ type Executor struct{
 
 // ExecuteTask runs a renegade script.
 func (exec Executor) ExecuteTask(ctx context.Context, output io.Writer, task *transport.Task) error {
+
 	code := script.New(
 		fmt.Sprint(task.GetId()),
 		bytes.NewBufferString(task.Content),

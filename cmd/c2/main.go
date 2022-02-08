@@ -2,13 +2,16 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
+
+	gohttp "net/http"
 
 	"github.com/kcarretto/paragon/graphql"
 	"github.com/kcarretto/paragon/graphql/models"
 	"github.com/kcarretto/paragon/pkg/agent/c2"
 	"github.com/kcarretto/paragon/pkg/agent/transport/http"
-
+	"github.com/kcarretto/paragon/pkg/agent/transport/websocket"
 	"go.uber.org/zap"
 )
 
@@ -47,7 +50,8 @@ func main() {
 	}
 
 	// Teamserver URL
-	teamserverURL := "http://127.0.0.1/graphql"
+	teamserverHost := "127.0.0.1"
+	teamserverURL := fmt.Sprintf("http://%s/graphql", teamserverHost)
 	if url := os.Getenv("TEAMSERVER_URL"); url != "" {
 		teamserverURL = url
 	}
@@ -66,12 +70,23 @@ func main() {
 		Log:        logger,
 		Teamserver: graph,
 	}
+
+	mux := gohttp.NewServeMux()
+
+	wsSvc := &websocket.ServerTransport{
+		Log:        logger.Named("transport.wsgiveshell"),
+		Handler:    websocket.HandleGiveShell,
+		TeamServer: teamserverHost,
+	}
+	mux.Handle("/websocketgiveshell", wsSvc)
+
 	httpSvc := &http.ServerTransport{
 		Log:    logger.Named("transport.http"),
 		Server: srv,
 	}
+	mux.Handle("/", httpSvc)
 
-	if err := httpSvc.ListenAndServe(httpAddr); err != nil {
+	if err := gohttp.ListenAndServe(httpAddr, mux); err != nil {
 		panic(err)
 	}
 }

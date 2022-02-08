@@ -8,6 +8,8 @@ This project was bootstrapped with [Create React App](https://github.com/faceboo
 3. Visit http://127.0.0.1:8080 to interact with the development version
 4. Run `go generate ./www/gen.go` to bundle your changes into the production version of paragon
    - Do not commit changes to WWW code without first testing in the dev environment and then including them in the production version
+5. Stand up c2 `PG_HTTP_ADDR="127.0.0.1:4444"; go run -tags dev ./cmd/c2/`
+6. Start up agent `go run -tags dev ./cmd/agent/`
 
 ## Available Scripts
 

@@ -24,11 +24,14 @@ func Run() bool {
 	// Initialize Agent
 	paragon := &agent.Agent{
 		Log:          logger,
-		MaxIdleTime:  30 * time.Second,
+		MaxIdleTime:  3 * time.Second,
 		TaskExecutor: Executor{},
 		AgentMessageWriter: &transport.AgentMessageMultiWriter{
 			Transports: transports(logger.Named("transport")),
 		},
+	}
+	paragon.OnRun = func(){
+		paragon.TaskExecutor = Executor{paragon.Metadata}
 	}
 
 	// Handle panic

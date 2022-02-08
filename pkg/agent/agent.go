@@ -18,6 +18,8 @@ type Agent struct {
 	transport.TaskExecutor
 	transport.AgentMessageWriter
 
+	OnRun		func()
+
 	Log         *zap.Logger
 	Metadata    transport.AgentMetadata
 	MaxIdleTime time.Duration
@@ -30,6 +32,10 @@ type Agent struct {
 // Run the agent, which will block until the provided context has been canceled.
 func (agent *Agent) Run(ctx context.Context) {
 	agent.collectMetadata()
+
+	if agent.OnRun != nil{
+		agent.OnRun()
+	}
 
 	checkinTicker := time.NewTicker(agent.MaxIdleTime)
 	defer checkinTicker.Stop()
