@@ -12,7 +12,7 @@ import (
 
 var PingTime = time.Second * 10
 var PingGrace = time.Second * 5
-var WsConnections map[string]WsConnection
+var WsConnections map[string]*WsConnection
 var ValidWsServices = [2]string{"shell", "socks"}
 
 type WsConnection struct {
@@ -39,25 +39,23 @@ type WsMsg struct {
 	MsgType int    `json:"MsgType"`
 }
 
-func GetWsConnections() *map[string]WsConnection {
+func GetWsConnections() *map[string]*WsConnection {
 	if WsConnections == nil {
-		WsConnections = make(map[string]WsConnection)
+		WsConnections = make(map[string]*WsConnection)
 	}
 	return &WsConnections
 }
 
-func GetWsConnection(uuid string) (WsConnection, error) {
-	if WsConnections == nil {
-		WsConnections = make(map[string]WsConnection)
-	}
+func GetWsConnection(uuid string) (*WsConnection, error) {
+	wsConnections := GetWsConnections()
 	// Get connection from map.
-	if val, ok := WsConnections[uuid]; ok {
+	if val, ok := (*wsConnections)[uuid]; ok {
 		wsConnection := val
 		// Update active status
 		wsConnection.IsActive = (wsConnection.LastContact+int64(PingTime)+int64(PingGrace) < time.Now().Unix())
 		return wsConnection, nil
 	}
-	return WsConnection{}, errors.New("could not find WsConnection for: ")
+	return nil, errors.New("could not find WsConnection for: ")
 
 }
 
@@ -66,7 +64,7 @@ func ConnectionPing(uuid string) error {
 	if err != nil {
 		return err
 	}
-	if connection != (WsConnection{}) {
+	if connection != (nil) {
 		connection.LastContact = time.Now().Unix()
 		return nil
 	}
@@ -74,9 +72,7 @@ func ConnectionPing(uuid string) error {
 }
 
 func RegisterWsConnection(wsMsg *WsMsg, WsService string, Conn *websocket.Conn, logger *zap.Logger) (*WsConnection, error) {
-	if WsConnections == nil {
-		WsConnections = make(map[string]WsConnection)
-	}
+	wsConnection := GetWsConnections()
 	isValidService := false
 	for _, value := range ValidWsServices {
 		if value == WsService {
@@ -98,7 +94,7 @@ func RegisterWsConnection(wsMsg *WsMsg, WsService string, Conn *websocket.Conn, 
 		IsActive:    true,
 	}
 	logger.Debug("created conn object")
-	WsConnections[NewConnection.Uuid] = NewConnection
+	(*wsConnection)[NewConnection.Uuid] = &NewConnection
 	logger.Debug("stored conn object")
 	return &NewConnection, nil
 }

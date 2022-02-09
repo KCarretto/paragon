@@ -117,7 +117,7 @@ func (svc *Service) HandleShellConnect(w http.ResponseWriter, r *http.Request) e
 	var upgrader = websocket.Upgrader{} // use default options
 
 	// recieve forwarded message from c2
-	c_c2 := commonwebsockets.WsConnection{}
+	c_c2 := &commonwebsockets.WsConnection{}
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 	c_client, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -159,6 +159,7 @@ func (svc *Service) HandleShellConnect(w http.ResponseWriter, r *http.Request) e
 		// 		svc.Log.Debug(fmt.Sprintf("Couldn't find client connection  %s", wsMsg.Uuid))
 		// 		continue
 		// 	}
+		// 	c_c2.ClientConn = c_client
 		// 	// _, err := commonwebsockets.RegisterWsConnection(wsMsg, "shell", c_c2, svc.Log)
 		// 	// if err != nil {
 		// 	// 	svc.Log.Debug(fmt.Sprintf("Failed to register agent: %v\n", err))
@@ -174,8 +175,12 @@ func (svc *Service) HandleShellConnect(w http.ResponseWriter, r *http.Request) e
 				continue
 			}
 			c_c2.ClientConn = c_client
+			// fmt.Println("c_client: %v", c_client)
+			// fmt.Println("c_c2.ClientConn: %v", c_c2.ClientConn)
+			c_c2, err = commonwebsockets.GetWsConnection(wsMsg.Uuid)
+			// fmt.Println("refreshed c_c2.ClientConn: %v", c_c2.ClientConn)
 
-			if c_c2 != (commonwebsockets.WsConnection{}) {
+			if c_c2 != (nil) {
 				wsMsgJSON, err := wsMsg.ToJson()
 				if err != nil {
 					svc.Log.Debug(fmt.Sprintf("Error converting wsMsg to JSON %v\n", err))
@@ -259,7 +264,7 @@ func (svc *Service) HandleGiveShell(w http.ResponseWriter, r *http.Request) erro
 		case commonwebsockets.Data:
 			// ERROR APPEARS TO BE IN HERE
 			// runtime error: invalid memory address or nil pointer dereference
-
+			// wsConnections := commonwebsockets.GetWsConnections()
 			wsConn, err := commonwebsockets.GetWsConnection(wsMsg.Uuid)
 			if err != nil {
 				svc.Log.Debug(fmt.Sprintf("Could not find conn for %s", string(wsMsg.Uuid)))
@@ -273,6 +278,10 @@ func (svc *Service) HandleGiveShell(w http.ResponseWriter, r *http.Request) erro
 			// looks like clientConn is nil.
 			// Error check that it's not nil.
 
+			if wsConn.ClientConn == nil {
+				svc.Log.Debug(fmt.Sprintf("Could not find active client connection %v", wsConn))
+				continue
+			}
 			err = wsConn.ClientConn.WriteMessage(websocket.TextMessage, wsMsgJSON)
 			if err != nil {
 				svc.Log.Debug(fmt.Sprintf("Could not write to websocket %v", err))

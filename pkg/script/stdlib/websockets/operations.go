@@ -3,7 +3,6 @@ package websockets
 import (
 	"errors"
 	"fmt"
-	"log"
 	"net/url"
 	"os/exec"
 	"time"
@@ -148,6 +147,9 @@ func handleShellMessage(wsMsg websockets.WsMsg) (websockets.WsMsg, error) {
 		logger.Debug("Confusion this is a server type")
 
 	case websockets.Data:
+		if len(wsMsg.Data) == 0 {
+			return websockets.WsMsg{}, errors.New("Empty command string")
+		}
 		logger.Debug(fmt.Sprintf("Executing command %s\n", string(string(wsMsg.Data))))
 		commandResponse, err := executeShellCommand(string(wsMsg.Data))
 		if err != nil {
@@ -176,9 +178,10 @@ func handleShellMessage(wsMsg websockets.WsMsg) (websockets.WsMsg, error) {
 }
 
 func executeShellCommand(command string) (string, error) {
-	out, err := exec.Command(command).Output()
+	out, err := exec.Command("/bin/sh", "-c", command).Output()
 	if err != nil {
-		log.Fatal(err)
+		logger.Debug(fmt.Sprintf("Error running command: %v", err))
+		return "", err
 	}
 	logger.Debug(string(out))
 	return string(out), nil

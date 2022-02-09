@@ -119,7 +119,7 @@ const XTerminalView = () => {
     // console.log(response.data)
     let jsonObj: any = JSON.parse(response.data);
     // console.log(jsonObj.Data)
-    setCommandOutput(jsonObj.Data);
+    setCommandOutput(atob(jsonObj.Data));
   }
 
 
