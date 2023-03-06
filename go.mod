@@ -31,6 +31,6 @@ require (
 	go.uber.org/zap v1.17.0
 	gocloud.dev v0.18.0
 	gocloud.dev/pubsub/natspubsub v0.18.0
-	golang.org/x/crypto v0.0.0-20210817164053-32db794688a5
+	golang.org/x/crypto v0.1.0
 	golang.org/x/oauth2 v0.0.0-20211104180415-d3ed0bb246c8
 )
